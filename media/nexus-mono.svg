@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" role="img" aria-label="Nexkit">
+  <!-- Monochrome (black & white) icon optimized for Activity Bar -->
+  <rect width="24" height="24" rx="4" fill="#000" />
+  <!-- Stylized 'N' in white with a slight texture (subtle lines) -->
+  <defs>
+    <pattern id="p" patternUnits="userSpaceOnUse" width="4" height="4" patternTransform="rotate(45)">
+      <rect width="2" height="4" fill="#ffffff" fill-opacity="0.06"></rect>
+    </pattern>
+  </defs>
+  <g fill="#fff" fill-rule="evenodd">
+    <path d="M6 7v10h2l6-6v6h2V7h-2l-6 6V7z" fill="url(#p)" />
+    <path d="M6 7v10h2l6-6v6h2V7h-2l-6 6V7z" fill="#fff" opacity="0.9" />
+  </g>
+</svg>
