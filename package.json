@@ -103,10 +103,10 @@
           "default": 24,
           "description": "Hours between automatic update checks."
         },
-        "nexkit.backup.retentionDays": {
+        "nexkit.templates.lastUpdateCheck": {
           "type": "number",
-          "default": 30,
-          "description": "Days to keep template backups."
+          "default": 0,
+          "description": "Timestamp of last update check."
         },
         "nexkit.mcpSetup.dismissed": {
           "type": "boolean",

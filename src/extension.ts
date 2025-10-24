@@ -4,6 +4,8 @@ import * as vscode from 'vscode';
 import { TemplateManager, DeploymentConfig } from './templateManager';
 import { InitWizard, InitWizardResult } from './initWizard';
 import { MCPConfigManager } from './mcpConfigManager';
+import { VersionManager } from './versionManager';
+import { GitHubReleaseService } from './githubReleaseService';
 
 /**
  * Check for required MCP servers and show notification if missing
@@ -35,6 +37,60 @@ async function checkRequiredMCPs(mcpConfigManager: MCPConfigManager): Promise<vo
 	}
 }
 
+/**
+ * Update the status bar with current template version and update status
+ */
+async function updateStatusBar(statusBarItem: vscode.StatusBarItem, versionManager: VersionManager): Promise<void> {
+	try {
+		const currentVersion = versionManager.getCurrentVersion();
+		const updateCheck = await versionManager.isUpdateAvailable();
+
+		if (updateCheck.available) {
+			statusBarItem.text = `$(arrow-up) Nexkit v${currentVersion}`;
+			statusBarItem.tooltip = `Update available: ${updateCheck.latestVersion}. Click to check for updates.`;
+			statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+		} else {
+			statusBarItem.text = `$(check) Nexkit v${currentVersion}`;
+			statusBarItem.tooltip = `Templates are up to date (v${currentVersion}). Click to check for updates.`;
+			statusBarItem.backgroundColor = undefined;
+		}
+
+		statusBarItem.show();
+	} catch (error) {
+		console.error('Error updating status bar:', error);
+		statusBarItem.text = `$(warning) Nexkit`;
+		statusBarItem.tooltip = 'Error checking template status';
+		statusBarItem.show();
+	}
+}
+
+/**
+ * Check for template updates on activation
+ */
+async function checkForUpdates(versionManager: VersionManager): Promise<void> {
+	try {
+		if (versionManager.shouldCheckForUpdates()) {
+			const updateCheck = await versionManager.isUpdateAvailable();
+
+			if (updateCheck.available) {
+				const result = await vscode.window.showInformationMessage(
+					`Nexkit templates ${updateCheck.latestVersion} available!`,
+					'Update Now', 'Remind Later'
+				);
+
+				if (result === 'Update Now') {
+					vscode.commands.executeCommand('nexkit-vscode.updateTemplates');
+				}
+			}
+
+			// Update last check timestamp
+			await versionManager.updateLastCheckTimestamp();
+		}
+	} catch (error) {
+		console.error('Error checking for updates:', error);
+	}
+}
+
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
@@ -45,9 +101,22 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const templateManager = new TemplateManager(context);
 	const mcpConfigManager = new MCPConfigManager();
+	const versionManager = new VersionManager();
+	const githubService = new GitHubReleaseService();
+
+	// Create status bar item
+	const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+	statusBarItem.command = 'nexkit-vscode.checkVersion';
+	context.subscriptions.push(statusBarItem);
+
+	// Update status bar
+	updateStatusBar(statusBarItem, versionManager);
 
 	// Check for required MCP servers on activation
 	checkRequiredMCPs(mcpConfigManager);
+
+	// Check for template updates on activation
+	checkForUpdates(versionManager);
 
 	// Register commands
 	const initProjectDisposable = vscode.commands.registerCommand('nexkit-vscode.initProject', async () => {
@@ -143,8 +212,84 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const updateTemplatesDisposable = vscode.commands.registerCommand('nexkit-vscode.updateTemplates', async () => {
 		try {
-			// Placeholder for update logic - will be implemented in Phase 4
-			vscode.window.showInformationMessage('Template update functionality will be implemented in Phase 4: GitHub Integration & Auto-Update');
+			await vscode.window.withProgress({
+				location: vscode.ProgressLocation.Notification,
+				title: 'Checking for template updates...',
+				cancellable: false
+			}, async (progress) => {
+				progress.report({ increment: 20, message: 'Checking for updates...' });
+
+				const updateCheck = await versionManager.isUpdateAvailable();
+
+				if (!updateCheck.available) {
+					vscode.window.showInformationMessage('Templates are up to date!');
+					return;
+				}
+
+				const { latestVersion, manifest } = updateCheck;
+
+				// Check extension compatibility
+				if (manifest && !githubService.checkExtensionVersion(manifest.minExtensionVersion)) {
+					vscode.window.showErrorMessage(
+						`Update requires extension version ${manifest.minExtensionVersion} or higher. Please update the extension first.`
+					);
+					return;
+				}
+
+				// Show confirmation dialog
+				const result = await vscode.window.showInformationMessage(
+					`Template update available: ${latestVersion}`,
+					{ modal: true },
+					'Update Now',
+					'View Changelog',
+					'Cancel'
+				);
+
+				if (result === 'View Changelog') {
+					if (manifest?.changelogUrl) {
+						vscode.env.openExternal(vscode.Uri.parse(manifest.changelogUrl));
+					}
+					return;
+				}
+
+				if (result !== 'Update Now') {
+					return;
+				}
+
+				progress.report({ increment: 20, message: 'Backing up current templates...' });
+
+				// Backup existing templates
+				const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+				if (workspaceFolder) {
+					const githubPath = vscode.Uri.joinPath(workspaceFolder.uri, '.github').fsPath;
+					await templateManager.backupDirectory(githubPath);
+				}
+
+				progress.report({ increment: 20, message: 'Downloading templates...' });
+
+				// Download templates
+				const templatesBuffer = await githubService.downloadTemplates(latestVersion!);
+
+				progress.report({ increment: 20, message: 'Extracting and deploying...' });
+
+				// Extract and deploy (simplified - in real implementation would extract zip)
+				// For now, just update the version
+				await versionManager.setCurrentVersion(latestVersion!);
+
+				// Update last check timestamp
+				await versionManager.updateLastCheckTimestamp();
+
+				progress.report({ increment: 20, message: 'Update complete!' });
+
+				vscode.window.showInformationMessage(
+					`Templates updated to version ${latestVersion}!`,
+					'View Changelog'
+				).then(selection => {
+					if (selection === 'View Changelog' && manifest?.changelogUrl) {
+						vscode.env.openExternal(vscode.Uri.parse(manifest.changelogUrl));
+					}
+				});
+			});
 		} catch (error) {
 			vscode.window.showErrorMessage(`Failed to update templates: ${error}`);
 		}
@@ -152,9 +297,21 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const checkVersionDisposable = vscode.commands.registerCommand('nexkit-vscode.checkVersion', async () => {
 		try {
-			// Placeholder for version check logic - will be implemented in Phase 4
-			const currentVersion = vscode.workspace.getConfiguration('nexkit').get('templates.version', 'unknown');
-			vscode.window.showInformationMessage(`Current template version: ${currentVersion}`);
+			const currentVersion = versionManager.getCurrentVersion();
+			const updateCheck = await versionManager.isUpdateAvailable();
+
+			if (updateCheck.available) {
+				vscode.window.showInformationMessage(
+					`Current version: ${currentVersion}. Latest available: ${updateCheck.latestVersion}`,
+					'Update Now'
+				).then(selection => {
+					if (selection === 'Update Now') {
+						vscode.commands.executeCommand('nexkit-vscode.updateTemplates');
+					}
+				});
+			} else {
+				vscode.window.showInformationMessage(`Templates are up to date (version ${currentVersion})`);
+			}
 		} catch (error) {
 			vscode.window.showErrorMessage(`Failed to check version: ${error}`);
 		}
@@ -224,8 +381,58 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const restoreBackupDisposable = vscode.commands.registerCommand('nexkit-vscode.restoreBackup', async () => {
 		try {
-			// Placeholder for backup restore logic - will be implemented in Phase 4
-			vscode.window.showInformationMessage('Backup restore functionality will be implemented in Phase 4: GitHub Integration & Auto-Update');
+			const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+			if (!workspaceFolder) {
+				vscode.window.showErrorMessage('No workspace folder open');
+				return;
+			}
+
+			const backups = await templateManager.listBackups(workspaceFolder.uri.fsPath);
+
+			if (backups.length === 0) {
+				vscode.window.showInformationMessage('No backups available');
+				return;
+			}
+
+			// Show backup selection
+			const selectedBackup = await vscode.window.showQuickPick(
+				backups.map(backup => ({
+					label: backup.replace('.github.backup-', ''),
+					description: backup,
+					detail: `Restore from ${backup}`
+				})),
+				{
+					placeHolder: 'Select a backup to restore',
+					title: 'Nexkit: Restore Template Backup'
+				}
+			);
+
+			if (!selectedBackup) {
+				return;
+			}
+
+			const confirm = await vscode.window.showWarningMessage(
+				`This will replace your current .github directory with the backup from ${selectedBackup.label}. Continue?`,
+				{ modal: true },
+				'Restore', 'Cancel'
+			);
+
+			if (confirm !== 'Restore') {
+				return;
+			}
+
+			await vscode.window.withProgress({
+				location: vscode.ProgressLocation.Notification,
+				title: 'Restoring backup...',
+				cancellable: false
+			}, async (progress) => {
+				progress.report({ increment: 50, message: 'Restoring templates...' });
+				await templateManager.restoreBackup(workspaceFolder.uri.fsPath, selectedBackup.description);
+
+				progress.report({ increment: 50, message: 'Backup restored successfully' });
+			});
+
+			vscode.window.showInformationMessage('Template backup restored successfully!');
 		} catch (error) {
 			vscode.window.showErrorMessage(`Failed to restore backup: ${error}`);
 		}

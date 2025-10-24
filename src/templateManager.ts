@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 
 export interface DeploymentConfig {
   alwaysDeploy: string[];
@@ -216,6 +217,91 @@ out/
 `;
 
     await fs.promises.writeFile(gitignorePath, gitignoreContent, 'utf8');
+  }
+
+  /**
+   * List available backups
+   */
+  async listBackups(targetRoot: string): Promise<string[]> {
+    const backupDir = path.join(targetRoot, '.github.backup-*');
+    // Simple glob implementation - in real app would use proper globbing
+    try {
+      const entries = await fs.promises.readdir(path.dirname(backupDir));
+      return entries
+        .filter(entry => entry.startsWith('.github.backup-'))
+        .sort()
+        .reverse(); // Most recent first
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Restore from a specific backup
+   */
+  async restoreBackup(targetRoot: string, backupName: string): Promise<void> {
+    const githubPath = path.join(targetRoot, '.github');
+    const backupPath = path.join(targetRoot, backupName);
+
+    if (!await this.checkFileExists(backupPath)) {
+      throw new Error(`Backup ${backupName} not found`);
+    }
+
+    // Create temp backup of current state
+    const tempBackup = `${githubPath}.temp`;
+    if (await this.checkFileExists(githubPath)) {
+      await this.copyDirectory(githubPath, tempBackup);
+    }
+
+    try {
+      // Remove current .github
+      if (await this.checkFileExists(githubPath)) {
+        await fs.promises.rm(githubPath, { recursive: true, force: true });
+      }
+
+      // Restore from backup
+      await this.copyDirectory(backupPath, githubPath);
+
+      // Clean up temp backup
+      if (await this.checkFileExists(tempBackup)) {
+        await fs.promises.rm(tempBackup, { recursive: true, force: true });
+      }
+    } catch (error) {
+      // Restore temp backup if something went wrong
+      if (await this.checkFileExists(tempBackup)) {
+        if (await this.checkFileExists(githubPath)) {
+          await fs.promises.rm(githubPath, { recursive: true, force: true });
+        }
+        await this.copyDirectory(tempBackup, githubPath);
+        await fs.promises.rm(tempBackup, { recursive: true, force: true });
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Clean up old backups based on retention policy
+   */
+  async cleanupBackups(targetRoot: string): Promise<void> {
+    const config = vscode.workspace.getConfiguration('nexkit');
+    const retentionDays = config.get('backup.retentionDays', 30);
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+
+    const backups = await this.listBackups(targetRoot);
+
+    for (const backup of backups) {
+      const backupPath = path.join(targetRoot, backup);
+      try {
+        const stats = await fs.promises.stat(backupPath);
+        if (stats.mtime < cutoffDate) {
+          await fs.promises.rm(backupPath, { recursive: true, force: true });
+          console.log(`Cleaned up old backup: ${backup}`);
+        }
+      } catch (error) {
+        console.error(`Error cleaning up backup ${backup}:`, error);
+      }
+    }
   }
 
   /**
