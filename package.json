@@ -54,7 +54,7 @@
         {
           "id": "nexkit-sidebar",
           "title": "Nexkit",
-          "icon": "resources/icon.png"
+          "icon": "media/icon.svg"
         }
       ]
     },

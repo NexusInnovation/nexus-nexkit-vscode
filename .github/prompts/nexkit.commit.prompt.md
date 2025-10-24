@@ -1,6 +1,6 @@
 ---
 description: Generate intelligent commit messages and commit staged changes
-model: GPT-5 mini (copilot)
+model: GPT-4.1 (copilot)
 
 ---
 
