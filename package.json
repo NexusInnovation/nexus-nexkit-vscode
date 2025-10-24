@@ -149,7 +149,7 @@
     "watch": "tsc -watch -p ./",
     "lint": "eslint",
     "test": "npx @vscode/test-cli --runTests src/test",
-    "publish": "npm version patch && git push && git push --tags"
+    "publish-private": "npm version patch --tag-version-prefix=v && git push && git push --tags"
   },
   "devDependencies": {
     "@types/vscode": "^1.105.0",
