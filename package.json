@@ -16,10 +16,7 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onLanguage:json",
-    "onLanguage:jsonc"
-  ],
+  "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -71,9 +68,10 @@
     "views": {
       "nexkit-sidebar": [
         {
-          "id": "nexkitView",
+          "id": "nexkitPanelView",
           "name": "Nexkit Home",
-          "icon": "media/Nexus_Symbole_MONOCHROME.svg"
+          "icon": "media/Nexus_Symbole_MONOCHROME.svg",
+          "type": "webview"
         }
       ]
     },

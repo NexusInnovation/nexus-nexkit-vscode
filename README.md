@@ -13,6 +13,7 @@ This extension provides the following commands (accessible via Command Palette o
 - **Nexkit: Enable Azure DevOps MCP** - Add Azure DevOps MCP to workspace for project-specific Azure integration
 - **Nexkit: Open Settings** - Quick access to extension settings
 - **Nexkit: Restore Template Backup** - Restore previous template versions from backups
+- **Nexkit: Show Panel** - Open the Nexkit custom panel with static information and action buttons
 
 ## Requirements
 
@@ -45,6 +46,19 @@ This extension contributes the following settings:
 ### Backup Settings
 
 - `nexkit.backup.retentionDays`: Days to keep template backups (default: 30)
+
+## Nexkit Custom Panel
+
+The Nexkit extension now provides a custom panel with static information and standard action buttons. To open the panel, run the command:
+
+```sh
+Nexkit: Show Panel
+```
+
+The panel displays:
+
+- Static info (version, status) at the top
+- Action buttons below to run common Nexkit commands (Update Templates, Re-initialize Project, Install User MCP Servers, Open Settings)
 
 ## Known Issues
 
