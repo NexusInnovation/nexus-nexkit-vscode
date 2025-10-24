@@ -142,13 +142,14 @@
       }
     }
   },
-	"scripts": {
+  "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "build": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "lint": "eslint"
-	},
+    "lint": "eslint",
+    "test": "npx @vscode/test-cli --runTests src/test"
+  },
   "devDependencies": {
     "@types/vscode": "^1.105.0",
     "@types/mocha": "^10.0.10",
