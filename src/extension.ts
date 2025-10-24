@@ -104,6 +104,25 @@ export function activate(context: vscode.ExtensionContext) {
 	const versionManager = new VersionManager();
 	const githubService = new GitHubReleaseService();
 
+	// Register Nexkit sidebar view
+	const nexkitTreeDataProvider = new class implements vscode.TreeDataProvider<vscode.TreeItem> {
+		getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
+			return element;
+		}
+		getChildren(element?: vscode.TreeItem): vscode.ProviderResult<vscode.TreeItem[]> {
+			if (!element) {
+				return [
+					new vscode.TreeItem('Welcome to Nexkit!', vscode.TreeItemCollapsibleState.None)
+				];
+			}
+			return [];
+		}
+	};
+	const nexkitTreeView = vscode.window.createTreeView('nexkitView', {
+		treeDataProvider: nexkitTreeDataProvider
+	});
+	context.subscriptions.push(nexkitTreeView);
+
 	// Create status bar item
 	const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
 	statusBarItem.command = 'nexkit-vscode.checkVersion';

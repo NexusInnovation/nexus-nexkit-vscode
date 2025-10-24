@@ -12,7 +12,7 @@
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
-    "commands": [
+  "commands": [
       {
         "command": "nexkit-vscode.initProject",
         "title": "Nexkit: Initialize Project",
@@ -49,6 +49,23 @@
         "category": "Nexkit"
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "nexkit-sidebar",
+          "title": "Nexkit",
+          "icon": "resources/icon.png"
+        }
+      ]
+    },
+    "views": {
+      "nexkit-sidebar": [
+        {
+          "id": "nexkitView",
+          "name": "Nexkit Home"
+        }
+      ]
+    },
     "configuration": {
       "title": "Nexkit",
       "properties": {
