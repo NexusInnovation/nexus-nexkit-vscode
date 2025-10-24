@@ -107,6 +107,11 @@
           "type": "number",
           "default": 30,
           "description": "Days to keep template backups."
+        },
+        "nexkit.mcpSetup.dismissed": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the user has dismissed the MCP setup notification."
         }
       }
     }

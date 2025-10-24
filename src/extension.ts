@@ -3,6 +3,37 @@
 import * as vscode from 'vscode';
 import { TemplateManager, DeploymentConfig } from './templateManager';
 import { InitWizard, InitWizardResult } from './initWizard';
+import { MCPConfigManager } from './mcpConfigManager';
+
+/**
+ * Check for required MCP servers and show notification if missing
+ */
+async function checkRequiredMCPs(mcpConfigManager: MCPConfigManager): Promise<void> {
+	try {
+		const { missing } = await mcpConfigManager.checkRequiredUserMCPs();
+
+		if (missing.length > 0) {
+			// Check if user has dismissed this notification before
+			const config = vscode.workspace.getConfiguration('nexkit');
+			const dismissed = config.get('mcpSetup.dismissed', false);
+
+			if (!dismissed) {
+				const result = await vscode.window.showInformationMessage(
+					`Nexkit requires MCP servers: ${missing.join(', ')}. Install now?`,
+					'Install', 'Later', 'Don\'t Ask Again'
+				);
+
+				if (result === 'Install') {
+					vscode.commands.executeCommand('nexkit-vscode.installUserMCPs');
+				} else if (result === 'Don\'t Ask Again') {
+					await config.update('mcpSetup.dismissed', true, vscode.ConfigurationTarget.Global);
+				}
+			}
+		}
+	} catch (error) {
+		console.error('Error checking MCP servers:', error);
+	}
+}
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -13,6 +44,10 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log('Nexkit extension activated!');
 
 	const templateManager = new TemplateManager(context);
+	const mcpConfigManager = new MCPConfigManager();
+
+	// Check for required MCP servers on activation
+	checkRequiredMCPs(mcpConfigManager);
 
 	// Register commands
 	const initProjectDisposable = vscode.commands.registerCommand('nexkit-vscode.initProject', async () => {
@@ -106,28 +141,94 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
-	const updateTemplatesDisposable = vscode.commands.registerCommand('nexkit-vscode.updateTemplates', () => {
-		vscode.window.showInformationMessage('Update templates functionality coming soon...');
+	const updateTemplatesDisposable = vscode.commands.registerCommand('nexkit-vscode.updateTemplates', async () => {
+		try {
+			// Placeholder for update logic - will be implemented in Phase 4
+			vscode.window.showInformationMessage('Template update functionality will be implemented in Phase 4: GitHub Integration & Auto-Update');
+		} catch (error) {
+			vscode.window.showErrorMessage(`Failed to update templates: ${error}`);
+		}
 	});
 
-	const checkVersionDisposable = vscode.commands.registerCommand('nexkit-vscode.checkVersion', () => {
-		vscode.window.showInformationMessage('Check version functionality coming soon...');
+	const checkVersionDisposable = vscode.commands.registerCommand('nexkit-vscode.checkVersion', async () => {
+		try {
+			// Placeholder for version check logic - will be implemented in Phase 4
+			const currentVersion = vscode.workspace.getConfiguration('nexkit').get('templates.version', 'unknown');
+			vscode.window.showInformationMessage(`Current template version: ${currentVersion}`);
+		} catch (error) {
+			vscode.window.showErrorMessage(`Failed to check version: ${error}`);
+		}
 	});
 
-	const installUserMCPsDisposable = vscode.commands.registerCommand('nexkit-vscode.installUserMCPs', () => {
-		vscode.window.showInformationMessage('Install user MCPs functionality coming soon...');
-	});
+	const installUserMCPsDisposable = vscode.commands.registerCommand('nexkit-vscode.installUserMCPs', async () => {
+		try {
+			await vscode.window.withProgress({
+				location: vscode.ProgressLocation.Notification,
+				title: 'Installing user MCP servers...',
+				cancellable: false
+			}, async (progress) => {
+				progress.report({ increment: 25, message: 'Checking existing configuration...' });
 
-	const configureAzureDevOpsDisposable = vscode.commands.registerCommand('nexkit-vscode.configureAzureDevOps', () => {
+				// Check what's already configured
+				const { configured, missing } = await mcpConfigManager.checkRequiredUserMCPs();
+
+				if (missing.length === 0) {
+					vscode.window.showInformationMessage('All required MCP servers are already configured!');
+					return;
+				}
+
+				progress.report({ increment: 50, message: `Installing ${missing.join(', ')}...` });
+
+				// Install missing servers
+				for (const server of missing) {
+					if (server === 'context7') {
+						await mcpConfigManager.addUserMCPServer('context7', {
+							command: 'npx',
+							args: ['-y', '@context7/mcp-server']
+						});
+					} else if (server === 'sequentialthinking') {
+						await mcpConfigManager.addUserMCPServer('sequentialthinking', {
+							command: 'npx',
+							args: ['-y', '@sequentialthinking/mcp-server']
+						});
+					}
+				}
+
+				progress.report({ increment: 25, message: 'Installation complete' });
+			});
+
+			vscode.window.showInformationMessage(
+				'User MCP servers installed successfully! Please reload VS Code for changes to take effect.',
+				'Reload Now'
+			).then(selection => {
+				if (selection === 'Reload Now') {
+					vscode.commands.executeCommand('workbench.action.reloadWindow');
+				}
+			});
+
+		} catch (error) {
+			vscode.window.showErrorMessage(`Failed to install MCP servers: ${error}`);
+		}
+	});	const configureAzureDevOpsDisposable = vscode.commands.registerCommand('nexkit-vscode.configureAzureDevOps', () => {
 		vscode.window.showInformationMessage('Configure Azure DevOps functionality coming soon...');
 	});
 
-	const openSettingsDisposable = vscode.commands.registerCommand('nexkit-vscode.openSettings', () => {
-		vscode.window.showInformationMessage('Open settings functionality coming soon...');
+	const openSettingsDisposable = vscode.commands.registerCommand('nexkit-vscode.openSettings', async () => {
+		try {
+			// Open VS Code settings with nexkit filter
+			await vscode.commands.executeCommand('workbench.action.openSettings', 'nexkit');
+		} catch (error) {
+			vscode.window.showErrorMessage(`Failed to open settings: ${error}`);
+		}
 	});
 
-	const restoreBackupDisposable = vscode.commands.registerCommand('nexkit-vscode.restoreBackup', () => {
-		vscode.window.showInformationMessage('Restore backup functionality coming soon...');
+	const restoreBackupDisposable = vscode.commands.registerCommand('nexkit-vscode.restoreBackup', async () => {
+		try {
+			// Placeholder for backup restore logic - will be implemented in Phase 4
+			vscode.window.showInformationMessage('Backup restore functionality will be implemented in Phase 4: GitHub Integration & Auto-Update');
+		} catch (error) {
+			vscode.window.showErrorMessage(`Failed to restore backup: ${error}`);
+		}
 	});
 
 	context.subscriptions.push(
