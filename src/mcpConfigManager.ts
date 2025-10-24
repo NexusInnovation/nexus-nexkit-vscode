@@ -133,7 +133,7 @@ export class MCPConfigManager {
    * Check if required user-level MCP servers are configured
    */
   async checkRequiredUserMCPs(): Promise<{ configured: string[], missing: string[] }> {
-    const requiredServers = ['context7', 'sequentialthinking'];
+    const requiredServers = ['context7', 'sequential-thinking'];
     const configured: string[] = [];
     const missing: string[] = [];
 

@@ -120,20 +120,47 @@ export function activate(context: vscode.ExtensionContext) {
 			};
 			// Use static helper to get HTML
 			webviewView.webview.html = NexkitPanel.getWebviewContent(webviewView.webview, this._extensionUri);
+			
 			// Set up message listener
-			webviewView.webview.onDidReceiveMessage(message => {
+			webviewView.webview.onDidReceiveMessage(async message => {
 				switch (message.command) {
+					case 'ready':
+						// Webview is ready - send initial version and status
+						const ext = vscode.extensions.getExtension('nexusinno.nexkit-vscode');
+						const version = ext?.packageJSON.version || 'Unknown';
+						webviewView.webview.postMessage({ version, status: 'Ready' });
+						break;
 					case 'updateTemplates':
-						vscode.commands.executeCommand('nexkit-vscode.updateTemplates');
+						await vscode.commands.executeCommand('nexkit-vscode.updateTemplates');
+						const ext2 = vscode.extensions.getExtension('nexusinno.nexkit-vscode');
+						webviewView.webview.postMessage({ 
+							version: ext2?.packageJSON.version || 'Unknown', 
+							status: 'Templates updated' 
+						});
 						break;
 					case 'initProject':
-						vscode.commands.executeCommand('nexkit-vscode.initProject');
+						await vscode.commands.executeCommand('nexkit-vscode.initProject');
+						const ext3 = vscode.extensions.getExtension('nexusinno.nexkit-vscode');
+						webviewView.webview.postMessage({ 
+							version: ext3?.packageJSON.version || 'Unknown', 
+							status: 'Project initialized' 
+						});
 						break;
 					case 'installUserMCPs':
-						vscode.commands.executeCommand('nexkit-vscode.installUserMCPs');
+						await vscode.commands.executeCommand('nexkit-vscode.installUserMCPs');
+						const ext4 = vscode.extensions.getExtension('nexusinno.nexkit-vscode');
+						webviewView.webview.postMessage({ 
+							version: ext4?.packageJSON.version || 'Unknown', 
+							status: 'User MCP servers installed' 
+						});
 						break;
 					case 'openSettings':
-						vscode.commands.executeCommand('nexkit-vscode.openSettings');
+						await vscode.commands.executeCommand('nexkit-vscode.openSettings');
+						const ext5 = vscode.extensions.getExtension('nexusinno.nexkit-vscode');
+						webviewView.webview.postMessage({ 
+							version: ext5?.packageJSON.version || 'Unknown', 
+							status: 'Settings opened' 
+						});
 						break;
 				}
 			});
@@ -205,14 +232,13 @@ export function activate(context: vscode.ExtensionContext) {
 				// Create deployment config based on wizard results
 				const deploymentConfig: DeploymentConfig = {
 					alwaysDeploy: [
-						'.github/prompts/commit.md',
-						'.github/prompts/document.md',
-						'.github/prompts/implement.md',
-						'.github/prompts/refine.md',
-						'.github/prompts/review.md',
+						'.github/prompts/nexkit.commit.prompt.md',
+						'.github/prompts/nexkit.document.prompt.md',
+						'.github/prompts/nexkit.implement.prompt.md',
+						'.github/prompts/nexkit.refine.prompt.md',
+						'.github/prompts/nexkit.review.prompt.md',
 						'.github/chatmodes/debug.chatmode.md',
-						'.github/chatmodes/plan.chatmode.md',
-						'.github/copilot-instructions.md'
+						'.github/chatmodes/plan.chatmode.md'
 					],
 					conditionalDeploy: {
 						'instructions.python': wizardResult.languages.includes('python') ? ['.github/instructions/python.instructions.md'] : [],
@@ -383,12 +409,12 @@ export function activate(context: vscode.ExtensionContext) {
 					if (server === 'context7') {
 						await mcpConfigManager.addUserMCPServer('context7', {
 							command: 'npx',
-							args: ['-y', '@context7/mcp-server']
+							args: ['-y', '@upstash/context7-mcp']
 						});
 					} else if (server === 'sequentialthinking') {
-						await mcpConfigManager.addUserMCPServer('sequentialthinking', {
+						await mcpConfigManager.addUserMCPServer('sequential-thinking', {
 							command: 'npx',
-							args: ['-y', '@sequentialthinking/mcp-server']
+							args: ['-y', '@modelcontextprotocol/server-sequential-thinking']
 						});
 					}
 				}
