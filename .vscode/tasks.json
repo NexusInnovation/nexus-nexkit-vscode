@@ -15,35 +15,6 @@
 				"kind": "build",
 				"isDefault": true
 			}
-		},
-		{
-			"type": "npm",
-			"script": "start",
-			"problemMatcher": [],
-			"dependsOn": "watch",
-			"presentation": {
-				"reveal": "always",
-				"panel": "shared"
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": false
-			}
-		},
-		// debug task to be used with "preLaunchTask" in launch.json
-		{
-			"type": "npm",
-			"script": "debug",
-			"problemMatcher": [],
-			"dependsOn": "watch",
-			"presentation": {
-				"reveal": "always",
-				"panel": "shared"
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": false
-			}
-		}	
+		}
 	]
 }

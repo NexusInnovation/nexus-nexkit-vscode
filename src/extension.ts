@@ -104,24 +104,108 @@ export function activate(context: vscode.ExtensionContext) {
 	const versionManager = new VersionManager();
 	const githubService = new GitHubReleaseService();
 
-	// Register Nexkit sidebar view
-	const nexkitTreeDataProvider = new class implements vscode.TreeDataProvider<vscode.TreeItem> {
-		getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
+	// Enhanced Nexkit sidebar view
+	class NexkitTreeItem extends vscode.TreeItem {
+		constructor(label: string, collapsibleState: vscode.TreeItemCollapsibleState, command?: vscode.Command, description?: string) {
+			super(label, collapsibleState);
+			if (command) { this.command = command; }
+			if (description) { this.description = description; }
+		}
+	}
+
+	class NexkitTreeDataProvider implements vscode.TreeDataProvider<NexkitTreeItem> {
+		private _onDidChangeTreeData: vscode.EventEmitter<NexkitTreeItem | undefined | void> = new vscode.EventEmitter<NexkitTreeItem | undefined | void>();
+		readonly onDidChangeTreeData: vscode.Event<NexkitTreeItem | undefined | void> = this._onDidChangeTreeData.event;
+
+		refresh(): void {
+			this._onDidChangeTreeData.fire();
+		}
+
+		async getTreeItem(element: NexkitTreeItem): Promise<NexkitTreeItem> {
 			return element;
 		}
-		getChildren(element?: vscode.TreeItem): vscode.ProviderResult<vscode.TreeItem[]> {
-			if (!element) {
-				return [
-					new vscode.TreeItem('Welcome to Nexkit!', vscode.TreeItemCollapsibleState.None)
-				];
-			}
-			return [];
+
+		async getChildren(element?: NexkitTreeItem): Promise<NexkitTreeItem[]> {
+			if (element) { return []; }
+
+			const items: NexkitTreeItem[] = [];
+
+			// Current Nexkit version
+			const currentVersion = versionManager.getCurrentVersion();
+			const updateCheck = await versionManager.isUpdateAvailable();
+			const versionLabel = updateCheck.available
+				? `$(arrow-up) Nexkit v${currentVersion} (Update available: ${updateCheck.latestVersion})`
+				: `$(check) Nexkit v${currentVersion}`;
+			items.push(new NexkitTreeItem(versionLabel, vscode.TreeItemCollapsibleState.None));
+
+			// Template status
+			items.push(new NexkitTreeItem(
+				updateCheck.available ? 'Templates: Update available' : 'Templates: Up to date',
+				vscode.TreeItemCollapsibleState.None
+			));
+
+			// MCP servers
+			const mcpStatus = await mcpConfigManager.checkRequiredUserMCPs();
+			const mcpInstalled = mcpStatus.configured.length > 0 ? mcpStatus.configured.join(', ') : 'None';
+			const mcpMissing = mcpStatus.missing.length > 0 ? mcpStatus.missing.join(', ') : 'None';
+			items.push(new NexkitTreeItem(`MCP Installed: ${mcpInstalled}`, vscode.TreeItemCollapsibleState.None));
+			items.push(new NexkitTreeItem(`MCP Missing: ${mcpMissing}`, vscode.TreeItemCollapsibleState.None));
+
+			// AzureDevOps MCP config
+			const workspaceConfig = vscode.workspace.getConfiguration('nexkit');
+			const azureDevOpsConfig = workspaceConfig.get('workspace.mcpServers', []);
+			items.push(new NexkitTreeItem(
+				`AzureDevOps MCP: ${azureDevOpsConfig && azureDevOpsConfig.length > 0 ? azureDevOpsConfig.join(', ') : 'Not configured'}`,
+				vscode.TreeItemCollapsibleState.None
+			));
+
+			// Action buttons
+			items.push(new NexkitTreeItem(
+				'Update Nexkit',
+				vscode.TreeItemCollapsibleState.None,
+				{ command: 'nexkit-vscode.updateTemplates', title: 'Update Nexkit Templates' }
+			));
+			items.push(new NexkitTreeItem(
+				'Refresh Project Templates',
+				vscode.TreeItemCollapsibleState.None,
+				{ command: 'nexkit-vscode.initProject', title: 'Re-initialize Nexkit Project' }
+			));
+			items.push(new NexkitTreeItem(
+				'Install User MCP Servers',
+				vscode.TreeItemCollapsibleState.None,
+				{ command: 'nexkit-vscode.installUserMCPs', title: 'Install User MCP Servers' }
+			));
+			items.push(new NexkitTreeItem(
+				'Open Nexkit Settings',
+				vscode.TreeItemCollapsibleState.None,
+				{ command: 'nexkit-vscode.openSettings', title: 'Open Nexkit Settings' }
+			));
+			items.push(new NexkitTreeItem(
+				'Restore Template Backup',
+				vscode.TreeItemCollapsibleState.None,
+				{ command: 'nexkit-vscode.restoreBackup', title: 'Restore Template Backup' }
+			));
+
+			return items;
 		}
-	};
+	}
+
+	const nexkitTreeDataProvider = new NexkitTreeDataProvider();
 	const nexkitTreeView = vscode.window.createTreeView('nexkitView', {
-		treeDataProvider: nexkitTreeDataProvider
+		treeDataProvider: nexkitTreeDataProvider,
+		showCollapseAll: false
 	});
 	context.subscriptions.push(nexkitTreeView);
+
+	// Optionally, refresh tree view on relevant events
+	vscode.workspace.onDidChangeConfiguration(e => {
+		if (e.affectsConfiguration('nexkit')) {
+			nexkitTreeDataProvider.refresh();
+		}
+	});
+
+	// Refresh on template update or init
+	vscode.commands.registerCommand('nexkitView.refresh', () => nexkitTreeDataProvider.refresh());
 
 	// Create status bar item
 	const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);

@@ -3,16 +3,26 @@
   "displayName": "Nexkit",
   "description": "VS Code extension for Nexkit CLI",
   "version": "0.0.1",
+  "publisher": "nexusinno",
+  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nexusinno/nexkit-vscode.git"
+  },
   "engines": {
     "vscode": "^1.105.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onLanguage:json",
+    "onLanguage:jsonc"
+  ],
   "main": "./out/extension.js",
   "contributes": {
-  "commands": [
+    "commands": [
       {
         "command": "nexkit-vscode.initProject",
         "title": "Nexkit: Initialize Project",
@@ -54,7 +64,7 @@
         {
           "id": "nexkit-sidebar",
           "title": "Nexkit",
-          "icon": "media/nexus-mono.svg"
+          "icon": "media/Nexus_Symbole_MONOCHROME.svg"
         }
       ]
     },
@@ -62,7 +72,8 @@
       "nexkit-sidebar": [
         {
           "id": "nexkitView",
-          "name": "Nexkit Home"
+          "name": "Nexkit Home",
+          "icon": "media/Nexus_Symbole_MONOCHROME.svg"
         }
       ]
     },
@@ -133,14 +144,12 @@
       }
     }
   },
-  "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src",
-    "test": "vscode-test"
-  },
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"lint": "eslint"
+	},
   "devDependencies": {
     "@types/vscode": "^1.105.0",
     "@types/mocha": "^10.0.10",
