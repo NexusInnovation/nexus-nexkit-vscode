@@ -143,12 +143,13 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "build": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "lint": "eslint",
-    "test": "npx @vscode/test-cli --runTests src/test"
+     "vscode:prepublish": "npm run compile",
+     "compile": "tsc -p ./",
+     "build": "tsc -p ./",
+     "watch": "tsc -watch -p ./",
+     "lint": "eslint",
+     "test": "npx @vscode/test-cli --runTests src/test",
+     "publish": "npm version patch && git push && git push --tags"
   },
   "devDependencies": {
     "@types/vscode": "^1.105.0",
