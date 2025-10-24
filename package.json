@@ -1,0 +1,133 @@
+{
+  "name": "nexkit-vscode",
+  "displayName": "Nexkit",
+  "description": "VS Code extension for Nexkit CLI",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.105.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "nexkit-vscode.initProject",
+        "title": "Nexkit: Initialize Project",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexkit-vscode.updateTemplates",
+        "title": "Nexkit: Update Templates",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexkit-vscode.checkVersion",
+        "title": "Nexkit: Check Template Version",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexkit-vscode.installUserMCPs",
+        "title": "Nexkit: Install User MCP Servers",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexkit-vscode.configureAzureDevOps",
+        "title": "Nexkit: Enable Azure DevOps MCP",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexkit-vscode.openSettings",
+        "title": "Nexkit: Open Settings",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexkit-vscode.restoreBackup",
+        "title": "Nexkit: Restore Template Backup",
+        "category": "Nexkit"
+      }
+    ],
+    "configuration": {
+      "title": "Nexkit",
+      "properties": {
+        "nexkit.init.promptForLanguages": {
+          "type": "boolean",
+          "default": true,
+          "description": "Prompt for programming languages during project initialization."
+        },
+        "nexkit.init.createVscodeSettings": {
+          "type": "boolean",
+          "default": true,
+          "description": "Create .vscode/settings.json during initialization."
+        },
+        "nexkit.init.createGitignore": {
+          "type": "boolean",
+          "default": true,
+          "description": "Create .gitignore during initialization."
+        },
+        "nexkit.workspace.initialized": {
+          "type": "boolean",
+          "default": false,
+          "description": "Indicates if the workspace has been initialized with Nexkit."
+        },
+        "nexkit.workspace.languages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "List of programming languages selected for the workspace."
+        },
+        "nexkit.workspace.mcpServers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "List of MCP servers configured for the workspace."
+        },
+        "nexkit.templates.version": {
+          "type": "string",
+          "default": "",
+          "description": "Current version of templates installed."
+        },
+        "nexkit.templates.autoCheckUpdates": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically check for template updates on extension activation."
+        },
+        "nexkit.templates.updateCheckInterval": {
+          "type": "number",
+          "default": 24,
+          "description": "Hours between automatic update checks."
+        },
+        "nexkit.backup.retentionDays": {
+          "type": "number",
+          "default": 30,
+          "description": "Days to keep template backups."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.105.0",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "@typescript-eslint/eslint-plugin": "^8.45.0",
+    "@typescript-eslint/parser": "^8.45.0",
+    "eslint": "^9.36.0",
+    "typescript": "^5.9.3",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}
