@@ -79,6 +79,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: quality-gate
     steps:
+      - name: Install Xvfb
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Start Xvfb
+        run: |
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 1920x1080x16 &
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
