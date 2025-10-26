@@ -9,7 +9,11 @@
     "typescript.tsc.autoDetect": "off",
     "editor.insertSpaces": false,
     "chat.promptFilesRecommendations": {
-        "nexkit.*": true,
+        "nexkit.commit": true,
+        "nexkit.document": true,
+        "nexkit.implement": true,
+        "nexkit.refine": true,
+        "nexkit.review": true
     },
     "chat.tools.terminal.autoApprove": {
         ".nexkit/scripts/bash/": true,
