@@ -24,15 +24,17 @@ This extension provides the following commands (accessible via Command Palette o
 ### From GitHub Releases (Internal Use)
 
 1. **Download the latest VSIX package**
+
    - Visit the [latest release](https://github.com/NexusInnovation/nexkit-vscode/releases/latest)
    - Download `nexkit-vscode.vsix`
    - Or use this direct link: [Download Latest VSIX](https://github.com/NexusInnovation/nexkit-vscode/releases/latest/download/nexkit-vscode.vsix)
 
 2. **Install in VS Code**
+
    ```bash
    # Using VS Code CLI
    code --install-extension nexkit-vscode.vsix
-   
+
    # Or via VS Code UI
    # 1. Open VS Code
    # 2. Press Ctrl+Shift+P (Cmd+Shift+P on macOS)
@@ -48,6 +50,7 @@ This extension provides the following commands (accessible via Command Palette o
 ### Pre-release Versions
 
 Pre-release versions (alpha, beta, RC) are available for testing:
+
 - Filter releases by "Pre-release" tag
 - Follow the same installation steps as above
 
@@ -115,22 +118,26 @@ Check the [latest release](https://github.com/NexusInnovation/nexkit-vscode/rele
 To develop this extension:
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/NexusInnovation/nexkit-vscode.git
    cd nexkit-vscode
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm ci
    ```
 
 3. **Build the extension**
+
    ```bash
    npm run compile
    ```
 
 4. **Run tests**
+
    ```bash
    npm test
    ```
@@ -144,6 +151,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development guidelines.
 ## Contributing
 
 Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
+
 - Code style guidelines
 - Commit message conventions (Conventional Commits)
 - Pull request process

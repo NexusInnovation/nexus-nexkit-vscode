@@ -27,22 +27,26 @@ This project adheres to professional standards of collaboration. Please be respe
 ### Setup Development Environment
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/NexusInnovation/nexkit-vscode.git
    cd nexkit-vscode
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm ci
    ```
 
 3. **Build the extension**
+
    ```bash
    npm run compile
    ```
 
 4. **Run tests**
+
    ```bash
    npm test
    ```
@@ -90,6 +94,7 @@ nexkit-vscode/
 ### Making Changes
 
 1. **Create a feature branch**
+
    ```bash
    git checkout -b feat/your-feature-name
    # or
@@ -97,11 +102,13 @@ nexkit-vscode/
    ```
 
 2. **Make your changes**
+
    - Follow TypeScript and VS Code extension best practices
    - Write tests for new functionality
    - Update documentation as needed
 
 3. **Run quality checks**
+
    ```bash
    npm run check:types
    npm run lint
@@ -170,6 +177,7 @@ BREAKING CHANGE: Template deployment now requires explicit language selection
 ### Validation
 
 Commit messages are validated automatically:
+
 - **Locally**: Install commit hooks with `npm install` (if Husky is configured)
 - **On PR**: Commitlint workflow validates all commits in pull requests
 
@@ -202,20 +210,20 @@ npm run test:coverage
 ### Test Structure
 
 ```typescript
-import * as assert from 'assert';
-import * as vscode from 'vscode';
+import * as assert from "assert";
+import * as vscode from "vscode";
 
-suite('Unit: TemplateManager', () => {
-    test('Should deploy templates successfully', async () => {
-        // Arrange
-        const manager = new TemplateManager();
-        
-        // Act
-        const result = await manager.deployTemplates();
-        
-        // Assert
-        assert.ok(result);
-    });
+suite("Unit: TemplateManager", () => {
+  test("Should deploy templates successfully", async () => {
+    // Arrange
+    const manager = new TemplateManager();
+
+    // Act
+    const result = await manager.deployTemplates();
+
+    // Assert
+    assert.ok(result);
+  });
 });
 ```
 
@@ -224,16 +232,19 @@ suite('Unit: TemplateManager', () => {
 ### Before Submitting
 
 1. **Ensure all tests pass**
+
    ```bash
    npm test
    ```
 
 2. **Run linter**
+
    ```bash
    npm run lint
    ```
 
 3. **Build successfully**
+
    ```bash
    npm run package
    ```
@@ -243,17 +254,20 @@ suite('Unit: TemplateManager', () => {
 ### Submitting a Pull Request
 
 1. **Push your branch**
+
    ```bash
    git push origin feat/your-feature-name
    ```
 
 2. **Create Pull Request** on GitHub
+
    - Use the PR template
    - Link related issues
    - Describe changes clearly
    - Add screenshots/videos for UI changes
 
 3. **Address review feedback**
+
    - Respond to comments
    - Make requested changes
    - Push updates to the same branch
@@ -295,6 +309,7 @@ Releases are automated using semantic-release based on commit messages.
 ### Pre-release Versions
 
 For testing before stable release:
+
 - Alpha: `v0.2.0-alpha.1`
 - Beta: `v0.2.0-beta.1`
 - RC: `v0.2.0-rc.1`
@@ -306,11 +321,13 @@ Pre-releases are marked as such in GitHub releases.
 If automated release fails:
 
 1. **Update version**
+
    ```bash
    npm version patch  # or minor/major
    ```
 
 2. **Create tag**
+
    ```bash
    git push --tags
    ```
