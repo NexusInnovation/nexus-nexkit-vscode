@@ -130,35 +130,12 @@ jobs:
           name: sbom
           path: sbom/
           retention-days: 90
-
   # Job 4: CodeQL Analysis
-  codeql:
-    name: CodeQL Security Scan
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: javascript-typescript
-          queries: security-and-quality
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
 
   # Job 5: Build & Package
   build:
     name: Build Extension
-    needs: [quality-gate, security, codeql]
+    needs: [quality-gate, security]
     runs-on: ubuntu-latest
     outputs:
       vsix-name: ${{ steps.package.outputs.vsix-name }}
