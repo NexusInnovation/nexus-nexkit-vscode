@@ -1,5 +1,4 @@
 {
-  "extends": true,
   "all": true,
   "reporter": ["lcovonly", "text", "html"],
   "report-dir": "coverage",
