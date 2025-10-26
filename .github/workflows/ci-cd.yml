@@ -223,12 +223,12 @@ jobs:
         run: npm ci
 
       - name: Download VSIX
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: nexkit-vscode-vsix
 
       - name: Download SBOM
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: sbom
           path: sbom
