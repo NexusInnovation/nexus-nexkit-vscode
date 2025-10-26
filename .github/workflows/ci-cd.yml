@@ -67,7 +67,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test-results-${{ matrix.os }}
           path: test-results/
@@ -106,7 +106,7 @@ jobs:
   #       run: npm run test:coverage
 
   #     - name: Upload coverage to artifact
-  #       uses: actions/upload-artifact@v4
+  #       uses: actions/upload-artifact@v5
   #       with:
   #         name: coverage-report
   #         path: coverage/
@@ -139,7 +139,7 @@ jobs:
           npx @cyclonedx/cyclonedx-npm --output-file sbom/bom.json --spec-version 1.5
 
       - name: Upload SBOM artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: sbom
           path: sbom/
@@ -192,7 +192,7 @@ jobs:
           fi
 
       - name: Upload VSIX artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: nexkit-vscode-vsix
           path: nexkit-vscode.vsix
