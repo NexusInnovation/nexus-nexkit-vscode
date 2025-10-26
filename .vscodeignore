@@ -9,3 +9,22 @@ vsc-extension-quickstart.md
 **/*.map
 **/*.ts
 **/.vscode-test.*
+
+# Additional exclusions for production
+.github/**
+specs/**
+*.vsix
+node_modules/**/.bin/**
+node_modules/**/test/**
+node_modules/**/*.md
+.editorconfig
+.eslintrc*
+.prettierrc*
+azure-pipelines.yml
+esbuild.config.js
+.releaserc.json
+.commitlintrc.json
+CONTRIBUTING.md
+coverage/**
+.nyc_output/**
+test-results/**

@@ -1,5 +1,7 @@
+---
 description: Instructions for building Model Context Protocol (MCP) servers using the TypeScript SDK
 applyTo: '**/*.ts'
+---
 
 ## Overview
 These instructions provide best practices and implementation guidance for building Model Context Protocol (MCP) servers in TypeScript/Node.js using the official SDK.

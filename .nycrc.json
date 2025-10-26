@@ -1,0 +1,23 @@
+{
+  "extends": true,
+  "all": true,
+  "reporter": ["lcovonly", "text", "html"],
+  "report-dir": "coverage",
+  "temp-dir": ".nyc_output",
+  "exclude": [
+    "**/*.test.js",
+    "**/test/**",
+    "out/test/**",
+    "esbuild.config.js",
+    "**/*.d.ts"
+  ],
+  "include": [
+    "out/extension.js",
+    "out/**/*.js"
+  ],
+  "check-coverage": true,
+  "lines": 70,
+  "statements": 70,
+  "functions": 70,
+  "branches": 60
+}

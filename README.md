@@ -1,5 +1,9 @@
 # Nexkit VS Code Extension
 
+[![CI/CD Pipeline](https://github.com/NexusInnovation/nexkit-vscode/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/NexusInnovation/nexkit-vscode/actions/workflows/ci-cd.yml)
+[![Latest Release](https://img.shields.io/github/v/release/NexusInnovation/nexkit-vscode)](https://github.com/NexusInnovation/nexkit-vscode/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A VS Code extension that migrates the functionality of the Nexkit CLI tool to provide Copilot-only spec-driven development workflows.
 
 ## Features
@@ -14,6 +18,38 @@ This extension provides the following commands (accessible via Command Palette o
 - **Nexkit: Open Settings** - Quick access to extension settings
 - **Nexkit: Restore Template Backup** - Restore previous template versions from backups
 - **Nexkit: Show Panel** - Open the Nexkit custom panel with static information and action buttons
+
+## Installation
+
+### From GitHub Releases (Internal Use)
+
+1. **Download the latest VSIX package**
+   - Visit the [latest release](https://github.com/NexusInnovation/nexkit-vscode/releases/latest)
+   - Download `nexkit-vscode.vsix`
+   - Or use this direct link: [Download Latest VSIX](https://github.com/NexusInnovation/nexkit-vscode/releases/latest/download/nexkit-vscode.vsix)
+
+2. **Install in VS Code**
+   ```bash
+   # Using VS Code CLI
+   code --install-extension nexkit-vscode.vsix
+   
+   # Or via VS Code UI
+   # 1. Open VS Code
+   # 2. Press Ctrl+Shift+P (Cmd+Shift+P on macOS)
+   # 3. Type "Extensions: Install from VSIX..."
+   # 4. Select the downloaded nexkit-vscode.vsix file
+   ```
+
+3. **Verify Installation**
+   - Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
+   - Type "Nexkit" to see available commands
+   - Run "Nexkit: Initialize Project" to set up your workspace
+
+### Pre-release Versions
+
+Pre-release versions (alpha, beta, RC) are available for testing:
+- Filter releases by "Pre-release" tag
+- Follow the same installation steps as above
 
 ## Requirements
 
@@ -62,13 +98,15 @@ The panel displays:
 
 ## Known Issues
 
-None reported yet.
+See [GitHub Issues](https://github.com/NexusInnovation/nexkit-vscode/issues) for known issues and bug reports.
 
 ## Release Notes
 
-### 0.0.1
+See [CHANGELOG.md](CHANGELOG.md) for detailed release notes.
 
-Initial release with basic command structure and settings. Migration from Nexkit CLI in progress.
+### Latest Release
+
+Check the [latest release](https://github.com/NexusInnovation/nexkit-vscode/releases/latest) for the most recent version and changes.
 
 ---
 
@@ -76,15 +114,51 @@ Initial release with basic command structure and settings. Migration from Nexkit
 
 To develop this extension:
 
-1. Clone the repository
-2. Run `npm install`
-3. Press F5 to launch extension development host
-4. Test commands in the new window
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/NexusInnovation/nexkit-vscode.git
+   cd nexkit-vscode
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm ci
+   ```
+
+3. **Build the extension**
+   ```bash
+   npm run compile
+   ```
+
+4. **Run tests**
+   ```bash
+   npm test
+   ```
+
+5. **Launch Extension Development Host**
+   - Press F5 to launch extension development host
+   - Test commands in the new window
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development guidelines.
 
 ## Contributing
 
-Contributions are welcome. Please follow the standard VS Code extension development guidelines.
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- Code style guidelines
+- Commit message conventions (Conventional Commits)
+- Pull request process
+- Testing requirements
 
 ## License
 
-[Add license information here]
+MIT License - See [LICENSE](LICENSE) file for details.
+
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/NexusInnovation/nexkit-vscode/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/NexusInnovation/nexkit-vscode/discussions)
+
+---
+
+**Maintained by**: Nexus Innovation  
+**Repository**: [github.com/NexusInnovation/nexkit-vscode](https://github.com/NexusInnovation/nexkit-vscode)

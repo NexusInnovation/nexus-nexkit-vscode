@@ -143,12 +143,23 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "npm run package",
     "compile": "tsc -p ./",
     "build": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "lint": "eslint",
-    "test": "npx @vscode/test-cli --runTests src/test",
+    "package": "npm run check:types && npm run lint && npm run esbuild-base -- --minify",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
+    "esbuild": "npm run esbuild-base -- --sourcemap",
+    "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
+    "check:types": "tsc --noEmit",
+    "test-compile": "tsc -p ./",
+    "pretest": "npm run test-compile && npm run lint",
+    "test": "node ./out/test/runTest.js",
+    "test:unit": "node ./out/test/runTest.js --grep 'Unit'",
+    "test:integration": "node ./out/test/runTest.js --grep 'Integration'",
+    "test:coverage": "nyc --reporter=lcovonly --reporter=text node ./out/test/runTest.js",
+    "lint": "eslint src --ext ts",
+    "version:bump": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md",
     "publish-private": "npm version patch --tag-version-prefix=v && git push && git push --tags"
   },
   "devDependencies": {
@@ -160,6 +171,18 @@
     "eslint": "^9.36.0",
     "typescript": "^5.9.3",
     "@vscode/test-cli": "^0.0.11",
-    "@vscode/test-electron": "^2.5.2"
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.2.1",
+    "esbuild": "^0.24.2",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "semantic-release": "^24.2.0",
+    "conventional-changelog-cli": "^5.0.0",
+    "@commitlint/cli": "^19.4.0",
+    "@commitlint/config-conventional": "^19.4.0",
+    "nyc": "^15.1.0",
+    "@cyclonedx/cyclonedx-npm": "^1.19.3",
+    "glob": "^11.0.0",
+    "mocha": "^10.0.10"
   }
 }

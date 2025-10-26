@@ -1,0 +1,48 @@
+name: Lint Commits
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  commitlint:
+    name: Validate Commit Messages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Validate commits
+        run: |
+          npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+
+      - name: Provide guidance on failure
+        if: failure()
+        run: |
+          echo "::error::Commit messages do not follow Conventional Commits format"
+          echo ""
+          echo "Please format commit messages as: <type>(<scope>): <subject>"
+          echo ""
+          echo "Valid types: feat, fix, docs, style, refactor, perf, test, chore, ci, build"
+          echo ""
+          echo "Examples:"
+          echo "  feat(templates): add Python template support"
+          echo "  fix(mcp): resolve config path on macOS"
+          echo "  docs: update installation instructions"
+          echo ""
+          echo "See CONTRIBUTING.md for full guidelines"
