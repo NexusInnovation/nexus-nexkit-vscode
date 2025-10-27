@@ -1,0 +1,112 @@
+name: Generate Release Manifest
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  generate-manifest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+      
+      - name: Get release information
+        id: release_info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const release = context.payload.release;
+            return {
+              version: release.tag_name.replace(/^v/, ''),
+              tagName: release.tag_name,
+              releaseDate: release.published_at,
+              changelogUrl: release.html_url
+            };
+      
+      - name: Generate manifest.json
+        uses: actions/github-script@v7
+        env:
+          RELEASE_INFO: ${{ steps.release_info.outputs.result }}
+        with:
+          script: |
+            const fs = require('fs');
+            const releaseInfo = JSON.parse(process.env.RELEASE_INFO);
+            
+            // Fetch release assets
+            const { data: release } = await github.rest.repos.getRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: context.payload.release.id
+            });
+            
+            // Parse template assets
+            const templates = {};
+            const templateAssetPattern = /^nexkit-template-(.+)-(.+)-v(.+)\.zip$/;
+            
+            for (const asset of release.assets) {
+              const match = asset.name.match(templateAssetPattern);
+              if (match) {
+                const [, aiTool, shell, version] = match;
+                const key = `${aiTool}-${shell}`;
+                templates[key] = {
+                  name: `${aiTool.charAt(0).toUpperCase() + aiTool.slice(1)} (${shell.toUpperCase()})`,
+                  description: `Nexkit templates optimized for ${aiTool} with ${shell === 'ps' ? 'PowerShell' : 'Bash'} scripts`,
+                  platform: shell === 'ps' ? 'windows' : 'unix',
+                  shell: shell === 'ps' ? 'powershell' : 'bash',
+                  downloadUrl: asset.browser_download_url,
+                  size: asset.size
+                };
+              }
+            }
+            
+            // Determine default download URL (prefer copilot-ps for Windows users)
+            const defaultDownloadUrl = templates['copilot-ps']?.downloadUrl || 
+                                      templates['copilot-sh']?.downloadUrl ||
+                                      Object.values(templates)[0]?.downloadUrl || '';
+            
+            // Create manifest
+            const manifest = {
+              version: releaseInfo.version,
+              releaseDate: releaseInfo.releaseDate,
+              changelogUrl: releaseInfo.changelogUrl,
+              minExtensionVersion: "0.3.0",
+              templates: templates,
+              downloadUrl: defaultDownloadUrl,
+              recommended: {
+                copilot: "copilot-ps",
+                claude: "claude-ps",
+                cursor: "cursor-ps"
+              }
+            };
+            
+            // Write manifest file
+            fs.writeFileSync('manifest.json', JSON.stringify(manifest, null, 2));
+            console.log('Generated manifest.json:');
+            console.log(JSON.stringify(manifest, null, 2));
+      
+      - name: Commit and push manifest
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add manifest.json
+          git commit -m "Generate manifest.json for release ${{ github.event.release.tag_name }}"
+          git push origin HEAD:refs/heads/release/${{ github.event.release.tag_name }}
+      
+      - name: Create pull request to main
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Add manifest.json for release ${context.payload.release.tag_name}`,
+              head: `release/${context.payload.release.tag_name}`,
+              base: 'main',
+              body: `This PR adds the generated manifest.json file for release ${context.payload.release.tag_name}.\n\nThe manifest will be available at:\n\`https://raw.githubusercontent.com/${context.repo.owner}/${context.repo.repo}/${context.payload.release.tag_name}/manifest.json\``
+            });
