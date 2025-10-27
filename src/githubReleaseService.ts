@@ -111,6 +111,41 @@ export class GitHubReleaseService {
   }
 
   /**
+   * Download .vsix file from release assets
+   */
+  async downloadVsixAsset(release: ReleaseInfo): Promise<ArrayBuffer> {
+    const vsixAsset = release.assets.find(asset => asset.name.endsWith('.vsix'));
+
+    if (!vsixAsset) {
+      throw new Error('.vsix file not found in release assets');
+    }
+
+    try {
+      const response = await fetch(vsixAsset.browserDownloadUrl, {
+        headers: {
+          'User-Agent': 'Nexkit-VSCode-Extension'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to download .vsix: ${response.status} ${response.statusText}`);
+      }
+
+      return await response.arrayBuffer();
+    } catch (error) {
+      throw new Error(`Failed to download .vsix file: ${error}`);
+    }
+  }
+
+  /**
+   * Get .vsix asset URL from release
+   */
+  getVsixAssetUrl(release: ReleaseInfo): string | null {
+    const vsixAsset = release.assets.find(asset => asset.name.endsWith('.vsix'));
+    return vsixAsset?.browserDownloadUrl || null;
+  }
+
+  /**
    * Check if current extension version meets minimum requirements
    */
   checkExtensionVersion(minVersion: string): boolean {

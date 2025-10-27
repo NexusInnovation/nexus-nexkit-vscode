@@ -2,7 +2,7 @@
   "name": "nexkit-vscode",
   "displayName": "Nexkit",
   "description": "VS Code extension for Nexkit CLI",
-  "version": "0.1.2",
+  "version": "0.3.0",
   "publisher": "nexusinno",
   "private": true,
   "license": "MIT",
@@ -16,6 +16,9 @@
   "categories": [
     "Other"
   ],
+  "dependencies": {
+    "adm-zip": "^0.5.16"
+  },
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
@@ -33,6 +36,11 @@
       {
         "command": "nexkit-vscode.checkVersion",
         "title": "Nexkit: Check Template Version",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexkit-vscode.checkExtensionUpdate",
+        "title": "Nexkit: Check for Extension Updates",
         "category": "Nexkit"
       },
       {
@@ -134,6 +142,21 @@
           "default": 0,
           "description": "Timestamp of last update check."
         },
+        "nexkit.extension.autoCheckUpdates": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically check for extension updates on activation."
+        },
+        "nexkit.extension.updateCheckInterval": {
+          "type": "number",
+          "default": 24,
+          "description": "Hours between automatic extension update checks."
+        },
+        "nexkit.extension.lastUpdateCheck": {
+          "type": "number",
+          "default": 0,
+          "description": "Timestamp of last extension update check."
+        },
         "nexkit.mcpSetup.dismissed": {
           "type": "boolean",
           "default": false,
@@ -163,26 +186,27 @@
     "publish-private": "npm version patch --tag-version-prefix=v && git push && git push --tags"
   },
   "devDependencies": {
-    "@types/vscode": "^1.105.0",
+    "@commitlint/cli": "^19.4.0",
+    "@commitlint/config-conventional": "^19.4.0",
+    "@cyclonedx/cyclonedx-npm": "^1.19.3",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@types/adm-zip": "^0.5.7",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
+    "@types/vscode": "^1.105.0",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0",
-    "eslint": "^9.36.0",
-    "typescript": "^5.9.3",
     "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.2.1",
-    "esbuild": "^0.24.2",
-    "@semantic-release/changelog": "^6.0.3",
-    "@semantic-release/git": "^10.0.1",
-    "semantic-release": "^24.2.0",
     "conventional-changelog-cli": "^5.0.0",
-    "@commitlint/cli": "^19.4.0",
-    "@commitlint/config-conventional": "^19.4.0",
-    "nyc": "^15.1.0",
-    "@cyclonedx/cyclonedx-npm": "^1.19.3",
+    "esbuild": "^0.24.2",
+    "eslint": "^9.36.0",
     "glob": "^11.0.0",
-    "mocha": "^10.0.10"
+    "mocha": "^10.0.10",
+    "nyc": "^15.1.0",
+    "semantic-release": "^24.2.0",
+    "typescript": "^5.9.3"
   }
 }
