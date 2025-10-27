@@ -7,6 +7,7 @@ import { MCPConfigManager } from './mcpConfigManager';
 import { VersionManager } from './versionManager';
 import { GitHubReleaseService } from './githubReleaseService';
 import { NexkitPanel } from './nexkitPanel';
+import { ExtensionUpdateManager } from './extensionUpdateManager';
 
 /**
  * Check for required MCP servers and show notification if missing
@@ -44,23 +45,36 @@ async function checkRequiredMCPs(mcpConfigManager: MCPConfigManager): Promise<vo
 async function updateStatusBar(statusBarItem: vscode.StatusBarItem, versionManager: VersionManager): Promise<void> {
 	try {
 		const currentVersion = versionManager.getCurrentVersion();
-		const updateCheck = await versionManager.isUpdateAvailable();
+		const templateUpdateCheck = await versionManager.isUpdateAvailable();
 
-		if (updateCheck.available) {
+		// Check for extension updates
+		const extensionUpdateManager = new ExtensionUpdateManager();
+		const extensionUpdateInfo = await extensionUpdateManager.checkForExtensionUpdate();
+
+		// Prioritize showing extension updates over template updates
+		if (extensionUpdateInfo) {
+			statusBarItem.text = `$(cloud-download) Nexkit v${extensionUpdateInfo.currentVersion}`;
+			statusBarItem.tooltip = `Extension update available: ${extensionUpdateInfo.latestVersion}. Click to update.`;
+			statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
+			statusBarItem.command = 'nexkit-vscode.checkExtensionUpdate';
+		} else if (templateUpdateCheck.available) {
 			statusBarItem.text = `$(arrow-up) Nexkit v${currentVersion}`;
-			statusBarItem.tooltip = `Update available: ${updateCheck.latestVersion}. Click to check for updates.`;
+			statusBarItem.tooltip = `Template update available: ${templateUpdateCheck.latestVersion}. Click to update.`;
 			statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+			statusBarItem.command = 'nexkit-vscode.checkVersion';
 		} else {
 			statusBarItem.text = `$(check) Nexkit v${currentVersion}`;
-			statusBarItem.tooltip = `Templates are up to date (v${currentVersion}). Click to check for updates.`;
+			statusBarItem.tooltip = `Extension and templates are up to date (v${currentVersion}). Click to check for updates.`;
 			statusBarItem.backgroundColor = undefined;
+			statusBarItem.command = 'nexkit-vscode.checkVersion';
 		}
 
 		statusBarItem.show();
 	} catch (error) {
 		console.error('Error updating status bar:', error);
 		statusBarItem.text = `$(warning) Nexkit`;
-		statusBarItem.tooltip = 'Error checking template status';
+		statusBarItem.tooltip = 'Error checking update status';
+		statusBarItem.command = 'nexkit-vscode.checkVersion';
 		statusBarItem.show();
 	}
 }
@@ -90,6 +104,68 @@ async function checkForUpdates(versionManager: VersionManager): Promise<void> {
 	} catch (error) {
 		console.error('Error checking for updates:', error);
 	}
+}
+
+/**
+ * Check for extension updates on activation
+ */
+async function checkForExtensionUpdates(): Promise<void> {
+	try {
+		const extensionUpdateManager = new ExtensionUpdateManager();
+
+		if (extensionUpdateManager.shouldCheckForExtensionUpdates()) {
+			const updateInfo = await extensionUpdateManager.checkForExtensionUpdate();
+
+			if (updateInfo) {
+				const result = await vscode.window.showInformationMessage(
+					`Nexkit extension ${updateInfo.latestVersion} available!`,
+					'Update Now', 'Remind Later'
+				);
+
+				if (result === 'Update Now') {
+					await extensionUpdateManager.promptUserForUpdate(updateInfo);
+				}
+			}
+
+			// Update last check timestamp
+			const config = vscode.workspace.getConfiguration('nexkit');
+			await config.update('extension.lastUpdateCheck', Date.now(), vscode.ConfigurationTarget.Global);
+		}
+	} catch (error) {
+		console.error('Error checking for extension updates:', error);
+	}
+}
+
+/**
+ * Build deployment config from current workspace settings
+ */
+function buildCurrentDeploymentConfig(): DeploymentConfig {
+	const config = vscode.workspace.getConfiguration('nexkit');
+	const languages = config.get<string[]>('workspace.languages', []);
+	const mcpServers = config.get<string[]>('workspace.mcpServers', []);
+
+	return {
+		alwaysDeploy: [
+			'.github/prompts/nexkit.commit.prompt.md',
+			'.github/prompts/nexkit.document.prompt.md',
+			'.github/prompts/nexkit.implement.prompt.md',
+			'.github/prompts/nexkit.refine.prompt.md',
+			'.github/prompts/nexkit.review.prompt.md',
+			'.github/chatmodes/debug.chatmode.md',
+			'.github/chatmodes/plan.chatmode.md'
+		],
+		conditionalDeploy: {
+			'instructions.python': languages.includes('python') ? ['.github/instructions/python.instructions.md'] : [],
+			'instructions.typescript': languages.includes('typescript') ? ['.github/instructions/typescript-5-es2022.instructions.md'] : [],
+			'instructions.csharp': languages.includes('csharp') ? ['.github/instructions/csharp.instructions.md'] : [],
+			'instructions.reactjs': languages.includes('react') ? ['.github/instructions/reactjs.instructions.md'] : [],
+			'instructions.bicep': languages.includes('bicep') ? ['.github/instructions/bicep-code-best-practices.instructions.md'] : [],
+			'instructions.dotnetFramework': languages.includes('netframework') ? ['.github/instructions/dotnet-framework.instructions.md'] : [],
+			'instructions.markdown': languages.includes('markdown') ? ['.github/instructions/markdown.instructions.md'] : [],
+			'instructions.azureDevOpsPipelines': languages.includes('azuredevopspipelines') ? ['.github/instructions/azure-devops-pipelines.instructions.md'] : []
+		},
+		workspaceMCPs: mcpServers
+	};
 }
 
 // This method is called when your extension is activated
@@ -186,6 +262,9 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Check for template updates on activation
 	checkForUpdates(versionManager);
+
+	// Check for extension updates on activation
+	checkForExtensionUpdates();
 
 	// Register commands
 	const initProjectDisposable = vscode.commands.registerCommand('nexkit-vscode.initProject', async () => {
@@ -340,8 +419,14 @@ export function activate(context: vscode.ExtensionContext) {
 
 				progress.report({ increment: 20, message: 'Extracting and deploying...' });
 
-				// Extract and deploy (simplified - in real implementation would extract zip)
-				// For now, just update the version
+				// Extract templates from zip
+				const extractedPath = await templateManager.extractTemplatesZip(templatesBuffer);
+
+				// Deploy templates based on current workspace configuration
+				const deploymentConfig = buildCurrentDeploymentConfig();
+				await templateManager.deployFromExtractedTemplates(extractedPath, deploymentConfig);
+
+				// Update version
 				await versionManager.setCurrentVersion(latestVersion!);
 
 				// Update last check timestamp
@@ -366,11 +451,39 @@ export function activate(context: vscode.ExtensionContext) {
 	const checkVersionDisposable = vscode.commands.registerCommand('nexkit-vscode.checkVersion', async () => {
 		try {
 			const currentVersion = versionManager.getCurrentVersion();
-			const updateCheck = await versionManager.isUpdateAvailable();
+			const templateUpdateCheck = await versionManager.isUpdateAvailable();
 
-			if (updateCheck.available) {
+			// Check for extension updates
+			const extensionUpdateManager = new ExtensionUpdateManager();
+			const extensionUpdateInfo = await extensionUpdateManager.checkForExtensionUpdate();
+
+			// Show extension update with priority
+			if (extensionUpdateInfo) {
+				const result = await vscode.window.showInformationMessage(
+					`Extension update available! Current: ${extensionUpdateInfo.currentVersion}, Latest: ${extensionUpdateInfo.latestVersion}`,
+					'Update Extension', 'Check Templates', 'Later'
+				);
+
+				if (result === 'Update Extension') {
+					vscode.commands.executeCommand('nexkit-vscode.checkExtensionUpdate');
+				} else if (result === 'Check Templates') {
+					// Fall through to template check
+					if (templateUpdateCheck.available) {
+						vscode.window.showInformationMessage(
+							`Template update available! Current: ${currentVersion}, Latest: ${templateUpdateCheck.latestVersion}`,
+							'Update Now'
+						).then(selection => {
+							if (selection === 'Update Now') {
+								vscode.commands.executeCommand('nexkit-vscode.updateTemplates');
+							}
+						});
+					} else {
+						vscode.window.showInformationMessage(`Templates are up to date (version ${currentVersion})`);
+					}
+				}
+			} else if (templateUpdateCheck.available) {
 				vscode.window.showInformationMessage(
-					`Current version: ${currentVersion}. Latest available: ${updateCheck.latestVersion}`,
+					`Template update available! Current: ${currentVersion}, Latest: ${templateUpdateCheck.latestVersion}`,
 					'Update Now'
 				).then(selection => {
 					if (selection === 'Update Now') {
@@ -378,7 +491,7 @@ export function activate(context: vscode.ExtensionContext) {
 					}
 				});
 			} else {
-				vscode.window.showInformationMessage(`Templates are up to date (version ${currentVersion})`);
+				vscode.window.showInformationMessage(`Extension and templates are up to date (version ${currentVersion})`);
 			}
 		} catch (error) {
 			vscode.window.showErrorMessage(`Failed to check version: ${error}`);
@@ -506,6 +619,33 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
+	const checkExtensionUpdateDisposable = vscode.commands.registerCommand('nexkit-vscode.checkExtensionUpdate', async () => {
+		try {
+			await vscode.window.withProgress({
+				location: vscode.ProgressLocation.Notification,
+				title: 'Checking for extension updates...',
+				cancellable: false
+			}, async (progress) => {
+				progress.report({ increment: 30, message: 'Checking GitHub releases...' });
+
+				const extensionUpdateManager = new ExtensionUpdateManager();
+				const updateInfo = await extensionUpdateManager.checkForExtensionUpdate();
+
+				if (!updateInfo) {
+					vscode.window.showInformationMessage('Nexkit extension is up to date!');
+					return;
+				}
+
+				progress.report({ increment: 70, message: 'Update available...' });
+
+				// Prompt user for update action
+				await extensionUpdateManager.promptUserForUpdate(updateInfo);
+			});
+		} catch (error) {
+			vscode.window.showErrorMessage(`Failed to check for extension updates: ${error}`);
+		}
+	});
+
 	context.subscriptions.push(
 		initProjectDisposable,
 		updateTemplatesDisposable,
@@ -513,7 +653,8 @@ export function activate(context: vscode.ExtensionContext) {
 		installUserMCPsDisposable,
 		configureAzureDevOpsDisposable,
 		openSettingsDisposable,
-		restoreBackupDisposable
+		restoreBackupDisposable,
+		checkExtensionUpdateDisposable
 	);
 }
 
