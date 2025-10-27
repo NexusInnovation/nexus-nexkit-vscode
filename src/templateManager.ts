@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import * as AdmZip from 'adm-zip';
 
 export interface DeploymentConfig {
   alwaysDeploy: string[];
@@ -322,5 +323,75 @@ out/
     } else {
       await fs.promises.copyFile(source, target);
     }
+  }
+
+  async extractTemplatesZip(buffer: ArrayBuffer): Promise<string> {
+    try {
+      const zipBuffer = Buffer.from(buffer);
+      const zip = new AdmZip(zipBuffer);
+      const tempDir = path.join(os.tmpdir(), `nexkit-templates-${Date.now()}`);
+      await fs.promises.mkdir(tempDir, { recursive: true });
+      zip.extractAllTo(tempDir, true);
+      console.log(`Templates extracted to: ${tempDir}`);
+      return tempDir;
+    } catch (error) {
+      throw new Error(`Failed to extract templates zip: ${error}`);
+    }
+  }
+
+  async deployFromExtractedTemplates(extractedPath: string, config: DeploymentConfig): Promise<void> {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) {
+      throw new Error('No workspace folder open');
+    }
+
+    try {
+      for (const templatePath of config.alwaysDeploy) {
+        await this.deployTemplateFromExtracted(extractedPath, templatePath, workspaceFolder.uri.fsPath);
+      }
+
+      for (const [settingKey, templates] of Object.entries(config.conditionalDeploy)) {
+        if (templates.length > 0) {
+          for (const templatePath of templates) {
+            await this.deployTemplateFromExtracted(extractedPath, templatePath, workspaceFolder.uri.fsPath);
+          }
+        }
+      }
+
+      await fs.promises.rm(extractedPath, { recursive: true, force: true });
+      console.log(`Cleaned up temp directory: ${extractedPath}`);
+    } catch (error) {
+      try {
+        await fs.promises.rm(extractedPath, { recursive: true, force: true });
+      } catch {}
+      throw error;
+    }
+  }
+
+  private async deployTemplateFromExtracted(extractedPath: string, templatePath: string, targetRoot: string): Promise<void> {
+    const possiblePaths = [
+      path.join(extractedPath, templatePath),
+      path.join(extractedPath, 'templates', templatePath),
+      path.join(extractedPath, '.github', templatePath.replace('.github/', '')),
+    ];
+
+    let sourceFile: string | null = null;
+    for (const possiblePath of possiblePaths) {
+      if (await this.checkFileExists(possiblePath)) {
+        sourceFile = possiblePath;
+        break;
+      }
+    }
+
+    if (!sourceFile) {
+      console.warn(`Template file not found in extracted archive: ${templatePath}`);
+      return;
+    }
+
+    const targetPath = path.join(targetRoot, templatePath);
+    const targetDir = path.dirname(targetPath);
+    await fs.promises.mkdir(targetDir, { recursive: true });
+    await fs.promises.copyFile(sourceFile, targetPath);
+    console.log(`Deployed template: ${templatePath}`);
   }
 }
