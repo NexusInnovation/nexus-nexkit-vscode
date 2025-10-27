@@ -186,8 +186,8 @@
     "publish-private": "npm version patch --tag-version-prefix=v && git push && git push --tags"
   },
   "devDependencies": {
-    "@commitlint/cli": "^19.4.0",
-    "@commitlint/config-conventional": "^19.4.0",
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
     "@cyclonedx/cyclonedx-npm": "^1.19.3",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
