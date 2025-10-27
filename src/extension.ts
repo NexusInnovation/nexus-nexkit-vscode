@@ -44,7 +44,9 @@ async function checkRequiredMCPs(mcpConfigManager: MCPConfigManager): Promise<vo
  */
 async function updateStatusBar(statusBarItem: vscode.StatusBarItem, versionManager: VersionManager): Promise<void> {
 	try {
-		const currentVersion = versionManager.getCurrentVersion();
+		// Get the extension version from package.json
+		const extensionVersion = vscode.extensions.getExtension('nexusinno.nexkit-vscode')?.packageJSON.version || '0.0.0';
+		const currentTemplateVersion = versionManager.getCurrentVersion();
 		const templateUpdateCheck = await versionManager.isUpdateAvailable();
 
 		// Check for extension updates
@@ -53,18 +55,18 @@ async function updateStatusBar(statusBarItem: vscode.StatusBarItem, versionManag
 
 		// Prioritize showing extension updates over template updates
 		if (extensionUpdateInfo) {
-			statusBarItem.text = `$(cloud-download) Nexkit v${extensionUpdateInfo.currentVersion}`;
+			statusBarItem.text = `$(cloud-download) Nexkit v${extensionVersion}`;
 			statusBarItem.tooltip = `Extension update available: ${extensionUpdateInfo.latestVersion}. Click to update.`;
 			statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.errorBackground');
 			statusBarItem.command = 'nexkit-vscode.checkExtensionUpdate';
 		} else if (templateUpdateCheck.available) {
-			statusBarItem.text = `$(arrow-up) Nexkit v${currentVersion}`;
-			statusBarItem.tooltip = `Template update available: ${templateUpdateCheck.latestVersion}. Click to update.`;
+			statusBarItem.text = `$(arrow-up) Nexkit v${extensionVersion}`;
+			statusBarItem.tooltip = `Template update available: ${templateUpdateCheck.latestVersion} (current: ${currentTemplateVersion}). Click to update.`;
 			statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
 			statusBarItem.command = 'nexkit-vscode.checkVersion';
 		} else {
-			statusBarItem.text = `$(check) Nexkit v${currentVersion}`;
-			statusBarItem.tooltip = `Extension and templates are up to date (v${currentVersion}). Click to check for updates.`;
+			statusBarItem.text = `$(check) Nexkit v${extensionVersion}`;
+			statusBarItem.tooltip = `Extension v${extensionVersion} and templates v${currentTemplateVersion} are up to date. Click to check for updates.`;
 			statusBarItem.backgroundColor = undefined;
 			statusBarItem.command = 'nexkit-vscode.checkVersion';
 		}
