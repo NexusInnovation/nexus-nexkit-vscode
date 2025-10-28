@@ -149,7 +149,7 @@ jobs:
   # Job 5: Build & Package
   build:
     name: Build Extension
-    needs: [quality-gate, security]
+    needs: [security]
     runs-on: ubuntu-latest
     outputs:
       vsix-name: ${{ steps.package.outputs.vsix-name }}
@@ -201,7 +201,7 @@ jobs:
   # Job 6: Create GitHub Release
   release:
     name: Create GitHub Release
-    needs: [build, security]
+    needs: [quality-gate, build, security]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
