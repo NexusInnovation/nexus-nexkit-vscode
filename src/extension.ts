@@ -42,7 +42,7 @@ async function checkRequiredMCPs(mcpConfigManager: MCPConfigManager): Promise<vo
 /**
  * Update the status bar with current template version and update status
  */
-async function updateStatusBar(statusBarItem: vscode.StatusBarItem, versionManager: VersionManager): Promise<void> {
+async function updateStatusBar(statusBarItem: vscode.StatusBarItem, versionManager: VersionManager, context: vscode.ExtensionContext): Promise<void> {
 	try {
 		// Get the extension version from package.json
 		const extensionVersion = vscode.extensions.getExtension('nexusinno.nexkit-vscode')?.packageJSON.version || '0.0.0';
@@ -50,7 +50,7 @@ async function updateStatusBar(statusBarItem: vscode.StatusBarItem, versionManag
 		const templateUpdateCheck = await versionManager.isUpdateAvailable();
 
 		// Check for extension updates
-		const extensionUpdateManager = new ExtensionUpdateManager();
+		const extensionUpdateManager = new ExtensionUpdateManager(context);
 		const extensionUpdateInfo = await extensionUpdateManager.checkForExtensionUpdate();
 
 		// Prioritize showing extension updates over template updates
@@ -111,9 +111,9 @@ async function checkForUpdates(versionManager: VersionManager): Promise<void> {
 /**
  * Check for extension updates on activation
  */
-async function checkForExtensionUpdates(): Promise<void> {
+async function checkForExtensionUpdates(context: vscode.ExtensionContext): Promise<void> {
 	try {
-		const extensionUpdateManager = new ExtensionUpdateManager();
+		const extensionUpdateManager = new ExtensionUpdateManager(context);
 
 		if (extensionUpdateManager.shouldCheckForExtensionUpdates()) {
 			const updateInfo = await extensionUpdateManager.checkForExtensionUpdate();
@@ -180,8 +180,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const templateManager = new TemplateManager(context);
 	const mcpConfigManager = new MCPConfigManager();
-	const versionManager = new VersionManager();
-	const githubService = new GitHubReleaseService();
+	const versionManager = new VersionManager(context);
+	const githubService = new GitHubReleaseService(context);
 
 
 	// Register NexkitPanel WebviewViewProvider for sidebar
@@ -257,7 +257,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(statusBarItem);
 
 	// Update status bar
-	updateStatusBar(statusBarItem, versionManager);
+	updateStatusBar(statusBarItem, versionManager, context);
 
 	// Check for required MCP servers on activation
 	checkRequiredMCPs(mcpConfigManager);
@@ -266,7 +266,7 @@ export function activate(context: vscode.ExtensionContext) {
 	checkForUpdates(versionManager);
 
 	// Check for extension updates on activation
-	checkForExtensionUpdates();
+	checkForExtensionUpdates(context);
 
 	// Register commands
 	const initProjectDisposable = vscode.commands.registerCommand('nexkit-vscode.initProject', async () => {
@@ -456,7 +456,7 @@ export function activate(context: vscode.ExtensionContext) {
 			const templateUpdateCheck = await versionManager.isUpdateAvailable();
 
 			// Check for extension updates
-			const extensionUpdateManager = new ExtensionUpdateManager();
+			const extensionUpdateManager = new ExtensionUpdateManager(context);
 			const extensionUpdateInfo = await extensionUpdateManager.checkForExtensionUpdate();
 
 			// Show extension update with priority
@@ -630,7 +630,7 @@ export function activate(context: vscode.ExtensionContext) {
 			}, async (progress) => {
 				progress.report({ increment: 30, message: 'Checking GitHub releases...' });
 
-				const extensionUpdateManager = new ExtensionUpdateManager();
+				const extensionUpdateManager = new ExtensionUpdateManager(context);
 				const updateInfo = await extensionUpdateManager.checkForExtensionUpdate();
 
 				if (!updateInfo) {

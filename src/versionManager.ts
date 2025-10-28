@@ -4,8 +4,8 @@ import { GitHubReleaseService, Manifest } from './githubReleaseService';
 export class VersionManager {
   private githubService: GitHubReleaseService;
 
-  constructor() {
-    this.githubService = new GitHubReleaseService();
+  constructor(context: vscode.ExtensionContext) {
+    this.githubService = new GitHubReleaseService(context);
   }
 
   /**
