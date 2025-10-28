@@ -96,8 +96,8 @@ export class GitHubReleaseService {
     const url = `${GitHubReleaseService.BASE_URL}/repos/${GitHubReleaseService.REPO_OWNER}/${GitHubReleaseService.REPO_NAME}/releases/latest`;
 
     try {
-      // First attempt: Try with existing session or prompt for auth
-      let headers = await this.getAuthHeaders(true);
+      // First attempt: Try with existing session silently
+      let headers = await this.getAuthHeaders(false);
       let response = await fetch(url, { headers });
 
       // If we get 404, 401, or 403, it might be a private repo - try to authenticate and retry
@@ -138,8 +138,8 @@ export class GitHubReleaseService {
     const url = `https://raw.githubusercontent.com/${GitHubReleaseService.REPO_OWNER}/${GitHubReleaseService.REPO_NAME}/${version}/manifest.json`;
 
     try {
-      // First attempt with authentication
-      let headers = await this.getAuthHeaders(true);
+      // First attempt with existing session silently
+      let headers = await this.getAuthHeaders(false);
       let response = await fetch(url, { headers });
 
       // Retry if authentication issue detected
@@ -175,8 +175,8 @@ export class GitHubReleaseService {
     }
 
     try {
-      // First attempt with authentication
-      let headers = await this.getAuthHeaders(true);
+      // First attempt with existing session silently
+      let headers = await this.getAuthHeaders(false);
       let response = await fetch(templatesAsset.browserDownloadUrl, { headers });
 
       // Retry if authentication issue detected
@@ -210,8 +210,8 @@ export class GitHubReleaseService {
     }
 
     try {
-      // First attempt with authentication
-      let headers = await this.getAuthHeaders(true);
+      // First attempt with existing session silently
+      let headers = await this.getAuthHeaders(false);
       let response = await fetch(vsixAsset.browserDownloadUrl, { headers });
 
       // Retry if authentication issue detected
