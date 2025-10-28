@@ -15,8 +15,8 @@ export class ExtensionUpdateManager {
   private githubService: GitHubReleaseService;
   private extensionId = 'nexusinno.nexkit-vscode';
 
-  constructor() {
-    this.githubService = new GitHubReleaseService();
+  constructor(context: vscode.ExtensionContext) {
+    this.githubService = new GitHubReleaseService(context);
   }
 
   /**
