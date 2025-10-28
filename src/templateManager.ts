@@ -134,12 +134,17 @@ export class TemplateManager {
 
     // Add Azure DevOps MCP if selected
     if (mcpServers.includes('azureDevOps')) {
+      if (!config.inputs) {
+        config.inputs = [];
+      }
+      config.inputs.push({
+        id: 'ado_org',
+        type: 'promptString',
+        description: "Azure DevOps organization name (e.g. 'contoso')"
+      });
       config.servers.azureDevOps = {
         command: 'npx',
-        args: ['-y', '@azure/devops-mcp-server'],
-        env: {
-          AZURE_DEVOPS_ORG_URL: 'https://dev.azure.com/your-org' // Placeholder
-        }
+        args: ['-y', '@azure-devops/mcp', '${input:ado_org}']
       };
     }
 
@@ -363,7 +368,7 @@ out/
     } catch (error) {
       try {
         await fs.promises.rm(extractedPath, { recursive: true, force: true });
-      } catch {}
+      } catch { }
       throw error;
     }
   }
