@@ -47,7 +47,7 @@ export class InitWizard {
       { label: 'Bicep', description: 'Azure Bicep code best practices', picked: true },
       { label: '.NET Framework', description: '.NET Framework instructions', picked: true },
       { label: 'Azure DevOps Pipelines', description: 'Azure DevOps pipeline instructions', picked: true },
-      { label: 'Markdown', description: 'Markdown writing instructions', picked: true
+      { label: 'Markdown', description: 'Markdown writing instructions', picked: true }
     ];
 
     const selected = await vscode.window.showQuickPick(languageOptions, {
