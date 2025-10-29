@@ -214,7 +214,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Create status bar item
 	const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-	statusBarItem.command = 'nexkit-vscode.checkVersion';
+	statusBarItem.command = 'nexkit-vscode.checkExtensionUpdate';
 	context.subscriptions.push(statusBarItem);
 
 	// Update status bar
