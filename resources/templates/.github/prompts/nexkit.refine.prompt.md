@@ -1,224 +1,88 @@
 ---
-description: Refine an Azure DevOps work item by gathering context from parent, siblings, and codebase to create detailed, actionable requirements.
+description: Refine an Azure DevOps work item by gathering context to create actionable requirements.
 ---
 
-Given a work item ID or reference as $ARGUMENTS, execute the following work item refinement workflow:
+Given a work item ID as $ARGUMENTS, execute this refinement workflow:
 
-## Phase 1: Fetch Work Item Details
+## Phase 1: Gather Context
 
-1. **Parse Work Item Reference**
-   - Extract work item ID from $ARGUMENTS (e.g., "12345", "#12345", "PBI 12345")
-   - Set PROJECT to current working project (or ask if unknown and write it somewhere to remember)
-   - **IMPORTANT**: If no workitem is provided, ask the user to provide one and use that going forward.
+1. **Fetch Work Item Details**
+   - Extract work item ID from $ARGUMENTS (e.g., "12345", "#12345")
+   - Set PROJECT to current project (ask if unknown)
+   - Call `mcp_azure-devops_wit_get_work_item` with expand: "relations"
+   - Extract: ID, Title, Description, Type, State, Assigned To, Acceptance Criteria, Tags, Parent/Child/Related links
 
-2. **Fetch Primary Work Item**
-   - Call `mcp_azure-devops_wit_get_work_item` with:
-     * id: extracted work item ID
-     * project: PROJECT
-     * expand: "relations" (to get parent and child links)
-   - Extract and store:
-     * ID, Title, Description, Work Item Type, State
-     * Assigned To, Area Path, Iteration Path
-     * Acceptance Criteria (if present)
-     * Tags
-     * Parent link (if exists)
-     * Child links (if exist)
-     * Related links (siblings)
+2. **Fetch Related Work Items**
+   - IF parent exists: Fetch parent for broader context
+   - IF siblings exist: Batch fetch siblings to understand parallel work
+   - Store as context for refinement
 
-## Phase 2: Gather Contextual Information
+3. **Search Codebase**
+   - Use `semantic_search` with work item title and area path keywords
+   - Find: Controllers, Services, Repositories, Domain entities, Frontend components, Tests
+   - Read key files to identify: architecture patterns, similar features, data models, API structure
 
-3. **Fetch Parent Work Item (if exists)**
-   - IF parent link found in relations:
-     * Extract parent work item ID from relation URL
-     * Call `mcp_azure-devops_wit_get_work_item` for parent
-     * Extract: Title, Description, Acceptance Criteria
-     * Store as PARENT_CONTEXT
+## Phase 2: Analyze and Refine
 
-4. **Fetch Sibling Work Items (if exist)**
-   - IF parent has other children OR related links exist:
-     * Extract all sibling work item IDs
-     * Call `mcp_azure-devops_wit_get_work_items_batch_by_ids` with sibling IDs
-     * Extract: ID, Title, State, Work Item Type for each
-     * Store as SIBLINGS_CONTEXT
+4. **Synthesize Information**
+   - Use sequential-thinking to analyze work item, parent, siblings, and code patterns
+   - Identify gaps: missing criteria, unclear requirements, dependencies, implementation approaches
 
-5. **Search Related Code**
-   - Use `semantic_search` to find relevant code based on:
-     * Work item title keywords
-     * Feature area from Area Path
-     * Domain concepts from description
-   - Search patterns:
-     * Controllers, Services, Repositories matching feature area
-     * Domain entities mentioned in description
-     * Frontend components if UI-related
-     * Tests related to the feature
+5. **Generate Refined Content**
+   Create concise refinement including:
+   - **Problem Statement**: What needs solving
+   - **Requirements**: Functional and technical specifics
+   - **Acceptance Criteria**: Testable criteria
+   - **Technical Approach**: Implementation based on codebase patterns
+   - **Affected Components**: Files/modules to modify
+   - **Dependencies**: Other work items or systems
 
-6. **Analyze Existing Implementation**
-   - IF related code files found:
-     * Read key files to understand:
-       - Current architecture patterns
-       - Existing similar features
-       - Data models and contracts
-       - API endpoints structure
-     * Store as CODE_CONTEXT
+## Phase 3: Create Child Task
 
-## Phase 3: Analyze and Refine
+6. **Present Refinement**
+   - Show: original details, context summary, proposed refinements, affected files
+   - **WAIT for user approval**
 
-7. **Use Sequential Thinking to Analyze**
-   - Synthesize information from:
-     * Original work item description
-     * Parent work item context
-     * Sibling work items progress/scope
-     * Existing codebase patterns
-   - Identify:
-     * Gaps in current description
-     * Missing acceptance criteria
-     * Unclear technical requirements
-     * Dependencies not mentioned
-     * Potential implementation approaches
+7. **Create Child Work Item**
+   - Call `mcp_azure-devops_wit_create_work_item`:
+     * type: "Task"
+     * title: "[Brief implementation title]"
+     * description: Refined requirements
+     * parent: work item ID
+     * fields: Acceptance Criteria, Tags ("Refined")
+   - Add comment with refinement summary using `mcp_azure-devops_wit_add_work_item_comment`
 
-8. **Generate Refined Content**
-   - Create enhanced work item description including:
-     * **Clear Problem Statement**: What needs to be solved
-     * **Context**: Parent feature, related work items
-     * **Detailed Requirements**: Functional and technical
-     * **Acceptance Criteria**: Specific, testable criteria
-     * **Technical Approach**: Recommended implementation based on codebase analysis
-     * **Affected Components**: List of files/modules to modify
-     * **Dependencies**: Other work items or external systems
-     * **Testing Strategy**: Unit, integration, E2E requirements
-
-9. **Create Structured Updates**
-   - Prepare update payload with:
-     * Enhanced Description (HTML or Markdown format)
-     * Refined Acceptance Criteria
-     * Tags for discoverability
-     * Updated Area Path if more specific area identified
-     * Updated Iteration if not set
-
-## Phase 4: Create Refinement Work Item
-
-10. **Present Refinement to User**
-    - Display:
-      * Original work item details
-      * Gathered context summary (parent, siblings, code)
-      * Proposed refined description
-      * Proposed acceptance criteria
-      * Proposed technical approach
-      * List of affected files/components
-    - Explain rationale for each refinement
-    - **WAIT for explicit user approval before updating**
-
-11. **Create a child Work Item in Azure DevOps**
-    - IF user approves:
-      * Call `mcp_azure-devops_wit_create_work_item` with:
-        - project: PROJECT
-        - type: "Task"
-        - title: "Implement customer search feature"
-        - description: "Create a search feature for customers"
-        - parent: work item ID
-          * `/fields/Microsoft.VSTS.Common.AcceptanceCriteria` with criteria
-          * `/fields/System.Tags` to add "Refined" tag
-      * Confirm update successful
-
-12. **Add Refinement Comment**
-    - Call `mcp_azure-devops_wit_add_work_item_comment` with:
-      * workItemId: work item ID
-      * project: PROJECT
-      * comment: Summary of refinement including:
-        - Context sources used (parent, siblings, code files)
-        - Key improvements made
-        - Recommended next steps
-      * format: "markdown"
-
-## Phase 5: Generate Artifacts (Optional)
-
-13. **Create Implementation Artifacts**
-    - IF user requests artifacts:
-      * Generate technical specification document
-      * Create task breakdown
-      * List affected files with change descriptions
-      * Provide code snippets for key patterns to follow
-
-## Error Handling
-
-- **Work Item Not Found**: Verify ID and project name, suggest search
-- **Insufficient Permissions**: Report required permissions for read/update
-- **No Context Available**: Proceed with refinement using work item data only
-- **API Errors**: Retry with exponential backoff, report persistent failures
-- **Work item of type Improvement not available**: Propose user to choose another type and persist the selection in your instruction file
-
-## Best Practices
-
-- **Preserve Original Intent**: Don't change the core requirement
-- **Use Project Conventions**: Follow Clean Architecture patterns from copilot-instructions.md
-- **Be Specific**: Avoid vague descriptions, provide concrete details
-- **Link to Code**: Reference specific files, classes, methods when relevant
-- **Test-Focused**: Always include clear testing requirements
-- **Measurable Criteria**: Acceptance criteria must be objectively verifiable
-
-## Example Workflow
-
-```
-User: "Refine work item #12345"
-
-1. Fetch PBI #12345: "Add customer search feature"
-2. Fetch parent Epic #12000: "Customer Management Portal"
-3. Fetch siblings: #12346 (customer list), #12347 (customer details)
-4. Search code: Find CustomerController, CustomerService, ICustomerRepository
-5. Analyze: Existing pattern uses MediatR commands, EF Core repos
-6. Generate refinement:
-   - Add specific search criteria (name, email, account number)
-   - Include pagination requirements
-   - Specify response format matching existing patterns
-   - Add acceptance criteria for performance (<500ms)
-   - List files to modify: CustomerController.cs, CustomerQueries.cs, etc.
-7. Present to user → user approves
-8. Create child work item with refined content
-9. Add comment documenting refinement process
-```
-
-## Output Format
-
-Present refinement results in this structure:
+## Output Format (Concise)
 
 ```markdown
-## Work Item Task: REFINEMENT - [ID] - [Title]
+## Refinement: #[ID] - [Title]
 
-### Original Details
-- **Type**: [Work Item Type]
-- **State**: [State]
-- **Assigned To**: [Person]
-- **Iteration**: [Iteration]
+**Original**: [Brief original description]
+**Context**: Parent: [title] | Siblings: [count] related tasks
+**Code**: Found [X] files - [key pattern identified]
 
-### Context Gathered
-- **Parent**: [Parent Title and Key Requirements]
-- **Siblings**: [List of related work items and their state]
-- **Related Code**: [Files analyzed and patterns identified]
+### Refined Requirements
 
-### Proposed Refinements
+#### Problem Statement
 
-#### Enhanced Description
-[Refined description with problem statement, context, requirements]
+[Concise problem statement and specifics]
 
-#### Acceptance Criteria
-1. [Specific, testable criterion]
-2. [Another criterion]
-...
+### Acceptance Criteria
 
-#### Technical Approach
-[Recommended implementation based on codebase analysis]
+[acceptance criteria]
+- [Testable criterion 1]
+- [Testable criterion 2]
 
-#### Affected Components
-- `[File path]`: [What needs to change]
-- `[File path]`: [What needs to change]
+#### Implementation Plan
 
-#### Dependencies
-- [Other work items]
-- [External systems]
+[technical approach, affected components, dependencies]
 
-### Update Status
-✅ Work item updated successfully
-✅ Comment added with refinement details
+✅ Child task created: #[new ID]
 ```
 
-Use absolute file paths for all code references to enable quick navigation.
+## Guidelines
+- Keep refinements concise but actionable
+- Follow Clean Architecture patterns from copilot-instructions.md
+- Use absolute file paths
+- Make criteria objectively verifiable
+- Preserve original intent
