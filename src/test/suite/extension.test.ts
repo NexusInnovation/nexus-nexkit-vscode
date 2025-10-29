@@ -20,7 +20,7 @@ suite('Unit: Extension Activation', () => {
 		const nexkitCommands = [
 			'nexkit-vscode.initProject',
 			'nexkit-vscode.updateTemplates',
-			'nexkit-vscode.checkVersion',
+			'nexkit-vscode.checkExtensionUpdate',
 			'nexkit-vscode.installUserMCPs',
 			'nexkit-vscode.configureAzureDevOps',
 			'nexkit-vscode.openSettings',
