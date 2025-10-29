@@ -54,6 +54,8 @@ export class NexkitPanel {
                     button { padding: 8px 16px; font-size: 1em; border-radius: 4px; border: none; background: #007acc; color: white; cursor: pointer; }
                     button:hover:not(:disabled) { background: #005fa3; }
                     button:disabled { background: #555; color: #999; cursor: not-allowed; opacity: 0.6; }
+                    .button-description { font-size: 0.85em; color: #888; margin-top: 4px; margin-bottom: 8px; line-height: 1.3; }
+                    .button-description.disabled { opacity: 0.6; color: #666; }
                 </style>
             </head>
             <body>
@@ -66,10 +68,15 @@ export class NexkitPanel {
                     <div class="actions">
                         <!-- Default: show initialize until state known; JS will swap if already initialized -->
                         <button id="initializeProjectBtn" onclick="vscode.postMessage({ command: 'initProject' })" disabled>Initialize Project</button>
+                        <p class="button-description disabled" id="initializeProjectBtnDesc">Set up Nexkit templates and configuration for your workspace</p>
                         <button id="reinitializeProjectBtn" onclick="vscode.postMessage({ command: 'reinitializeProject' })" style="display: none;" disabled>Re-initialize Project</button>
+                        <p class="button-description disabled" id="reinitializeProjectBtnDesc" style="display: none;">Reset project configuration and redeploy templates</p>
                         <button id="updateTemplatesBtn" onclick="vscode.postMessage({ command: 'updateTemplates' })" disabled>Update Nexkit Templates</button>
+                        <p class="button-description disabled" id="updateTemplatesBtnDesc">Update templates to the latest version from the extension</p>
                         <button id="installUserMCPsBtn" onclick="vscode.postMessage({ command: 'installUserMCPs' })">Install User MCP Servers</button>
+                        <p class="button-description" id="installUserMCPsBtnDesc">Install required MCP servers for enhanced AI capabilities</p>
                         <button id="openSettingsBtn" onclick="vscode.postMessage({ command: 'openSettings' })">Open Settings</button>
+                        <p class="button-description" id="openSettingsBtnDesc">Configure Nexkit extension preferences and project settings</p>
                     </div>
                 </div>
                 <script>
@@ -88,33 +95,61 @@ export class NexkitPanel {
                         const updateTemplatesBtn = document.getElementById('updateTemplatesBtn');
                         const initializeProjectBtn = document.getElementById('initializeProjectBtn');
                         const reinitializeProjectBtn = document.getElementById('reinitializeProjectBtn');
+                        const updateTemplatesBtnDesc = document.getElementById('updateTemplatesBtnDesc');
+                        const initializeProjectBtnDesc = document.getElementById('initializeProjectBtnDesc');
+                        const reinitializeProjectBtnDesc = document.getElementById('reinitializeProjectBtnDesc');
                         
-                        // Handle initialization state changes - show/hide mutually exclusive buttons
+                        // Handle initialization state changes - show/hide mutually exclusive buttons and descriptions
                         if (typeof isInitialized !== 'undefined') {
-                            if (initializeProjectBtn && reinitializeProjectBtn) {
+                            if (initializeProjectBtn && reinitializeProjectBtn && initializeProjectBtnDesc && reinitializeProjectBtnDesc) {
                                 if (isInitialized) {
-                                    // Project is initialized - show reinitialize button only
+                                    // Project is initialized - show reinitialize button and description only
                                     initializeProjectBtn.style.display = 'none';
+                                    initializeProjectBtnDesc.style.display = 'none';
                                     reinitializeProjectBtn.style.display = 'block';
+                                    reinitializeProjectBtnDesc.style.display = 'block';
                                 } else {
-                                    // Project not initialized - show initialize button only
+                                    // Project not initialized - show initialize button and description only
                                     initializeProjectBtn.style.display = 'block';
+                                    initializeProjectBtnDesc.style.display = 'block';
                                     reinitializeProjectBtn.style.display = 'none';
+                                    reinitializeProjectBtnDesc.style.display = 'none';
                                 }
                             }
                         }
                         
                         // Handle workspace state changes - must come after display logic
                         if (typeof hasWorkspace !== 'undefined') {
-                            // Enable/disable workspace-dependent buttons
+                            // Enable/disable workspace-dependent buttons and descriptions
                             if (updateTemplatesBtn) {
                                 updateTemplatesBtn.disabled = !hasWorkspace;
+                            }
+                            if (updateTemplatesBtnDesc) {
+                                if (hasWorkspace) {
+                                    updateTemplatesBtnDesc.classList.remove('disabled');
+                                } else {
+                                    updateTemplatesBtnDesc.classList.add('disabled');
+                                }
                             }
                             if (initializeProjectBtn) {
                                 initializeProjectBtn.disabled = !hasWorkspace;
                             }
+                            if (initializeProjectBtnDesc) {
+                                if (hasWorkspace) {
+                                    initializeProjectBtnDesc.classList.remove('disabled');
+                                } else {
+                                    initializeProjectBtnDesc.classList.add('disabled');
+                                }
+                            }
                             if (reinitializeProjectBtn) {
                                 reinitializeProjectBtn.disabled = !hasWorkspace;
+                            }
+                            if (reinitializeProjectBtnDesc) {
+                                if (hasWorkspace) {
+                                    reinitializeProjectBtnDesc.classList.remove('disabled');
+                                } else {
+                                    reinitializeProjectBtnDesc.classList.add('disabled');
+                                }
                             }
                         }
                     });
