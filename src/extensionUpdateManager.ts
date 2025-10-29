@@ -143,44 +143,62 @@ export class ExtensionUpdateManager {
     }
 
     if (result === 'View Release Notes') {
-      // Open GitHub release page
-      const releaseUrl = `https://github.com/NexusInnovation/nexkit/releases/tag/${updateInfo.releaseInfo.tagName}`;
+      // Open GitHub release page - corrected to use nexkit-vscode repository
+      const releaseUrl = `https://github.com/NexusInnovation/nexkit-vscode/releases/tag/${updateInfo.releaseInfo.tagName}`;
       await vscode.env.openExternal(vscode.Uri.parse(releaseUrl));
       return;
     }
 
-    // Download .vsix file
-    await vscode.window.withProgress({
-      location: vscode.ProgressLocation.Notification,
-      title: 'Downloading extension update...',
-      cancellable: false
-    }, async (progress) => {
-      progress.report({ increment: 30, message: 'Downloading .vsix file...' });
-      const vsixPath = await this.downloadExtensionVsix(updateInfo);
-      
-      progress.report({ increment: 40, message: 'Preparing installation...' });
+    // Download .vsix file with proper error handling
+    try {
+      await vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: 'Downloading extension update...',
+        cancellable: false
+      }, async (progress) => {
+        try {
+          progress.report({ increment: 30, message: 'Downloading .vsix file...' });
+          const vsixPath = await this.downloadExtensionVsix(updateInfo);
+          
+          progress.report({ increment: 40, message: 'Preparing installation...' });
 
-      if (result === 'Install & Reload') {
-        progress.report({ increment: 30, message: 'Installing extension...' });
-        await this.installExtension(vsixPath);
-      } else if (result === 'Copy Install Command') {
-        const codeCommand = this.getCodeCommand();
-        const installCommand = `${codeCommand} --install-extension "${vsixPath}"`;
-        await vscode.env.clipboard.writeText(installCommand);
-        
-        vscode.window.showInformationMessage(
-          `Install command copied to clipboard! Extension downloaded to: ${vsixPath}`,
-          'Open File Location',
-          'Install Now'
-        ).then(async selection => {
-          if (selection === 'Open File Location') {
-            await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(vsixPath));
-          } else if (selection === 'Install Now') {
+          if (result === 'Install & Reload') {
+            progress.report({ increment: 30, message: 'Installing extension...' });
             await this.installExtension(vsixPath);
+          } else if (result === 'Copy Install Command') {
+            const codeCommand = this.getCodeCommand();
+            const installCommand = `${codeCommand} --install-extension "${vsixPath}"`;
+            await vscode.env.clipboard.writeText(installCommand);
+            
+            vscode.window.showInformationMessage(
+              `Install command copied to clipboard! Extension downloaded to: ${vsixPath}`,
+              'Open File Location',
+              'Install Now'
+            ).then(async selection => {
+              if (selection === 'Open File Location') {
+                await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(vsixPath));
+              } else if (selection === 'Install Now') {
+                await this.installExtension(vsixPath);
+              }
+            });
           }
-        });
-      }
-    });
+        } catch (downloadError) {
+          // If download fails due to authentication, the GitHubReleaseService already prompted the user
+          // If they authenticated and it still failed, or if they cancelled, show appropriate error
+          const errorMessage = downloadError instanceof Error ? downloadError.message : String(downloadError);
+          
+          // Check if this is a authentication/permission error vs other errors
+          if (errorMessage.includes('404') || errorMessage.includes('401') || errorMessage.includes('403')) {
+            throw new Error('Failed to download extension update. Please ensure you have access to the repository and try again.');
+          } else {
+            throw downloadError;
+          }
+        }
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      vscode.window.showErrorMessage(`Failed to update extension: ${errorMessage}`);
+    }
   }
 
   /**

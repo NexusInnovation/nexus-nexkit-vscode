@@ -56,8 +56,7 @@ export class NexkitPanel {
                         <p>Status: <span id="status">Loading...</span></p>
                     </div>
                     <div class="actions">
-                        <button onclick="vscode.postMessage({ command: 'updateTemplates' })">Update Nexkit Templates</button>
-                        <button onclick="vscode.postMessage({ command: 'initProject' })">Re-initialize Project</button>
+                        <button onclick="vscode.postMessage({ command: 'initProject' })">Initialize Project</button>
                         <button onclick="vscode.postMessage({ command: 'installUserMCPs' })">Install User MCP Servers</button>
                         <button onclick="vscode.postMessage({ command: 'openSettings' })">Open Settings</button>
                     </div>
@@ -115,12 +114,6 @@ export class NexkitPanel {
                     case 'ready':
                         // Webview is ready to receive messages
                         await this._initializeVersionStatus();
-                        break;
-                    case 'updateTemplates':
-                        await vscode.commands.executeCommand('nexkit-vscode.updateTemplates');
-                        this._status = 'Templates updated';
-                        this._version = await this._getExtensionVersion();
-                        this._postVersionStatus();
                         break;
                     case 'initProject':
                         await vscode.commands.executeCommand('nexkit-vscode.initProject');

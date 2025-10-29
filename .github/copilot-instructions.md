@@ -6,16 +6,16 @@ VS Code extension that deploys spec-driven AI development templates to workspace
 ## Architecture & Key Components
 
 ### Core Services (src/ directory)
-- **`extension.ts`**: Main activation logic with command registration, status bar management, and automatic update checks on startup
-- **`TemplateManager`**: Template deployment engine with atomic backup/restore operations using timestamped `.github.backup-*` directories
+- **`extension.ts`**: Main activation logic with command registration, status bar management, and automatic extension update checks on startup
+- **`TemplateManager`**: Template deployment engine using local templates from `resources/templates/` with atomic backup/restore operations using timestamped `.github.backup-*` directories
 - **`MCPConfigManager`**: Platform-aware MCP config management (Windows/macOS/Linux paths differ)
 - **`InitWizard`**: 4-step QuickPick wizard for language selection, Azure DevOps toggle, and scaffold options
-- **`VersionManager`**: Semantic version comparison with configurable auto-update intervals (default 24h)
-- **`GitHubReleaseService`**: GitHub API integration fetching from `NexusInnovation/nexkit` repo releases
+- **`GitHubReleaseService`**: GitHub API integration for fetching extension updates from `NexusInnovation/nexkit-vscode` repository
+- **`ExtensionUpdateManager`**: Handles extension .vsix downloads and updates
 - **`NexkitPanel`**: Webview sidebar provider with bi-directional messaging for command execution
 
 ### Template System
-Templates source: `resources/templates/.github/` → Deploy target: `workspace/.github/`
+Templates are bundled with the extension in `resources/templates/.github/` and deployed to workspace `.github/` directory.
 
 **Deployment Logic** (`DeploymentConfig` interface):
 ```typescript
@@ -26,6 +26,9 @@ conditionalDeploy: {
 }
 workspaceMCPs: enableAzureDevOps ? ['azureDevOps'] : []
 ```
+
+**Template Source**: All templates are included in the extension package under `resources/templates/`
+**Template Updates**: Templates are updated when the extension is updated (no separate template versioning)
 
 **Critical Template Paths**:
 - Core prompts: `nexkit.{commit,document,implement,refine,review}.prompt.md`
@@ -53,15 +56,15 @@ npm run lint       # ESLint validation with @typescript-eslint/parser
 **Debug Pattern**: Press `F5` to launch Extension Development Host. The `watch` task auto-starts via `preLaunchTask`. Test changes in the spawned VS Code instance, then close it to return to main session.
 
 ### Critical Commands to Test After Code Changes
-1. **`Nexkit: Initialize Project`** - Tests full wizard flow + template deployment + settings persistence
-2. **`Nexkit: Update Templates`** - Tests GitHub API calls + version comparison + backup creation
+1. **`Nexkit: Initialize Project`** - Tests full wizard flow + local template deployment + settings persistence
+2. **`Nexkit: Check for Extension Updates`** - Tests GitHub API calls + extension version comparison + .vsix download
 3. **`Nexkit: Install User MCP Servers`** - Tests platform path resolution + JSON file writes + VS Code reload prompt
-4. **Status bar item click** - Tests `checkVersion` command + modal dialogs
+4. **Status bar item click** - Tests `checkVersion` command for extension updates
 
 ### Verifying Template Deployment
 After running `Initialize Project`:
-- Check `.github/` folder exists with prompts/chatmodes/instructions subdirectories
-- Verify `.github.backup-<timestamp>` directory created
+- Check `.github/` folder exists with prompts/chatmodes/instructions subdirectories copied from `resources/templates/`
+- Verify `.github.backup-<timestamp>` directory created if previous `.github/` existed
 - Confirm `.vscode/settings.json` has nexkit.* keys
 - Validate `.vscode/mcp.json` exists if Azure DevOps was enabled
 
@@ -143,8 +146,8 @@ Update status bar to reflect template state with visual indicators:
 Follow the established configuration structure in `package.json`:
 - `nexkit.init.*`: User preferences for initialization behavior
 - `nexkit.workspace.*`: Project-specific state (initialized, languages, mcpServers)
-- `nexkit.templates.*`: Template versioning and auto-update controls
-- `nexkit.backup.*`: Retention policies for backup cleanup (default 30 days)
+- `nexkit.extension.*`: Extension auto-update controls and check intervals
+- `nexkit.mcpSetup.*`: MCP setup notification preferences
 
 ### Webview Messaging Pattern
 `NexkitPanel` implements bi-directional communication:
@@ -180,5 +183,5 @@ When modifying commands:
 ## Critical Dependencies
 - **VS Code API 1.105.0+**: Uses latest QuickPick, Webview, and Configuration APIs
 - **Node.js fs.promises**: All file operations are async - never use sync variants
-- **GitHub API**: Fetches from `https://api.github.com/repos/NexusInnovation/nexkit/releases/latest`
+- **GitHub API**: Fetches extension updates from `https://api.github.com/repos/NexusInnovation/nexkit-vscode/releases/latest`
 - **Platform Detection**: `os.platform()` returns `'win32'`, `'darwin'`, or `'linux'` for path logic

@@ -10,14 +10,12 @@ A VS Code extension that migrates the functionality of the Nexkit CLI tool to pr
 
 This extension provides the following commands (accessible via Command Palette or right-click menus):
 
-- **Nexkit: Initialize Project** - Deploy templates to the current workspace for spec-driven development
-- **Nexkit: Update Templates** - Fetch and install the latest templates from GitHub releases
-- **Nexkit: Check Template Version** - Compare local vs available template versions
+- **Nexkit: Initialize Project** - Deploy bundled templates to the current workspace for spec-driven development
+- **Nexkit: Check for Extension Updates** - Check for new extension releases and install updates
 - **Nexkit: Install User MCP Servers** - Set up required MCP servers (Context7 and Sequential Thinking) for user-level configuration
 - **Nexkit: Enable Azure DevOps MCP** - Add Azure DevOps MCP to workspace for project-specific Azure integration
 - **Nexkit: Open Settings** - Quick access to extension settings
 - **Nexkit: Restore Template Backup** - Restore previous template versions from backups
-- **Nexkit: Show Panel** - Open the Nexkit custom panel with static information and action buttons
 
 ## Installation
 
@@ -76,28 +74,25 @@ This extension contributes the following settings:
 - `nexkit.workspace.languages`: List of programming languages selected for the workspace (default: [])
 - `nexkit.workspace.mcpServers`: List of MCP servers configured for the workspace (default: [])
 
-### Template Management
+### Extension Updates
 
-- `nexkit.templates.version`: Current version of templates installed (default: "")
-- `nexkit.templates.autoCheckUpdates`: Automatically check for template updates on extension activation (default: true)
-- `nexkit.templates.updateCheckInterval`: Hours between automatic update checks (default: 24)
+- `nexkit.extension.autoCheckUpdates`: Automatically check for extension updates on activation (default: true)
+- `nexkit.extension.updateCheckInterval`: Hours between automatic extension update checks (default: 24)
+- `nexkit.extension.lastUpdateCheck`: Timestamp of last extension update check (default: 0)
 
-### Backup Settings
+### MCP Setup
 
-- `nexkit.backup.retentionDays`: Days to keep template backups (default: 30)
+- `nexkit.mcpSetup.dismissed`: Whether the user has dismissed the MCP setup notification (default: false)
 
-## Nexkit Custom Panel
+## Template System
 
-The Nexkit extension now provides a custom panel with static information and standard action buttons. To open the panel, run the command:
+Templates are bundled with the extension in the `resources/templates/` directory and deployed to your workspace's `.github/` folder during initialization. Templates include:
 
-```sh
-Nexkit: Show Panel
-```
+- **Prompts**: commit, document, implement, refine, review
+- **Chat Modes**: debug, plan
+- **Instructions**: Language-specific coding guidelines (Python, TypeScript, C#, React, Bicep, etc.)
 
-The panel displays:
-
-- Static info (version, status) at the top
-- Action buttons below to run common Nexkit commands (Update Templates, Re-initialize Project, Install User MCP Servers, Open Settings)
+Templates are updated when you install a new version of the extension - no separate template management needed!
 
 ## Known Issues
 
