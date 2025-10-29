@@ -67,7 +67,7 @@ Given a work item ID as $ARGUMENTS, execute this refinement workflow:
 
 [Concise problem statement and specifics]
 
-### Acceptance Criteria
+#### Acceptance Criteria
 
 [acceptance criteria]
 - [Testable criterion 1]
