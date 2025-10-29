@@ -50,6 +50,16 @@
         "command": "nexkit-vscode.restoreBackup",
         "title": "Nexkit: Restore Template Backup",
         "category": "Nexkit"
+      },
+      {
+        "command": "nexkit-vscode.updateTemplates",
+        "title": "Nexkit: Update Templates",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexkit-vscode.reinitializeProject",
+        "title": "Nexkit: Re-initialize Project",
+        "category": "Nexkit"
       }
     ],
     "viewsContainers": {
