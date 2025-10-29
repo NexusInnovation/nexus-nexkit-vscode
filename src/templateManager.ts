@@ -187,37 +187,12 @@ export class TemplateManager {
       return; // Don't overwrite existing .gitignore
     }
 
-    const gitignoreContent = `# Dependencies
-node_modules/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-# Environment variables
-.env
-.env.local
-
-# IDE
-.vscode/settings.json
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-logs/
-
-# Build outputs
-dist/
-build/
-out/
-
-# Temporary files
-*.tmp
-*.temp
+    const gitignoreContent = `# NexKit generated .gitignore
+    
+.specify/
+.github/**/nexkit.*
+.github/chatmodes/
+.github/instructions/
 `;
 
     await fs.promises.writeFile(gitignorePath, gitignoreContent, 'utf8');
