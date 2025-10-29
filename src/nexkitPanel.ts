@@ -9,6 +9,7 @@ export class NexkitPanel {
 
     private _version: string = 'Loading...';
     private _status: string = 'Ready';
+    private _isInitialized: boolean = false;
 
     private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
         this._panel = panel;
@@ -21,7 +22,13 @@ export class NexkitPanel {
     private async _initializeVersionStatus() {
         this._version = await this._getExtensionVersion();
         this._status = 'Ready';
+        this._isInitialized = await this._checkIsInitialized();
         this._postVersionStatus();
+    }
+
+    private async _checkIsInitialized(): Promise<boolean> {
+        const config = vscode.workspace.getConfiguration('nexkit');
+        return config.get('workspace.initialized', false);
     }
 
     public async refresh() {
@@ -57,8 +64,9 @@ export class NexkitPanel {
                         <p>Status: <span id="status">Loading...</span></p>
                     </div>
                     <div class="actions">
-                        <button id="initializeProjectBtn" onclick="vscode.postMessage({ command: 'initProject' })">Initialize Project</button>
-                        <button id="reinitializeProjectBtn" onclick="vscode.postMessage({ command: 'reinitializeProject' })" disabled>Re-initialize Project</button>
+                        <!-- Default: show initialize until state known; JS will swap if already initialized -->
+                        <button id="initializeProjectBtn" onclick="vscode.postMessage({ command: 'initProject' })" disabled>Initialize Project</button>
+                        <button id="reinitializeProjectBtn" onclick="vscode.postMessage({ command: 'reinitializeProject' })" style="display: none;" disabled>Re-initialize Project</button>
                         <button id="updateTemplatesBtn" onclick="vscode.postMessage({ command: 'updateTemplates' })" disabled>Update Nexkit Templates</button>
                         <button id="installUserMCPsBtn" onclick="vscode.postMessage({ command: 'installUserMCPs' })">Install User MCP Servers</button>
                         <button id="openSettingsBtn" onclick="vscode.postMessage({ command: 'openSettings' })">Open Settings</button>
@@ -69,17 +77,36 @@ export class NexkitPanel {
                     
                     // Handle messages from the extension
                     window.addEventListener('message', event => {
-                        const { version, status, hasWorkspace } = event.data;
+                        const { version, status, hasWorkspace, isInitialized } = event.data;
                         if (typeof version !== 'undefined') {
                             document.getElementById('version').textContent = version;
                         }
                         if (typeof status !== 'undefined') {
                             document.getElementById('status').textContent = status;
                         }
+                        
+                        const updateTemplatesBtn = document.getElementById('updateTemplatesBtn');
+                        const initializeProjectBtn = document.getElementById('initializeProjectBtn');
+                        const reinitializeProjectBtn = document.getElementById('reinitializeProjectBtn');
+                        
+                        // Handle initialization state changes - show/hide mutually exclusive buttons
+                        if (typeof isInitialized !== 'undefined') {
+                            if (initializeProjectBtn && reinitializeProjectBtn) {
+                                if (isInitialized) {
+                                    // Project is initialized - show reinitialize button only
+                                    initializeProjectBtn.style.display = 'none';
+                                    reinitializeProjectBtn.style.display = 'block';
+                                } else {
+                                    // Project not initialized - show initialize button only
+                                    initializeProjectBtn.style.display = 'block';
+                                    reinitializeProjectBtn.style.display = 'none';
+                                }
+                            }
+                        }
+                        
+                        // Handle workspace state changes - must come after display logic
                         if (typeof hasWorkspace !== 'undefined') {
                             // Enable/disable workspace-dependent buttons
-                            const updateTemplatesBtn = document.getElementById('updateTemplatesBtn');
-                            const reinitializeProjectBtn = document.getElementById('reinitializeProjectBtn');
                             if (updateTemplatesBtn) {
                                 updateTemplatesBtn.disabled = !hasWorkspace;
                             }
@@ -131,15 +158,20 @@ export class NexkitPanel {
                     case 'ready':
                         // Webview is ready to receive messages
                         await this._initializeVersionStatus();
-                        // Also send workspace state
+                        // Also send workspace state and initialization state
                         const hasWorkspace = (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
-                        this._panel.webview.postMessage({ hasWorkspace });
+                        this._panel.webview.postMessage({ 
+                            hasWorkspace, 
+                            isInitialized: this._isInitialized 
+                        });
                         break;
                     case 'initProject':
                         await vscode.commands.executeCommand('nexkit-vscode.initProject');
                         this._status = 'Project initialized';
                         this._version = await this._getExtensionVersion();
+                        this._isInitialized = await this._checkIsInitialized();
                         this._postVersionStatus();
+                        this._panel.webview.postMessage({ isInitialized: this._isInitialized });
                         break;
                     case 'updateTemplates':
                         await vscode.commands.executeCommand('nexkit-vscode.updateTemplates');
@@ -151,7 +183,9 @@ export class NexkitPanel {
                         await vscode.commands.executeCommand('nexkit-vscode.reinitializeProject');
                         this._status = 'Project re-initialized';
                         this._version = await this._getExtensionVersion();
+                        this._isInitialized = await this._checkIsInitialized();
                         this._postVersionStatus();
+                        this._panel.webview.postMessage({ isInitialized: this._isInitialized });
                         break;
                     case 'installUserMCPs':
                         await vscode.commands.executeCommand('nexkit-vscode.installUserMCPs');
@@ -170,7 +204,7 @@ export class NexkitPanel {
     }
 
     private _postVersionStatus() {
-        this._panel.webview.postMessage({ version: this._version, status: this._status });
+        this._panel.webview.postMessage({ version: this._version, status: this._status, isInitialized: this._isInitialized });
     }
 
     private async _getExtensionVersion(): Promise<string> {

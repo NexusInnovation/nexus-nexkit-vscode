@@ -134,11 +134,12 @@ export function activate(context: vscode.ExtensionContext) {
 			webviewView.webview.onDidReceiveMessage(async message => {
 				switch (message.command) {
 					case 'ready':
-						// Webview is ready - send initial version, status, and workspace state
+						// Webview is ready - send initial version, status, workspace and initialization state
 						const ext = vscode.extensions.getExtension('nexusinno.nexkit-vscode');
 						const version = ext?.packageJSON.version || 'Unknown';
 						const hasWorkspace = (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
-						webviewView.webview.postMessage({ version, status: 'Ready', hasWorkspace });
+						const isInitialized = vscode.workspace.getConfiguration('nexkit').get('workspace.initialized', false);
+						webviewView.webview.postMessage({ version, status: 'Ready', hasWorkspace, isInitialized });
 						break;
 
 					case 'initProject':
@@ -146,7 +147,8 @@ export function activate(context: vscode.ExtensionContext) {
 						const ext3 = vscode.extensions.getExtension('nexusinno.nexkit-vscode');
 						webviewView.webview.postMessage({ 
 							version: ext3?.packageJSON.version || 'Unknown', 
-							status: 'Project initialized' 
+							status: 'Project initialized',
+							isInitialized: vscode.workspace.getConfiguration('nexkit').get('workspace.initialized', false)
 						});
 						break;
 					case 'updateTemplates':
@@ -154,7 +156,8 @@ export function activate(context: vscode.ExtensionContext) {
 						const ext6 = vscode.extensions.getExtension('nexusinno.nexkit-vscode');
 						webviewView.webview.postMessage({ 
 							version: ext6?.packageJSON.version || 'Unknown', 
-							status: 'Templates updated' 
+							status: 'Templates updated',
+							isInitialized: vscode.workspace.getConfiguration('nexkit').get('workspace.initialized', false)
 						});
 						break;
 					case 'reinitializeProject':
@@ -162,7 +165,8 @@ export function activate(context: vscode.ExtensionContext) {
 						const ext7 = vscode.extensions.getExtension('nexusinno.nexkit-vscode');
 						webviewView.webview.postMessage({ 
 							version: ext7?.packageJSON.version || 'Unknown', 
-							status: 'Project re-initialized' 
+							status: 'Project re-initialized',
+							isInitialized: vscode.workspace.getConfiguration('nexkit').get('workspace.initialized', false)
 						});
 						break;
 					case 'installUserMCPs':
