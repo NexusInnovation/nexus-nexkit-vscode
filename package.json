@@ -2,7 +2,7 @@
   "name": "nexkit-vscode",
   "displayName": "Nexkit",
   "description": "VS Code extension for Nexkit CLI",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "publisher": "nexusinno",
   "private": true,
   "license": "MIT",
@@ -16,9 +16,7 @@
   "categories": [
     "Other"
   ],
-  "dependencies": {
-    "adm-zip": "^0.5.16"
-  },
+  "dependencies": {},
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
@@ -29,18 +27,8 @@
         "category": "Nexkit"
       },
       {
-        "command": "nexkit-vscode.updateTemplates",
-        "title": "Nexkit: Update Templates",
-        "category": "Nexkit"
-      },
-      {
-        "command": "nexkit-vscode.checkVersion",
-        "title": "Nexkit: Check Template Version",
-        "category": "Nexkit"
-      },
-      {
         "command": "nexkit-vscode.checkExtensionUpdate",
-        "title": "Nexkit: Check for Extension Updates",
+        "title": "Nexkit: Check for Updates",
         "category": "Nexkit"
       },
       {
@@ -121,26 +109,6 @@
           },
           "default": [],
           "description": "List of MCP servers configured for the workspace."
-        },
-        "nexkit.templates.version": {
-          "type": "string",
-          "default": "",
-          "description": "Current version of templates installed."
-        },
-        "nexkit.templates.autoCheckUpdates": {
-          "type": "boolean",
-          "default": true,
-          "description": "Automatically check for template updates on extension activation."
-        },
-        "nexkit.templates.updateCheckInterval": {
-          "type": "number",
-          "default": 24,
-          "description": "Hours between automatic update checks."
-        },
-        "nexkit.templates.lastUpdateCheck": {
-          "type": "number",
-          "default": 0,
-          "description": "Timestamp of last update check."
         },
         "nexkit.extension.autoCheckUpdates": {
           "type": "boolean",

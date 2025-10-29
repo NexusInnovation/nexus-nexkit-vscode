@@ -87,17 +87,6 @@ if ($hasGit) {
     Write-Warning "[nexkit] Warning: Git repository not detected; skipped branch creation for $branchName"
 }
 
-$featureDir = Join-Path $specsDir $specFolder
-New-Item -ItemType Directory -Path $featureDir -Force | Out-Null
-
-$template = Join-Path $repoRoot '.nexkit/templates/spec-template.md'
-$specFile = Join-Path $featureDir 'spec.md'
-if (Test-Path $template) { 
-    Copy-Item $template $specFile -Force 
-} else { 
-    New-Item -ItemType File -Path $specFile | Out-Null 
-}
-
 # Set the NEXKIT_FEATURE environment variable for the current session
 $env:NEXKIT_FEATURE = $specFolder
 

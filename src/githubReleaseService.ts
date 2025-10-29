@@ -10,15 +10,6 @@ export interface ReleaseInfo {
   }>;
 }
 
-export interface Manifest {
-  version: string;
-  releaseDate: string;
-  changelogUrl: string;
-  minExtensionVersion: string;
-  templates: { [key: string]: any };
-  downloadUrl: string;
-}
-
 export class GitHubReleaseService {
   private static readonly REPO_OWNER = 'NexusInnovation';
   private static readonly REPO_NAME = 'nexkit-vscode';
@@ -131,73 +122,7 @@ export class GitHubReleaseService {
     }
   }
 
-  /**
-   * Fetch manifest from a specific release
-   */
-  async fetchManifest(version: string): Promise<Manifest> {
-    const url = `https://raw.githubusercontent.com/${GitHubReleaseService.REPO_OWNER}/${GitHubReleaseService.REPO_NAME}/${version}/manifest.json`;
 
-    try {
-      // First attempt with existing session silently
-      let headers = await this.getAuthHeaders(false);
-      let response = await fetch(url, { headers });
-
-      // Retry if authentication issue detected
-      if (!response.ok && (response.status === 404 || response.status === 401 || response.status === 403)) {
-        const authenticated = await this.handleAuthError(response);
-        
-        if (authenticated) {
-          headers = await this.getAuthHeaders(false);
-          response = await fetch(url, { headers });
-        }
-      }
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch manifest: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data as Manifest;
-    } catch (error) {
-      throw new Error(`Failed to fetch manifest for version ${version}: ${error}`);
-    }
-  }
-
-  /**
-   * Download templates zip file
-   */
-  async downloadTemplates(version: string): Promise<ArrayBuffer> {
-    const release = await this.fetchLatestRelease();
-    const templatesAsset = release.assets.find(asset => asset.name === 'templates.zip');
-
-    if (!templatesAsset) {
-      throw new Error('Templates zip file not found in latest release');
-    }
-
-    try {
-      // First attempt with existing session silently
-      let headers = await this.getAuthHeaders(false);
-      let response = await fetch(templatesAsset.browserDownloadUrl, { headers });
-
-      // Retry if authentication issue detected
-      if (!response.ok && (response.status === 404 || response.status === 401 || response.status === 403)) {
-        const authenticated = await this.handleAuthError(response);
-        
-        if (authenticated) {
-          headers = await this.getAuthHeaders(false);
-          response = await fetch(templatesAsset.browserDownloadUrl, { headers });
-        }
-      }
-
-      if (!response.ok) {
-        throw new Error(`Failed to download templates: ${response.status} ${response.statusText}`);
-      }
-
-      return await response.arrayBuffer();
-    } catch (error) {
-      throw new Error(`Failed to download templates: ${error}`);
-    }
-  }
 
   /**
    * Download .vsix file from release assets
@@ -240,35 +165,5 @@ export class GitHubReleaseService {
   getVsixAssetUrl(release: ReleaseInfo): string | null {
     const vsixAsset = release.assets.find(asset => asset.name.endsWith('.vsix'));
     return vsixAsset?.browserDownloadUrl || null;
-  }
-
-  /**
-   * Check if current extension version meets minimum requirements
-   */
-  checkExtensionVersion(minVersion: string): boolean {
-    const currentVersion = vscode.extensions.getExtension('nexkit-vscode')?.packageJSON?.version || '0.0.0';
-    return this.compareVersions(currentVersion, minVersion) >= 0;
-  }
-
-  /**
-   * Compare two semantic versions
-   */
-  private compareVersions(version1: string, version2: string): number {
-    const v1Parts = version1.split('.').map(Number);
-    const v2Parts = version2.split('.').map(Number);
-
-    for (let i = 0; i < Math.max(v1Parts.length, v2Parts.length); i++) {
-      const v1Part = v1Parts[i] || 0;
-      const v2Part = v2Parts[i] || 0;
-
-      if (v1Part > v2Part) {
-        return 1;
-      }
-      if (v1Part < v2Part) {
-        return -1;
-      }
-    }
-
-    return 0;
   }
 }

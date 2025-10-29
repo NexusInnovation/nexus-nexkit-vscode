@@ -40,14 +40,14 @@ export class InitWizard {
 
   private async selectLanguages(): Promise<string[] | null> {
     const languageOptions = [
-      { label: 'Python', description: 'Python development instructions' },
-      { label: 'TypeScript', description: 'TypeScript 5 ES2022 instructions' },
-      { label: 'C#', description: 'C# development instructions' },
-      { label: 'React', description: 'React.js development instructions' },
-      { label: 'Bicep', description: 'Azure Bicep code best practices' },
-      { label: '.NET Framework', description: '.NET Framework instructions' },
-      { label: 'Azure DevOps Pipelines', description: 'Azure DevOps pipeline instructions' },
-      { label: 'Markdown', description: 'Markdown writing instructions' }
+      { label: 'Python', description: 'Python development instructions', picked: true },
+      { label: 'TypeScript', description: 'TypeScript 5 ES2022 instructions', picked: true },
+      { label: 'C#', description: 'C# development instructions', picked: true },
+      { label: 'React', description: 'React.js development instructions', picked: true },
+      { label: 'Bicep', description: 'Azure Bicep code best practices', picked: true },
+      { label: '.NET Framework', description: '.NET Framework instructions', picked: true },
+      { label: 'Azure DevOps Pipelines', description: 'Azure DevOps pipeline instructions', picked: true },
+      { label: 'Markdown', description: 'Markdown writing instructions', picked: true
     ];
 
     const selected = await vscode.window.showQuickPick(languageOptions, {
