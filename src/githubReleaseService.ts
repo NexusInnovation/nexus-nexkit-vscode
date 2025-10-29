@@ -137,15 +137,17 @@ export class GitHubReleaseService {
     try {
       // First attempt with existing session silently
       let headers = await this.getAuthHeaders(false);
-      let response = await fetch(vsixAsset.browserDownloadUrl, { headers });
+      // Adjust Accept header for binary download
+      headers['Accept'] = 'application/octet-stream';
+      let response = await this.fetchWithRedirects(vsixAsset.browserDownloadUrl, { headers });
 
-      // Retry if authentication issue detected
+      // Retry if authentication issue detected (non-redirect auth failures)
       if (!response.ok && (response.status === 404 || response.status === 401 || response.status === 403)) {
         const authenticated = await this.handleAuthError(response);
-        
         if (authenticated) {
           headers = await this.getAuthHeaders(false);
-          response = await fetch(vsixAsset.browserDownloadUrl, { headers });
+          headers['Accept'] = 'application/octet-stream';
+          response = await this.fetchWithRedirects(vsixAsset.browserDownloadUrl, { headers });
         }
       }
 
@@ -165,5 +167,66 @@ export class GitHubReleaseService {
   getVsixAssetUrl(release: ReleaseInfo): string | null {
     const vsixAsset = release.assets.find(asset => asset.name.endsWith('.vsix'));
     return vsixAsset?.browserDownloadUrl || null;
+  }
+
+  /**
+   * Fetch helper that manually follows redirects. Some extension host environments
+   * have had issues auto-following 302 responses for large binary assets.
+   * This method ensures we follow up to maxRedirects and drop Authorization on cross-origin hops.
+   * @param url Initial URL to fetch
+   * @param init Initial request init (supports headers + method)
+   * @param maxRedirects Maximum redirects to follow to avoid infinite loops
+   */
+  private async fetchWithRedirects(
+    url: string,
+    init: { headers?: Record<string, string>; method?: string } = {},
+    maxRedirects: number = 10
+  ): Promise<Response> {
+    let currentUrl = url;
+    let redirects = 0;
+    let method = init.method || 'GET';
+    const headers: Record<string, string> = { ...(init.headers || {}) };
+
+    // Track original host for Authorization logic
+    const originalHost = new URL(url).host;
+
+    while (redirects <= maxRedirects) {
+      const response = await fetch(currentUrl, { headers, method, redirect: 'manual' });
+
+      // If not a redirect status, return immediately
+      if (![301, 302, 303, 307, 308].includes(response.status)) {
+        return response;
+      }
+
+      const location = response.headers.get('location');
+      if (!location) {
+        // Location header missing on redirect - treat as error
+        return response; // Let caller handle non-ok with missing location
+      }
+
+      redirects += 1;
+      if (redirects > maxRedirects) {
+        throw new Error(`Too many redirects (${redirects}) attempting to fetch ${url}`);
+      }
+
+      // Resolve relative locations against current URL
+      const nextUrl = new URL(location, currentUrl).toString();
+      const nextHost = new URL(nextUrl).host;
+
+      // Per GitHub asset download behavior, subsequent hosts (e.g., codeload.github.com, objects...) do not require Authorization
+      // Remove Authorization header if host changes to prevent leaking tokens cross-origin.
+      if (headers['Authorization'] && nextHost !== originalHost) {
+        delete headers['Authorization'];
+      }
+
+      // For 303, RFC allows switching to GET
+      if (response.status === 303) {
+        method = 'GET';
+      }
+
+      currentUrl = nextUrl;
+    }
+
+    throw new Error(`Redirect handling exited unexpectedly for ${url}`);
   }
 }
