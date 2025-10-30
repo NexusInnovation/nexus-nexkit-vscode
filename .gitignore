@@ -19,3 +19,5 @@ specs/
 .github/chatmodes/
 .github/instructions/
 # END NexKit
+
+.vscode/
