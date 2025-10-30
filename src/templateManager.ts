@@ -60,6 +60,43 @@ export class TemplateManager {
   }
 
   /**
+   * Dynamically discover all files that should always be deployed
+   * Scans resources/templates/.github/prompts/ and resources/templates/.github/chatmodes/
+   */
+  async discoverAlwaysDeployFiles(): Promise<string[]> {
+    const alwaysDeployFiles: string[] = [];
+
+    try {
+      // Discover prompt files
+      const promptsPath = path.join(this.templatesPath, '.github', 'prompts');
+      if (await this.checkFileExists(promptsPath)) {
+        const promptFiles = await fs.promises.readdir(promptsPath);
+        const markdownPrompts = promptFiles
+          .filter(file => file.endsWith('.md'))
+          .sort()
+          .map(file => `.github/prompts/${file}`);
+        alwaysDeployFiles.push(...markdownPrompts);
+      }
+
+      // Discover chatmode files
+      const chatmodesPath = path.join(this.templatesPath, '.github', 'chatmodes');
+      if (await this.checkFileExists(chatmodesPath)) {
+        const chatmodeFiles = await fs.promises.readdir(chatmodesPath);
+        const markdownChatmodes = chatmodeFiles
+          .filter(file => file.endsWith('.md'))
+          .sort()
+          .map(file => `.github/chatmodes/${file}`);
+        alwaysDeployFiles.push(...markdownChatmodes);
+      }
+    } catch (error) {
+      console.error('Error discovering template files:', error);
+      // Return empty array on error to fail gracefully
+    }
+
+    return alwaysDeployFiles.sort(); // Ensure consistent ordering
+  }
+
+  /**
    * Deploy a single template file
    */
   async deployTemplate(templatePath: string, targetRoot: string): Promise<void> {

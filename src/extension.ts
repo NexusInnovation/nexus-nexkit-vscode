@@ -115,8 +115,8 @@ export function activate(context: vscode.ExtensionContext) {
 	class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
 		private _view?: vscode.WebviewView;
 
-		constructor(private readonly _extensionUri: vscode.Uri) {}
-		
+		constructor(private readonly _extensionUri: vscode.Uri) { }
+
 		async resolveWebviewView(
 			webviewView: vscode.WebviewView,
 			context: vscode.WebviewViewResolveContext<unknown>,
@@ -129,7 +129,7 @@ export function activate(context: vscode.ExtensionContext) {
 			};
 			// Use static helper to get HTML
 			webviewView.webview.html = NexkitPanel.getWebviewContent(webviewView.webview, this._extensionUri);
-			
+
 			// Set up message listener
 			webviewView.webview.onDidReceiveMessage(async message => {
 				switch (message.command) {
@@ -145,8 +145,8 @@ export function activate(context: vscode.ExtensionContext) {
 					case 'initProject':
 						await vscode.commands.executeCommand('nexkit-vscode.initProject');
 						const ext3 = vscode.extensions.getExtension('nexusinno.nexkit-vscode');
-						webviewView.webview.postMessage({ 
-							version: ext3?.packageJSON.version || 'Unknown', 
+						webviewView.webview.postMessage({
+							version: ext3?.packageJSON.version || 'Unknown',
 							status: 'Project initialized',
 							isInitialized: vscode.workspace.getConfiguration('nexkit').get('workspace.initialized', false)
 						});
@@ -154,8 +154,8 @@ export function activate(context: vscode.ExtensionContext) {
 					case 'updateTemplates':
 						await vscode.commands.executeCommand('nexkit-vscode.updateTemplates');
 						const ext6 = vscode.extensions.getExtension('nexusinno.nexkit-vscode');
-						webviewView.webview.postMessage({ 
-							version: ext6?.packageJSON.version || 'Unknown', 
+						webviewView.webview.postMessage({
+							version: ext6?.packageJSON.version || 'Unknown',
 							status: 'Templates updated',
 							isInitialized: vscode.workspace.getConfiguration('nexkit').get('workspace.initialized', false)
 						});
@@ -163,8 +163,8 @@ export function activate(context: vscode.ExtensionContext) {
 					case 'reinitializeProject':
 						await vscode.commands.executeCommand('nexkit-vscode.reinitializeProject');
 						const ext7 = vscode.extensions.getExtension('nexusinno.nexkit-vscode');
-						webviewView.webview.postMessage({ 
-							version: ext7?.packageJSON.version || 'Unknown', 
+						webviewView.webview.postMessage({
+							version: ext7?.packageJSON.version || 'Unknown',
 							status: 'Project re-initialized',
 							isInitialized: vscode.workspace.getConfiguration('nexkit').get('workspace.initialized', false)
 						});
@@ -172,17 +172,17 @@ export function activate(context: vscode.ExtensionContext) {
 					case 'installUserMCPs':
 						await vscode.commands.executeCommand('nexkit-vscode.installUserMCPs');
 						const ext4 = vscode.extensions.getExtension('nexusinno.nexkit-vscode');
-						webviewView.webview.postMessage({ 
-							version: ext4?.packageJSON.version || 'Unknown', 
-							status: 'User MCP servers installed' 
+						webviewView.webview.postMessage({
+							version: ext4?.packageJSON.version || 'Unknown',
+							status: 'User MCP servers installed'
 						});
 						break;
 					case 'openSettings':
 						await vscode.commands.executeCommand('nexkit-vscode.openSettings');
 						const ext5 = vscode.extensions.getExtension('nexusinno.nexkit-vscode');
-						webviewView.webview.postMessage({ 
-							version: ext5?.packageJSON.version || 'Unknown', 
-							status: 'Settings opened' 
+						webviewView.webview.postMessage({
+							version: ext5?.packageJSON.version || 'Unknown',
+							status: 'Settings opened'
 						});
 						break;
 				}
@@ -268,17 +268,12 @@ export function activate(context: vscode.ExtensionContext) {
 
 				progress.report({ increment: 30, message: 'Preparing deployment configuration...' });
 
+				// Dynamically discover files to always deploy
+				const alwaysDeployFiles = await templateManager.discoverAlwaysDeployFiles();
+
 				// Create deployment config based on wizard results
 				const deploymentConfig: DeploymentConfig = {
-					alwaysDeploy: [
-						'.github/prompts/nexkit.commit.prompt.md',
-						'.github/prompts/nexkit.document.prompt.md',
-						'.github/prompts/nexkit.implement.prompt.md',
-						'.github/prompts/nexkit.refine.prompt.md',
-						'.github/prompts/nexkit.review.prompt.md',
-						'.github/chatmodes/debug.chatmode.md',
-						'.github/chatmodes/plan.chatmode.md'
-					],
+					alwaysDeploy: alwaysDeployFiles,
 					conditionalDeploy: {
 						'instructions.python': wizardResult.languages.includes('python') ? ['.github/instructions/python.instructions.md'] : [],
 						'instructions.typescript': wizardResult.languages.includes('typescript') ? ['.github/instructions/typescript-5-es2022.instructions.md'] : [],
@@ -368,7 +363,7 @@ export function activate(context: vscode.ExtensionContext) {
 		} catch (error) {
 			vscode.window.showErrorMessage(`Failed to install MCP servers: ${error}`);
 		}
-	});	const configureAzureDevOpsDisposable = vscode.commands.registerCommand('nexkit-vscode.configureAzureDevOps', () => {
+	}); const configureAzureDevOpsDisposable = vscode.commands.registerCommand('nexkit-vscode.configureAzureDevOps', () => {
 		vscode.window.showInformationMessage('Configure Azure DevOps functionality coming soon...');
 	});
 
@@ -489,17 +484,12 @@ export function activate(context: vscode.ExtensionContext) {
 
 				progress.report({ increment: 30, message: 'Preparing deployment configuration...' });
 
+				// Dynamically discover files to always deploy
+				const alwaysDeployFiles = await templateManager.discoverAlwaysDeployFiles();
+
 				// Recreate deployment config from stored settings
 				const deploymentConfig: DeploymentConfig = {
-					alwaysDeploy: [
-						'.github/prompts/nexkit.commit.prompt.md',
-						'.github/prompts/nexkit.document.prompt.md',
-						'.github/prompts/nexkit.implement.prompt.md',
-						'.github/prompts/nexkit.refine.prompt.md',
-						'.github/prompts/nexkit.review.prompt.md',
-						'.github/chatmodes/debug.chatmode.md',
-						'.github/chatmodes/plan.chatmode.md'
-					],
+					alwaysDeploy: alwaysDeployFiles,
 					conditionalDeploy: {
 						'instructions.python': languages.includes('python') ? ['.github/instructions/python.instructions.md'] : [],
 						'instructions.typescript': languages.includes('typescript') ? ['.github/instructions/typescript-5-es2022.instructions.md'] : [],
@@ -594,4 +584,4 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() { }

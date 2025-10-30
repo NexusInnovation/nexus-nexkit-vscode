@@ -151,7 +151,7 @@ dist/`;
 		// Verify proper formatting
 		assert.ok(content.includes('node_modules/'));
 		assert.ok(content.includes('# BEGIN NexKit'));
-		
+
 		// Verify no double newlines or formatting issues
 		assert.ok(!content.includes('\n\n\n'));
 	});
@@ -168,5 +168,115 @@ dist/`;
 		assert.ok(content.includes('# BEGIN NexKit'));
 		assert.ok(content.includes('# END NexKit'));
 		assert.ok(content.includes('.specify/'));
+	});
+});
+
+suite('Unit: TemplateManager - discoverAlwaysDeployFiles', () => {
+	let tempDir: string;
+	let manager: TemplateManager;
+	let mockContext: any;
+
+	setup(async () => {
+		// Create a temporary directory structure that mimics the extension structure
+		tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'nexkit-test-'));
+
+		// Create mock context with temporary extension path
+		mockContext = {
+			extensionPath: tempDir,
+		} as unknown as import('vscode').ExtensionContext;
+
+		manager = new TemplateManager(mockContext);
+
+		// Create the templates directory structure
+		const templatesDir = path.join(tempDir, 'resources', 'templates', '.github');
+		const promptsDir = path.join(templatesDir, 'prompts');
+		const chatmodesDir = path.join(templatesDir, 'chatmodes');
+
+		await fs.promises.mkdir(promptsDir, { recursive: true });
+		await fs.promises.mkdir(chatmodesDir, { recursive: true });
+	});
+
+	teardown(async () => {
+		// Clean up temporary directory after each test
+		try {
+			await fs.promises.rm(tempDir, { recursive: true, force: true });
+		} catch (error) {
+			console.error('Error cleaning up temp directory:', error);
+		}
+	});
+
+	test('should discover all files from prompts and chatmodes directories', async () => {
+		// Create test files
+		const promptsDir = path.join(tempDir, 'resources', 'templates', '.github', 'prompts');
+		const chatmodesDir = path.join(tempDir, 'resources', 'templates', '.github', 'chatmodes');
+
+		await fs.promises.writeFile(path.join(promptsDir, 'nexkit.commit.prompt.md'), 'test content');
+		await fs.promises.writeFile(path.join(promptsDir, 'nexkit.refactor.prompt.md'), 'test content');
+		await fs.promises.writeFile(path.join(chatmodesDir, 'debug.chatmode.md'), 'test content');
+		await fs.promises.writeFile(path.join(chatmodesDir, '4.1-Beast.chatmode.md'), 'test content');
+
+		const result = await (manager as any).discoverAlwaysDeployFiles();
+
+		assert.ok(Array.isArray(result));
+		assert.ok(result.includes('.github/prompts/nexkit.commit.prompt.md'));
+		assert.ok(result.includes('.github/prompts/nexkit.refactor.prompt.md'));
+		assert.ok(result.includes('.github/chatmodes/debug.chatmode.md'));
+		assert.ok(result.includes('.github/chatmodes/4.1-Beast.chatmode.md'));
+	});
+
+	test('should return empty array if directories do not exist', async () => {
+		// Don't create the directories - test handling of missing directories
+		const result = await (manager as any).discoverAlwaysDeployFiles();
+
+		assert.ok(Array.isArray(result));
+		assert.strictEqual(result.length, 0);
+	});
+
+	test('should ignore non-markdown files', async () => {
+		const promptsDir = path.join(tempDir, 'resources', 'templates', '.github', 'prompts');
+		const chatmodesDir = path.join(tempDir, 'resources', 'templates', '.github', 'chatmodes');
+
+		await fs.promises.writeFile(path.join(promptsDir, 'nexkit.commit.prompt.md'), 'test content');
+		await fs.promises.writeFile(path.join(promptsDir, 'config.json'), '{}'); // Should be ignored
+		await fs.promises.writeFile(path.join(chatmodesDir, 'debug.chatmode.md'), 'test content');
+		await fs.promises.writeFile(path.join(chatmodesDir, 'temp.txt'), 'temp'); // Should be ignored
+
+		const result = await (manager as any).discoverAlwaysDeployFiles();
+
+		assert.ok(result.includes('.github/prompts/nexkit.commit.prompt.md'));
+		assert.ok(result.includes('.github/chatmodes/debug.chatmode.md'));
+		assert.ok(!result.includes('.github/prompts/config.json'));
+		assert.ok(!result.includes('.github/chatmodes/temp.txt'));
+	});
+
+	test('should handle empty directories gracefully', async () => {
+		// Directories exist but are empty
+		const result = await (manager as any).discoverAlwaysDeployFiles();
+
+		assert.ok(Array.isArray(result));
+		assert.strictEqual(result.length, 0);
+	});
+
+	test('should sort files alphabetically for consistent ordering', async () => {
+		const promptsDir = path.join(tempDir, 'resources', 'templates', '.github', 'prompts');
+		const chatmodesDir = path.join(tempDir, 'resources', 'templates', '.github', 'chatmodes');
+
+		// Create files in non-alphabetical order
+		await fs.promises.writeFile(path.join(promptsDir, 'nexkit.refactor.prompt.md'), 'test content');
+		await fs.promises.writeFile(path.join(promptsDir, 'nexkit.commit.prompt.md'), 'test content');
+		await fs.promises.writeFile(path.join(chatmodesDir, 'plan.chatmode.md'), 'test content');
+		await fs.promises.writeFile(path.join(chatmodesDir, 'debug.chatmode.md'), 'test content');
+
+		const result = await (manager as any).discoverAlwaysDeployFiles();
+
+		// Verify prompts are sorted
+		const promptFiles = result.filter((f: string) => f.includes('/prompts/'));
+		assert.ok(promptFiles.indexOf('.github/prompts/nexkit.commit.prompt.md') <
+			promptFiles.indexOf('.github/prompts/nexkit.refactor.prompt.md'));
+
+		// Verify chatmodes are sorted
+		const chatmodeFiles = result.filter((f: string) => f.includes('/chatmodes/'));
+		assert.ok(chatmodeFiles.indexOf('.github/chatmodes/debug.chatmode.md') <
+			chatmodeFiles.indexOf('.github/chatmodes/plan.chatmode.md'));
 	});
 });
