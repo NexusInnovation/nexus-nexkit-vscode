@@ -60,7 +60,7 @@ export class InitWizard {
       return null;
     }
 
-    return selected.map(item => item.label.toLowerCase().replace(/[^a-z]/g, ''));
+    return selected.map(item => item.label.toLowerCase().replace(/[^a-z\#]/g, ''));
   }
 
   private async confirmAzureDevOps(): Promise<boolean> {
