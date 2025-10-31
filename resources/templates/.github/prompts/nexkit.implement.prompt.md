@@ -5,27 +5,31 @@ description: Complete implementation workflow for code changes with planning, de
 Given the change description provided as an $ARGUMENTS, execute the following comprehensive implementation workflow:
 
 ## Phase 0 (optional): Look for work item reference
+
 1. **IF work item reference is provided**
    - **Fetch work item details**: Use the MCP Azure DevOps tools to fetch work item details for the given work item ID:
    - Call `mcp_azure-devops_wit_get_work_item` with the work item ID and current project
    - Extract: id, title, description, work item type, state, assigned to, acceptance criteria, area path, iteration path
    - Look for attached file to get more information about implementation details.
    - Read all child and related work items and related work items to gather more context about the change request.
+   - Read all comments to gather additional context.
 2. **Create or use existing feature branch**
-   - If the current branch is not the feature branch then 
-      Run the script `.specify.specify/scripts/powershell/create-new-feature.ps1 -Json -WorkItemId "$ARGUMENTS"` from repo root and parse its JSON output for BRANCH_NAME. All file paths must be absolute.
+   - If the current branch is not the feature branch then
+     Run the script `.specify.specify/scripts/powershell/create-new-feature.ps1 -Json -WorkItemId "$ARGUMENTS"` from repo root and parse its JSON output for BRANCH_NAME. All file paths must be absolute.
    - else
-      Use the current branch and set BRANCH_NAME to current branch name
+     Use the current branch and set BRANCH_NAME to current branch name
 
 ## Phase 1: Planning and Validation
 
 1. **Analyze the Change Request**
+
    - Use sequential-thinking to explore multiple possible approaches
    - Consider different implementation strategies and choose the optimal one
    - Identify affected components, files, and dependencies
    - Assess the scope and complexity of the change
 
 2. **Create Implementation Plan**
+
    - Break down the change into logical, manageable steps
    - Identify files that need to be created, modified, or deleted
    - Map out dependencies between different parts of the implementation
@@ -42,11 +46,13 @@ Given the change description provided as an $ARGUMENTS, execute the following co
 ## Phase 2: Implementation
 
 4. **Gather Context and Documentation**
+
    - Use Context7 to retrieve up-to-date documentation for any libraries involved
    - Read existing code to understand current patterns and conventions
    - Identify reusable components and established patterns in the codebase
 
 5. **Implement the Change**
+
    - Follow the approved plan step by step
    - Write clean, maintainable code following project conventions
    - Add appropriate error handling and logging
@@ -63,6 +69,7 @@ Given the change description provided as an $ARGUMENTS, execute the following co
 ## Phase 3: Validation and Quality Assurance
 
 7. **Build and Test Execution**
+
    - Build the entire project to ensure no compilation errors
    - Run all existing tests to ensure no regressions
    - Execute new tests to validate the implementation
@@ -79,12 +86,14 @@ Given the change description provided as an $ARGUMENTS, execute the following co
 ## Phase 4: Review and Recommendations
 
 9. **Implementation Review**
+
    - Analyze the completed implementation for potential issues
    - Check for code smells or anti-patterns
    - Verify all requirements have been met
    - Assess the solution's scalability and maintainability
 
 10. **Identify Improvements and Next Steps**
+
     - Detect any potential problems or areas for optimization
     - Suggest additional enhancements or follow-up work
     - Recommend monitoring or observability improvements
@@ -118,6 +127,7 @@ Given the change description provided as an $ARGUMENTS, execute the following co
 ## Success Criteria
 
 The implementation is considered complete when:
+
 - All planned changes have been successfully implemented
 - All tests pass (existing and new)
 - Code builds without errors or warnings
