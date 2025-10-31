@@ -20,7 +20,45 @@ suite('Unit: TemplateManager', () => {
 		assert.strictEqual(typeof manager.deployTemplates, 'function');
 	});
 
-	// Add more tests for backup/restore and error handling as needed
+	test('should deep merge flat objects', () => {
+		const manager = new TemplateManager(mockContext);
+		const source = { a: 1, b: 2 };
+		const target = { b: 3, c: 4 };
+		const merged = (manager as any).deepMerge(source, target);
+		assert.deepStrictEqual(merged, { a: 1, b: 3, c: 4 });
+	});
+
+	test('should deep merge nested objects', () => {
+		const manager = new TemplateManager(mockContext);
+		const source = { editor: { fontSize: 14, tabSize: 2 } };
+		const target = { editor: { fontSize: 16 } };
+		const merged = (manager as any).deepMerge(source, target);
+		assert.deepStrictEqual(merged, { editor: { fontSize: 16, tabSize: 2 } });
+	});
+
+	test('should handle arrays correctly', () => {
+		const manager = new TemplateManager(mockContext);
+		const source = { arr: [1, 2] };
+		const target = { arr: [3] };
+		const merged = (manager as any).deepMerge(source, target);
+		assert.deepStrictEqual(merged, { arr: [3] });
+	});
+
+	test('should handle null/undefined values', () => {
+		const manager = new TemplateManager(mockContext);
+		const source = { a: 1, b: null };
+		const target = { b: undefined, c: null };
+		const merged = (manager as any).deepMerge(source, target);
+		assert.deepStrictEqual(merged, { a: 1, b: undefined, c: null });
+	});
+
+	test('should handle primitives', () => {
+		const manager = new TemplateManager(mockContext);
+		const source = { a: 1 };
+		const target = { a: 2 };
+		const merged = (manager as any).deepMerge(source, target);
+		assert.deepStrictEqual(merged, { a: 2 });
+	});
 });
 
 suite('Unit: TemplateManager - createGitignore', () => {
