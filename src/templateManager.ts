@@ -18,6 +18,32 @@ export class TemplateManager {
   }
 
   /**
+   * Deep merge two objects, with target values taking priority
+   * @param source - Base object (template settings)
+   * @param target - Override object (user settings) - these values win
+   * @returns Merged object
+   */
+  private deepMerge(source: any, target: any): any {
+    const result: any = { ...source };
+    for (const key in target) {
+      if (Object.prototype.hasOwnProperty.call(target, key)) {
+        if (
+          target[key] &&
+          typeof target[key] === 'object' &&
+          !Array.isArray(target[key]) &&
+          !Array.isArray(source[key])
+        ) {
+          result[key] = this.deepMerge(source[key] ?? {}, target[key]);
+        } else {
+          // Primitive, array, or only one side is object - target wins
+          result[key] = target[key];
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
    * Deploy templates to the workspace based on configuration
    */
   async deployTemplates(config: DeploymentConfig): Promise<void> {
@@ -33,7 +59,7 @@ export class TemplateManager {
 
     // Deploy conditional templates based on settings
     for (const [settingKey, templates] of Object.entries(config.conditionalDeploy)) {
-      const enabled = vscode.workspace.getConfiguration('nexkit').get(settingKey, false);
+      const enabled = templates.length > 0;
       if (enabled) {
         for (const template of templates) {
           await this.deployTemplate(template, workspaceFolder.uri.fsPath);
@@ -158,6 +184,7 @@ export class TemplateManager {
 
   /**
    * Deploy workspace MCP configuration
+   * NON-DESTRUCTIVE: Merges with existing configuration
    */
   private async deployWorkspaceMCPConfig(mcpServers: string[], targetRoot: string): Promise<void> {
     const mcpConfigPath = path.join(targetRoot, '.vscode', 'mcp.json');
@@ -165,22 +192,48 @@ export class TemplateManager {
 
     await fs.promises.mkdir(mcpDir, { recursive: true });
 
-    const config: any = { servers: {} };
+    // Read existing config or start fresh
+    let config: any = { servers: {} };
+    if (await this.checkFileExists(mcpConfigPath)) {
+      try {
+        const existingContent = await fs.promises.readFile(mcpConfigPath, 'utf8');
+        config = JSON.parse(existingContent);
+        if (!config.servers) {
+          config.servers = {};
+        }
+      } catch (error) {
+        console.warn('Existing mcp.json is invalid, starting fresh:', error);
+        config = { servers: {} };
+      }
+    }
 
     // Add Azure DevOps MCP if selected
     if (mcpServers.includes('azureDevOps')) {
       if (!config.inputs) {
         config.inputs = [];
       }
-      config.inputs.push({
-        id: 'ado_org',
-        type: 'promptString',
-        description: "Azure DevOps organization name (e.g. 'contoso')"
-      });
+      // Check if input already exists
+      const adoInputExists = config.inputs.some((input: any) => input.id === 'ado_org');
+      if (!adoInputExists) {
+        config.inputs.push({
+          id: 'ado_org',
+          type: 'promptString',
+          description: "Azure DevOps organization name (e.g. 'contoso')"
+        });
+      }
+      // Add or update the server (overwrite if exists, preserving user's choice to update)
       config.servers.azureDevOps = {
         command: 'npx',
         args: ['-y', '@azure-devops/mcp', '${input:ado_org}']
       };
+    }
+
+    // Add additional MCP servers as needed
+    for (const serverName of mcpServers) {
+      if (serverName !== 'azureDevOps') {
+        // Handle other server types in the future
+        console.log(`MCP server ${serverName} not yet implemented`);
+      }
     }
 
     await fs.promises.writeFile(mcpConfigPath, JSON.stringify(config, null, 2), 'utf8');
@@ -188,6 +241,7 @@ export class TemplateManager {
 
   /**
    * Deploy VS Code settings
+   * NON-DESTRUCTIVE: Deep merges with existing settings, user values take priority
    */
   private async deployVscodeSettings(targetRoot: string): Promise<void> {
     const settingsPath = path.join(targetRoot, '.vscode', 'settings.json');
@@ -197,17 +251,25 @@ export class TemplateManager {
 
     // Read template settings
     const templateSettings = await this.readTemplate(path.join('.vscode', 'settings.json'));
-    const settings = JSON.parse(templateSettings);
+    let settings = JSON.parse(templateSettings);
 
-    // Merge with existing settings if they exist
+    // Merge with existing settings if they exist (user settings take priority)
     if (await this.checkFileExists(settingsPath)) {
       const existingContent = await fs.promises.readFile(settingsPath, 'utf8');
       try {
         const existingSettings = JSON.parse(existingContent);
-        Object.assign(settings, existingSettings);
+        // Deep merge: template as base, user settings override
+        settings = this.deepMerge(settings, existingSettings);
       } catch (error) {
-        // If existing settings are invalid, overwrite
-        vscode.window.showWarningMessage('Existing .vscode/settings.json is invalid JSON. Overwriting with template.');
+        // If existing settings are invalid JSON, show warning but preserve template
+        vscode.window.showWarningMessage(
+          'Existing .vscode/settings.json is invalid JSON. Using template settings.',
+          'View Error'
+        ).then(selection => {
+          if (selection === 'View Error') {
+            // Optionally show error details
+          }
+        });
       }
     }
 
