@@ -1,6 +1,6 @@
 ---
-description: 'Best practices for Azure DevOps Pipeline YAML files'
-applyTo: '**/azure-pipelines.yml, **/azure-pipelines*.yml, **/*.pipeline.yml'
+description: "Best practices for Azure DevOps Pipeline YAML files"
+applyTo: "**/azure-pipelines.yml, **/azure-pipelines*.yml, **/*.pipeline.yml"
 ---
 
 # Azure DevOps Pipeline YAML Best Practices
@@ -120,57 +120,57 @@ trigger:
 variables:
   - group: shared-variables
   - name: buildConfiguration
-    value: 'Release'
+    value: "Release"
 
 stages:
   - stage: Build
-    displayName: 'Build and Test'
+    displayName: "Build and Test"
     jobs:
       - job: Build
-        displayName: 'Build Application'
+        displayName: "Build Application"
         pool:
-          vmImage: 'ubuntu-latest'
+          vmImage: "ubuntu-latest"
         steps:
           - task: UseDotNet@2
-            displayName: 'Use .NET SDK'
+            displayName: "Use .NET SDK"
             inputs:
-              version: '8.x'
-          
+              version: "8.x"
+
           - task: DotNetCoreCLI@2
-            displayName: 'Restore dependencies'
+            displayName: "Restore dependencies"
             inputs:
-              command: 'restore'
-              projects: '**/*.csproj'
-          
+              command: "restore"
+              projects: "**/*.csproj"
+
           - task: DotNetCoreCLI@2
-            displayName: 'Build application'
+            displayName: "Build application"
             inputs:
-              command: 'build'
-              projects: '**/*.csproj'
-              arguments: '--configuration $(buildConfiguration) --no-restore'
+              command: "build"
+              projects: "**/*.csproj"
+              arguments: "--configuration $(buildConfiguration) --no-restore"
 
   - stage: Deploy
-    displayName: 'Deploy to Staging'
+    displayName: "Deploy to Staging"
     dependsOn: Build
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     jobs:
       - deployment: DeployToStaging
-        displayName: 'Deploy to Staging Environment'
-        environment: 'staging'
+        displayName: "Deploy to Staging Environment"
+        environment: "staging"
         strategy:
           runOnce:
             deploy:
               steps:
                 - download: current
-                  displayName: 'Download drop artifact'
+                  displayName: "Download drop artifact"
                   artifact: drop
                 - task: AzureWebApp@1
-                  displayName: 'Deploy to Azure Web App'
+                  displayName: "Deploy to Azure Web App"
                   inputs:
-                    azureSubscription: 'staging-service-connection'
-                    appType: 'webApp'
-                    appName: 'myapp-staging'
-                    package: '$(Pipeline.Workspace)/drop/**/*.zip'
+                    azureSubscription: "staging-service-connection"
+                    appType: "webApp"
+                    appName: "myapp-staging"
+                    package: "$(Pipeline.Workspace)/drop/**/*.zip"
 ```
 
 ## Common Anti-Patterns to Avoid
