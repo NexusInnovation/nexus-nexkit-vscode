@@ -5,6 +5,7 @@ description: Safe refactoring workflow with mandatory test coverage verification
 Given the refactoring description provided as an $ARGUMENTS, execute the following comprehensive refactoring workflow:
 
 ## Phase 0 (optional): Look for work item reference
+
 1. **IF work item reference is provided**
    - **Fetch work item details**: Use the MCP Azure DevOps tools to fetch work item details for the given work item ID:
    - Call `mcp_azure-devops_wit_get_work_item` with the work item ID and current project
@@ -12,14 +13,15 @@ Given the refactoring description provided as an $ARGUMENTS, execute the followi
    - Look for attached file to get more information about refactoring details.
    - Read all child and related work items and related work items to gather more context about the refactoring request.
 2. **Create or use existing feature branch**
-   - If the current branch is not the feature branch then 
-      Run the script `.specify.specify/scripts/powershell/create-new-feature.ps1 -Json -WorkItemId "$ARGUMENTS"` from repo root and parse its JSON output for BRANCH_NAME. All file paths must be absolute.
+   - If the current branch is not the feature branch then
+     Run the script `.specify.specify/scripts/powershell/create-new-feature.ps1 -Json -WorkItemId "$ARGUMENTS"` from repo root and parse its JSON output for BRANCH_NAME. All file paths must be absolute.
    - else
-      Use the current branch and set BRANCH_NAME to current branch name
+     Use the current branch and set BRANCH_NAME to current branch name
 
 ## Phase 1: Analysis and Test Coverage Verification
 
 1. **Analyze the Refactoring Request**
+
    - Use sequential-thinking to understand the current code structure and refactoring goals
    - Identify the specific code components that need refactoring
    - Understand the motivation: performance, maintainability, readability, design patterns, etc.
@@ -27,6 +29,7 @@ Given the refactoring description provided as an $ARGUMENTS, execute the followi
    - Map dependencies and potential impact areas
 
 2. **Mandatory Test Coverage Verification**
+
    - **CRITICAL**: Examine existing test coverage for all code that will be modified
    - Identify gaps in test coverage that could lead to regression risks
    - Run existing tests to establish baseline functionality
@@ -46,6 +49,7 @@ Given the refactoring description provided as an $ARGUMENTS, execute the followi
 ## Phase 2: Refactoring Plan and Before/After Validation
 
 4. **Create Detailed Refactoring Plan**
+
    - Define the target architecture and structure
    - Break down refactoring into safe, incremental steps
    - Plan for maintaining functionality throughout the process
@@ -53,6 +57,7 @@ Given the refactoring description provided as an $ARGUMENTS, execute the followi
    - Estimate effort and complexity for each refactoring step
 
 5. **Present Before/After Comparison**
+
    - **Show current code structure**: Present the existing code that will be modified
    - **Show proposed refactored structure**: Present the planned code after refactoring
    - **Explain changes clearly**:
@@ -73,12 +78,14 @@ Given the refactoring description provided as an $ARGUMENTS, execute the followi
 ## Phase 3: Safe Refactoring Implementation
 
 7. **Gather Context and Documentation**
+
    - Use Context7 to retrieve up-to-date documentation for any libraries involved
    - Read existing code to understand current patterns and conventions
    - Identify reusable components and established patterns in the codebase
    - Review architectural guidelines and coding standards
 
 8. **Execute Incremental Refactoring**
+
    - Follow the approved plan step by step
    - Make small, atomic changes that can be easily validated
    - **Run tests after each significant change** to catch regressions early
@@ -96,6 +103,7 @@ Given the refactoring description provided as an $ARGUMENTS, execute the followi
 ## Phase 4: Final Validation and Quality Assurance
 
 10. **Comprehensive Testing**
+
     - Run complete test suite to ensure no regressions
     - Execute integration tests for end-to-end validation
     - Test edge cases and error conditions
@@ -103,6 +111,7 @@ Given the refactoring description provided as an $ARGUMENTS, execute the followi
     - Check memory usage and resource consumption if applicable
 
 11. **Code Quality Verification**
+
     - Verify refactored code follows project style guidelines
     - Check for improved maintainability and readability
     - Ensure proper separation of concerns
@@ -119,12 +128,14 @@ Given the refactoring description provided as an $ARGUMENTS, execute the followi
 ## Phase 5: Review and Validation
 
 13. **Implementation Review**
+
     - Compare final result with original refactoring goals
     - Verify all functionality has been preserved
     - Assess the improvement in code quality, maintainability, or performance
     - Check for any unintended side effects or new technical debt
 
 14. **Final Validation with User**
+
     - Present the completed refactoring with before/after comparison
     - Demonstrate that functionality has been preserved
     - Show improvements achieved (performance, maintainability, etc.)
@@ -168,6 +179,7 @@ Given the refactoring description provided as an $ARGUMENTS, execute the followi
 ## Success Criteria
 
 The refactoring is considered complete when:
+
 - All existing functionality is preserved (verified by tests)
 - Code structure and quality have been improved
 - All tests pass (existing and any new ones)
