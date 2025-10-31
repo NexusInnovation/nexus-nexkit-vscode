@@ -11,6 +11,14 @@
     "github": {
       "type": "http",
       "url": "https://api.githubcopilot.com/mcp/"
+    },
+    "M365AgentsToolkit MCP Server": {
+      "command": "npx",
+      "args": [
+        "@microsoft/m365agentstoolkit-mcp@latest",
+        "server",
+        "start"
+      ]
     }
   },
   "inputs": [
