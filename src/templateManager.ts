@@ -59,7 +59,7 @@ export class TemplateManager {
 
     // Deploy conditional templates based on settings
     for (const [settingKey, templates] of Object.entries(config.conditionalDeploy)) {
-      const enabled = vscode.workspace.getConfiguration('nexkit').get(settingKey, false);
+      const enabled = templates.length > 0;
       if (enabled) {
         for (const template of templates) {
           await this.deployTemplate(template, workspaceFolder.uri.fsPath);
