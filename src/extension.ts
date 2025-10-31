@@ -277,7 +277,7 @@ export function activate(context: vscode.ExtensionContext) {
 					conditionalDeploy: {
 						'instructions.python': wizardResult.languages.includes('python') ? ['.github/instructions/python.instructions.md'] : [],
 						'instructions.typescript': wizardResult.languages.includes('typescript') ? ['.github/instructions/typescript-5-es2022.instructions.md'] : [],
-						'instructions.csharp': wizardResult.languages.includes('C#') ? ['.github/instructions/csharp.instructions.md'] : [],
+						'instructions.csharp': wizardResult.languages.includes('c#') ? ['.github/instructions/csharp.instructions.md'] : [],
 						'instructions.reactjs': wizardResult.languages.includes('react') ? ['.github/instructions/reactjs.instructions.md'] : [],
 						'instructions.bicep': wizardResult.languages.includes('bicep') ? ['.github/instructions/bicep-code-best-practices.instructions.md'] : [],
 						'instructions.dotnetFramework': wizardResult.languages.includes('netframework') ? ['.github/instructions/dotnet-framework.instructions.md'] : [],
