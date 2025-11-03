@@ -340,7 +340,7 @@ export function activate(context: vscode.ExtensionContext) {
 							command: 'npx',
 							args: ['-y', '@upstash/context7-mcp']
 						});
-					} else if (server === 'sequentialthinking') {
+					} else if (server === 'sequential-thinking') {
 						await mcpConfigManager.addUserMCPServer('sequential-thinking', {
 							command: 'npx',
 							args: ['-y', '@modelcontextprotocol/server-sequential-thinking']
