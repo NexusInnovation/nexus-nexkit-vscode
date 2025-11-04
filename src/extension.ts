@@ -150,6 +150,10 @@ export async function activate(context: vscode.ExtensionContext) {
 						break;
 
 					case 'initProject':
+						telemetryService.trackEvent('ui.button.clicked', { 
+							buttonName: 'initProject',
+							source: 'webview'
+						});
 						await vscode.commands.executeCommand('nexkit-vscode.initProject');
 						const ext3 = vscode.extensions.getExtension('nexusinno.nexkit-vscode');
 						webviewView.webview.postMessage({
@@ -159,6 +163,10 @@ export async function activate(context: vscode.ExtensionContext) {
 						});
 						break;
 					case 'updateTemplates':
+						telemetryService.trackEvent('ui.button.clicked', { 
+							buttonName: 'updateTemplates',
+							source: 'webview'
+						});
 						await vscode.commands.executeCommand('nexkit-vscode.updateTemplates');
 						const ext6 = vscode.extensions.getExtension('nexusinno.nexkit-vscode');
 						webviewView.webview.postMessage({
@@ -168,6 +176,10 @@ export async function activate(context: vscode.ExtensionContext) {
 						});
 						break;
 					case 'reinitializeProject':
+						telemetryService.trackEvent('ui.button.clicked', { 
+							buttonName: 'reinitializeProject',
+							source: 'webview'
+						});
 						await vscode.commands.executeCommand('nexkit-vscode.reinitializeProject');
 						const ext7 = vscode.extensions.getExtension('nexusinno.nexkit-vscode');
 						webviewView.webview.postMessage({
@@ -177,6 +189,10 @@ export async function activate(context: vscode.ExtensionContext) {
 						});
 						break;
 					case 'installUserMCPs':
+						telemetryService.trackEvent('ui.button.clicked', { 
+							buttonName: 'installUserMCPs',
+							source: 'webview'
+						});
 						await vscode.commands.executeCommand('nexkit-vscode.installUserMCPs');
 						const ext4 = vscode.extensions.getExtension('nexusinno.nexkit-vscode');
 						webviewView.webview.postMessage({
@@ -185,6 +201,10 @@ export async function activate(context: vscode.ExtensionContext) {
 						});
 						break;
 					case 'openSettings':
+						telemetryService.trackEvent('ui.button.clicked', { 
+							buttonName: 'openSettings',
+							source: 'webview'
+						});
 						await vscode.commands.executeCommand('nexkit-vscode.openSettings');
 						const ext5 = vscode.extensions.getExtension('nexusinno.nexkit-vscode');
 						webviewView.webview.postMessage({

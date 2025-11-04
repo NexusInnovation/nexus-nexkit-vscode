@@ -48,6 +48,11 @@ export class TelemetryService {
 
 			this.client = appInsights.defaultClient;
 
+			// Configure for immediate flushing (live telemetry)
+			// Disable batching by setting flush interval to minimum
+			this.client.config.maxBatchSize = 1; // Send events immediately, one at a time
+			this.client.config.maxBatchIntervalMs = 0; // No delay between batches
+
 			// Set common properties for all telemetry
 			this.client.commonProperties = {
 				'extensionVersion': this.extensionVersion,
@@ -58,7 +63,7 @@ export class TelemetryService {
 			};
 
 			this.isEnabled = true;
-			console.log('Nexkit telemetry initialized successfully');
+			console.log('Nexkit telemetry initialized successfully (live mode)');
 		} catch (error) {
 			console.error('Failed to initialize telemetry:', error);
 			this.isEnabled = false;
@@ -96,10 +101,8 @@ export class TelemetryService {
 			return configConnectionString;
 		}
 
-		// Priority 3: Extension context secrets (for production)
-		// Note: This would require setting up secrets in the extension
-		// For now, we'll rely on environment variable or configuration
-		return undefined;
+		// Priority 3: Default connection string (production)
+		return 'InstrumentationKey=36541b20-0c16-4477-9d5c-d6990c51bafd;IngestionEndpoint=https://canadaeast-0.in.applicationinsights.azure.com/;LiveEndpoint=https://canadaeast.livediagnostics.monitor.azure.com/;ApplicationId=d5494809-608d-4364-a30e-feaeb0769286';
 	}
 
 	/**
@@ -167,6 +170,8 @@ export class TelemetryService {
 				...properties
 			}
 		});
+
+		this.client.flush();
 	}
 
 	/**
@@ -194,6 +199,8 @@ export class TelemetryService {
 				'duration': durationMs
 			}
 		});
+
+		this.client.flush();
 	}
 
 	/**
@@ -211,6 +218,8 @@ export class TelemetryService {
 				...properties
 			}
 		});
+
+		this.client.flush();
 	}
 
 	/**
@@ -229,6 +238,8 @@ export class TelemetryService {
 			},
 			measurements
 		});
+
+		this.client.flush();
 	}
 
 	/**
@@ -247,6 +258,8 @@ export class TelemetryService {
 				...properties
 			}
 		});
+
+		this.client.flush();
 	}
 
 	/**
