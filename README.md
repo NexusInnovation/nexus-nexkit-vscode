@@ -143,6 +143,46 @@ To develop this extension:
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development guidelines.
 
+## Privacy and Telemetry
+
+This extension collects anonymous usage telemetry to help improve Nexkit. The telemetry data includes:
+
+- Extension activation and session duration
+- Commands executed (not including any user data or file contents)
+- Error occurrences (without personal information)
+- Performance metrics (command execution times)
+- Extension version and VS Code version
+- Operating system type
+
+### What is NOT collected
+
+- No personally identifiable information (PII)
+- No file names, paths, or contents
+- No workspace or project names
+- No user settings or configuration values
+- No IP addresses (masked by default)
+
+### Opting Out
+
+Telemetry respects your privacy preferences:
+
+1. **VS Code Global Telemetry Setting**: If you've disabled telemetry in VS Code (`telemetry.telemetryLevel` set to `off`), Nexkit telemetry is automatically disabled.
+
+2. **Nexkit-Specific Setting**: You can disable Nexkit telemetry separately:
+   - Open Settings (Ctrl+, or Cmd+,)
+   - Search for "Nexkit Telemetry"
+   - Uncheck "Nexkit: Telemetry Enabled"
+
+   Or add to your `settings.json`:
+
+   ```json
+   {
+     "nexkit.telemetry.enabled": false
+   }
+   ```
+
+For more information about how telemetry data is collected and stored, see [docs/TELEMETRY_SETUP.md](docs/TELEMETRY_SETUP.md).
+
 ## Contributing
 
 Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:

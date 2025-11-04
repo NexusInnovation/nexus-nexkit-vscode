@@ -6,6 +6,7 @@ import { InitWizard } from './initWizard';
 import { MCPConfigManager } from './mcpConfigManager';
 import { NexkitPanel } from './nexkitPanel';
 import { ExtensionUpdateManager } from './extensionUpdateManager';
+import { TelemetryService } from './telemetryService';
 
 /**
  * Check for required MCP servers and show notification if missing
@@ -102,11 +103,17 @@ async function checkForExtensionUpdates(context: vscode.ExtensionContext): Promi
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
 
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
 	console.log('Nexkit extension activated!');
+
+	// Initialize telemetry service
+	const telemetryService = new TelemetryService(context);
+	await telemetryService.initialize();
+	telemetryService.trackActivation();
+	context.subscriptions.push(telemetryService);
 
 	const templateManager = new TemplateManager(context);
 	const mcpConfigManager = new MCPConfigManager();
@@ -228,95 +235,99 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Register commands
 	const initProjectDisposable = vscode.commands.registerCommand('nexkit-vscode.initProject', async () => {
-		try {
-			// Check if already initialized
-			const isInitialized = vscode.workspace.getConfiguration('nexkit').get('workspace.initialized', false);
-			if (isInitialized) {
-				const result = await vscode.window.showWarningMessage(
-					'Workspace already initialized with Nexkit. Re-initialize?',
-					'Yes', 'No'
-				);
-				if (result !== 'Yes') {
-					return;
-				}
-			}
-
-			// Run initialization wizard
-			const wizard = new InitWizard();
-			const wizardResult = await wizard.run();
-			if (!wizardResult) {
-				return; // User cancelled
-			}
-
-			// Show progress
-			await vscode.window.withProgress({
-				location: vscode.ProgressLocation.Notification,
-				title: 'Initializing Nexkit project...',
-				cancellable: false
-			}, async (progress) => {
-				progress.report({ increment: 10, message: 'Backing up existing templates...' });
-
-				// Backup existing .github directory if it exists
-				const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-				if (workspaceFolder) {
-					const githubPath = vscode.Uri.joinPath(workspaceFolder.uri, '.github').fsPath;
-					const backupPath = await templateManager.backupDirectory(githubPath);
-					if (backupPath) {
-						console.log(`Backed up existing templates to: ${backupPath}`);
+		await telemetryService.trackCommandExecution('initProject', async () => {
+			try {
+				// Check if already initialized
+				const isInitialized = vscode.workspace.getConfiguration('nexkit').get('workspace.initialized', false);
+				if (isInitialized) {
+					const result = await vscode.window.showWarningMessage(
+						'Workspace already initialized with Nexkit. Re-initialize?',
+						'Yes', 'No'
+					);
+					if (result !== 'Yes') {
+						return;
 					}
 				}
 
-				progress.report({ increment: 30, message: 'Preparing deployment configuration...' });
+				// Run initialization wizard
+				const wizard = new InitWizard();
+				const wizardResult = await wizard.run();
+				if (!wizardResult) {
+					return; // User cancelled
+				}
 
-				// Dynamically discover files to always deploy
-				const alwaysDeployFiles = await templateManager.discoverAlwaysDeployFiles();
+				// Show progress
+				await vscode.window.withProgress({
+					location: vscode.ProgressLocation.Notification,
+					title: 'Initializing Nexkit project...',
+					cancellable: false
+				}, async (progress) => {
+					progress.report({ increment: 10, message: 'Backing up existing templates...' });
 
-				// Create deployment config based on wizard results
-				const deploymentConfig: DeploymentConfig = {
-					alwaysDeploy: alwaysDeployFiles,
-					conditionalDeploy: {
-						'instructions.python': wizardResult.languages.includes('python') ? ['.github/instructions/python.instructions.md'] : [],
-						'instructions.typescript': wizardResult.languages.includes('typescript') ? ['.github/instructions/typescript-5-es2022.instructions.md'] : [],
-						'instructions.csharp': wizardResult.languages.includes('c#') ? ['.github/instructions/csharp.instructions.md'] : [],
-						'instructions.reactjs': wizardResult.languages.includes('react') ? ['.github/instructions/reactjs.instructions.md'] : [],
-						'instructions.bicep': wizardResult.languages.includes('bicep') ? ['.github/instructions/bicep-code-best-practices.instructions.md'] : [],
-						'instructions.dotnetFramework': wizardResult.languages.includes('netframework') ? ['.github/instructions/dotnet-framework.instructions.md'] : [],
-						'instructions.markdown': wizardResult.languages.includes('markdown') ? ['.github/instructions/markdown.instructions.md'] : [],
-						'instructions.azureDevOpsPipelines': wizardResult.languages.includes('azuredevopspipelines') ? ['.github/instructions/azure-devops-pipelines.instructions.md'] : []
-					},
-					workspaceMCPs: wizardResult.enableAzureDevOps ? ['azureDevOps'] : []
-				};
+					// Backup existing .github directory if it exists
+					const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+					if (workspaceFolder) {
+						const githubPath = vscode.Uri.joinPath(workspaceFolder.uri, '.github').fsPath;
+						const backupPath = await templateManager.backupDirectory(githubPath);
+						if (backupPath) {
+							console.log(`Backed up existing templates to: ${backupPath}`);
+						}
+					}
 
-				progress.report({ increment: 40, message: 'Deploying templates...' });
+					progress.report({ increment: 30, message: 'Preparing deployment configuration...' });
 
-				// Deploy templates
-				await templateManager.deployTemplates(deploymentConfig);
+					// Dynamically discover files to always deploy
+					const alwaysDeployFiles = await templateManager.discoverAlwaysDeployFiles();
 
-				progress.report({ increment: 20, message: 'Updating workspace settings...' });
+					// Create deployment config based on wizard results
+					const deploymentConfig: DeploymentConfig = {
+						alwaysDeploy: alwaysDeployFiles,
+						conditionalDeploy: {
+							'instructions.python': wizardResult.languages.includes('python') ? ['.github/instructions/python.instructions.md'] : [],
+							'instructions.typescript': wizardResult.languages.includes('typescript') ? ['.github/instructions/typescript-5-es2022.instructions.md'] : [],
+							'instructions.csharp': wizardResult.languages.includes('c#') ? ['.github/instructions/csharp.instructions.md'] : [],
+							'instructions.reactjs': wizardResult.languages.includes('react') ? ['.github/instructions/reactjs.instructions.md'] : [],
+							'instructions.bicep': wizardResult.languages.includes('bicep') ? ['.github/instructions/bicep-code-best-practices.instructions.md'] : [],
+							'instructions.dotnetFramework': wizardResult.languages.includes('netframework') ? ['.github/instructions/dotnet-framework.instructions.md'] : [],
+							'instructions.markdown': wizardResult.languages.includes('markdown') ? ['.github/instructions/markdown.instructions.md'] : [],
+							'instructions.azureDevOpsPipelines': wizardResult.languages.includes('azuredevopspipelines') ? ['.github/instructions/azure-devops-pipelines.instructions.md'] : []
+						},
+						workspaceMCPs: wizardResult.enableAzureDevOps ? ['azureDevOps'] : []
+					};
 
-				// Update workspace settings
-				const config = vscode.workspace.getConfiguration('nexkit');
-				await config.update('workspace.initialized', true, vscode.ConfigurationTarget.Workspace);
-				await config.update('workspace.languages', wizardResult.languages, vscode.ConfigurationTarget.Workspace);
-				await config.update('workspace.mcpServers', deploymentConfig.workspaceMCPs, vscode.ConfigurationTarget.Workspace);
+					progress.report({ increment: 40, message: 'Deploying templates...' });
 
-				// Update init settings based on wizard
-				await config.update('init.createVscodeSettings', wizardResult.createVscodeSettings, vscode.ConfigurationTarget.Workspace);
-				await config.update('init.createGitignore', wizardResult.createGitignore, vscode.ConfigurationTarget.Workspace);
-			});
+					// Deploy templates
+					await templateManager.deployTemplates(deploymentConfig);
 
-			vscode.window.showInformationMessage('Nexkit project initialized successfully!');
+					progress.report({ increment: 20, message: 'Updating workspace settings...' });
 
-		} catch (error) {
-			vscode.window.showErrorMessage(`Failed to initialize project: ${error}`);
-		}
+					// Update workspace settings
+					const config = vscode.workspace.getConfiguration('nexkit');
+					await config.update('workspace.initialized', true, vscode.ConfigurationTarget.Workspace);
+					await config.update('workspace.languages', wizardResult.languages, vscode.ConfigurationTarget.Workspace);
+					await config.update('workspace.mcpServers', deploymentConfig.workspaceMCPs, vscode.ConfigurationTarget.Workspace);
+
+					// Update init settings based on wizard
+					await config.update('init.createVscodeSettings', wizardResult.createVscodeSettings, vscode.ConfigurationTarget.Workspace);
+					await config.update('init.createGitignore', wizardResult.createGitignore, vscode.ConfigurationTarget.Workspace);
+				});
+
+				vscode.window.showInformationMessage('Nexkit project initialized successfully!');
+
+			} catch (error) {
+				vscode.window.showErrorMessage(`Failed to initialize project: ${error}`);
+				throw error;
+			}
+		});
 	});
 
 
 
 	const installUserMCPsDisposable = vscode.commands.registerCommand('nexkit-vscode.installUserMCPs', async () => {
-		try {
-			await vscode.window.withProgress({
+		await telemetryService.trackCommandExecution('installUserMCPs', async () => {
+			try {
+				await vscode.window.withProgress({
 				location: vscode.ProgressLocation.Notification,
 				title: 'Installing user MCP servers...',
 				cancellable: false
@@ -348,41 +359,50 @@ export function activate(context: vscode.ExtensionContext) {
 					}
 				}
 
-				progress.report({ increment: 25, message: 'Installation complete' });
-			});
+					progress.report({ increment: 25, message: 'Installation complete' });
+				});
 
-			vscode.window.showInformationMessage(
-				'User MCP servers installed successfully! Please reload VS Code for changes to take effect.',
-				'Reload Now'
-			).then(selection => {
-				if (selection === 'Reload Now') {
-					vscode.commands.executeCommand('workbench.action.reloadWindow');
-				}
-			});
+				vscode.window.showInformationMessage(
+					'User MCP servers installed successfully! Please reload VS Code for changes to take effect.',
+					'Reload Now'
+				).then(selection => {
+					if (selection === 'Reload Now') {
+						vscode.commands.executeCommand('workbench.action.reloadWindow');
+					}
+				});
 
-		} catch (error) {
-			vscode.window.showErrorMessage(`Failed to install MCP servers: ${error}`);
-		}
-	}); const configureAzureDevOpsDisposable = vscode.commands.registerCommand('nexkit-vscode.configureAzureDevOps', () => {
+			} catch (error) {
+				vscode.window.showErrorMessage(`Failed to install MCP servers: ${error}`);
+				throw error;
+			}
+		});
+	});
+
+	const configureAzureDevOpsDisposable = vscode.commands.registerCommand('nexkit-vscode.configureAzureDevOps', () => {
+		telemetryService.trackCommand('configureAzureDevOps');
 		vscode.window.showInformationMessage('Configure Azure DevOps functionality coming soon...');
 	});
 
 	const openSettingsDisposable = vscode.commands.registerCommand('nexkit-vscode.openSettings', async () => {
-		try {
-			// Open VS Code settings with nexkit filter
-			await vscode.commands.executeCommand('workbench.action.openSettings', 'nexkit');
-		} catch (error) {
-			vscode.window.showErrorMessage(`Failed to open settings: ${error}`);
-		}
+		await telemetryService.trackCommandExecution('openSettings', async () => {
+			try {
+				// Open VS Code settings with nexkit filter
+				await vscode.commands.executeCommand('workbench.action.openSettings', 'nexkit');
+			} catch (error) {
+				vscode.window.showErrorMessage(`Failed to open settings: ${error}`);
+				throw error;
+			}
+		});
 	});
 
 	const restoreBackupDisposable = vscode.commands.registerCommand('nexkit-vscode.restoreBackup', async () => {
-		try {
-			const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-			if (!workspaceFolder) {
-				vscode.window.showErrorMessage('No workspace folder open');
-				return;
-			}
+		await telemetryService.trackCommandExecution('restoreBackup', async () => {
+			try {
+				const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+				if (!workspaceFolder) {
+					vscode.window.showErrorMessage('No workspace folder open');
+					return;
+				}
 
 			const backups = await templateManager.listBackups(workspaceFolder.uri.fsPath);
 
@@ -418,30 +438,33 @@ export function activate(context: vscode.ExtensionContext) {
 				return;
 			}
 
-			await vscode.window.withProgress({
-				location: vscode.ProgressLocation.Notification,
-				title: 'Restoring backup...',
-				cancellable: false
-			}, async (progress) => {
-				progress.report({ increment: 50, message: 'Restoring templates...' });
-				await templateManager.restoreBackup(workspaceFolder.uri.fsPath, selectedBackup.description);
+				await vscode.window.withProgress({
+					location: vscode.ProgressLocation.Notification,
+					title: 'Restoring backup...',
+					cancellable: false
+				}, async (progress) => {
+					progress.report({ increment: 50, message: 'Restoring templates...' });
+					await templateManager.restoreBackup(workspaceFolder.uri.fsPath, selectedBackup.description);
 
-				progress.report({ increment: 50, message: 'Backup restored successfully' });
-			});
+					progress.report({ increment: 50, message: 'Backup restored successfully' });
+				});
 
-			vscode.window.showInformationMessage('Template backup restored successfully!');
-		} catch (error) {
-			vscode.window.showErrorMessage(`Failed to restore backup: ${error}`);
-		}
+				vscode.window.showInformationMessage('Template backup restored successfully!');
+			} catch (error) {
+				vscode.window.showErrorMessage(`Failed to restore backup: ${error}`);
+				throw error;
+			}
+		});
 	});
 
 	const updateTemplatesDisposable = vscode.commands.registerCommand('nexkit-vscode.updateTemplates', async () => {
-		try {
-			const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-			if (!workspaceFolder) {
-				vscode.window.showErrorMessage('No workspace folder open. Please open a workspace first.');
-				return;
-			}
+		await telemetryService.trackCommandExecution('updateTemplates', async () => {
+			try {
+				const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+				if (!workspaceFolder) {
+					vscode.window.showErrorMessage('No workspace folder open. Please open a workspace first.');
+					return;
+				}
 
 			// Get stored configuration
 			const config = vscode.workspace.getConfiguration('nexkit');
@@ -511,20 +534,23 @@ export function activate(context: vscode.ExtensionContext) {
 				progress.report({ increment: 10, message: 'Templates updated successfully' });
 			});
 
-			vscode.window.showInformationMessage('Nexkit templates updated successfully!');
+				vscode.window.showInformationMessage('Nexkit templates updated successfully!');
 
-		} catch (error) {
-			vscode.window.showErrorMessage(`Failed to update templates: ${error}`);
-		}
+			} catch (error) {
+				vscode.window.showErrorMessage(`Failed to update templates: ${error}`);
+				throw error;
+			}
+		});
 	});
 
 	const reinitializeProjectDisposable = vscode.commands.registerCommand('nexkit-vscode.reinitializeProject', async () => {
-		try {
-			const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-			if (!workspaceFolder) {
-				vscode.window.showErrorMessage('No workspace folder open. Please open a workspace first.');
-				return;
-			}
+		await telemetryService.trackCommandExecution('reinitializeProject', async () => {
+			try {
+				const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+				if (!workspaceFolder) {
+					vscode.window.showErrorMessage('No workspace folder open. Please open a workspace first.');
+					return;
+				}
 
 			const confirm = await vscode.window.showWarningMessage(
 				'This will run the initialization wizard again and reconfigure your Nexkit settings. Continue?',
@@ -536,39 +562,44 @@ export function activate(context: vscode.ExtensionContext) {
 				return;
 			}
 
-			// Run the init project command (it already handles re-initialization)
-			await vscode.commands.executeCommand('nexkit-vscode.initProject');
+				// Run the init project command (it already handles re-initialization)
+				await vscode.commands.executeCommand('nexkit-vscode.initProject');
 
-		} catch (error) {
-			vscode.window.showErrorMessage(`Failed to re-initialize project: ${error}`);
-		}
+			} catch (error) {
+				vscode.window.showErrorMessage(`Failed to re-initialize project: ${error}`);
+				throw error;
+			}
+		});
 	});
 
 	const checkExtensionUpdateDisposable = vscode.commands.registerCommand('nexkit-vscode.checkExtensionUpdate', async () => {
-		try {
-			await vscode.window.withProgress({
-				location: vscode.ProgressLocation.Notification,
-				title: 'Checking for extension updates...',
-				cancellable: false
-			}, async (progress) => {
-				progress.report({ increment: 30, message: 'Checking GitHub releases...' });
+		await telemetryService.trackCommandExecution('checkExtensionUpdate', async () => {
+			try {
+				await vscode.window.withProgress({
+					location: vscode.ProgressLocation.Notification,
+					title: 'Checking for extension updates...',
+					cancellable: false
+				}, async (progress) => {
+					progress.report({ increment: 30, message: 'Checking GitHub releases...' });
 
-				const extensionUpdateManager = new ExtensionUpdateManager(context);
-				const updateInfo = await extensionUpdateManager.checkForExtensionUpdate();
+					const extensionUpdateManager = new ExtensionUpdateManager(context);
+					const updateInfo = await extensionUpdateManager.checkForExtensionUpdate();
 
-				if (!updateInfo) {
-					vscode.window.showInformationMessage('Nexkit extension is up to date!');
-					return;
-				}
+					if (!updateInfo) {
+						vscode.window.showInformationMessage('Nexkit extension is up to date!');
+						return;
+					}
 
-				progress.report({ increment: 70, message: 'Update available...' });
+					progress.report({ increment: 70, message: 'Update available...' });
 
-				// Prompt user for update action
-				await extensionUpdateManager.promptUserForUpdate(updateInfo);
-			});
-		} catch (error) {
-			vscode.window.showErrorMessage(`Failed to check for extension updates: ${error}`);
-		}
+					// Prompt user for update action
+					await extensionUpdateManager.promptUserForUpdate(updateInfo);
+				});
+			} catch (error) {
+				vscode.window.showErrorMessage(`Failed to check for extension updates: ${error}`);
+				throw error;
+			}
+		});
 	});
 
 	context.subscriptions.push(
