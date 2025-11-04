@@ -44,6 +44,8 @@ export class TelemetryService {
 				.setAutoCollectDependencies(false)
 				.setAutoCollectConsole(false)
 				.setUseDiskRetryCaching(true)
+				// Enable live metrics streaming
+				// .setSendLiveMetrics(true)
 				.start();
 
 			this.client = appInsights.defaultClient;
