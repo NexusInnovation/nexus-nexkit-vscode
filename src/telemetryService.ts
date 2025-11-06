@@ -1,9 +1,14 @@
 import * as vscode from "vscode";
 import * as appInsights from "applicationinsights";
+import * as os from "os";
+import * as https from "https";
 
 /**
  * Telemetry service for tracking extension usage, commands, errors, and performance metrics
  * Respects user privacy settings and VS Code telemetry configuration
+ *
+ * ⚠️ PRIVACY NOTICE: This service collects PII including username and IP address.
+ * Ensure compliance with privacy regulations (GDPR, CCPA, etc.) and obtain proper user consent.
  */
 export class TelemetryService {
   private client: appInsights.TelemetryClient | null = null;
@@ -11,6 +16,8 @@ export class TelemetryService {
   private sessionId: string;
   private extensionVersion: string;
   private activationTime: number;
+  private cachedPublicIP: string | null = null;
+  private username: string;
 
   constructor(private context: vscode.ExtensionContext) {
     this.sessionId = this.generateSessionId();
@@ -18,6 +25,66 @@ export class TelemetryService {
       vscode.extensions.getExtension("nexusinno.nexkit-vscode")?.packageJSON
         .version || "unknown";
     this.activationTime = Date.now();
+    this.username = this.getUsername();
+  }
+
+  /**
+   * Get the OS username
+   * @returns The current OS username
+   */
+  private getUsername(): string {
+    try {
+      return os.userInfo().username;
+    } catch (error) {
+      console.error("Failed to get username:", error);
+      return "unknown";
+    }
+  }
+
+  /**
+   * Fetch the public IP address from an external service
+   * Uses caching to avoid repeated requests
+   * @returns Promise resolving to IP address or "unavailable" on failure
+   */
+  private async fetchPublicIP(): Promise<string> {
+    // Return cached IP if available
+    if (this.cachedPublicIP) {
+      return this.cachedPublicIP;
+    }
+
+    return new Promise<string>((resolve) => {
+      const timeout = setTimeout(() => {
+        console.log("IP fetch timeout - using unavailable");
+        resolve("unavailable");
+      }, 5000);
+
+      https
+        .get("https://api.ipify.org?format=json", (res) => {
+          let data = "";
+
+          res.on("data", (chunk) => {
+            data += chunk;
+          });
+
+          res.on("end", () => {
+            clearTimeout(timeout);
+            try {
+              const json = JSON.parse(data);
+              const ip = json.ip || "unavailable";
+              this.cachedPublicIP = ip;
+              resolve(ip);
+            } catch (error) {
+              console.error("Failed to parse IP response:", error);
+              resolve("unavailable");
+            }
+          });
+        })
+        .on("error", (error) => {
+          clearTimeout(timeout);
+          console.error("Failed to fetch public IP:", error);
+          resolve("unavailable");
+        });
+    });
   }
 
   /**
@@ -58,13 +125,18 @@ export class TelemetryService {
       this.client.config.maxBatchSize = 1; // Send events immediately, one at a time
       this.client.config.maxBatchIntervalMs = 0; // No delay between batches
 
-      // Set common properties for all telemetry
+      // Fetch public IP address (async, with caching and timeout)
+      const publicIP = await this.fetchPublicIP();
+
+      // Set common properties for all telemetry (includes PII: username and IP)
       this.client.commonProperties = {
         extensionVersion: this.extensionVersion,
         vscodeVersion: vscode.version,
         platform: process.platform,
         nodeVersion: process.version,
         sessionId: this.sessionId,
+        username: this.username,
+        ipAddress: publicIP,
       };
 
       this.isEnabled = true;
