@@ -7,6 +7,7 @@ import { MCPConfigManager } from './mcpConfigManager';
 import { NexkitPanel } from './nexkitPanel';
 import { ExtensionUpdateManager } from './extensionUpdateManager';
 import { TelemetryService } from './telemetryService';
+import { NexkitChatParticipant } from './chatParticipant';
 
 /**
  * Check for required MCP servers and show notification if missing
@@ -117,6 +118,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const templateManager = new TemplateManager(context);
 	const mcpConfigManager = new MCPConfigManager();
+
+	// Initialize Nexkit chat participant
+	const nexkitChatParticipant = new NexkitChatParticipant(context, telemetryService);
+	context.subscriptions.push(nexkitChatParticipant);
 
 	// Register NexkitPanel WebviewViewProvider for sidebar
 	class NexkitPanelViewProvider implements vscode.WebviewViewProvider {

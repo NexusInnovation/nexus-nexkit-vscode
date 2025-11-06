@@ -2,6 +2,58 @@
 
 This guide walks you through deploying Azure Application Insights infrastructure for the Nexkit VS Code extension telemetry.
 
+## ⚠️ Privacy and Data Collection Notice
+
+**IMPORTANT: This telemetry service collects Personally Identifiable Information (PII).**
+
+### Data Collected
+
+The Nexkit telemetry service automatically collects the following information with every telemetry event:
+
+- **Username**: Operating system username (e.g., `john.doe`, `DOMAIN\user`)
+- **IP Address**: Public IP address of the user's machine
+- **Extension version**: Version of Nexkit extension installed
+- **VS Code version**: Version of Visual Studio Code
+- **Platform**: Operating system (Windows, macOS, Linux)
+- **Session ID**: Unique identifier for each extension activation session
+- **Command usage**: Commands executed and their success/failure status
+- **Error information**: Exception details and stack traces
+
+### Privacy Compliance
+
+Before deploying this telemetry system, ensure you:
+
+1. ✅ **Obtain User Consent**: Users must be informed about data collection and provide explicit consent
+2. ✅ **Comply with Regulations**: Ensure compliance with:
+   - GDPR (General Data Protection Regulation) for EU users
+   - CCPA (California Consumer Privacy Act) for California users
+   - Other applicable data protection laws in your jurisdiction
+3. ✅ **Provide Opt-Out**: The extension respects VS Code's global telemetry settings and includes `nexkit.telemetry.enabled` configuration
+4. ✅ **Document Data Usage**: Clearly communicate how collected data will be used, stored, and protected
+5. ✅ **Implement Data Retention**: Configure appropriate data retention policies in Application Insights
+6. ✅ **Secure Access**: Restrict access to telemetry data using Azure RBAC and implement proper authentication
+
+### Recommended Use Cases
+
+This PII-enabled telemetry configuration is suitable for:
+
+- **Enterprise/Internal Deployments**: Organizations tracking extension usage within their environment
+- **Security & Compliance Auditing**: Tracking who performs specific actions for audit trails
+- **Support & Troubleshooting**: Identifying users who encounter issues for targeted support
+
+### Alternative Approach (Non-PII)
+
+For public/open-source distributions where PII collection is not appropriate:
+
+1. Remove or hash username before sending to telemetry
+2. Disable IP address tracking (Application Insights can still collect anonymized location data)
+3. Use anonymous user identifiers instead of usernames
+
+To disable PII tracking, modify `src/telemetryService.ts`:
+
+- Remove `username` and `ipAddress` from `commonProperties`
+- Use session-based or device-based anonymous identifiers instead
+
 ## Prerequisites
 
 - Azure subscription with appropriate permissions
@@ -163,7 +215,20 @@ customEvents
 | order by Users desc
 ```
 
-**Command Usage:**
+**Command Usage by User:**
+
+```kql
+customEvents
+| where timestamp > ago(7d)
+| where name == "command.executed"
+| summarize Count=count() by 
+    Command=tostring(customDimensions.commandName),
+    Username=tostring(customDimensions.username),
+    IPAddress=tostring(customDimensions.ipAddress)
+| order by Count desc
+```
+
+**Command Usage Summary:**
 
 ```kql
 customEvents
@@ -171,6 +236,21 @@ customEvents
 | where name == "command.executed"
 | summarize Count=count() by Command=tostring(customDimensions.commandName)
 | order by Count desc
+```
+
+**User Activity by IP Address:**
+
+```kql
+customEvents
+| where timestamp > ago(24h)
+| summarize 
+    Events=count(), 
+    Commands=countif(name == "command.executed"),
+    Errors=countif(name == "error")
+by 
+    Username=tostring(customDimensions.username),
+    IPAddress=tostring(customDimensions.ipAddress)
+| order by Events desc
 ```
 
 **Real-time Active Sessions (last 5 minutes):**
