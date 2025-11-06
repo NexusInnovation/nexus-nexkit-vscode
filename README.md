@@ -11,6 +11,8 @@ A VS Code extension that migrates the functionality of the Nexkit CLI tool to pr
 This extension provides the following commands (accessible via Command Palette or right-click menus):
 
 - **Nexkit: Initialize Project** - Deploy bundled templates to the current workspace for spec-driven development
+- **Nexkit: Update Templates** - Update workspace templates to match the latest extension version
+- **Nexkit: Re-initialize Project** - Re-run the initialization wizard to reconfigure your workspace
 - **Nexkit: Check for Extension Updates** - Check for new extension releases and install updates
 - **Nexkit: Install User MCP Servers** - Set up required MCP servers (Context7 and Sequential Thinking) for user-level configuration
 - **Nexkit: Enable Azure DevOps MCP** - Add Azure DevOps MCP to workspace for project-specific Azure integration
@@ -68,21 +70,16 @@ This extension contributes the following settings:
 - `nexkit.init.createVscodeSettings`: Create .vscode/settings.json during initialization (default: true)
 - `nexkit.init.createGitignore`: Create .gitignore during initialization (default: true)
 
-### Workspace Settings
-
-- `nexkit.workspace.initialized`: Indicates if the workspace has been initialized with Nexkit (default: false)
-- `nexkit.workspace.languages`: List of programming languages selected for the workspace (default: [])
-- `nexkit.workspace.mcpServers`: List of MCP servers configured for the workspace (default: [])
-
 ### Extension Updates
 
 - `nexkit.extension.autoCheckUpdates`: Automatically check for extension updates on activation (default: true)
 - `nexkit.extension.updateCheckInterval`: Hours between automatic extension update checks (default: 24)
-- `nexkit.extension.lastUpdateCheck`: Timestamp of last extension update check (default: 0)
+- `nexkit.extension.promptTemplateUpdate`: Prompt to update templates when extension is updated (default: true)
 
-### MCP Setup
+### Telemetry Settings
 
-- `nexkit.mcpSetup.dismissed`: Whether the user has dismissed the MCP setup notification (default: false)
+- `nexkit.telemetry.enabled`: Enable telemetry to help improve Nexkit. Respects VS Code's global telemetry setting. No personally identifiable information is collected (default: true)
+- `nexkit.telemetry.connectionString`: Azure Application Insights connection string (optional, for custom telemetry endpoint) (default: "")
 
 ## Template System
 
@@ -92,7 +89,26 @@ Templates are bundled with the extension in the `resources/templates/` directory
 - **Chat Modes**: debug, plan
 - **Instructions**: Language-specific coding guidelines (Python, TypeScript, C#, React, Bicep, etc.)
 
-Templates are updated when you install a new version of the extension - no separate template management needed!
+### Automatic Template Updates
+
+When you update the Nexkit extension to a new version, you'll automatically be prompted to update your workspace templates. This ensures you always have access to the latest prompts, instructions, and chatmodes.
+
+**How it works:**
+
+1. Extension detects when its version has changed
+2. If your workspace is initialized with Nexkit, you'll see a notification
+3. Choose "Update Templates" to apply the latest templates
+4. A backup is created automatically before any files are overwritten
+
+**What gets updated:**
+
+- All prompts (`.github/prompts/`)
+- All chatmodes (`.github/chatmodes/`)
+- All instructions (`.github/instructions/`)
+
+**Manual update:** You can also update templates anytime by running "Nexkit: Update Templates" from the Command Palette.
+
+**Disable auto-prompt:** Set `nexkit.extension.promptTemplateUpdate` to `false` if you prefer not to be prompted automatically.
 
 ## Known Issues
 

@@ -109,13 +109,14 @@ Given the change description provided as an $ARGUMENTS, execute the following co
 
 ## Guidelines and Best Practices
 
-- **Respect the constitution**: Read the constitution at .specify.specify/memory/constitution.md to understand constitutional requirements.
+- **Respect the instructions**: Read all relevant instructions files .github/copilot-instructions.md and matching .github/instructions/\*.md before starting implementation
 - **Use Sequential-Thinking**: For complex decisions, use sequential-thinking to explore multiple options and select the best approach
 - **Leverage Context7**: Always consult Context7 for the latest documentation of libraries and frameworks being used
 - **Maintain Quality**: Ensure all changes meet or exceed existing code quality standards
 - **Test-Driven Approach**: Write tests early and ensure comprehensive coverage
 - **Documentation**: Update relevant documentation as part of the implementation
 - **Communication**: Keep the user informed of progress and any roadblocks encountered
+- **Ask Questions**: If any part of the change request is unclear, ask clarifying questions **one at the time** before proceeding
 
 ## Error Handling
 

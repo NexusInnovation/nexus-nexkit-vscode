@@ -1,6 +1,6 @@
-import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as path from 'path';
+import * as vscode from "vscode";
+import * as fs from "fs";
+import * as path from "path";
 
 export interface DeploymentConfig {
   alwaysDeploy: string[];
@@ -14,7 +14,11 @@ export class TemplateManager {
 
   constructor(context: vscode.ExtensionContext) {
     this.extensionContext = context;
-    this.templatesPath = path.join(context.extensionPath, 'resources', 'templates');
+    this.templatesPath = path.join(
+      context.extensionPath,
+      "resources",
+      "templates"
+    );
   }
 
   /**
@@ -29,7 +33,7 @@ export class TemplateManager {
       if (Object.prototype.hasOwnProperty.call(target, key)) {
         if (
           target[key] &&
-          typeof target[key] === 'object' &&
+          typeof target[key] === "object" &&
           !Array.isArray(target[key]) &&
           !Array.isArray(source[key])
         ) {
@@ -49,7 +53,7 @@ export class TemplateManager {
   async deployTemplates(config: DeploymentConfig): Promise<void> {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) {
-      throw new Error('No workspace folder open');
+      throw new Error("No workspace folder open");
     }
 
     // Always deploy core templates
@@ -58,7 +62,9 @@ export class TemplateManager {
     }
 
     // Deploy conditional templates based on settings
-    for (const [settingKey, templates] of Object.entries(config.conditionalDeploy)) {
+    for (const [settingKey, templates] of Object.entries(
+      config.conditionalDeploy
+    )) {
       const enabled = templates.length > 0;
       if (enabled) {
         for (const template of templates) {
@@ -69,17 +75,24 @@ export class TemplateManager {
 
     // Deploy workspace MCP configurations
     if (config.workspaceMCPs.length > 0) {
-      await this.deployWorkspaceMCPConfig(config.workspaceMCPs, workspaceFolder.uri.fsPath);
+      await this.deployWorkspaceMCPConfig(
+        config.workspaceMCPs,
+        workspaceFolder.uri.fsPath
+      );
     }
 
     // Deploy VS Code settings if enabled
-    const createVscodeSettings = vscode.workspace.getConfiguration('nexkit').get('init.createVscodeSettings', true);
+    const createVscodeSettings = vscode.workspace
+      .getConfiguration("nexkit")
+      .get("init.createVscodeSettings", true);
     if (createVscodeSettings) {
       await this.deployVscodeSettings(workspaceFolder.uri.fsPath);
     }
 
     // Create .gitignore if enabled
-    const createGitignore = vscode.workspace.getConfiguration('nexkit').get('init.createGitignore', true);
+    const createGitignore = vscode.workspace
+      .getConfiguration("nexkit")
+      .get("init.createGitignore", true);
     if (createGitignore) {
       await this.createGitignore(workspaceFolder.uri.fsPath);
     }
@@ -94,28 +107,32 @@ export class TemplateManager {
 
     try {
       // Discover prompt files
-      const promptsPath = path.join(this.templatesPath, '.github', 'prompts');
+      const promptsPath = path.join(this.templatesPath, ".github", "prompts");
       if (await this.checkFileExists(promptsPath)) {
         const promptFiles = await fs.promises.readdir(promptsPath);
         const markdownPrompts = promptFiles
-          .filter(file => file.endsWith('.md'))
+          .filter((file) => file.endsWith(".md"))
           .sort()
-          .map(file => `.github/prompts/${file}`);
+          .map((file) => `.github/prompts/${file}`);
         alwaysDeployFiles.push(...markdownPrompts);
       }
 
       // Discover chatmode files
-      const chatmodesPath = path.join(this.templatesPath, '.github', 'chatmodes');
+      const chatmodesPath = path.join(
+        this.templatesPath,
+        ".github",
+        "chatmodes"
+      );
       if (await this.checkFileExists(chatmodesPath)) {
         const chatmodeFiles = await fs.promises.readdir(chatmodesPath);
         const markdownChatmodes = chatmodeFiles
-          .filter(file => file.endsWith('.md'))
+          .filter((file) => file.endsWith(".md"))
           .sort()
-          .map(file => `.github/chatmodes/${file}`);
+          .map((file) => `.github/chatmodes/${file}`);
         alwaysDeployFiles.push(...markdownChatmodes);
       }
     } catch (error) {
-      console.error('Error discovering template files:', error);
+      console.error("Error discovering template files:", error);
       // Return empty array on error to fail gracefully
     }
 
@@ -125,11 +142,14 @@ export class TemplateManager {
   /**
    * Deploy a single template file
    */
-  async deployTemplate(templatePath: string, targetRoot: string): Promise<void> {
+  async deployTemplate(
+    templatePath: string,
+    targetRoot: string
+  ): Promise<void> {
     const fullTemplatePath = path.join(this.templatesPath, templatePath);
     const targetPath = path.join(targetRoot, templatePath);
 
-    if (!await this.checkFileExists(fullTemplatePath)) {
+    if (!(await this.checkFileExists(fullTemplatePath))) {
       vscode.window.showWarningMessage(`Template not found: ${templatePath}`);
       return;
     }
@@ -139,21 +159,26 @@ export class TemplateManager {
     await fs.promises.mkdir(targetDir, { recursive: true });
 
     // Read template content
-    const content = await fs.promises.readFile(fullTemplatePath, 'utf8');
+    const content = await fs.promises.readFile(fullTemplatePath, "utf8");
+
+    // Check if target file exists (for logging purposes)
+    const fileExists = await this.checkFileExists(targetPath);
+    const action = fileExists ? "Overwriting" : "Creating";
+    console.log(`${action} template: ${templatePath}`);
 
     // Write to target (overwrite existing)
-    await fs.promises.writeFile(targetPath, content, 'utf8');
+    await fs.promises.writeFile(targetPath, content, "utf8");
   }
 
   /**
    * Create backup of existing .github directory
    */
   async backupDirectory(sourcePath: string): Promise<string | null> {
-    if (!await this.checkFileExists(sourcePath)) {
+    if (!(await this.checkFileExists(sourcePath))) {
       return null; // Nothing to backup
     }
 
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const backupPath = `${sourcePath}.backup-${timestamp}`;
 
     // Copy directory recursively
@@ -179,15 +204,18 @@ export class TemplateManager {
    */
   async readTemplate(templatePath: string): Promise<string> {
     const fullPath = path.join(this.templatesPath, templatePath);
-    return await fs.promises.readFile(fullPath, 'utf8');
+    return await fs.promises.readFile(fullPath, "utf8");
   }
 
   /**
    * Deploy workspace MCP configuration
    * NON-DESTRUCTIVE: Merges with existing configuration
    */
-  private async deployWorkspaceMCPConfig(mcpServers: string[], targetRoot: string): Promise<void> {
-    const mcpConfigPath = path.join(targetRoot, '.vscode', 'mcp.json');
+  private async deployWorkspaceMCPConfig(
+    mcpServers: string[],
+    targetRoot: string
+  ): Promise<void> {
+    const mcpConfigPath = path.join(targetRoot, ".vscode", "mcp.json");
     const mcpDir = path.dirname(mcpConfigPath);
 
     await fs.promises.mkdir(mcpDir, { recursive: true });
@@ -196,47 +224,56 @@ export class TemplateManager {
     let config: any = { servers: {} };
     if (await this.checkFileExists(mcpConfigPath)) {
       try {
-        const existingContent = await fs.promises.readFile(mcpConfigPath, 'utf8');
+        const existingContent = await fs.promises.readFile(
+          mcpConfigPath,
+          "utf8"
+        );
         config = JSON.parse(existingContent);
         if (!config.servers) {
           config.servers = {};
         }
       } catch (error) {
-        console.warn('Existing mcp.json is invalid, starting fresh:', error);
+        console.warn("Existing mcp.json is invalid, starting fresh:", error);
         config = { servers: {} };
       }
     }
 
     // Add Azure DevOps MCP if selected
-    if (mcpServers.includes('azureDevOps')) {
+    if (mcpServers.includes("azureDevOps")) {
       if (!config.inputs) {
         config.inputs = [];
       }
       // Check if input already exists
-      const adoInputExists = config.inputs.some((input: any) => input.id === 'ado_org');
+      const adoInputExists = config.inputs.some(
+        (input: any) => input.id === "ado_org"
+      );
       if (!adoInputExists) {
         config.inputs.push({
-          id: 'ado_org',
-          type: 'promptString',
-          description: "Azure DevOps organization name (e.g. 'contoso')"
+          id: "ado_org",
+          type: "promptString",
+          description: "Azure DevOps organization name (e.g. 'contoso')",
         });
       }
       // Add or update the server (overwrite if exists, preserving user's choice to update)
       config.servers.azureDevOps = {
-        command: 'npx',
-        args: ['-y', '@azure-devops/mcp', '${input:ado_org}']
+        command: "npx",
+        args: ["-y", "@azure-devops/mcp", "${input:ado_org}"],
       };
     }
 
     // Add additional MCP servers as needed
     for (const serverName of mcpServers) {
-      if (serverName !== 'azureDevOps') {
+      if (serverName !== "azureDevOps") {
         // Handle other server types in the future
         console.log(`MCP server ${serverName} not yet implemented`);
       }
     }
 
-    await fs.promises.writeFile(mcpConfigPath, JSON.stringify(config, null, 2), 'utf8');
+    await fs.promises.writeFile(
+      mcpConfigPath,
+      JSON.stringify(config, null, 2),
+      "utf8"
+    );
   }
 
   /**
@@ -244,36 +281,44 @@ export class TemplateManager {
    * NON-DESTRUCTIVE: Deep merges with existing settings, user values take priority
    */
   private async deployVscodeSettings(targetRoot: string): Promise<void> {
-    const settingsPath = path.join(targetRoot, '.vscode', 'settings.json');
+    const settingsPath = path.join(targetRoot, ".vscode", "settings.json");
     const settingsDir = path.dirname(settingsPath);
 
     await fs.promises.mkdir(settingsDir, { recursive: true });
 
     // Read template settings
-    const templateSettings = await this.readTemplate(path.join('.vscode', 'settings.json'));
+    const templateSettings = await this.readTemplate(
+      path.join(".vscode", "settings.json")
+    );
     let settings = JSON.parse(templateSettings);
 
     // Merge with existing settings if they exist (user settings take priority)
     if (await this.checkFileExists(settingsPath)) {
-      const existingContent = await fs.promises.readFile(settingsPath, 'utf8');
+      const existingContent = await fs.promises.readFile(settingsPath, "utf8");
       try {
         const existingSettings = JSON.parse(existingContent);
         // Deep merge: template as base, user settings override
         settings = this.deepMerge(settings, existingSettings);
       } catch (error) {
         // If existing settings are invalid JSON, show warning but preserve template
-        vscode.window.showWarningMessage(
-          'Existing .vscode/settings.json is invalid JSON. Using template settings.',
-          'View Error'
-        ).then(selection => {
-          if (selection === 'View Error') {
-            // Optionally show error details
-          }
-        });
+        vscode.window
+          .showWarningMessage(
+            "Existing .vscode/settings.json is invalid JSON. Using template settings.",
+            "View Error"
+          )
+          .then((selection) => {
+            if (selection === "View Error") {
+              // Optionally show error details
+            }
+          });
       }
     }
 
-    await fs.promises.writeFile(settingsPath, JSON.stringify(settings, null, 2), 'utf8');
+    await fs.promises.writeFile(
+      settingsPath,
+      JSON.stringify(settings, null, 2),
+      "utf8"
+    );
   }
 
   /**
@@ -281,7 +326,7 @@ export class TemplateManager {
    * Preserves existing content by using delimited section markers
    */
   private async createGitignore(targetRoot: string): Promise<void> {
-    const gitignorePath = path.join(targetRoot, '.gitignore');
+    const gitignorePath = path.join(targetRoot, ".gitignore");
 
     // Define NexKit section with clear delimiters
     const nexkitSection = `# BEGIN NexKit
@@ -291,11 +336,11 @@ export class TemplateManager {
 .github/instructions/
 # END NexKit`;
 
-    let content = '';
+    let content = "";
 
     // Read existing content if file exists
     if (await this.checkFileExists(gitignorePath)) {
-      content = await fs.promises.readFile(gitignorePath, 'utf8');
+      content = await fs.promises.readFile(gitignorePath, "utf8");
     }
 
     // Check if NexKit section already exists
@@ -306,28 +351,28 @@ export class TemplateManager {
       content = content.replace(sectionRegex, nexkitSection);
     } else {
       // Append new NexKit section
-      if (content.length > 0 && !content.endsWith('\n')) {
-        content += '\n';
+      if (content.length > 0 && !content.endsWith("\n")) {
+        content += "\n";
       }
       if (content.length > 0) {
-        content += '\n'; // Add blank line before section
+        content += "\n"; // Add blank line before section
       }
-      content += nexkitSection + '\n';
+      content += nexkitSection + "\n";
     }
 
-    await fs.promises.writeFile(gitignorePath, content, 'utf8');
+    await fs.promises.writeFile(gitignorePath, content, "utf8");
   }
 
   /**
    * List available backups
    */
   async listBackups(targetRoot: string): Promise<string[]> {
-    const backupDir = path.join(targetRoot, '.github.backup-*');
+    const backupDir = path.join(targetRoot, ".github.backup-*");
     // Simple glob implementation - in real app would use proper globbing
     try {
       const entries = await fs.promises.readdir(path.dirname(backupDir));
       return entries
-        .filter(entry => entry.startsWith('.github.backup-'))
+        .filter((entry) => entry.startsWith(".github.backup-"))
         .sort()
         .reverse(); // Most recent first
     } catch {
@@ -339,10 +384,10 @@ export class TemplateManager {
    * Restore from a specific backup
    */
   async restoreBackup(targetRoot: string, backupName: string): Promise<void> {
-    const githubPath = path.join(targetRoot, '.github');
+    const githubPath = path.join(targetRoot, ".github");
     const backupPath = path.join(targetRoot, backupName);
 
-    if (!await this.checkFileExists(backupPath)) {
+    if (!(await this.checkFileExists(backupPath))) {
       throw new Error(`Backup ${backupName} not found`);
     }
 
@@ -382,8 +427,8 @@ export class TemplateManager {
    * Clean up old backups based on retention policy
    */
   async cleanupBackups(targetRoot: string): Promise<void> {
-    const config = vscode.workspace.getConfiguration('nexkit');
-    const retentionDays = config.get('backup.retentionDays', 30);
+    const config = vscode.workspace.getConfiguration("nexkit");
+    const retentionDays = config.get("backup.retentionDays", 30);
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
 
@@ -422,5 +467,4 @@ export class TemplateManager {
       await fs.promises.copyFile(source, target);
     }
   }
-
 }

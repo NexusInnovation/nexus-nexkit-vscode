@@ -1,45 +1,48 @@
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
+import { StateManager } from "./stateManager";
 
 export class NexkitPanel {
-    public static currentPanel: NexkitPanel | undefined;
-    private readonly _panel: vscode.WebviewPanel;
-    private readonly _extensionUri: vscode.Uri;
+  public static currentPanel: NexkitPanel | undefined;
+  private readonly _panel: vscode.WebviewPanel;
+  private readonly _extensionUri: vscode.Uri;
 
-    public static readonly viewType = 'nexkitCustomView';
+  public static readonly viewType = "nexkitCustomView";
 
-    private _version: string = 'Loading...';
-    private _status: string = 'Ready';
-    private _isInitialized: boolean = false;
+  private _version: string = "Loading...";
+  private _status: string = "Ready";
+  private _isInitialized: boolean = false;
 
-    private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
-        this._panel = panel;
-        this._extensionUri = extensionUri;
-        this._panel.webview.html = this._getHtmlForWebview();
-        this._setWebviewMessageListener();
-        // Don't send version/status yet - wait for webview to signal it's ready
-    }
+  private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
+    this._panel = panel;
+    this._extensionUri = extensionUri;
+    this._panel.webview.html = this._getHtmlForWebview();
+    this._setWebviewMessageListener();
+    // Don't send version/status yet - wait for webview to signal it's ready
+  }
 
-    private async _initializeVersionStatus() {
-        this._version = await this._getExtensionVersion();
-        this._status = 'Ready';
-        this._isInitialized = await this._checkIsInitialized();
-        this._postVersionStatus();
-    }
+  private async _initializeVersionStatus() {
+    this._version = await this._getExtensionVersion();
+    this._status = "Ready";
+    this._isInitialized = await this._checkIsInitialized();
+    this._postVersionStatus();
+  }
 
-    private async _checkIsInitialized(): Promise<boolean> {
-        const config = vscode.workspace.getConfiguration('nexkit');
-        return config.get('workspace.initialized', false);
-    }
+  private async _checkIsInitialized(): Promise<boolean> {
+    return StateManager.getWorkspaceInitialized();
+  }
 
-    public async refresh() {
-        await this._initializeVersionStatus();
-    }
+  public async refresh() {
+    await this._initializeVersionStatus();
+  }
 
-    // Helper to get HTML for a webview (static so other providers can use it)
-    public static getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri): string {
-        // For now we don't need webview.asWebviewUri, but keep signature for future assets
-        // Return the same HTML as _getHtmlForWebview
-        return `
+  // Helper to get HTML for a webview (static so other providers can use it)
+  public static getWebviewContent(
+    webview: vscode.Webview,
+    extensionUri: vscode.Uri
+  ): string {
+    // For now we don't need webview.asWebviewUri, but keep signature for future assets
+    // Return the same HTML as _getHtmlForWebview
+    return `
             <!DOCTYPE html>
             <html lang="en">
             <head>
@@ -160,94 +163,105 @@ export class NexkitPanel {
             </body>
             </html>
         `;
-    }
+  }
 
-    public static createOrShow(extensionUri: vscode.Uri) {
-        const column = vscode.ViewColumn.One;
-        if (NexkitPanel.currentPanel) {
-            NexkitPanel.currentPanel._panel.reveal(column);
-            // Refresh data when revealing existing panel
-            NexkitPanel.currentPanel.refresh();
-        } else {
-            const panel = vscode.window.createWebviewPanel(
-                NexkitPanel.viewType,
-                'Nexkit Info & Actions',
-                column,
-                {
-                    enableScripts: true,
-                    retainContextWhenHidden: true
-                }
-            );
-            NexkitPanel.currentPanel = new NexkitPanel(panel, extensionUri);
+  public static createOrShow(extensionUri: vscode.Uri) {
+    const column = vscode.ViewColumn.One;
+    if (NexkitPanel.currentPanel) {
+      NexkitPanel.currentPanel._panel.reveal(column);
+      // Refresh data when revealing existing panel
+      NexkitPanel.currentPanel.refresh();
+    } else {
+      const panel = vscode.window.createWebviewPanel(
+        NexkitPanel.viewType,
+        "Nexkit Info & Actions",
+        column,
+        {
+          enableScripts: true,
+          retainContextWhenHidden: true,
         }
+      );
+      NexkitPanel.currentPanel = new NexkitPanel(panel, extensionUri);
     }
+  }
 
-    private _getHtmlForWebview(): string {
-        return NexkitPanel.getWebviewContent(this._panel.webview, this._extensionUri);
-    }
+  private _getHtmlForWebview(): string {
+    return NexkitPanel.getWebviewContent(
+      this._panel.webview,
+      this._extensionUri
+    );
+  }
 
-    private _setWebviewMessageListener() {
-        this._panel.webview.onDidReceiveMessage(
-            async message => {
-                switch (message.command) {
-                    case 'ready':
-                        // Webview is ready to receive messages
-                        await this._initializeVersionStatus();
-                        // Also send workspace state and initialization state
-                        const hasWorkspace = (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
-                        this._panel.webview.postMessage({ 
-                            hasWorkspace, 
-                            isInitialized: this._isInitialized 
-                        });
-                        break;
-                    case 'initProject':
-                        await vscode.commands.executeCommand('nexkit-vscode.initProject');
-                        this._status = 'Project initialized';
-                        this._version = await this._getExtensionVersion();
-                        this._isInitialized = await this._checkIsInitialized();
-                        this._postVersionStatus();
-                        this._panel.webview.postMessage({ isInitialized: this._isInitialized });
-                        break;
-                    case 'updateTemplates':
-                        await vscode.commands.executeCommand('nexkit-vscode.updateTemplates');
-                        this._status = 'Templates updated';
-                        this._version = await this._getExtensionVersion();
-                        this._postVersionStatus();
-                        break;
-                    case 'reinitializeProject':
-                        await vscode.commands.executeCommand('nexkit-vscode.reinitializeProject');
-                        this._status = 'Project re-initialized';
-                        this._version = await this._getExtensionVersion();
-                        this._isInitialized = await this._checkIsInitialized();
-                        this._postVersionStatus();
-                        this._panel.webview.postMessage({ isInitialized: this._isInitialized });
-                        break;
-                    case 'installUserMCPs':
-                        await vscode.commands.executeCommand('nexkit-vscode.installUserMCPs');
-                        this._status = 'User MCP servers installed';
-                        this._postVersionStatus();
-                        break;
-                    case 'openSettings':
-                        await vscode.commands.executeCommand('nexkit-vscode.openSettings');
-                        this._status = 'Settings opened';
-                        this._postVersionStatus();
-                        break;
-                }
-            },
-            undefined
-        );
-    }
+  private _setWebviewMessageListener() {
+    this._panel.webview.onDidReceiveMessage(async (message) => {
+      switch (message.command) {
+        case "ready":
+          // Webview is ready to receive messages
+          await this._initializeVersionStatus();
+          // Also send workspace state and initialization state
+          const hasWorkspace =
+            (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
+          this._panel.webview.postMessage({
+            hasWorkspace,
+            isInitialized: this._isInitialized,
+          });
+          break;
+        case "initProject":
+          await vscode.commands.executeCommand("nexkit-vscode.initProject");
+          this._status = "Project initialized";
+          this._version = await this._getExtensionVersion();
+          this._isInitialized = await this._checkIsInitialized();
+          this._postVersionStatus();
+          this._panel.webview.postMessage({
+            isInitialized: this._isInitialized,
+          });
+          break;
+        case "updateTemplates":
+          await vscode.commands.executeCommand("nexkit-vscode.updateTemplates");
+          this._status = "Templates updated";
+          this._version = await this._getExtensionVersion();
+          this._postVersionStatus();
+          break;
+        case "reinitializeProject":
+          await vscode.commands.executeCommand(
+            "nexkit-vscode.reinitializeProject"
+          );
+          this._status = "Project re-initialized";
+          this._version = await this._getExtensionVersion();
+          this._isInitialized = await this._checkIsInitialized();
+          this._postVersionStatus();
+          this._panel.webview.postMessage({
+            isInitialized: this._isInitialized,
+          });
+          break;
+        case "installUserMCPs":
+          await vscode.commands.executeCommand("nexkit-vscode.installUserMCPs");
+          this._status = "User MCP servers installed";
+          this._postVersionStatus();
+          break;
+        case "openSettings":
+          await vscode.commands.executeCommand("nexkit-vscode.openSettings");
+          this._status = "Settings opened";
+          this._postVersionStatus();
+          break;
+      }
+    }, undefined);
+  }
 
-    private _postVersionStatus() {
-        this._panel.webview.postMessage({ version: this._version, status: this._status, isInitialized: this._isInitialized });
-    }
+  private _postVersionStatus() {
+    this._panel.webview.postMessage({
+      version: this._version,
+      status: this._status,
+      isInitialized: this._isInitialized,
+    });
+  }
 
-    private async _getExtensionVersion(): Promise<string> {
-        try {
-            const ext = vscode.extensions.getExtension('nexusinno.nexkit-vscode');
-            return ext?.packageJSON.version || 'Unknown';
-        } catch {
-            return 'Unknown';
-        }
+  private async _getExtensionVersion(): Promise<string> {
+    try {
+      const ext = vscode.extensions.getExtension("nexusinno.nexkit-vscode");
+      return ext?.packageJSON.version || "Unknown";
+    } catch {
+      return "Unknown";
     }
+  }
 }

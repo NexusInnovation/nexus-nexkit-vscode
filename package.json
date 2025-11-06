@@ -137,27 +137,6 @@
           "default": true,
           "description": "Create .gitignore during initialization."
         },
-        "nexkit.workspace.initialized": {
-          "type": "boolean",
-          "default": false,
-          "description": "Indicates if the workspace has been initialized with Nexkit."
-        },
-        "nexkit.workspace.languages": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [],
-          "description": "List of programming languages selected for the workspace."
-        },
-        "nexkit.workspace.mcpServers": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [],
-          "description": "List of MCP servers configured for the workspace."
-        },
         "nexkit.extension.autoCheckUpdates": {
           "type": "boolean",
           "default": true,
@@ -168,15 +147,10 @@
           "default": 24,
           "description": "Hours between automatic extension update checks."
         },
-        "nexkit.extension.lastUpdateCheck": {
-          "type": "number",
-          "default": 0,
-          "description": "Timestamp of last extension update check."
-        },
-        "nexkit.mcpSetup.dismissed": {
+        "nexkit.extension.promptTemplateUpdate": {
           "type": "boolean",
-          "default": false,
-          "description": "Whether the user has dismissed the MCP setup notification."
+          "default": true,
+          "description": "Prompt to update templates when extension is updated."
         },
         "nexkit.telemetry.enabled": {
           "type": "boolean",
