@@ -1,13 +1,5 @@
 {
   "editor.formatOnSave": true,
-  "chat.promptFilesRecommendations": {
-    "nexkit.implement": true,
-    "nexkit.commit": true,
-    "nexkit.refactor": true,
-    "nexkit.document": true,
-    "nexkit.refine": true,
-    "nexkit.review": true
-  },
   "typescript.preferences.importModuleSpecifier": "relative",
   "typescript.suggest.autoImports": true
 }
