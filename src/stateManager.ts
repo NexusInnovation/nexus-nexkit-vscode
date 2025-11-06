@@ -92,16 +92,18 @@ export class StateManager {
   public static async migrateFromConfiguration(): Promise<void> {
     const config = vscode.workspace.getConfiguration("nexkit");
 
-    // Check if migration is needed by looking for any of the old config values
-    const hasOldConfig =
-      config.has("workspace.initialized") ||
-      config.has("workspace.languages") ||
-      config.has("workspace.mcpServers") ||
-      config.has("extension.lastUpdateCheck") ||
-      config.has("extension.lastKnownVersion") ||
-      config.has("mcpSetup.dismissed");
+    // Check if any values are actually set (not just defaults from package.json)
+    const hasWorkspaceConfig =
+      config.inspect("workspace.initialized")?.workspaceValue !== undefined ||
+      config.inspect("workspace.languages")?.workspaceValue !== undefined ||
+      config.inspect("workspace.mcpServers")?.workspaceValue !== undefined;
 
-    if (!hasOldConfig) {
+    const hasGlobalConfig =
+      config.inspect("extension.lastUpdateCheck")?.globalValue !== undefined ||
+      config.inspect("extension.lastKnownVersion")?.globalValue !== undefined ||
+      config.inspect("mcpSetup.dismissed")?.globalValue !== undefined;
+
+    if (!hasWorkspaceConfig && !hasGlobalConfig) {
       return; // Nothing to migrate
     }
 
@@ -110,7 +112,13 @@ export class StateManager {
     );
 
     // Migrate workspace-specific settings
-    if (config.has("workspace.initialized")) {
+    const workspaceInitInspect = config.inspect<boolean>(
+      "workspace.initialized"
+    );
+    if (
+      workspaceInitInspect?.workspaceValue !== undefined ||
+      workspaceInitInspect?.workspaceFolderValue !== undefined
+    ) {
       const initialized = config.get<boolean>("workspace.initialized", false);
       await this.setWorkspaceInitialized(initialized);
       await config.update(
@@ -125,7 +133,13 @@ export class StateManager {
       );
     }
 
-    if (config.has("workspace.languages")) {
+    const workspaceLanguagesInspect = config.inspect<string[]>(
+      "workspace.languages"
+    );
+    if (
+      workspaceLanguagesInspect?.workspaceValue !== undefined ||
+      workspaceLanguagesInspect?.workspaceFolderValue !== undefined
+    ) {
       const languages = config.get<string[]>("workspace.languages", []);
       await this.setWorkspaceLanguages(languages);
       await config.update(
@@ -140,7 +154,13 @@ export class StateManager {
       );
     }
 
-    if (config.has("workspace.mcpServers")) {
+    const workspaceMcpInspect = config.inspect<string[]>(
+      "workspace.mcpServers"
+    );
+    if (
+      workspaceMcpInspect?.workspaceValue !== undefined ||
+      workspaceMcpInspect?.workspaceFolderValue !== undefined
+    ) {
       const mcpServers = config.get<string[]>("workspace.mcpServers", []);
       await this.setWorkspaceMcpServers(mcpServers);
       await config.update(
@@ -156,7 +176,10 @@ export class StateManager {
     }
 
     // Migrate global settings
-    if (config.has("extension.lastUpdateCheck")) {
+    const lastCheckInspect = config.inspect<number>(
+      "extension.lastUpdateCheck"
+    );
+    if (lastCheckInspect?.globalValue !== undefined) {
       const lastCheck = config.get<number>("extension.lastUpdateCheck", 0);
       await this.setLastUpdateCheck(lastCheck);
       await config.update(
@@ -166,7 +189,10 @@ export class StateManager {
       );
     }
 
-    if (config.has("extension.lastKnownVersion")) {
+    const lastVersionInspect = config.inspect<string>(
+      "extension.lastKnownVersion"
+    );
+    if (lastVersionInspect?.globalValue !== undefined) {
       const lastVersion = config.get<string>("extension.lastKnownVersion", "");
       await this.setLastKnownVersion(lastVersion);
       await config.update(
@@ -176,7 +202,8 @@ export class StateManager {
       );
     }
 
-    if (config.has("mcpSetup.dismissed")) {
+    const mcpDismissedInspect = config.inspect<boolean>("mcpSetup.dismissed");
+    if (mcpDismissedInspect?.globalValue !== undefined) {
       const dismissed = config.get<boolean>("mcpSetup.dismissed", false);
       await this.setMcpSetupDismissed(dismissed);
       await config.update(
