@@ -54,21 +54,25 @@ export class NexkitChatParticipant implements vscode.Disposable {
     try {
       const command = request.command || "";
 
-      // If no command specified, just forward to the model without tracking
+      // If no command specified, show guidance message
       if (!command) {
-        const messages = this.buildMessages(
-          null,
-          request.prompt,
-          request.references
+        stream.markdown(
+          `ℹ️ **@nexkit** is designed to work with specific commands.\n\n`
         );
-        await this.sendAndStreamResponse(
-          messages,
-          request.model,
-          stream,
-          token
+        stream.markdown(`**Available commands:**\n\n`);
+        stream.markdown(
+          `- \`/nexkit.implement\` - Implement features or changes\n`
+        );
+        stream.markdown(`- \`/nexkit.refine\` - Refine existing code\n`);
+        stream.markdown(`- \`/nexkit.commit\` - Generate commit messages\n`);
+        stream.markdown(`- \`/nexkit.document\` - Generate documentation\n`);
+        stream.markdown(`- \`/nexkit.review\` - Review code changes\n`);
+        stream.markdown(`- \`/nexkit.refactor\` - Refactor code\n\n`);
+        stream.markdown(
+          `💡 For general questions, use the regular Copilot chat without @nexkit.\n`
         );
         success = true;
-        return { metadata: { success: true } };
+        return { metadata: { command: "none", showedGuidance: true } };
       }
 
       // Validate command
