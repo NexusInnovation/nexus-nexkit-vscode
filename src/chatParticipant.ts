@@ -1,6 +1,4 @@
 import * as vscode from "vscode";
-import * as path from "path";
-import * as fs from "fs/promises";
 import { TelemetryService } from "./telemetryService";
 
 /**
@@ -91,10 +89,10 @@ export class NexkitChatParticipant implements vscode.Disposable {
       if (!promptContent) {
         stream.markdown(`⚠️ Prompt file not found for \`/${command}\`\n\n`);
         stream.markdown(
-          `Make sure your workspace is initialized with Nexkit templates.\n`
+          `This might be an issue with the extension installation.\n`
         );
         stream.markdown(
-          `Run **Nexkit: Initialize Project** to set up the prompt files.`
+          `Try reinstalling the Nexkit extension or contact support.`
         );
         return { metadata: { command, error: "prompt_file_not_found" } };
       }
@@ -206,23 +204,20 @@ export class NexkitChatParticipant implements vscode.Disposable {
   }
 
   /**
-   * Read prompt file from workspace .github/prompts directory
+   * Read prompt file from extension resources
    */
   private async readPromptFile(command: string): Promise<string | null> {
     try {
-      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-      if (!workspaceFolder) {
-        return null;
-      }
-
-      const promptFilePath = path.join(
-        workspaceFolder.uri.fsPath,
-        ".github",
+      // Read from extension's resources/prompts directory
+      const promptFilePath = vscode.Uri.joinPath(
+        this.context.extensionUri,
+        "resources",
         "prompts",
         `${command}.prompt.md`
       );
 
-      const content = await fs.readFile(promptFilePath, "utf-8");
+      const contentBytes = await vscode.workspace.fs.readFile(promptFilePath);
+      const content = new TextDecoder().decode(contentBytes);
       return content;
     } catch (error) {
       console.error(`Failed to read prompt file for ${command}:`, error);

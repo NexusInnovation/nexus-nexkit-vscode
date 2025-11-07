@@ -151,6 +151,7 @@ Given the refactoring description provided as an $ARGUMENTS, execute the followi
 
 ## Safety Guidelines and Best Practices
 
+- **Check for instruction files in this order**: `.github/copilot-instructions.md`, `copilot-instructions.md`, `.vscode/copilot-instructions.md`, and any language-specific `{language}.instructions.md` files. Follow the guidance in these files when generating code or providing assistan
 - **Test-First Approach**: Never refactor code without adequate test coverage
 - **Incremental Changes**: Make small, verifiable changes rather than large rewrites
 - **Preserve Functionality**: Refactoring should improve structure without changing behavior
@@ -158,6 +159,7 @@ Given the refactoring description provided as an $ARGUMENTS, execute the followi
 - **Continuous Testing**: Run tests frequently during refactoring process
 - **Rollback Strategy**: Be prepared to revert changes if issues are discovered
 - **Documentation**: Keep documentation in sync with structural changes
+- **Ask Questions**: If any part of the change request is unclear, ask clarifying questions **one at the time** before proceeding
 
 ## Refactoring-Specific Principles
 

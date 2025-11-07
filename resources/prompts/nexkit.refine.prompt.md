@@ -20,9 +20,16 @@ Given a work item ID as $ARGUMENTS, execute this refinement workflow:
    - Store as context for refinement
 
 3. **Search Codebase**
+
    - Use `semantic_search` with work item title and area path keywords
    - Find: Controllers, Services, Repositories, Domain entities, Frontend components, Tests
    - Read key files to identify: architecture patterns, similar features, data models, API structure
+
+4. **Validate Understanding**
+
+   - Summarize gathered context: work item details, parent/sibling insights, code patterns
+   - Identify gaps: missing criteria, unclear requirements, dependencies, implementation approaches
+   - **ASK clarifying questions one at a time** to resolve ambiguities before proceeding
 
 ## Phase 2: Analyze and Refine
 
