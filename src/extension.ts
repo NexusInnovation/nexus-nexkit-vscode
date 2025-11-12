@@ -412,6 +412,13 @@ export async function activate(context: vscode.ExtensionContext) {
   // Check for extension updates on activation
   checkForExtensionUpdates(context);
 
+  // Auto-activate Nexkit sidebar on extension load
+  vscode.commands
+    .executeCommand("workbench.view.extension.nexkit-sidebar")
+    .then(undefined, (err: unknown) => {
+      console.error("Failed to auto-activate Nexkit sidebar:", err);
+    });
+
   // Register commands
   const initProjectDisposable = vscode.commands.registerCommand(
     "nexkit-vscode.initProject",
