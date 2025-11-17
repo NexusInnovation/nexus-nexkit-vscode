@@ -13,7 +13,11 @@ Given the change description provided as an $ARGUMENTS, execute the following co
    - Look for attached file to get more information about implementation details.
    - Read all child and related work items and related work items to gather more context about the change request.
    - Read all comments to gather additional context.
-2. **Create or use existing feature branch**
+2. **If no workitem provided**
+
+   - Proceed with the provided $ARGUMENTS as the change description.
+
+3. **Create or use existing feature branch**
    - If the current branch is not the feature branch then
      Run the script `.specify.specify/scripts/powershell/create-new-feature.ps1 -Json -WorkItemId "$ARGUMENTS"` from repo root and parse its JSON output for BRANCH_NAME. All file paths must be absolute.
    - else
