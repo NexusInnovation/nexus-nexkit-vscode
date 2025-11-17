@@ -100,8 +100,7 @@ export class TemplateManager {
 
   /**
    * Dynamically discover all files that should always be deployed
-   * Scans resources/templates/.github/chatmodes/
-   * Note: Prompts are now bundled with the extension and not deployed to workspace
+   * Scans resources/templates/.github/chatmodes/ and resources/templates/.github/prompts/
    */
   async discoverAlwaysDeployFiles(): Promise<string[]> {
     const alwaysDeployFiles: string[] = [];
@@ -120,6 +119,17 @@ export class TemplateManager {
           .sort()
           .map((file) => `.github/chatmodes/${file}`);
         alwaysDeployFiles.push(...markdownChatmodes);
+      }
+
+      // Discover prompt files
+      const promptsPath = path.join(this.templatesPath, ".github", "prompts");
+      if (await this.checkFileExists(promptsPath)) {
+        const promptFiles = await fs.promises.readdir(promptsPath);
+        const markdownPrompts = promptFiles
+          .filter((file) => file.endsWith(".md"))
+          .sort()
+          .map((file) => `.github/prompts/${file}`);
+        alwaysDeployFiles.push(...markdownPrompts);
       }
     } catch (error) {
       console.error("Error discovering template files:", error);
@@ -319,6 +329,7 @@ export class TemplateManager {
 .github/**/nexkit.*
 .github/chatmodes/
 .github/instructions/
+.github/prompts/
 # END NexKit`;
 
     let content = "";
