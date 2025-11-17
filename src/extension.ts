@@ -7,7 +7,6 @@ import { MCPConfigManager } from "./mcpConfigManager";
 import { NexkitPanel } from "./nexkitPanel";
 import { ExtensionUpdateManager } from "./extensionUpdateManager";
 import { TelemetryService } from "./telemetryService";
-import { NexkitChatParticipant } from "./chatParticipant";
 
 /**
  * Check for required MCP servers and show notification if missing
@@ -123,85 +122,6 @@ async function checkForExtensionUpdates(
   }
 }
 
-/**
- * Clean up old prompt files from workspace (migration from v0.4.x to v0.5.x)
- * Prompts are now bundled with the extension, not copied to workspace
- */
-async function cleanupOldPromptFiles(): Promise<void> {
-  try {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) {
-      return;
-    }
-
-    const promptsDir = vscode.Uri.joinPath(
-      workspaceFolder.uri,
-      ".github",
-      "prompts"
-    );
-
-    // Check if the prompts directory exists
-    try {
-      await vscode.workspace.fs.stat(promptsDir);
-    } catch {
-      // Directory doesn't exist, nothing to clean up
-      return;
-    }
-
-    // List all files in the prompts directory
-    const entries = await vscode.workspace.fs.readDirectory(promptsDir);
-    const promptFiles = entries
-      .filter(
-        ([name, type]) =>
-          type === vscode.FileType.File &&
-          name.startsWith("nexkit.") &&
-          name.endsWith(".prompt.md")
-      )
-      .map(([name]) => name);
-
-    if (promptFiles.length === 0) {
-      return;
-    }
-
-    // Ask user if they want to clean up old prompt files
-    const result = await vscode.window.showInformationMessage(
-      `Found ${promptFiles.length} old prompt file(s) in .github/prompts/. These are now bundled with the extension. Clean them up?`,
-      "Yes",
-      "No",
-      "Don't Ask Again"
-    );
-
-    if (result === "Yes") {
-      // Delete the prompt files
-      for (const fileName of promptFiles) {
-        const filePath = vscode.Uri.joinPath(promptsDir, fileName);
-        await vscode.workspace.fs.delete(filePath);
-      }
-
-      // Try to delete the prompts directory if it's empty
-      const remainingEntries = await vscode.workspace.fs.readDirectory(
-        promptsDir
-      );
-      if (remainingEntries.length === 0) {
-        await vscode.workspace.fs.delete(promptsDir);
-      }
-
-      vscode.window.showInformationMessage(
-        `Cleaned up ${promptFiles.length} old prompt file(s).`
-      );
-    } else if (result === "Don't Ask Again") {
-      const config = vscode.workspace.getConfiguration("nexkit");
-      await config.update(
-        "prompts.cleanupDismissed",
-        true,
-        vscode.ConfigurationTarget.Workspace
-      );
-    }
-  } catch (error) {
-    console.error("Error cleaning up old prompt files:", error);
-  }
-}
-
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
@@ -217,23 +137,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const templateManager = new TemplateManager(context);
   const mcpConfigManager = new MCPConfigManager();
-
-  // Initialize Nexkit chat participant
-  const nexkitChatParticipant = new NexkitChatParticipant(
-    context,
-    telemetryService
-  );
-  context.subscriptions.push(nexkitChatParticipant);
-
-  // Clean up old prompt files from workspace (migration)
-  const config = vscode.workspace.getConfiguration("nexkit");
-  const cleanupDismissed = config.get("prompts.cleanupDismissed", false);
-  if (!cleanupDismissed) {
-    // Run cleanup in background, don't block activation
-    cleanupOldPromptFiles().catch((err) =>
-      console.error("Failed to clean up old prompt files:", err)
-    );
-  }
 
   // Register NexkitPanel WebviewViewProvider for sidebar
   class NexkitPanelViewProvider implements vscode.WebviewViewProvider {

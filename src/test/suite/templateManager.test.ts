@@ -97,6 +97,7 @@ suite("Unit: TemplateManager - createGitignore", () => {
     assert.ok(content.includes(".github/**/nexkit.*"));
     assert.ok(content.includes(".github/chatmodes/"));
     assert.ok(content.includes(".github/instructions/"));
+    assert.ok(content.includes(".github/prompts/"));
   });
 
   test("should preserve existing content when adding NexKit section", async () => {
@@ -338,5 +339,65 @@ suite("Unit: TemplateManager - discoverAlwaysDeployFiles", () => {
       chatmodeFiles.indexOf(".github/chatmodes/debug.chatmode.md") <
         chatmodeFiles.indexOf(".github/chatmodes/plan.chatmode.md")
     );
+  });
+
+  test("should discover all files from prompts directory", async () => {
+    const promptsDir = path.join(
+      tempDir,
+      "resources",
+      "templates",
+      ".github",
+      "prompts"
+    );
+
+    await fs.promises.mkdir(promptsDir, { recursive: true });
+    await fs.promises.writeFile(
+      path.join(promptsDir, "nexkit.implement.prompt.md"),
+      "test content"
+    );
+    await fs.promises.writeFile(
+      path.join(promptsDir, "nexkit.refine.prompt.md"),
+      "test content"
+    );
+
+    const result = await (manager as any).discoverAlwaysDeployFiles();
+
+    assert.ok(result.includes(".github/prompts/nexkit.implement.prompt.md"));
+    assert.ok(result.includes(".github/prompts/nexkit.refine.prompt.md"));
+  });
+
+  test("should discover both chatmodes and prompts together", async () => {
+    const chatmodesDir = path.join(
+      tempDir,
+      "resources",
+      "templates",
+      ".github",
+      "chatmodes"
+    );
+    const promptsDir = path.join(
+      tempDir,
+      "resources",
+      "templates",
+      ".github",
+      "prompts"
+    );
+
+    await fs.promises.mkdir(chatmodesDir, { recursive: true });
+    await fs.promises.mkdir(promptsDir, { recursive: true });
+
+    await fs.promises.writeFile(
+      path.join(chatmodesDir, "debug.chatmode.md"),
+      "test content"
+    );
+    await fs.promises.writeFile(
+      path.join(promptsDir, "nexkit.implement.prompt.md"),
+      "test content"
+    );
+
+    const result = await (manager as any).discoverAlwaysDeployFiles();
+
+    assert.ok(result.includes(".github/chatmodes/debug.chatmode.md"));
+    assert.ok(result.includes(".github/prompts/nexkit.implement.prompt.md"));
+    assert.ok(result.length >= 2);
   });
 });
