@@ -2,7 +2,7 @@
 description: Generate comprehensive yet concise documentation following the Diátaxis framework.
 ---
 
-Given a work item reference provided as $ARGUMENTS, execute the following documentation workflow based on the **Diátaxis**
+Given a work item reference provided as $ARGUMENTS or a description of what to document, execute the following documentation workflow based on the **Diátaxis**
 framework, which organizes documentation into four distinct quadrants:
 
 ## 📚 Understanding Diátaxis Framework

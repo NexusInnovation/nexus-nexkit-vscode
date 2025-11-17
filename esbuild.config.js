@@ -35,7 +35,7 @@ async function main() {
 		format: 'cjs',
 		minify: production,
 		sourcemap: !production,
-		sourcesContent: false,
+		sourcesContent: !production, // Include original TS source in source maps
 		platform: 'node',
 		outfile: 'out/extension.js',
 		external: ['vscode'],

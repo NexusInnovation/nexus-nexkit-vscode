@@ -2,7 +2,7 @@
   "name": "nexkit-vscode",
   "displayName": "Nexkit",
   "description": "VS Code extension for Nexkit CLI",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "publisher": "nexusinno",
   "private": true,
   "license": "MIT",
@@ -20,8 +20,7 @@
     "applicationinsights": "^2.9.6"
   },
   "activationEvents": [
-    "onStartupFinished",
-    "onChatParticipant:nexkit-vscode.nexkit"
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -86,40 +85,6 @@
         }
       ]
     },
-    "chatParticipants": [
-      {
-        "id": "nexkit-vscode.nexkit",
-        "name": "nexkit",
-        "description": "Nexkit development assistant with specialized commands for implementation, refinement, commits, and more.",
-        "isSticky": true,
-        "commands": [
-          {
-            "name": "nexkit.implement",
-            "description": "Complete implementation workflow with planning, development, testing, and review phases"
-          },
-          {
-            "name": "nexkit.refine",
-            "description": "Refine and improve existing code with detailed analysis and suggestions"
-          },
-          {
-            "name": "nexkit.commit",
-            "description": "Generate conventional commit messages based on staged changes"
-          },
-          {
-            "name": "nexkit.document",
-            "description": "Generate comprehensive documentation for code"
-          },
-          {
-            "name": "nexkit.review",
-            "description": "Perform detailed code review with best practices and suggestions"
-          },
-          {
-            "name": "nexkit.refactor",
-            "description": "Refactor code with improvements for maintainability and performance"
-          }
-        ]
-      }
-    ],
     "configuration": {
       "title": "Nexkit",
       "properties": {
