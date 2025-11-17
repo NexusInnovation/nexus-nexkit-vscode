@@ -1,4 +1,6 @@
 import * as assert from 'assert';
+import * as fs from 'fs';
+import * as path from 'path';
 import * as vscode from 'vscode';
 
 suite('Unit: Extension Activation', () => {
@@ -31,6 +33,22 @@ suite('Unit: Extension Activation', () => {
 			assert.ok(
 				commands.includes(cmd),
 				`Command ${cmd} should be registered`
+			);
+		});
+
+		test('Activation events should include onStartupFinished', () => {
+			const packageJsonPath = path.join(
+				__dirname,
+				'..',
+				'..',
+				'..',
+				'package.json'
+			);
+			const packageJsonRaw = fs.readFileSync(packageJsonPath, 'utf8');
+			const packageJson = JSON.parse(packageJsonRaw);
+			assert.ok(
+				packageJson.activationEvents?.includes('onStartupFinished'),
+				'Extension must activate on VS Code startup to perform background tasks.'
 			);
 		});
 	});
