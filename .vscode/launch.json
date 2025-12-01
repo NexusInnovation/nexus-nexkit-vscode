@@ -13,21 +13,48 @@
 				"--extensionDevelopmentPath=${workspaceFolder}",
 				"--enable-proposed-api=nexkit-vscode.nexkit"
 			],
-			"sourceMaps": true,
 			"outFiles": [
 				"${workspaceFolder}/out/**/*.js"
 			],
+			"sourceMaps": true,
+			"smartStep": true,
+			"skipFiles": [
+				"<node_internals>/**"
+			],
 			"preLaunchTask": "npm: watch"
 		},
-        {
-            "type": "node",
-            "request": "attach",
-            "name": "Attach to Extension Host",
-            "port": 5870,
-            "restart": true,
-            "outFiles": [
-                "${workspaceRoot}/out"
-            ]
-        }
+		{
+			"name": "Extension Tests",
+			"type": "extensionHost",
+			"request": "launch",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--extensionTestsPath=${workspaceFolder}/out/test/suite/index"
+			],
+			"outFiles": [
+				"${workspaceFolder}/out/**/*.js"
+			],
+			"sourceMaps": true,
+			"smartStep": true,
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"preLaunchTask": "npm: watch"
+		},
+		{
+			"type": "node",
+			"request": "attach",
+			"name": "Attach to Extension Host",
+			"port": 5870,
+			"restart": true,
+			"outFiles": [
+				"${workspaceFolder}/out/**/*.js"
+			],
+			"sourceMaps": true,
+			"smartStep": true,
+			"skipFiles": [
+				"<node_internals>/**"
+			]
+		}
 	]
 }

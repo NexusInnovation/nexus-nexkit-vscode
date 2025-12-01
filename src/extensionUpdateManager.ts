@@ -51,6 +51,15 @@ export class ExtensionUpdateManager {
 
       return null;
     } catch (error) {
+      // Treat "no releases" as a normal "no update" condition to avoid
+      // noisy errors when the extension hasn't published any releases yet
+      // or the repository is not exposing releases.
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes("No releases")) {
+        console.log("[Nexkit] No extension releases available yet");
+        return null;
+      }
+
       console.error("Error checking for extension updates:", error);
       return null;
     }
