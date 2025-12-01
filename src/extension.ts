@@ -7,6 +7,8 @@ import { MCPConfigManager } from "./mcpConfigManager";
 import { NexkitPanel } from "./nexkitPanel";
 import { ExtensionUpdateManager } from "./extensionUpdateManager";
 import { TelemetryService } from "./telemetryService";
+import { AwesomeCopilotService } from "./awesomeCopilotService";
+import { ContentManager } from "./contentManager";
 
 /**
  * Check for required MCP servers and show notification if missing
@@ -137,12 +139,18 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const templateManager = new TemplateManager(context);
   const mcpConfigManager = new MCPConfigManager();
+  const awesomeCopilotService = new AwesomeCopilotService(context);
+  const contentManager = new ContentManager(context);
 
   // Register NexkitPanel WebviewViewProvider for sidebar
   class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
     private _view?: vscode.WebviewView;
 
-    constructor(private readonly _extensionUri: vscode.Uri) {}
+    constructor(
+      private readonly _extensionUri: vscode.Uri,
+      private readonly _awesomeCopilotService: AwesomeCopilotService,
+      private readonly _contentManager: ContentManager
+    ) {}
 
     async resolveWebviewView(
       webviewView: vscode.WebviewView,
@@ -267,6 +275,79 @@ export async function activate(context: vscode.ExtensionContext) {
               status: "Settings opened",
             });
             break;
+
+          case "loadAwesomeItems":
+            try {
+              // Fetch items from GitHub
+              const agents = await this._awesomeCopilotService.fetchAgents();
+              const prompts = await this._awesomeCopilotService.fetchPrompts();
+              const instructions =
+                await this._awesomeCopilotService.fetchInstructions();
+
+              // Get installed items
+              const installed = await this._contentManager.getInstalledItems();
+
+              // Send to webview
+              webviewView.webview.postMessage({
+                command: "awesomeItemsLoaded",
+                items: { agents, prompts, instructions },
+                installed: {
+                  agents: Array.from(installed.agents),
+                  prompts: Array.from(installed.prompts),
+                  instructions: Array.from(installed.instructions),
+                },
+              });
+            } catch (error) {
+              console.error("Error loading awesome items:", error);
+              webviewView.webview.postMessage({
+                command: "awesomeItemsError",
+                error: error instanceof Error ? error.message : String(error),
+              });
+            }
+            break;
+
+          case "installItem":
+            try {
+              const { category, item } = message;
+              // Download file content
+              const content = await this._awesomeCopilotService.downloadFile(
+                item.rawUrl
+              );
+              // Install file
+              await this._contentManager.installFile(
+                category,
+                item.name,
+                content
+              );
+              // Notify webview
+              webviewView.webview.postMessage({
+                command: "itemInstalled",
+                category,
+                itemName: item.name,
+              });
+            } catch (error) {
+              console.error("Error installing item:", error);
+              vscode.window.showErrorMessage(
+                `Failed to install item: ${error}`
+              );
+            }
+            break;
+
+          case "removeItem":
+            try {
+              const { category, item } = message;
+              // Remove file
+              await this._contentManager.removeFile(category, item.name);
+              // Notify webview
+              webviewView.webview.postMessage({
+                command: "itemRemoved",
+                category,
+                itemName: item.name,
+              });
+            } catch (error) {
+              console.error("Error removing item:", error);
+            }
+            break;
         }
       });
     }
@@ -279,7 +360,11 @@ export async function activate(context: vscode.ExtensionContext) {
   }
 
   // Create and register the webview provider
-  const nexkitPanelProvider = new NexkitPanelViewProvider(context.extensionUri);
+  const nexkitPanelProvider = new NexkitPanelViewProvider(
+    context.extensionUri,
+    awesomeCopilotService,
+    contentManager
+  );
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
       "nexkitPanelView",
