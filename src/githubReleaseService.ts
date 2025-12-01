@@ -148,10 +148,16 @@ export class GitHubReleaseService {
       }
 
       if (!response.ok) {
-        // More friendly error message for 404
+        // 404 can mean: no releases, repo is private, or repo doesn't exist.
+        // For our extension, treat this as "no updates" instead of an error.
         if (response.status === 404) {
-          throw new Error(`No releases found for this extension`);
+          if (!silent) {
+            console.log("[Nexkit] No releases found for this extension");
+          }
+          // Signal caller that there is simply no release data yet.
+          throw new Error("No releases available");
         }
+
         throw new Error(
           `GitHub API error: ${response.status} ${response.statusText}`
         );

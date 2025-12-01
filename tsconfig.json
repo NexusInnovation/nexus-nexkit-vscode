@@ -7,6 +7,9 @@
 		],
 		"outDir": "out",
 		"sourceMap": true,
+		"inlineSourceMap": false,
+		"inlineSources": false,
+		"sourceRoot": "../src",
 		"rootDir": "src",
 		"strict": true,
 		"forceConsistentCasingInFileNames": true
