@@ -97,7 +97,10 @@ async function checkForExtensionUpdates(
     const extensionUpdateManager = new ExtensionUpdateManager(context);
 
     if (extensionUpdateManager.shouldCheckForExtensionUpdates()) {
-      const updateInfo = await extensionUpdateManager.checkForExtensionUpdate();
+      // Pass silent=true to avoid prompts during automatic checks
+      const updateInfo = await extensionUpdateManager.checkForExtensionUpdate(
+        true
+      );
 
       if (updateInfo) {
         const result = await vscode.window.showInformationMessage(
@@ -120,7 +123,13 @@ async function checkForExtensionUpdates(
       );
     }
   } catch (error) {
-    console.error("Error checking for extension updates:", error);
+    // Only log errors that aren't "no releases" errors
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    if (!errorMessage.includes("No releases")) {
+      console.error("Error checking for extension updates:", error);
+    } else {
+      console.log("[Nexkit] No releases available yet");
+    }
   }
 }
 
@@ -278,14 +287,23 @@ export async function activate(context: vscode.ExtensionContext) {
 
           case "loadAwesomeItems":
             try {
+              console.log("[Nexkit] Loading awesome items from GitHub...");
               // Fetch items from GitHub
               const agents = await this._awesomeCopilotService.fetchAgents();
+              console.log(`[Nexkit] Fetched ${agents.length} agents`);
               const prompts = await this._awesomeCopilotService.fetchPrompts();
+              console.log(`[Nexkit] Fetched ${prompts.length} prompts`);
               const instructions =
                 await this._awesomeCopilotService.fetchInstructions();
+              console.log(
+                `[Nexkit] Fetched ${instructions.length} instructions`
+              );
 
               // Get installed items
               const installed = await this._contentManager.getInstalledItems();
+              console.log(
+                `[Nexkit] Found ${installed.agents.size} installed agents, ${installed.prompts.size} prompts, ${installed.instructions.size} instructions`
+              );
 
               // Send to webview
               webviewView.webview.postMessage({
@@ -298,7 +316,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 },
               });
             } catch (error) {
-              console.error("Error loading awesome items:", error);
+              console.error("[Nexkit] Error loading awesome items:", error);
               webviewView.webview.postMessage({
                 command: "awesomeItemsError",
                 error: error instanceof Error ? error.message : String(error),
@@ -990,8 +1008,9 @@ export async function activate(context: vscode.ExtensionContext) {
                 const extensionUpdateManager = new ExtensionUpdateManager(
                   context
                 );
+                // User-initiated check - allow auth prompts (silent=false)
                 const updateInfo =
-                  await extensionUpdateManager.checkForExtensionUpdate();
+                  await extensionUpdateManager.checkForExtensionUpdate(false);
 
                 if (!updateInfo) {
                   vscode.window.showInformationMessage(
