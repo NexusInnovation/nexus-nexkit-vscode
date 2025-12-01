@@ -122,7 +122,7 @@ export class ContentManager {
       // Create directory if it doesn't exist
       await fs.promises.mkdir(dirPath, { recursive: true });
 
-      // Write file (overwrite if exists since checkbox controls state)
+      // Write file (overwrites if it already exists)
       await fs.promises.writeFile(filePath, content, "utf8");
 
       vscode.window.showInformationMessage(
