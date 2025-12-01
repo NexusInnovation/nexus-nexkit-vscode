@@ -76,11 +76,12 @@ export class NexkitPanel {
                     
                     /* Awesome Copilot Library Styles */
                     .library-section { background: #fffdfd23; padding: 12px; border-radius: 6px; margin-bottom: 20px; }
-                    .library-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+                    .library-header { position: sticky; top: 0; z-index: 100; background: var(--vscode-editor-background, #1e1e1e); display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; padding: 4px; border-radius: 4px; transition: background 0.2s; }
+                    .library-header:hover { background: #ffffff08; }
                     .library-header h2 { margin: 0; font-size: 1.2em; }
-                    .library-header .toggle { font-size: 1.2em; }
+                    .library-header .toggle { font-size: 1.2em; transition: transform 0.2s; }
                     .category { margin-top: 16px; }
-                    .category-header { display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #ffffff10; border-radius: 4px; cursor: pointer; user-select: none; margin-bottom: 8px; }
+                    .category-header { position: sticky; top: 48px; z-index: 90; background: var(--vscode-editor-background, #1e1e1e); display: flex; justify-content: space-between; align-items: center; padding: 8px; border-radius: 4px; cursor: pointer; user-select: none; margin-bottom: 8px; }
                     .category-header h3 { margin: 0; font-size: 1em; }
                     .category-header .badge { background: #007acc; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.85em; }
                     .category-header .toggle { font-size: 1em; }
@@ -122,7 +123,7 @@ export class NexkitPanel {
                     <div class="library-section">
                         <div class="library-header" onclick="toggleLibrary()">
                             <h2>Awesome Copilot Library</h2>
-                            <span class="toggle" id="libraryToggle">▼</span>
+                            <span class="toggle" id="libraryToggle">▶</span>
                         </div>
                         <div id="libraryContent" class="category-content">
                             <p class="button-description">Browse and install agents, prompts, and custom instructions from the GitHub awesome-copilot repository</p>
@@ -175,7 +176,7 @@ export class NexkitPanel {
                     const vscode = acquireVsCodeApi();
                     
                     // State management
-                    let libraryExpanded = false;
+                    let libraryExpanded = false; // Start collapsed so users can see the feature
                     let expandedCategories = new Set();
                     let items = { agents: [], prompts: [], instructions: [] };
                     let installedItems = { agents: new Set(), prompts: new Set(), instructions: new Set() };
@@ -492,14 +493,21 @@ export class NexkitPanel {
 
   private async _loadAwesomeItems() {
     try {
+      console.log("[Nexkit] Loading awesome items from GitHub...");
       // Fetch items from GitHub
       const agents = await this._awesomeCopilotService.fetchAgents();
+      console.log(`[Nexkit] Fetched ${agents.length} agents`);
       const prompts = await this._awesomeCopilotService.fetchPrompts();
+      console.log(`[Nexkit] Fetched ${prompts.length} prompts`);
       const instructions =
         await this._awesomeCopilotService.fetchInstructions();
+      console.log(`[Nexkit] Fetched ${instructions.length} instructions`);
 
       // Get installed items
       const installed = await this._contentManager.getInstalledItems();
+      console.log(
+        `[Nexkit] Found ${installed.agents.size} installed agents, ${installed.prompts.size} prompts, ${installed.instructions.size} instructions`
+      );
 
       // Send to webview
       this._panel.webview.postMessage({
@@ -516,7 +524,7 @@ export class NexkitPanel {
         },
       });
     } catch (error) {
-      console.error("Error loading awesome items:", error);
+      console.error("[Nexkit] Error loading awesome items:", error);
       this._panel.webview.postMessage({
         command: "awesomeItemsError",
         error: error instanceof Error ? error.message : String(error),
