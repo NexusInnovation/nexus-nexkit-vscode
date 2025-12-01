@@ -22,7 +22,8 @@ export class AwesomeCopilotService {
   private static readonly BASE_URL = "https://api.github.com";
   private static readonly RAW_BASE_URL = "https://raw.githubusercontent.com";
   private static readonly GITHUB_AUTH_PROVIDER_ID = "github";
-  private static readonly REQUIRED_SCOPES = ["repo"];
+  // Use minimal scopes for public repository access - authentication is optional for rate limiting
+  private static readonly REQUIRED_SCOPES = ["user:email"];
 
   private cache: Map<string, AwesomeCopilotItem[]> = new Map();
   private cacheTimestamp: Map<string, number> = new Map();
@@ -51,6 +52,7 @@ export class AwesomeCopilotService {
 
   /**
    * Get authentication headers for GitHub API requests
+   * Authentication is optional for public repositories but helps with rate limiting
    */
   private async getAuthHeaders(
     requireAuth: boolean = false
@@ -62,7 +64,7 @@ export class AwesomeCopilotService {
     };
 
     if (session) {
-      headers["Authorization"] = `Bearer ${session.accessToken}`;
+      headers["Authorization"] = `token ${session.accessToken}`;
     }
 
     return headers;
