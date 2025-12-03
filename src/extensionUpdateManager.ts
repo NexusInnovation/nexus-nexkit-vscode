@@ -31,11 +31,9 @@ export class ExtensionUpdateManager {
    * Check if an extension update is available
    * @param silent If true, suppress authentication prompts (for automatic checks)
    */
-  async checkForExtensionUpdate(
-    silent: boolean = false
-  ): Promise<ExtensionUpdateInfo | null> {
+  async checkForExtensionUpdate(): Promise<ExtensionUpdateInfo | null> {
     try {
-      const release = await this.githubService.fetchLatestRelease(silent);
+      const release = await this.githubService.fetchLatestRelease();
       const latestVersion = release.tagName.replace(/^v/, "");
       const currentVersion = this.getCurrentExtensionVersion();
 
