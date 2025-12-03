@@ -1008,9 +1008,8 @@ export async function activate(context: vscode.ExtensionContext) {
                 const extensionUpdateManager = new ExtensionUpdateManager(
                   context
                 );
-                // User-initiated check - allow auth prompts (silent=false)
                 const updateInfo =
-                  await extensionUpdateManager.checkForExtensionUpdate(false);
+                  await extensionUpdateManager.checkForExtensionUpdate();
 
                 if (!updateInfo) {
                   vscode.window.showInformationMessage(
