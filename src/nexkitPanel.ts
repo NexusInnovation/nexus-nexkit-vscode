@@ -96,6 +96,19 @@ export class NexkitPanel {
                     .loading { text-align: center; padding: 20px; color: #888; }
                     .error { color: #f48771; padding: 8px; }
                     .empty { text-align: center; padding: 20px; color: #888; font-style: italic; }
+                    
+                    /* Search Bar Styles */
+                    .search-container { margin: 12px 0; padding: 8px; background: #ffffff08; border-radius: 4px; }
+                    .search-bar { display: flex; gap: 8px; margin-bottom: 8px; }
+                    .search-input { flex: 1; padding: 8px 12px; border: 1px solid #555; border-radius: 4px; background: var(--vscode-input-background); color: var(--vscode-input-foreground); font-size: 0.95em; }
+                    .search-input:focus { outline: none; border-color: #007acc; }
+                    .search-button { padding: 8px 16px; border: none; border-radius: 4px; background: #007acc; color: white; cursor: pointer; font-size: 0.95em; white-space: nowrap; }
+                    .search-button:hover { background: #005fa3; }
+                    .search-button.clear { background: #555; }
+                    .search-button.clear:hover { background: #666; }
+                    .search-info { font-size: 0.85em; color: #888; margin-top: 4px; }
+                    .search-results-header { font-size: 0.9em; font-weight: 500; margin: 12px 0 8px 0; color: #007acc; }
+                    .search-highlight { background: #007acc33; padding: 2px 4px; border-radius: 2px; }
                 </style>
             </head>
             <body>
@@ -127,6 +140,21 @@ export class NexkitPanel {
                         </div>
                         <div id="libraryContent" class="category-content">
                             <p class="button-description">Browse and install agents, prompts, and custom instructions from the GitHub awesome-copilot repository</p>
+                            
+                            <!-- Search Bar -->
+                            <div class="search-container" id="searchContainer" style="display: none;">
+                                <div class="search-bar">
+                                    <input 
+                                        type="text" 
+                                        id="searchInput" 
+                                        class="search-input" 
+                                        placeholder="Search by name or description..." 
+                                        oninput="performSearch()"
+                                    />
+                                    <button class="search-button clear" id="clearSearchBtn" onclick="clearSearch()" style="display: none;">Clear</button>
+                                </div>
+                                <div class="search-info" id="searchInfo"></div>
+                            </div>
                             
                             <!-- Agents Category -->
                             <div class="category">
@@ -180,22 +208,29 @@ export class NexkitPanel {
                     let expandedCategories = new Set();
                     let items = { agents: [], prompts: [], instructions: [] };
                     let installedItems = { agents: new Set(), prompts: new Set(), instructions: new Set() };
+                    let allItemsLoaded = false;
+                    let searchActive = false;
+                    let searchResults = { agents: [], prompts: [], instructions: [] };
                     
                     // Toggle library section
                     function toggleLibrary() {
                         libraryExpanded = !libraryExpanded;
                         const content = document.getElementById('libraryContent');
                         const toggle = document.getElementById('libraryToggle');
+                        const searchContainer = document.getElementById('searchContainer');
+                        
                         if (libraryExpanded) {
                             content.classList.add('expanded');
                             toggle.textContent = '▼';
+                            searchContainer.style.display = 'block';
                             // Load items if not already loaded
-                            if (items.agents.length === 0) {
+                            if (!allItemsLoaded) {
                                 vscode.postMessage({ command: 'loadAwesomeItems' });
                             }
                         } else {
                             content.classList.remove('expanded');
                             toggle.textContent = '▶';
+                            searchContainer.style.display = 'none';
                         }
                     }
                     
@@ -213,6 +248,132 @@ export class NexkitPanel {
                             content.classList.add('expanded');
                             toggle.textContent = '▼';
                         }
+                    }
+                    
+                    // Perform search across all categories
+                    function performSearch() {
+                        const searchInput = document.getElementById('searchInput');
+                        const searchInfo = document.getElementById('searchInfo');
+                        const clearBtn = document.getElementById('clearSearchBtn');
+                        const query = searchInput.value.trim().toLowerCase();
+                        
+                        // If query is empty, clear search and return to normal view
+                        if (!query) {
+                            if (searchActive) {
+                                clearSearch();
+                            }
+                            return;
+                        }
+                        
+                        searchActive = true;
+                        clearBtn.style.display = 'block';
+                        
+                        // Search across all categories
+                        let totalResults = 0;
+                        ['agents', 'prompts', 'instructions'].forEach(category => {
+                            searchResults[category] = items[category].filter(item => {
+                                const titleMatch = item.title.toLowerCase().includes(query);
+                                const descMatch = item.description && item.description.toLowerCase().includes(query);
+                                const nameMatch = item.name.toLowerCase().includes(query);
+                                return titleMatch || descMatch || nameMatch;
+                            });
+                            totalResults += searchResults[category].length;
+                        });
+                        
+                        // Update UI with search results
+                        const resultText = totalResults !== 1 ? 's' : '';
+                        searchInfo.textContent = 'Found ' + totalResults + ' result' + resultText + ' for "' + query + '"';
+                        
+                        // Auto-expand categories with results and render filtered items
+                        ['agents', 'prompts', 'instructions'].forEach(category => {
+                            if (searchResults[category].length > 0) {
+                                expandedCategories.add(category);
+                                renderSearchResults(category);
+                            } else {
+                                renderSearchResults(category);
+                            }
+                        });
+                    }
+                    
+                    // Clear search and restore normal view
+                    function clearSearch() {
+                        const searchInput = document.getElementById('searchInput');
+                        const searchInfo = document.getElementById('searchInfo');
+                        const clearBtn = document.getElementById('clearSearchBtn');
+                        
+                        searchInput.value = '';
+                        searchInfo.textContent = '';
+                        clearBtn.style.display = 'none';
+                        searchActive = false;
+                        searchResults = { agents: [], prompts: [], instructions: [] };
+                        
+                        // Restore normal view
+                        ['agents', 'prompts', 'instructions'].forEach(category => {
+                            renderItems(category);
+                        });
+                    }
+                    
+                    // Render search results for a category
+                    function renderSearchResults(category) {
+                        const content = document.getElementById(category + 'Content');
+                        const toggle = document.getElementById(category + 'Toggle');
+                        const categoryItems = searchResults[category];
+                        
+                        // Update toggle to reflect expanded state
+                        if (expandedCategories.has(category)) {
+                            content.classList.add('expanded');
+                            toggle.textContent = '▼';
+                        } else {
+                            content.classList.remove('expanded');
+                            toggle.textContent = '▶';
+                        }
+                        
+                        if (categoryItems.length === 0) {
+                            content.innerHTML = '<div class="empty">No matching items</div>';
+                            return;
+                        }
+                        
+                        const searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
+                        
+                        content.innerHTML = categoryItems.map(item => {
+                            const isInstalled = installedItems[category].has(item.name);
+                            
+                            // Highlight matching text (simple string replacement for highlighting)
+                            let displayTitle = item.title;
+                            let displayDesc = item.description || '';
+                            
+                            if (searchQuery) {
+                                // Simple case-insensitive highlighting
+                                const parts = displayTitle.split(new RegExp('(' + searchQuery + ')', 'i'));
+                                displayTitle = parts.map((part, i) => 
+                                    part.toLowerCase() === searchQuery ? '<span class="search-highlight">' + part + '</span>' : part
+                                ).join('');
+                                
+                                if (displayDesc) {
+                                    const descParts = displayDesc.split(new RegExp('(' + searchQuery + ')', 'i'));
+                                    displayDesc = descParts.map((part, i) => 
+                                        part.toLowerCase() === searchQuery ? '<span class="search-highlight">' + part + '</span>' : part
+                                    ).join('');
+                                }
+                            }
+                            
+                            return \`
+                                <div class="item">
+                                    <input 
+                                        type="checkbox" 
+                                        id="\${category}-\${item.name}" 
+                                        \${isInstalled ? 'checked' : ''}
+                                        onchange="handleCheckboxChange('\${category}', '\${item.name}', this.checked)"
+                                    />
+                                    <label class="item-info" for="\${category}-\${item.name}">
+                                        <div class="item-name">\${displayTitle}</div>
+                                        \${displayDesc ? \`<div class="item-description">\${displayDesc}</div>\` : ''}
+                                    </label>
+                                </div>
+                            \`;
+                        }).join('');
+                        
+                        updateBadge(category);
                     }
                     
                     // Handle checkbox change
@@ -233,6 +394,12 @@ export class NexkitPanel {
                     
                     // Render items for a category
                     function renderItems(category) {
+                        // If search is active, render search results instead
+                        if (searchActive) {
+                            renderSearchResults(category);
+                            return;
+                        }
+                        
                         const content = document.getElementById(category + 'Content');
                         const categoryItems = items[category];
                         
@@ -291,6 +458,7 @@ export class NexkitPanel {
                                 prompts: new Set(message.installed.prompts || []),
                                 instructions: new Set(message.installed.instructions || [])
                             };
+                            allItemsLoaded = true;
                             
                             renderItems('agents');
                             renderItems('prompts');
