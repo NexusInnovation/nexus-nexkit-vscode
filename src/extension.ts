@@ -98,9 +98,7 @@ async function checkForExtensionUpdates(
 
     if (extensionUpdateManager.shouldCheckForExtensionUpdates()) {
       // Pass silent=true to avoid prompts during automatic checks
-      const updateInfo = await extensionUpdateManager.checkForExtensionUpdate(
-        true
-      );
+      const updateInfo = await extensionUpdateManager.checkForExtensionUpdate();
 
       if (updateInfo) {
         const result = await vscode.window.showInformationMessage(
@@ -1008,9 +1006,8 @@ export async function activate(context: vscode.ExtensionContext) {
                 const extensionUpdateManager = new ExtensionUpdateManager(
                   context
                 );
-                // User-initiated check - allow auth prompts (silent=false)
                 const updateInfo =
-                  await extensionUpdateManager.checkForExtensionUpdate(false);
+                  await extensionUpdateManager.checkForExtensionUpdate();
 
                 if (!updateInfo) {
                   vscode.window.showInformationMessage(

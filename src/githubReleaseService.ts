@@ -1,4 +1,4 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
 export interface ReleaseInfo {
   tagName: string;
@@ -11,22 +11,19 @@ export interface ReleaseInfo {
 }
 
 export class GitHubReleaseService {
-  private static readonly REPO_OWNER = "nexusinno";
-  private static readonly REPO_NAME = "nexkit-vscode";
-  private static readonly BASE_URL = "https://api.github.com";
-  private static readonly GITHUB_AUTH_PROVIDER_ID = "github";
-  // Use minimal scopes - will prompt for more if repository is private
-  private static readonly REQUIRED_SCOPES = ["user:email"];
+  private static readonly REPO_OWNER = 'NexusInnovation';
+  private static readonly REPO_NAME = 'nexkit-vscode';
+  private static readonly BASE_URL = 'https://api.github.com';
+  private static readonly GITHUB_AUTH_PROVIDER_ID = 'github';
+  private static readonly REQUIRED_SCOPES = ['repo'];
 
-  constructor(private readonly context: vscode.ExtensionContext) {}
+  constructor(private readonly context: vscode.ExtensionContext) { }
 
   /**
    * Get GitHub authentication session with required scopes
    * @param createIfNone If true, prompt user to sign in if not authenticated
    */
-  private async getGitHubSession(
-    createIfNone: boolean = false
-  ): Promise<vscode.AuthenticationSession | undefined> {
+  private async getGitHubSession(createIfNone: boolean = false): Promise<vscode.AuthenticationSession | undefined> {
     try {
       const session = await vscode.authentication.getSession(
         GitHubReleaseService.GITHUB_AUTH_PROVIDER_ID,
@@ -35,7 +32,7 @@ export class GitHubReleaseService {
       );
       return session;
     } catch (error) {
-      console.error("Failed to get GitHub authentication session:", error);
+      console.error('Failed to get GitHub authentication session:', error);
       return undefined;
     }
   }
@@ -44,17 +41,15 @@ export class GitHubReleaseService {
    * Get authentication headers for GitHub API requests
    * @param requireAuth If true, will prompt for authentication if not already authenticated
    */
-  private async getAuthHeaders(
-    requireAuth: boolean = false
-  ): Promise<Record<string, string>> {
+  private async getAuthHeaders(requireAuth: boolean = true): Promise<Record<string, string>> {
     const session = await this.getGitHubSession(requireAuth);
     const headers: Record<string, string> = {
-      "User-Agent": "Nexkit-VSCode-Extension",
-      Accept: "application/vnd.github.v3+json",
+      'User-Agent': 'Nexkit-VSCode-Extension',
+      'Accept': 'application/vnd.github.v3+json'
     };
 
     if (session) {
-      headers["Authorization"] = `token ${session.accessToken}`;
+      headers['Authorization'] = `Bearer ${session.accessToken}`;
     }
 
     return headers;
@@ -67,24 +62,15 @@ export class GitHubReleaseService {
   private async handleAuthError(response: Response): Promise<boolean> {
     // GitHub returns 404 for private repositories when not authenticated
     // This is a security feature to not reveal the existence of private repos
-    if (
-      response.status === 401 ||
-      response.status === 403 ||
-      response.status === 404
-    ) {
-      const message =
-        response.status === 404
-          ? "Repository not found. This may be a private repository. Please sign in to GitHub."
-          : response.status === 401
-          ? "GitHub authentication required to access private repositories."
-          : "GitHub API rate limit exceeded or insufficient permissions.";
+    if (response.status === 401 || response.status === 403 || response.status === 404) {
+      const message = response.status === 404
+        ? 'Repository not found. This may be a private repository. Please sign in to GitHub.'
+        : response.status === 401
+          ? 'GitHub authentication required to access private repositories.'
+          : 'GitHub API rate limit exceeded or insufficient permissions.';
 
-      const signIn = "Sign In to GitHub";
-      const result = await vscode.window.showErrorMessage(
-        message,
-        signIn,
-        "Cancel"
-      );
+      const signIn = 'Sign In to GitHub';
+      const result = await vscode.window.showErrorMessage(message, signIn, 'Cancel');
 
       if (result === signIn) {
         const session = await this.getGitHubSession(true);
@@ -96,9 +82,8 @@ export class GitHubReleaseService {
 
   /**
    * Fetch the latest release information from GitHub
-   * @param silent If true, suppress authentication prompts (for automatic checks)
    */
-  async fetchLatestRelease(silent: boolean = false): Promise<ReleaseInfo> {
+  async fetchLatestRelease(): Promise<ReleaseInfo> {
     const url = `${GitHubReleaseService.BASE_URL}/repos/${GitHubReleaseService.REPO_OWNER}/${GitHubReleaseService.REPO_NAME}/releases/latest`;
 
     try {
@@ -107,37 +92,7 @@ export class GitHubReleaseService {
       let response = await fetch(url, { headers });
 
       // If we get 404, 401, or 403, it might be a private repo - try to authenticate and retry
-      if (
-        !response.ok &&
-        (response.status === 404 ||
-          response.status === 401 ||
-          response.status === 403)
-      ) {
-        // 404 could mean: no releases, private repo, or repo doesn't exist
-        if (response.status === 404) {
-          // In silent mode, just log and throw without prompting
-          if (silent) {
-            console.log(
-              `[Nexkit] No releases found or repository inaccessible`
-            );
-            throw new Error(`No releases available`);
-          }
-          // For non-silent mode, still try authentication in case it's a private repo
-          console.log(
-            `[Nexkit] No releases found at public endpoint, checking if repository is private...`
-          );
-        }
-
-        // Only show prompts if not in silent mode
-        if (silent) {
-          // In silent mode, just log the error and throw
-          console.log(
-            `[Nexkit] Unable to check for updates (${response.status}) - authentication required`
-          );
-          throw new Error(
-            `GitHub API error: ${response.status} ${response.statusText}`
-          );
-        }
+      if (!response.ok && (response.status === 404 || response.status === 401 || response.status === 403)) {
         const authenticated = await this.handleAuthError(response);
 
         if (authenticated) {
@@ -148,22 +103,10 @@ export class GitHubReleaseService {
       }
 
       if (!response.ok) {
-        // 404 can mean: no releases, repo is private, or repo doesn't exist.
-        // For our extension, treat this as "no updates" instead of an error.
-        if (response.status === 404) {
-          if (!silent) {
-            console.log("[Nexkit] No releases found for this extension");
-          }
-          // Signal caller that there is simply no release data yet.
-          throw new Error("No releases available");
-        }
-
-        throw new Error(
-          `GitHub API error: ${response.status} ${response.statusText}`
-        );
+        throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
       }
 
-      const data = (await response.json()) as any;
+      const data = await response.json() as any;
 
       return {
         tagName: data.tag_name,
@@ -171,24 +114,24 @@ export class GitHubReleaseService {
         assets: data.assets.map((asset: any) => ({
           name: asset.name,
           browserDownloadUrl: asset.browser_download_url,
-          size: asset.size,
-        })),
+          size: asset.size
+        }))
       };
     } catch (error) {
       throw new Error(`Failed to fetch latest release: ${error}`);
     }
   }
 
+
+
   /**
    * Download .vsix file from release assets
    */
   async downloadVsixAsset(release: ReleaseInfo): Promise<ArrayBuffer> {
-    const vsixAsset = release.assets.find((asset) =>
-      asset.name.endsWith(".vsix")
-    );
+    const vsixAsset = release.assets.find(asset => asset.name.endsWith('.vsix'));
 
     if (!vsixAsset) {
-      throw new Error(".vsix file not found in release assets");
+      throw new Error('.vsix file not found in release assets');
     }
 
     try {
@@ -206,33 +149,22 @@ export class GitHubReleaseService {
       // First attempt with existing session silently
       let headers = await this.getAuthHeaders(false);
       // Set Accept header for binary download to trigger redirect to actual file
-      headers["Accept"] = "application/octet-stream";
+      headers['Accept'] = 'application/octet-stream';
 
-      let response = await this.fetchWithRedirectsPrivateRepo(apiUrl, {
-        headers,
-      });
+      let response = await this.fetchWithRedirectsPrivateRepo(apiUrl, { headers });
 
       // Retry if authentication issue detected
-      if (
-        !response.ok &&
-        (response.status === 404 ||
-          response.status === 401 ||
-          response.status === 403)
-      ) {
+      if (!response.ok && (response.status === 404 || response.status === 401 || response.status === 403)) {
         const authenticated = await this.handleAuthError(response);
         if (authenticated) {
           headers = await this.getAuthHeaders(false);
-          headers["Accept"] = "application/octet-stream";
-          response = await this.fetchWithRedirectsPrivateRepo(apiUrl, {
-            headers,
-          });
+          headers['Accept'] = 'application/octet-stream';
+          response = await this.fetchWithRedirectsPrivateRepo(apiUrl, { headers });
         }
       }
 
       if (!response.ok) {
-        throw new Error(
-          `Failed to download .vsix: ${response.status} ${response.statusText}`
-        );
+        throw new Error(`Failed to download .vsix: ${response.status} ${response.statusText}`);
       }
 
       return await response.arrayBuffer();
@@ -246,28 +178,21 @@ export class GitHubReleaseService {
    */
   private async downloadViaDirectUrl(url: string): Promise<ArrayBuffer> {
     let headers = await this.getAuthHeaders(false);
-    headers["Accept"] = "application/octet-stream";
+    headers['Accept'] = 'application/octet-stream';
 
     let response = await this.fetchWithRedirectsPrivateRepo(url, { headers });
 
-    if (
-      !response.ok &&
-      (response.status === 404 ||
-        response.status === 401 ||
-        response.status === 403)
-    ) {
+    if (!response.ok && (response.status === 404 || response.status === 401 || response.status === 403)) {
       const authenticated = await this.handleAuthError(response);
       if (authenticated) {
         headers = await this.getAuthHeaders(false);
-        headers["Accept"] = "application/octet-stream";
+        headers['Accept'] = 'application/octet-stream';
         response = await this.fetchWithRedirectsPrivateRepo(url, { headers });
       }
     }
 
     if (!response.ok) {
-      throw new Error(
-        `Failed to download .vsix: ${response.status} ${response.statusText}`
-      );
+      throw new Error(`Failed to download .vsix: ${response.status} ${response.statusText}`);
     }
 
     return await response.arrayBuffer();
@@ -277,9 +202,7 @@ export class GitHubReleaseService {
    * Get .vsix asset URL from release
    */
   getVsixAssetUrl(release: ReleaseInfo): string | null {
-    const vsixAsset = release.assets.find((asset) =>
-      asset.name.endsWith(".vsix")
-    );
+    const vsixAsset = release.assets.find(asset => asset.name.endsWith('.vsix'));
     return vsixAsset?.browserDownloadUrl || null;
   }
 
@@ -288,10 +211,7 @@ export class GitHubReleaseService {
    * Example: https://github.com/owner/repo/releases/download/v1.0.0/file.vsix
    * We need to get the asset ID via the API instead
    */
-  private async getAssetIdFromRelease(
-    release: ReleaseInfo,
-    assetName: string
-  ): Promise<number | null> {
+  private async getAssetIdFromRelease(release: ReleaseInfo, assetName: string): Promise<number | null> {
     try {
       const headers = await this.getAuthHeaders(false);
       const url = `${GitHubReleaseService.BASE_URL}/repos/${GitHubReleaseService.REPO_OWNER}/${GitHubReleaseService.REPO_NAME}/releases/tags/${release.tagName}`;
@@ -301,7 +221,7 @@ export class GitHubReleaseService {
         return null;
       }
 
-      const data = (await response.json()) as any;
+      const data = await response.json() as any;
       const asset = data.assets?.find((a: any) => a.name === assetName);
       return asset?.id || null;
     } catch {
@@ -320,30 +240,21 @@ export class GitHubReleaseService {
   ): Promise<Response> {
     let currentUrl = url;
     let redirects = 0;
-    let method = init.method || "GET";
+    let method = init.method || 'GET';
     const headers: Record<string, string> = { ...(init.headers || {}) };
 
     // List of GitHub-related domains that should keep the Authorization header
-    const githubDomains = [
-      "github.com",
-      "api.github.com",
-      "codeload.github.com",
-      "objects-origin.githubusercontent.com",
-    ];
+    const githubDomains = ['github.com', 'api.github.com', 'codeload.github.com', 'objects-origin.githubusercontent.com'];
 
     while (redirects <= maxRedirects) {
-      const response = await fetch(currentUrl, {
-        headers,
-        method,
-        redirect: "manual",
-      });
+      const response = await fetch(currentUrl, { headers, method, redirect: 'manual' });
 
       // If not a redirect status, return immediately
       if (![301, 302, 303, 307, 308].includes(response.status)) {
         return response;
       }
 
-      const location = response.headers.get("location");
+      const location = response.headers.get('location');
       if (!location) {
         // Location header missing on redirect - treat as error
         return response; // Let caller handle non-ok with missing location
@@ -351,9 +262,7 @@ export class GitHubReleaseService {
 
       redirects += 1;
       if (redirects > maxRedirects) {
-        throw new Error(
-          `Too many redirects (${redirects}) attempting to fetch ${url}`
-        );
+        throw new Error(`Too many redirects (${redirects}) attempting to fetch ${url}`);
       }
 
       // Resolve relative locations against current URL
@@ -362,14 +271,14 @@ export class GitHubReleaseService {
 
       // For private repositories, keep Authorization header for GitHub domains
       // Remove it only when redirecting to completely external domains (like cloud storage)
-      if (headers["Authorization"] && !githubDomains.includes(nextHost)) {
+      if (headers['Authorization'] && !githubDomains.includes(nextHost)) {
         // Only remove auth when going to non-GitHub domains
-        delete headers["Authorization"];
+        delete headers['Authorization'];
       }
 
       // For 303, RFC allows switching to GET
       if (response.status === 303) {
-        method = "GET";
+        method = 'GET';
       }
 
       currentUrl = nextUrl;
@@ -393,25 +302,21 @@ export class GitHubReleaseService {
   ): Promise<Response> {
     let currentUrl = url;
     let redirects = 0;
-    let method = init.method || "GET";
+    let method = init.method || 'GET';
     const headers: Record<string, string> = { ...(init.headers || {}) };
 
     // Track original host for Authorization logic
     const originalHost = new URL(url).host;
 
     while (redirects <= maxRedirects) {
-      const response = await fetch(currentUrl, {
-        headers,
-        method,
-        redirect: "manual",
-      });
+      const response = await fetch(currentUrl, { headers, method, redirect: 'manual' });
 
       // If not a redirect status, return immediately
       if (![301, 302, 303, 307, 308].includes(response.status)) {
         return response;
       }
 
-      const location = response.headers.get("location");
+      const location = response.headers.get('location');
       if (!location) {
         // Location header missing on redirect - treat as error
         return response; // Let caller handle non-ok with missing location
@@ -419,9 +324,7 @@ export class GitHubReleaseService {
 
       redirects += 1;
       if (redirects > maxRedirects) {
-        throw new Error(
-          `Too many redirects (${redirects}) attempting to fetch ${url}`
-        );
+        throw new Error(`Too many redirects (${redirects}) attempting to fetch ${url}`);
       }
 
       // Resolve relative locations against current URL
@@ -430,13 +333,13 @@ export class GitHubReleaseService {
 
       // Per GitHub asset download behavior, subsequent hosts (e.g., codeload.github.com, objects...) do not require Authorization
       // Remove Authorization header if host changes to prevent leaking tokens cross-origin.
-      if (headers["Authorization"] && nextHost !== originalHost) {
-        delete headers["Authorization"];
+      if (headers['Authorization'] && nextHost !== originalHost) {
+        delete headers['Authorization'];
       }
 
       // For 303, RFC allows switching to GET
       if (response.status === 303) {
-        method = "GET";
+        method = 'GET';
       }
 
       currentUrl = nextUrl;
