@@ -98,9 +98,7 @@ async function checkForExtensionUpdates(
 
     if (extensionUpdateManager.shouldCheckForExtensionUpdates()) {
       // Pass silent=true to avoid prompts during automatic checks
-      const updateInfo = await extensionUpdateManager.checkForExtensionUpdate(
-        true
-      );
+      const updateInfo = await extensionUpdateManager.checkForExtensionUpdate();
 
       if (updateInfo) {
         const result = await vscode.window.showInformationMessage(
