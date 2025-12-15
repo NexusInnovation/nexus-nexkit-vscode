@@ -62,11 +62,14 @@ export class TemplateManager {
     }
 
     // Deploy conditional templates based on settings
-    for (const templates of Object.values(config.conditionalDeploy)) {
+    for (const [settingKey, templates] of Object.entries(
+      config.conditionalDeploy
+    )) {
       if (templates.length === 0) {
         continue;
       }
 
+      // Optionally, you could log or use settingKey here for debugging
       for (const template of templates) {
         await this.deployTemplate(template, workspaceFolder.uri.fsPath);
       }
