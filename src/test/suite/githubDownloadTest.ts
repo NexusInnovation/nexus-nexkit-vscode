@@ -97,7 +97,7 @@ suite("GitHub Download Diagnostic Tests", () => {
       console.log("Testing direct fetch with Authorization header...");
 
       const headers = {
-        "User-Agent": "nexus-nexkit-vscode-Extension",
+        "User-Agent": "Nexkit-VSCode-Extension",
         Accept: "application/octet-stream",
         Authorization: `Bearer ${session.accessToken}`,
       };
@@ -145,7 +145,7 @@ suite("GitHub Download Diagnostic Tests", () => {
           // Test 3: Following redirect without Auth header
           console.log("Test 3: Following redirect without Auth header");
           const headersNoAuth = {
-            "User-Agent": "nexus-nexkit-vscode-Extension",
+            "User-Agent": "Nexkit-VSCode-Extension",
             Accept: "application/octet-stream",
           };
 
@@ -265,7 +265,7 @@ suite("GitHub Download Diagnostic Tests", () => {
 
       // Test manual fetch with different strategies
       const headers = {
-        "User-Agent": "nexus-nexkit-vscode-Extension",
+        "User-Agent": "Nexkit-VSCode-Extension",
         Accept: "application/octet-stream",
         Authorization: `Bearer ${session.accessToken}`,
       };
