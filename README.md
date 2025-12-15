@@ -116,7 +116,7 @@ To develop this extension:
 
    ```bash
    git clone https://github.com/NexusInnovation/nexus-nexkit-vscode.git
-   cd nexkit-vscode
+   cd nexus-nexkit-vscode
    ```
 
 2. **Install dependencies**

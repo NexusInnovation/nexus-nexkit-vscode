@@ -1,5 +1,5 @@
 {
-  "name": "nexkit-vscode",
+  "name": "nexus-nexkit-vscode",
   "displayName": "Nexkit",
   "description": "VS Code extension for Nexkit CLI",
   "version": "0.5.4",
@@ -8,7 +8,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/NexusInnovation/nexus-nexkit-vscode.git"
+    "url": "https://github.com/nexusinno/nexus-nexkit-vscode.git"
   },
   "engines": {
     "vscode": "^1.105.0"
@@ -26,42 +26,42 @@
   "contributes": {
     "commands": [
       {
-        "command": "nexkit-vscode.initProject",
+        "command": "nexus-nexkit-vscode.initProject",
         "title": "Nexkit: Initialize Project",
         "category": "Nexkit"
       },
       {
-        "command": "nexkit-vscode.checkExtensionUpdate",
+        "command": "nexus-nexkit-vscode.checkExtensionUpdate",
         "title": "Nexkit: Check for Updates",
         "category": "Nexkit"
       },
       {
-        "command": "nexkit-vscode.installUserMCPs",
+        "command": "nexus-nexkit-vscode.installUserMCPs",
         "title": "Nexkit: Install User MCP Servers",
         "category": "Nexkit"
       },
       {
-        "command": "nexkit-vscode.configureAzureDevOps",
+        "command": "nexus-nexkit-vscode.configureAzureDevOps",
         "title": "Nexkit: Enable Azure DevOps MCP",
         "category": "Nexkit"
       },
       {
-        "command": "nexkit-vscode.openSettings",
+        "command": "nexus-nexkit-vscode.openSettings",
         "title": "Nexkit: Open Settings",
         "category": "Nexkit"
       },
       {
-        "command": "nexkit-vscode.restoreBackup",
+        "command": "nexus-nexkit-vscode.restoreBackup",
         "title": "Nexkit: Restore Template Backup",
         "category": "Nexkit"
       },
       {
-        "command": "nexkit-vscode.updateTemplates",
+        "command": "nexus-nexkit-vscode.updateTemplates",
         "title": "Nexkit: Update Templates",
         "category": "Nexkit"
       },
       {
-        "command": "nexkit-vscode.reinitializeProject",
+        "command": "nexus-nexkit-vscode.reinitializeProject",
         "title": "Nexkit: Re-initialize Project",
         "category": "Nexkit"
       }

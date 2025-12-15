@@ -30,7 +30,7 @@ This project adheres to professional standards of collaboration. Please be respe
 
    ```bash
    git clone https://github.com/NexusInnovation/nexus-nexkit-vscode.git
-   cd nexkit-vscode
+   cd nexus-nexkit-vscode
    ```
 
 2. **Install dependencies**
@@ -60,7 +60,7 @@ This project adheres to professional standards of collaboration. Please be respe
 ### Project Structure
 
 ```
-nexkit-vscode/
+nexus-nexkit-vscode/
 ├── .github/
 │   ├── workflows/          # CI/CD pipelines
 │   ├── dependabot.yml      # Dependency automation
