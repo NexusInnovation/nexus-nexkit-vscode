@@ -1,28 +1,46 @@
 {
-  "branches": ["main"],
+  "tagFormat": "v${version}",
+  "branches": [
+    "main",
+    {
+      "name": "develop",
+      "prerelease": "beta"
+    }
+  ],
   "plugins": [
-    "@semantic-release/commit-analyzer",
-    "@semantic-release/release-notes-generator",
     [
-      "@semantic-release/changelog",
+      "@semantic-release/commit-analyzer",
       {
-        "changelogFile": "CHANGELOG.md",
-        "changelogTitle": "# Changelog\n\nAll notable changes to the Nexkit VS Code extension will be documented in this file."
+        "preset": "conventionalcommits"
       }
     ],
     [
-      "@semantic-release/npm",
+      "@semantic-release/release-notes-generator",
       {
-        "npmPublish": false,
-        "pkgRoot": ".",
-        "tarballDir": false
+        "preset": "conventionalcommits"
+      }
+    ],
+    [
+      "@semantic-release/changelog",
+      {
+        "changelogFile": "CHANGELOG.md"
+      }
+    ],
+    [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "node -e \"require('fs').mkdirSync('sbom',{recursive:true})\" && npm version ${nextRelease.version} --no-git-tag-version && npm run package && npx @vscode/vsce package --out nexkit-vscode.vsix && npx @cyclonedx/cyclonedx-npm --output-file sbom/manifest.json --spec-version 1.5"
       }
     ],
     [
       "@semantic-release/git",
       {
-        "assets": ["package.json", "package-lock.json", "CHANGELOG.md"],
-        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+        "assets": [
+          "package.json",
+          "package-lock.json",
+          "CHANGELOG.md"
+        ],
+        "message": "chore(release): v${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
       }
     ],
     [
@@ -30,8 +48,12 @@
       {
         "assets": [
           {
-            "path": "*.vsix",
-            "label": "VS Code Extension (VSIX)"
+            "path": "nexkit-vscode.vsix",
+            "label": "VSIX package"
+          },
+          {
+            "path": "sbom/manifest.json",
+            "label": "SBOM (CycloneDX)"
           }
         ]
       }
