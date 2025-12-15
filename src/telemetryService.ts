@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import * as appInsights from "applicationinsights";
 import * as os from "os";
 import * as https from "https";
+import { getNexkitExtensionVersion } from "./extensionIdentity";
 
 /**
  * Telemetry service for tracking extension usage, commands, errors, and performance metrics
@@ -21,9 +22,7 @@ export class TelemetryService {
 
   constructor(private context: vscode.ExtensionContext) {
     this.sessionId = this.generateSessionId();
-    this.extensionVersion =
-      vscode.extensions.getExtension("nexusinno.nexus-nexkit-vscode")
-        ?.packageJSON.version || "unknown";
+    this.extensionVersion = getNexkitExtensionVersion();
     this.activationTime = Date.now();
     this.username = this.getUsername();
   }

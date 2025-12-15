@@ -9,6 +9,7 @@ import { ExtensionUpdateManager } from "./extensionUpdateManager";
 import { TelemetryService } from "./telemetryService";
 import { AwesomeCopilotService } from "./awesomeCopilotService";
 import { ContentManager } from "./contentManager";
+import { getNexkitExtensionVersion } from "./extensionIdentity";
 
 /**
  * Check for required MCP servers and show notification if missing
@@ -56,9 +57,7 @@ async function updateStatusBar(
   context: vscode.ExtensionContext
 ): Promise<void> {
   try {
-    const extensionVersion =
-      vscode.extensions.getExtension("nexusinno.nexus-nexkit-vscode")
-        ?.packageJSON.version || "0.0.0";
+    const extensionVersion = getNexkitExtensionVersion() || "0.0.0";
     const extensionUpdateManager = new ExtensionUpdateManager(context);
     const extensionUpdateInfo =
       await extensionUpdateManager.checkForExtensionUpdate();
@@ -174,10 +173,7 @@ export async function activate(context: vscode.ExtensionContext) {
         switch (message.command) {
           case "ready":
             // Webview is ready - send initial version, status, workspace and initialization state
-            const ext = vscode.extensions.getExtension(
-              "nexusinno.nexus-nexkit-vscode"
-            );
-            const version = ext?.packageJSON.version || "Unknown";
+            const version = getNexkitExtensionVersion() || "Unknown";
             const hasWorkspace =
               (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
             const isInitialized = vscode.workspace
@@ -199,11 +195,8 @@ export async function activate(context: vscode.ExtensionContext) {
             await vscode.commands.executeCommand(
               "nexus-nexkit-vscode.initProject"
             );
-            const ext3 = vscode.extensions.getExtension(
-              "nexusinno.nexus-nexkit-vscode"
-            );
             webviewView.webview.postMessage({
-              version: ext3?.packageJSON.version || "Unknown",
+              version: getNexkitExtensionVersion() || "Unknown",
               status: "Project initialized",
               isInitialized: vscode.workspace
                 .getConfiguration("nexkit")
@@ -218,11 +211,8 @@ export async function activate(context: vscode.ExtensionContext) {
             await vscode.commands.executeCommand(
               "nexus-nexkit-vscode.updateTemplates"
             );
-            const ext6 = vscode.extensions.getExtension(
-              "nexusinno.nexus-nexkit-vscode"
-            );
             webviewView.webview.postMessage({
-              version: ext6?.packageJSON.version || "Unknown",
+              version: getNexkitExtensionVersion() || "Unknown",
               status: "Templates updated",
               isInitialized: vscode.workspace
                 .getConfiguration("nexkit")
@@ -237,11 +227,8 @@ export async function activate(context: vscode.ExtensionContext) {
             await vscode.commands.executeCommand(
               "nexus-nexkit-vscode.reinitializeProject"
             );
-            const ext7 = vscode.extensions.getExtension(
-              "nexusinno.nexus-nexkit-vscode"
-            );
             webviewView.webview.postMessage({
-              version: ext7?.packageJSON.version || "Unknown",
+              version: getNexkitExtensionVersion() || "Unknown",
               status: "Project re-initialized",
               isInitialized: vscode.workspace
                 .getConfiguration("nexkit")
@@ -256,11 +243,8 @@ export async function activate(context: vscode.ExtensionContext) {
             await vscode.commands.executeCommand(
               "nexus-nexkit-vscode.installUserMCPs"
             );
-            const ext4 = vscode.extensions.getExtension(
-              "nexusinno.nexus-nexkit-vscode"
-            );
             webviewView.webview.postMessage({
-              version: ext4?.packageJSON.version || "Unknown",
+              version: getNexkitExtensionVersion() || "Unknown",
               status: "User MCP servers installed",
             });
             break;
@@ -272,11 +256,8 @@ export async function activate(context: vscode.ExtensionContext) {
             await vscode.commands.executeCommand(
               "nexus-nexkit-vscode.openSettings"
             );
-            const ext5 = vscode.extensions.getExtension(
-              "nexusinno.nexus-nexkit-vscode"
-            );
             webviewView.webview.postMessage({
-              version: ext5?.packageJSON.version || "Unknown",
+              version: getNexkitExtensionVersion() || "Unknown",
               status: "Settings opened",
             });
             break;
