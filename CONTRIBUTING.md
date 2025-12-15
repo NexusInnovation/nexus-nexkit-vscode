@@ -320,19 +320,34 @@ Pre-releases are marked as such in GitHub releases.
 
 If automated release fails:
 
-1. **Update version**
+1. **Use the release helper script (recommended)**
+
+   From the repo root on the `main` branch:
+
+   - `./scripts/publish-release.ps1`
+
+   The script will:
+   - propose a semantic version bump (patch/minor/major) based on Conventional Commits since the last `vX.Y.Z` tag
+   - update `package.json` (and `package-lock.json` when possible)
+   - commit the version bump to `main`
+   - create an **annotated** tag `vX.Y.Z`
+   - push `main` and the tag to `origin` to trigger the GitHub release workflow
+
+2. **Alternative: manual steps**
+
+   1. **Update version**
 
    ```bash
    npm version patch  # or minor/major
    ```
 
-2. **Create tag**
+   2. **Create tag**
 
    ```bash
    git push --tags
    ```
 
-3. **Create GitHub release manually**
+   3. **Create GitHub release manually**
    - Attach VSIX file
    - Add release notes
 
