@@ -112,8 +112,7 @@ async function checkForExtensionUpdates(
         }
       }
 
-      // Update last check timestamp
-      await extensionUpdateManager.updateLastCheckTimestamp();
+      // (Timestamp update handled by ExtensionUpdateManager)
     }
   } catch (error) {
     // Only log errors that aren't "no releases" errors

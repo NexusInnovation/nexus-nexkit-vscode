@@ -28,7 +28,7 @@ export class ExtensionUpdateManager {
   }
 
   /**
-   * Check if an extension update is available
+   * Checks if an extension update is available by comparing the current version with the latest release.
    */
   async checkForExtensionUpdate(): Promise<ExtensionUpdateInfo | null> {
     try {
