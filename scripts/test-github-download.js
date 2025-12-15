@@ -5,7 +5,7 @@
  * Run this outside of VS Code extension environment
  */
 
-const testUrl = 'https://github.com/NexusInnovation/nexkit-vscode/releases/download/v0.3.7/nexkit-vscode.vsix';
+const testUrl = 'https://github.com/NexusInnovation/nexus-nexkit-vscode/releases/download/v0.3.7/nexkit-vscode.vsix';
 
 async function testGitHubDownload() {
     console.log('🔧 Testing GitHub private repository download...');
@@ -20,7 +20,7 @@ async function testGitHubDownload() {
     }
 
     const headers = {
-        'User-Agent': 'Nexkit-VSCode-Extension',
+        'User-Agent': 'nexus-nexkit-vscode-Extension',
         'Accept': 'application/octet-stream',
         'Authorization': `Bearer ${token}`
     };

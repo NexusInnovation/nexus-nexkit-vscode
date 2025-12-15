@@ -13,7 +13,7 @@ async function main() {
     // Use isolated directories per run to avoid VS Code mutex/profile conflicts
     // (especially on Windows where a shared user-data-dir can cause failures).
     const baseDir = fs.mkdtempSync(
-      path.join(os.tmpdir(), "nexkit-vscode-test-")
+      path.join(os.tmpdir(), "nexus-nexkit-vscode-test-")
     );
     const userDataDir = path.join(baseDir, "user-data");
     const extensionsDir = path.join(baseDir, "extensions");

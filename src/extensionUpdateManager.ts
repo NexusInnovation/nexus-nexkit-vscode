@@ -13,7 +13,7 @@ export interface ExtensionUpdateInfo {
 
 export class ExtensionUpdateManager {
   private githubService: GitHubReleaseService;
-  private extensionId = "nexusinno.nexkit-vscode";
+  private extensionId = "nexusinno.nexus-nexkit-vscode";
 
   constructor(context: vscode.ExtensionContext) {
     this.githubService = new GitHubReleaseService(context);

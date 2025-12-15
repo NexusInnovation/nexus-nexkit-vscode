@@ -33,7 +33,7 @@ async function checkRequiredMCPs(
         );
 
         if (result === "Install") {
-          vscode.commands.executeCommand("nexkit-vscode.installUserMCPs");
+          vscode.commands.executeCommand("nexus-nexkit-vscode.installUserMCPs");
         } else if (result === "Don't Ask Again") {
           await config.update(
             "mcpSetup.dismissed",
@@ -57,8 +57,8 @@ async function updateStatusBar(
 ): Promise<void> {
   try {
     const extensionVersion =
-      vscode.extensions.getExtension("nexusinno.nexkit-vscode")?.packageJSON
-        .version || "0.0.0";
+      vscode.extensions.getExtension("nexusinno.nexus-nexkit-vscode")
+        ?.packageJSON.version || "0.0.0";
     const extensionUpdateManager = new ExtensionUpdateManager(context);
     const extensionUpdateInfo =
       await extensionUpdateManager.checkForExtensionUpdate();
@@ -69,12 +69,12 @@ async function updateStatusBar(
       statusBarItem.backgroundColor = new vscode.ThemeColor(
         "statusBarItem.warningBackground"
       );
-      statusBarItem.command = "nexkit-vscode.checkExtensionUpdate";
+      statusBarItem.command = "nexus-nexkit-vscode.checkExtensionUpdate";
     } else {
       statusBarItem.text = `$(check) Nexkit v${extensionVersion}`;
       statusBarItem.tooltip = `Nexkit v${extensionVersion} is up to date. Click to check for updates.`;
       statusBarItem.backgroundColor = undefined;
-      statusBarItem.command = "nexkit-vscode.checkExtensionUpdate";
+      statusBarItem.command = "nexus-nexkit-vscode.checkExtensionUpdate";
     }
 
     statusBarItem.show();
@@ -82,7 +82,7 @@ async function updateStatusBar(
     console.error("Error updating status bar:", error);
     statusBarItem.text = `$(warning) Nexkit`;
     statusBarItem.tooltip = "Error checking update status";
-    statusBarItem.command = "nexkit-vscode.checkExtensionUpdate";
+    statusBarItem.command = "nexus-nexkit-vscode.checkExtensionUpdate";
     statusBarItem.show();
   }
 }
@@ -175,7 +175,7 @@ export async function activate(context: vscode.ExtensionContext) {
           case "ready":
             // Webview is ready - send initial version, status, workspace and initialization state
             const ext = vscode.extensions.getExtension(
-              "nexusinno.nexkit-vscode"
+              "nexusinno.nexus-nexkit-vscode"
             );
             const version = ext?.packageJSON.version || "Unknown";
             const hasWorkspace =
@@ -196,9 +196,11 @@ export async function activate(context: vscode.ExtensionContext) {
               buttonName: "initProject",
               source: "webview",
             });
-            await vscode.commands.executeCommand("nexkit-vscode.initProject");
+            await vscode.commands.executeCommand(
+              "nexus-nexkit-vscode.initProject"
+            );
             const ext3 = vscode.extensions.getExtension(
-              "nexusinno.nexkit-vscode"
+              "nexusinno.nexus-nexkit-vscode"
             );
             webviewView.webview.postMessage({
               version: ext3?.packageJSON.version || "Unknown",
@@ -214,10 +216,10 @@ export async function activate(context: vscode.ExtensionContext) {
               source: "webview",
             });
             await vscode.commands.executeCommand(
-              "nexkit-vscode.updateTemplates"
+              "nexus-nexkit-vscode.updateTemplates"
             );
             const ext6 = vscode.extensions.getExtension(
-              "nexusinno.nexkit-vscode"
+              "nexusinno.nexus-nexkit-vscode"
             );
             webviewView.webview.postMessage({
               version: ext6?.packageJSON.version || "Unknown",
@@ -233,10 +235,10 @@ export async function activate(context: vscode.ExtensionContext) {
               source: "webview",
             });
             await vscode.commands.executeCommand(
-              "nexkit-vscode.reinitializeProject"
+              "nexus-nexkit-vscode.reinitializeProject"
             );
             const ext7 = vscode.extensions.getExtension(
-              "nexusinno.nexkit-vscode"
+              "nexusinno.nexus-nexkit-vscode"
             );
             webviewView.webview.postMessage({
               version: ext7?.packageJSON.version || "Unknown",
@@ -252,10 +254,10 @@ export async function activate(context: vscode.ExtensionContext) {
               source: "webview",
             });
             await vscode.commands.executeCommand(
-              "nexkit-vscode.installUserMCPs"
+              "nexus-nexkit-vscode.installUserMCPs"
             );
             const ext4 = vscode.extensions.getExtension(
-              "nexusinno.nexkit-vscode"
+              "nexusinno.nexus-nexkit-vscode"
             );
             webviewView.webview.postMessage({
               version: ext4?.packageJSON.version || "Unknown",
@@ -267,9 +269,11 @@ export async function activate(context: vscode.ExtensionContext) {
               buttonName: "openSettings",
               source: "webview",
             });
-            await vscode.commands.executeCommand("nexkit-vscode.openSettings");
+            await vscode.commands.executeCommand(
+              "nexus-nexkit-vscode.openSettings"
+            );
             const ext5 = vscode.extensions.getExtension(
-              "nexusinno.nexkit-vscode"
+              "nexusinno.nexus-nexkit-vscode"
             );
             webviewView.webview.postMessage({
               version: ext5?.packageJSON.version || "Unknown",
@@ -398,7 +402,7 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.StatusBarAlignment.Right,
     100
   );
-  statusBarItem.command = "nexkit-vscode.checkExtensionUpdate";
+  statusBarItem.command = "nexus-nexkit-vscode.checkExtensionUpdate";
   context.subscriptions.push(statusBarItem);
 
   // Update status bar
@@ -412,7 +416,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Register commands
   const initProjectDisposable = vscode.commands.registerCommand(
-    "nexkit-vscode.initProject",
+    "nexus-nexkit-vscode.initProject",
     async () => {
       await telemetryService.trackCommandExecution("initProject", async () => {
         try {
@@ -586,7 +590,7 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   const installUserMCPsDisposable = vscode.commands.registerCommand(
-    "nexkit-vscode.installUserMCPs",
+    "nexus-nexkit-vscode.installUserMCPs",
     async () => {
       await telemetryService.trackCommandExecution(
         "installUserMCPs",
@@ -672,7 +676,7 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   const configureAzureDevOpsDisposable = vscode.commands.registerCommand(
-    "nexkit-vscode.configureAzureDevOps",
+    "nexus-nexkit-vscode.configureAzureDevOps",
     () => {
       telemetryService.trackCommand("configureAzureDevOps");
       vscode.window.showInformationMessage(
@@ -682,7 +686,7 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   const openSettingsDisposable = vscode.commands.registerCommand(
-    "nexkit-vscode.openSettings",
+    "nexus-nexkit-vscode.openSettings",
     async () => {
       await telemetryService.trackCommandExecution("openSettings", async () => {
         try {
@@ -700,7 +704,7 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   const restoreBackupDisposable = vscode.commands.registerCommand(
-    "nexkit-vscode.restoreBackup",
+    "nexus-nexkit-vscode.restoreBackup",
     async () => {
       await telemetryService.trackCommandExecution(
         "restoreBackup",
@@ -787,7 +791,7 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   const updateTemplatesDisposable = vscode.commands.registerCommand(
-    "nexkit-vscode.updateTemplates",
+    "nexus-nexkit-vscode.updateTemplates",
     async () => {
       await telemetryService.trackCommandExecution(
         "updateTemplates",
@@ -817,7 +821,7 @@ export async function activate(context: vscode.ExtensionContext) {
               );
               if (result === "Initialize") {
                 await vscode.commands.executeCommand(
-                  "nexkit-vscode.initProject"
+                  "nexus-nexkit-vscode.initProject"
                 );
               }
               return;
@@ -940,7 +944,7 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   const reinitializeProjectDisposable = vscode.commands.registerCommand(
-    "nexkit-vscode.reinitializeProject",
+    "nexus-nexkit-vscode.reinitializeProject",
     async () => {
       await telemetryService.trackCommandExecution(
         "reinitializeProject",
@@ -966,7 +970,9 @@ export async function activate(context: vscode.ExtensionContext) {
             }
 
             // Run the init project command (it already handles re-initialization)
-            await vscode.commands.executeCommand("nexkit-vscode.initProject");
+            await vscode.commands.executeCommand(
+              "nexus-nexkit-vscode.initProject"
+            );
           } catch (error) {
             vscode.window.showErrorMessage(
               `Failed to re-initialize project: ${error}`
@@ -979,7 +985,7 @@ export async function activate(context: vscode.ExtensionContext) {
   );
 
   const checkExtensionUpdateDisposable = vscode.commands.registerCommand(
-    "nexkit-vscode.checkExtensionUpdate",
+    "nexus-nexkit-vscode.checkExtensionUpdate",
     async () => {
       await telemetryService.trackCommandExecution(
         "checkExtensionUpdate",
