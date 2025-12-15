@@ -3,12 +3,12 @@
   "displayName": "Nexkit",
   "description": "VS Code extension for Nexkit CLI",
   "version": "0.5.4",
-  "publisher": "nexusinno",
+  "publisher": "NexusInnovation",
   "private": true,
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nexusinno/nexus-nexkit-vscode.git"
+    "url": "https://github.com/NexusInnovation/nexus-nexkit-vscode.git"
   },
   "engines": {
     "vscode": "^1.105.0"
