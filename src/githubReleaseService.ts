@@ -12,7 +12,7 @@ export interface ReleaseInfo {
 
 export class GitHubReleaseService {
   private static readonly REPO_OWNER = "NexusInnovation";
-  private static readonly REPO_NAME = "nexkit-vscode";
+  private static readonly REPO_NAME = "nexus-nexkit-vscode";
   private static readonly BASE_URL = "https://api.github.com";
   private static readonly GITHUB_AUTH_PROVIDER_ID = "github";
   private static readonly REQUIRED_SCOPES = ["repo"];
@@ -48,7 +48,7 @@ export class GitHubReleaseService {
   ): Promise<Record<string, string>> {
     const session = await this.getGitHubSession(requireAuth);
     const headers: Record<string, string> = {
-      "User-Agent": "Nexkit-VSCode-Extension",
+      "User-Agent": "nexus-nexkit-vscode-Extension",
       Accept: "application/vnd.github.v3+json",
     };
 
