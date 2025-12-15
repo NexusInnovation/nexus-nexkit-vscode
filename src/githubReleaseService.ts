@@ -48,7 +48,7 @@ export class GitHubReleaseService {
   ): Promise<Record<string, string>> {
     const session = await this.getGitHubSession(requireAuth);
     const headers: Record<string, string> = {
-      "User-Agent": "Nexkit-VSCode-Extension",
+      "User-Agent": "nexus-nexkit-vscode-Extension",
       Accept: "application/vnd.github.v3+json",
     };
 

@@ -20,7 +20,7 @@ async function testGitHubDownload() {
     }
 
     const headers = {
-        'User-Agent': 'Nexkit-VSCode-Extension',
+        'User-Agent': 'nexus-nexkit-vscode-Extension',
         'Accept': 'application/octet-stream',
         'Authorization': `Bearer ${token}`
     };

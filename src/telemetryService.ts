@@ -22,8 +22,8 @@ export class TelemetryService {
   constructor(private context: vscode.ExtensionContext) {
     this.sessionId = this.generateSessionId();
     this.extensionVersion =
-      vscode.extensions.getExtension("nexusinno.nexkit-vscode")?.packageJSON
-        .version || "unknown";
+      vscode.extensions.getExtension("nexusinno.nexus-nexkit-vscode")
+        ?.packageJSON.version || "unknown";
     this.activationTime = Date.now();
     this.username = this.getUsername();
   }

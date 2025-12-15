@@ -336,7 +336,7 @@ The Nexkit extension is configured to send **live telemetry** to Azure Applicati
 **Real-time Events:**
 
 - Extension activation/deactivation
-- Command executions (e.g., `nexkit-vscode.initProject`)
+- Command executions (e.g., `nexus-nexkit-vscode.initProject`)
 - Errors and exceptions with stack traces
 - Custom events and metrics
 

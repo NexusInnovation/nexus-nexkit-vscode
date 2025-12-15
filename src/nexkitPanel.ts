@@ -618,7 +618,9 @@ export class NexkitPanel {
           await this._removeItem(message.category, message.item);
           break;
         case "initProject":
-          await vscode.commands.executeCommand("nexkit-vscode.initProject");
+          await vscode.commands.executeCommand(
+            "nexus-nexkit-vscode.initProject"
+          );
           this._status = "Project initialized";
           this._version = await this._getExtensionVersion();
           this._isInitialized = await this._checkIsInitialized();
@@ -628,14 +630,16 @@ export class NexkitPanel {
           });
           break;
         case "updateTemplates":
-          await vscode.commands.executeCommand("nexkit-vscode.updateTemplates");
+          await vscode.commands.executeCommand(
+            "nexus-nexkit-vscode.updateTemplates"
+          );
           this._status = "Templates updated";
           this._version = await this._getExtensionVersion();
           this._postVersionStatus();
           break;
         case "reinitializeProject":
           await vscode.commands.executeCommand(
-            "nexkit-vscode.reinitializeProject"
+            "nexus-nexkit-vscode.reinitializeProject"
           );
           this._status = "Project re-initialized";
           this._version = await this._getExtensionVersion();
@@ -646,12 +650,16 @@ export class NexkitPanel {
           });
           break;
         case "installUserMCPs":
-          await vscode.commands.executeCommand("nexkit-vscode.installUserMCPs");
+          await vscode.commands.executeCommand(
+            "nexus-nexkit-vscode.installUserMCPs"
+          );
           this._status = "User MCP servers installed";
           this._postVersionStatus();
           break;
         case "openSettings":
-          await vscode.commands.executeCommand("nexkit-vscode.openSettings");
+          await vscode.commands.executeCommand(
+            "nexus-nexkit-vscode.openSettings"
+          );
           this._status = "Settings opened";
           this._postVersionStatus();
           break;
@@ -757,7 +765,9 @@ export class NexkitPanel {
 
   private async _getExtensionVersion(): Promise<string> {
     try {
-      const ext = vscode.extensions.getExtension("nexusinno.nexkit-vscode");
+      const ext = vscode.extensions.getExtension(
+        "nexusinno.nexus-nexkit-vscode"
+      );
       return ext?.packageJSON.version || "Unknown";
     } catch {
       return "Unknown";
