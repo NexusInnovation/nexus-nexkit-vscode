@@ -12,7 +12,7 @@ export interface ReleaseInfo {
 
 export class GitHubReleaseService {
   private static readonly REPO_OWNER = "NexusInnovation";
-  private static readonly REPO_NAME = "nexkit-vscode";
+  private static readonly REPO_NAME = "nexus-nexkit-vscode";
   private static readonly BASE_URL = "https://api.github.com";
   private static readonly GITHUB_AUTH_PROVIDER_ID = "github";
   private static readonly REQUIRED_SCOPES = ["repo"];
