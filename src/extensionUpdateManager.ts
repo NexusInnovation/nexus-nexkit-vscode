@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import { GitHubReleaseService, ReleaseInfo } from "./githubReleaseService";
+import { findNexkitExtension } from "./extensionIdentity";
 
 export interface ExtensionUpdateInfo {
   currentVersion: string;
@@ -13,7 +14,6 @@ export interface ExtensionUpdateInfo {
 
 export class ExtensionUpdateManager {
   private githubService: GitHubReleaseService;
-  private extensionId = "nexusinno.nexus-nexkit-vscode";
 
   constructor(context: vscode.ExtensionContext) {
     this.githubService = new GitHubReleaseService(context);
@@ -23,8 +23,7 @@ export class ExtensionUpdateManager {
    * Get current extension version from package.json
    */
   getCurrentExtensionVersion(): string {
-    const extension = vscode.extensions.getExtension(this.extensionId);
-    return extension?.packageJSON?.version || "0.0.0";
+    return findNexkitExtension()?.packageJSON?.version || "0.0.0";
   }
 
   /**

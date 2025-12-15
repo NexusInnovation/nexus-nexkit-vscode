@@ -4,6 +4,7 @@ import {
   AwesomeCopilotItem,
 } from "./awesomeCopilotService";
 import { ContentManager } from "./contentManager";
+import { getNexkitExtensionVersion } from "./extensionIdentity";
 
 export class NexkitPanel {
   public static currentPanel: NexkitPanel | undefined;
@@ -765,10 +766,7 @@ export class NexkitPanel {
 
   private async _getExtensionVersion(): Promise<string> {
     try {
-      const ext = vscode.extensions.getExtension(
-        "nexusinno.nexus-nexkit-vscode"
-      );
-      return ext?.packageJSON.version || "Unknown";
+      return getNexkitExtensionVersion() || "Unknown";
     } catch {
       return "Unknown";
     }
