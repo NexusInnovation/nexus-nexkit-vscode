@@ -157,7 +157,7 @@ export class ExtensionUpdateManager {
 
     if (result === "View Release Notes") {
       // Open GitHub release page
-      const releaseUrl = `https://github.com/NexusInnovation/nexkit/releases/tag/${updateInfo.releaseInfo.tagName}`;
+      const releaseUrl = `https://github.com/NexusInnovation/nexus-nexkit-vscode/releases/tag/${updateInfo.releaseInfo.tagName}`;
       await vscode.env.openExternal(vscode.Uri.parse(releaseUrl));
       return;
     }
