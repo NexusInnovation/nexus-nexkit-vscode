@@ -175,14 +175,20 @@
     "test:coverage": "nyc --reporter=lcovonly --reporter=text node ./out/test/runTest.js",
     "lint": "eslint src --ext ts",
     "version:bump": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md",
-    "publish-private": "npm version patch --tag-version-prefix=v && git push && git push --tags"
+    "publish-private": "npm version patch --tag-version-prefix=v && git push && git push --tags",
+    "release": "semantic-release",
+    "release:dry": "semantic-release --dry-run"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.4.0",
     "@commitlint/config-conventional": "^19.4.0",
     "@cyclonedx/cyclonedx-npm": "^1.19.3",
+    "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/exec": "^7.0.3",
     "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.6",
+    "@semantic-release/release-notes-generator": "^14.0.3",
     "@types/adm-zip": "^0.5.7",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
