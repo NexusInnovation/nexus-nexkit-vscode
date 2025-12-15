@@ -1,15 +1,14 @@
 <#
 .SYNOPSIS
-  Publishes a new release by bumping package version, committing to main, creating an annotated tag, and pushing.
+    LEGACY: Previously published a release by bumping version, committing to main, tagging, and pushing.
 
 .DESCRIPTION
-  - Determines current version from package.json
-  - Proposes a semantic version bump (patch/minor/major) based on Conventional Commits since last v* tag
-  - Prompts for final version selection (recommended / patch / minor / major / custom)
-  - Updates package.json (and package-lock.json when possible)
-  - Commits the change on main
-  - Creates an annotated git tag (vX.Y.Z or vX.Y.Z-prerelease.N)
-  - Pushes main and the tag to origin to trigger GitHub Actions release workflow
+    This script is retained for historical/emergency purposes.
+
+    Nexkit releases are now handled by semantic-release in CI.
+    Prefer merging PRs into `main` / `develop` and letting GitHub Actions publish.
+
+    To prevent accidental manual releases, this script requires explicit opt-in via -AllowLegacyRelease.
 
 .NOTES
   Run from repo root: .\scripts\publish-release.ps1
@@ -19,6 +18,9 @@
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
     [switch]$DryRun,
+
+    # Explicit opt-in. Without this switch the script will refuse to run.
+    [switch]$AllowLegacyRelease,
 
     # Optional override if you want to skip commit scanning
     [ValidateSet('patch', 'minor', 'major')]
@@ -308,6 +310,10 @@ function Push-Main-And-Tag([string]$TagName) {
 # --- Main ---
 
 Assert-Command git
+
+if (-not $AllowLegacyRelease) {
+    throw "This legacy release script is disabled by default. Releases are now handled by semantic-release in CI.\n\nIf you really need to use this legacy flow, re-run with: .\\scripts\\publish-release.ps1 -AllowLegacyRelease"
+}
 
 $repoRoot = Get-RepoRoot
 Push-Location $repoRoot
