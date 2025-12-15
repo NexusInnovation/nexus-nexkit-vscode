@@ -29,7 +29,7 @@ This project adheres to professional standards of collaboration. Please be respe
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/NexusInnovation/nexkit-vscode.git
+   git clone https://github.com/NexusInnovation/nexus-nexkit-vscode.git
    cd nexkit-vscode
    ```
 
