@@ -29,7 +29,6 @@ export class ExtensionUpdateManager {
 
   /**
    * Check if an extension update is available
-   * @param silent If true, suppress authentication prompts (for automatic checks)
    */
   async checkForExtensionUpdate(): Promise<ExtensionUpdateInfo | null> {
     try {
