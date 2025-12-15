@@ -48,19 +48,27 @@ function Read-JsonFile([string]$Path) {
 }
 
 function Get-RepoRoot {
-    $root = (git rev-parse --show-toplevel) 2>$null
+    $root = @((git rev-parse --show-toplevel) 2>$null) -join "`n"
     if (-not $root) { throw 'Not inside a git repository.' }
     return $root.Trim()
 }
 
 function Get-CurrentBranch {
-    return (git rev-parse --abbrev-ref HEAD).Trim()
+    return ((@((git rev-parse --abbrev-ref HEAD) 2>$null) -join "`n").Trim())
 }
 
 function Assert-CleanWorkingTree {
     $status = (git status --porcelain)
     if ($status) {
-        throw "Working tree is not clean. Commit or stash changes before releasing.\n$status"
+        throw "Working tree is not clean.\n$status"
+    }
+}
+
+function Warn-IfDirtyWorkingTree {
+    $status = (git status --porcelain)
+    if ($status) {
+        Write-Warn "Working tree is not clean. Proceeding anyway (only version files will be committed)."
+        Write-Host $status
     }
 }
 
@@ -72,7 +80,7 @@ function Assert-OnMain {
 }
 
 function Assert-OriginConfigured {
-    $origin = (git remote get-url origin) 2>$null
+    $origin = @((git remote get-url origin) 2>$null) -join "`n"
     if (-not $origin) {
         throw "Git remote 'origin' is not configured."
     }
@@ -81,7 +89,8 @@ function Assert-OriginConfigured {
 function Assert-UpToDateWithOrigin {
     git fetch --tags origin | Out-Null
 
-    $aheadBehind = (git rev-list --left-right --count origin/main...main).Trim()
+    $aheadBehind = @((git rev-list --left-right --count origin/main...main) 2>$null) -join ' '
+    $aheadBehind = $aheadBehind.Trim()
     if (-not $aheadBehind) {
         throw 'Unable to determine ahead/behind status vs origin/main.'
     }
@@ -149,9 +158,10 @@ function Bump-Version([string]$Current, [ValidateSet('patch', 'minor', 'major')]
 
 function Get-LatestReleaseTag {
     # Prefer stable tags vX.Y.Z (exclude prerelease tags from the baseline)
-    $tag = (git describe --tags --abbrev=0 --match "v[0-9]*.[0-9]*.[0-9]*" 2>$null)
+    $tag = @((git describe --tags --abbrev=0 --match "v[0-9]*.[0-9]*.[0-9]*") 2>$null) -join "`n"
+    $tag = $tag.Trim()
     if (-not $tag) { return $null }
-    return $tag.Trim()
+    return $tag
 }
 
 function Infer-BumpFromCommits([string]$SinceTag) {
@@ -227,7 +237,10 @@ function Prompt-Choice([string]$CurrentVersion, [string]$SuggestedBump, [string]
 }
 
 function Assert-TagDoesNotExist([string]$TagName) {
-    $existing = (git tag --list $TagName).Trim()
+    # When the tag does not exist, git produces no output and PowerShell returns $null.
+    # Avoid calling .Trim() on $null.
+    $existing = @((git tag --list $TagName) 2>$null) -join "`n"
+    $existing = $existing.Trim()
     if ($existing) {
         throw "Tag already exists: $TagName"
     }
@@ -274,7 +287,8 @@ function Commit-VersionBump([string]$NewVersion, [string[]]$Files) {
     }
 
     Write-Info "Creating commit: $msg"
-    git commit -m $msg | Out-Null
+    # Commit only the version files even if other changes are already staged.
+    git commit -m $msg -- $Files | Out-Null
 }
 
 function Create-AnnotatedTag([string]$TagName) {
@@ -300,7 +314,7 @@ Push-Location $repoRoot
 try {
     Assert-OriginConfigured
     Assert-OnMain
-    Assert-CleanWorkingTree
+    Warn-IfDirtyWorkingTree
     Assert-UpToDateWithOrigin
 
     $currentVersion = Get-PackageVersion $repoRoot
