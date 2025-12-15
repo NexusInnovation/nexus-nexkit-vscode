@@ -112,13 +112,7 @@ async function checkForExtensionUpdates(
         }
       }
 
-      // Update last check timestamp
-      const config = vscode.workspace.getConfiguration("nexkit");
-      await config.update(
-        "extension.lastUpdateCheck",
-        Date.now(),
-        vscode.ConfigurationTarget.Global
-      );
+      // (Timestamp update handled by ExtensionUpdateManager)
     }
   } catch (error) {
     // Only log errors that aren't "no releases" errors
