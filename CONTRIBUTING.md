@@ -289,7 +289,7 @@ suite("Unit: TemplateManager", () => {
 
 ## Release Process
 
-Releases are automated using semantic-release based on commit messages.
+Releases are automated using **semantic-release** in GitHub Actions, based on **Conventional Commits**.
 
 ### Versioning
 
@@ -299,57 +299,38 @@ Releases are automated using semantic-release based on commit messages.
 
 ### Automated Release Flow
 
-1. **Merge to main** - PR merged with conventional commits
-2. **CI/CD runs** - Tests, linting, security scans
-3. **Semantic release** - Version calculated from commits
-4. **Tag created** - Git tag (e.g., `v0.2.0`)
-5. **GitHub release** - Created with VSIX attachment
-6. **Changelog** - Automatically generated
+1. **Merge PRs** into a release branch:
+   - `main` for **stable** releases
+   - `develop` for **beta** pre-releases
+2. **CI/CD runs** (tests, linting, security scans).
+3. **semantic-release runs** on pushes to `main`/`develop` and:
+   - computes the next version from commit messages
+   - updates `CHANGELOG.md`
+   - updates `package.json` / `package-lock.json`
+   - creates and pushes the git tag `vX.Y.Z` (or pre-release tags)
+   - packages the extension into a `.vsix`
+   - creates a GitHub Release and uploads assets
+
+> Important: Do **not** manually bump `package.json` version in PRs and do **not** manually create `v*` tags.
 
 ### Pre-release Versions
 
-For testing before stable release:
+Pre-releases are produced from the `develop` branch and are tagged as betas:
 
-- Alpha: `v0.2.0-alpha.1`
-- Beta: `v0.2.0-beta.1`
-- RC: `v0.2.0-rc.1`
+- Beta: `vX.Y.Z-beta.N`
 
-Pre-releases are marked as such in GitHub releases.
+These are marked as **pre-releases** on GitHub.
 
 ### Manual Release (Emergency Only)
 
-If automated release fails:
+If a release fails in CI:
 
-1. **Use the release helper script (recommended)**
+1. Re-run the **CI/CD Pipeline** workflow for the failing commit.
+2. If needed, run the workflow manually using **workflow_dispatch** on `main` or `develop`.
 
-   From the repo root on the `main` branch:
+The legacy script `scripts/publish-release.ps1` exists for historical reasons, but it is **not the recommended release mechanism** now that semantic-release is CI-driven.
 
-   - `./scripts/publish-release.ps1`
-
-   The script will:
-   - propose a semantic version bump (patch/minor/major) based on Conventional Commits since the last `vX.Y.Z` tag
-   - update `package.json` (and `package-lock.json` when possible)
-   - commit the version bump to `main`
-   - create an **annotated** tag `vX.Y.Z`
-   - push `main` and the tag to `origin` to trigger the GitHub release workflow
-
-2. **Alternative: manual steps**
-
-   1. **Update version**
-
-   ```bash
-   npm version patch  # or minor/major
-   ```
-
-   2. **Create tag**
-
-   ```bash
-   git push --tags
-   ```
-
-   3. **Create GitHub release manually**
-   - Attach VSIX file
-   - Add release notes
+For detailed release guidance, see `docs/RELEASING.md`.
 
 ## Code Style
 

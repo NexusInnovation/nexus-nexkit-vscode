@@ -3,8 +3,6 @@ name: CI/CD Pipeline
 on:
   push:
     branches: [main, develop]
-    tags:
-      - "v*.*.*"
   pull_request:
     branches: [main, develop]
     paths-ignore:
@@ -24,6 +22,7 @@ jobs:
   quality-gate:
     name: Quality Gate (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
     strategy:
       fail-fast: false
       matrix:
@@ -120,6 +119,7 @@ jobs:
   security:
     name: Security Audit
     runs-on: ubuntu-latest
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -134,7 +134,7 @@ jobs:
         run: npm ci
 
       - name: Run npm audit
-        run: npm audit --production --audit-level=high
+        run: npm audit --omit=dev --audit-level=high
         continue-on-error: false
 
       - name: Generate SBOM
@@ -155,6 +155,7 @@ jobs:
     name: Build Extension
     needs: [security]
     runs-on: ubuntu-latest
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
     outputs:
       vsix-name: ${{ steps.package.outputs.vsix-name }}
       vsix-size: ${{ steps.size.outputs.size }}
@@ -202,14 +203,19 @@ jobs:
           path: nexkit-vscode.vsix
           retention-days: 30
 
-  # Job 6: Create GitHub Release
+  # Job 6: Release (semantic-release)
   release:
-    name: Create GitHub Release
-    needs: [quality-gate, build, security]
+    name: Release (semantic-release)
+    needs: [quality-gate, security]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && !contains(github.event.head_commit.message, '[skip ci]')
+    concurrency:
+      group: release-${{ github.ref }}
+      cancel-in-progress: false
     permissions:
       contents: write
+      issues: write
+      pull-requests: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -222,78 +228,15 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
 
+      - name: Configure git author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
       - name: Install dependencies
         run: npm ci
 
-      - name: Download VSIX
-        uses: actions/download-artifact@v4
-        with:
-          name: nexkit-vscode-vsix
-
-      - name: Download SBOM
-        uses: actions/download-artifact@v4
-        with:
-          name: sbom
-          path: sbom
-
-      - name: Generate changelog
-        id: changelog
-        run: |
-          npx conventional-changelog-cli -p angular -r 2 -o RELEASE_NOTES.md
-          cat RELEASE_NOTES.md
-
-      - name: Determine release type
-        id: release-type
-        run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          if [[ "$TAG" =~ -(alpha|beta|rc) ]]; then
-            echo "is_prerelease=true" >> $GITHUB_OUTPUT
-            echo "Release type: Pre-release"
-          else
-            echo "is_prerelease=false" >> $GITHUB_OUTPUT
-            echo "Release type: Stable"
-          fi
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            nexkit-vscode.vsix
-            sbom/manifest.json
-          body_path: RELEASE_NOTES.md
-          draft: false
-          prerelease: ${{ steps.release-type.outputs.is_prerelease }}
-          make_latest: ${{ steps.release-type.outputs.is_prerelease == 'false' }}
+      - name: Run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create release summary
-        run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          echo "### 🎉 Release Created Successfully" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Version:** ${TAG}" >> $GITHUB_STEP_SUMMARY
-          echo "**Type:** ${{ steps.release-type.outputs.is_prerelease == 'true' && 'Pre-release' || 'Stable' }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Extension Size:** $(numfmt --to=iec-i --suffix=B ${{ needs.build.outputs.vsix-size }})" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "#### Download Links" >> $GITHUB_STEP_SUMMARY
-          echo "- [VSIX Package](${{ github.server_url }}/${{ github.repository }}/releases/download/${TAG}/nexkit-vscode.vsix)" >> $GITHUB_STEP_SUMMARY
-          echo "- [Latest Release](${{ github.server_url }}/${{ github.repository }}/releases/latest/download/nexkit-vscode.vsix)" >> $GITHUB_STEP_SUMMARY
-          echo "- [Release Page](${{ github.server_url }}/${{ github.repository }}/releases/tag/${TAG})" >> $GITHUB_STEP_SUMMARY
-
-  # Job 7: Notify on Success
-  notify:
-    name: Notify Release
-    needs: release
-    runs-on: ubuntu-latest
-    if: success() && startsWith(github.ref, 'refs/tags/v')
-    steps:
-      - name: Extract version
-        id: version
-        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
-      - name: Send notification
-        run: |
-          echo "🎉 Successfully released Nexkit VS Code Extension v${{ steps.version.outputs.version }}"
-          echo "Download: ${{ github.server_url }}/${{ github.repository }}/releases/download/${{ github.ref_name }}/nexkit-vscode.vsix"
-          echo "Latest: ${{ github.server_url }}/${{ github.repository }}/releases/latest/download/nexkit-vscode.vsix"
+        run: npx semantic-release

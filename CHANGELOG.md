@@ -51,4 +51,4 @@ Initial release with template deployment, MCP configuration, version management,
 
 ---
 
-**Note**: Starting from the next release, versions will be automatically managed by semantic-release based on conventional commits.
+**Note**: Versions are managed automatically by semantic-release based on Conventional Commits (see `docs/RELEASING.md`).
