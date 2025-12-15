@@ -5,7 +5,7 @@ import * as vscode from "vscode";
  */
 async function testGitHubDownload() {
   const testUrl =
-    "https://github.com/NexusInnovation/nexus-nexkit-vscode/releases/download/v0.3.7/nexus-nexkit-vscode.vsix";
+    "https://github.com/NexusInnovation/nexus-nexkit-vscode/releases/download/v0.3.7/nexkit-vscode.vsix";
 
   try {
     // Get authentication session
@@ -23,7 +23,7 @@ async function testGitHubDownload() {
     console.log("✅ GitHub session obtained");
 
     const headers = {
-      "User-Agent": "nexus-nexkit-vscode-Extension",
+      "User-Agent": "Nexkit-VSCode-Extension",
       Accept: "application/octet-stream",
       Authorization: `Bearer ${session.accessToken}`,
     };
@@ -59,7 +59,7 @@ async function testGitHubDownload() {
 
         console.log("\n🔍 Test 3: Following redirect WITHOUT Auth header");
         const headersNoAuth = {
-          "User-Agent": "nexus-nexkit-vscode-Extension",
+          "User-Agent": "Nexkit-VSCode-Extension",
           Accept: "application/octet-stream",
         };
 
