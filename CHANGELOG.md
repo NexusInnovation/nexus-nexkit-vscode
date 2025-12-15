@@ -1,3 +1,18 @@
+## <small>0.5.5 (2025-12-15)</small>
+
+* Merge branch 'chore/semantic-release-ci' of https://github.com/NexusInnovation/nexus-nexkit-vscode i ([364d1a0](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/364d1a0))
+* Merge branch 'main' into chore/semantic-release-ci ([f32b0ab](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/f32b0ab))
+* Merge pull request #37 from NexusInnovation/repo-rename-nexus-nexkit-vscode ([aae4080](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/aae4080)), closes [#37](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/37)
+* Merge pull request #38 from NexusInnovation:chore/semantic-release-ci ([31ae0a3](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/31ae0a3)), closes [#38](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/38)
+* Merge pull request #39 from NexusInnovation/chore/semantic-release-ci ([667cad9](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/667cad9)), closes [#39](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/39)
+* Merge pull request #40 from NexusInnovation/chore/semantic-release-ci ([b2d782c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/b2d782c)), closes [#40](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/40)
+* Merge pull request #41 from NexusInnovation/fix/refactor ([79e1d5a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/79e1d5a)), closes [#41](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/41)
+* refactor: centralize Nexkit extension version retrieval ([c0b0c82](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c0b0c82))
+* refactor: Update repository references from 'nexkit-vscode' to 'nexus-nexkit-vscode' ([deedfcb](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/deedfcb))
+* fix: correct publisher name and repository URL for consistency ([9acc28e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9acc28e))
+* fix: rename extension and update user agent for consistency ([7a613b3](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/7a613b3))
+* chore(ci): run semantic-release on main/develop ([507fa90](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/507fa90))
+
 # Changelog
 
 All notable changes to the Nexkit VS Code extension will be documented in this file.
