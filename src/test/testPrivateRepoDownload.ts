@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { GitHubReleaseService } from '../githubReleaseService';
+import { GitHubReleaseService } from '../services/githubReleaseService';
 
 /**
  * Simple test to verify GitHub private repository download works

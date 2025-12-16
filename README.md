@@ -22,7 +22,6 @@ This extension provides the following commands (accessible via Command Palette o
 ### From GitHub Releases (Internal Use)
 
 1. **Download the latest VSIX package**
-
    - Visit the [latest release](https://github.com/NexusInnovation/nexus-nexkit-vscode/releases/latest)
    - Download `nexkit-vscode.vsix`
    - Or use this direct link: [Download Latest VSIX](https://github.com/NexusInnovation/nexus-nexkit-vscode/releases/latest/download/nexkit-vscode.vsix)
@@ -64,14 +63,11 @@ This extension contributes the following settings:
 
 ### Initialization Settings
 
-- `nexkit.init.promptForLanguages`: Prompt for programming languages during project initialization (default: true)
 - `nexkit.init.createVscodeSettings`: Create .vscode/settings.json during initialization (default: true)
-- `nexkit.init.createGitignore`: Create .gitignore during initialization (default: true)
 
 ### Workspace Settings
 
 - `nexkit.workspace.initialized`: Indicates if the workspace has been initialized with Nexkit (default: false)
-- `nexkit.workspace.languages`: List of programming languages selected for the workspace (default: [])
 - `nexkit.workspace.mcpServers`: List of MCP servers configured for the workspace (default: [])
 
 ### Extension Updates

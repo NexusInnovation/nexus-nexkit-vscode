@@ -3,89 +3,13 @@
 import * as vscode from "vscode";
 import { TemplateManager, DeploymentConfig } from "./templateManager";
 import { InitWizard } from "./initWizard";
-import { MCPConfigManager } from "./mcpConfigManager";
 import { NexkitPanel } from "./nexkitPanel";
 import { ExtensionUpdateManager } from "./extensionUpdateManager";
-import { TelemetryService } from "./telemetryService";
-import { AwesomeCopilotService } from "./awesomeCopilotService";
-import { ContentManager } from "./contentManager";
-
-/**
- * Check for required MCP servers and show notification if missing
- */
-async function checkRequiredMCPs(
-  mcpConfigManager: MCPConfigManager
-): Promise<void> {
-  try {
-    const { missing } = await mcpConfigManager.checkRequiredUserMCPs();
-
-    if (missing.length > 0) {
-      // Check if user has dismissed this notification before
-      const config = vscode.workspace.getConfiguration("nexkit");
-      const dismissed = config.get("mcpSetup.dismissed", false);
-
-      if (!dismissed) {
-        const result = await vscode.window.showInformationMessage(
-          `Nexkit requires MCP servers: ${missing.join(", ")}. Install now?`,
-          "Install",
-          "Later",
-          "Don't Ask Again"
-        );
-
-        if (result === "Install") {
-          vscode.commands.executeCommand("nexus-nexkit-vscode.installUserMCPs");
-        } else if (result === "Don't Ask Again") {
-          await config.update(
-            "mcpSetup.dismissed",
-            true,
-            vscode.ConfigurationTarget.Global
-          );
-        }
-      }
-    }
-  } catch (error) {
-    console.error("Error checking MCP servers:", error);
-  }
-}
-
-/**
- * Update the status bar with extension version and update status
- */
-async function updateStatusBar(
-  statusBarItem: vscode.StatusBarItem,
-  context: vscode.ExtensionContext
-): Promise<void> {
-  try {
-    const extensionVersion =
-      vscode.extensions.getExtension("nexusinno.nexus-nexkit-vscode")
-        ?.packageJSON.version || "0.0.0";
-    const extensionUpdateManager = new ExtensionUpdateManager(context);
-    const extensionUpdateInfo =
-      await extensionUpdateManager.checkForExtensionUpdate();
-
-    if (extensionUpdateInfo) {
-      statusBarItem.text = `$(cloud-download) Nexkit v${extensionVersion}`;
-      statusBarItem.tooltip = `Extension update available: ${extensionUpdateInfo.latestVersion}. Click to update.`;
-      statusBarItem.backgroundColor = new vscode.ThemeColor(
-        "statusBarItem.warningBackground"
-      );
-      statusBarItem.command = "nexus-nexkit-vscode.checkExtensionUpdate";
-    } else {
-      statusBarItem.text = `$(check) Nexkit v${extensionVersion}`;
-      statusBarItem.tooltip = `Nexkit v${extensionVersion} is up to date. Click to check for updates.`;
-      statusBarItem.backgroundColor = undefined;
-      statusBarItem.command = "nexus-nexkit-vscode.checkExtensionUpdate";
-    }
-
-    statusBarItem.show();
-  } catch (error) {
-    console.error("Error updating status bar:", error);
-    statusBarItem.text = `$(warning) Nexkit`;
-    statusBarItem.tooltip = "Error checking update status";
-    statusBarItem.command = "nexus-nexkit-vscode.checkExtensionUpdate";
-    statusBarItem.show();
-  }
-}
+import { TelemetryService } from "./services/telemetryService";
+import { ContentCategory, ContentManager } from "./services/contentManagerService";
+import { MultiRepositoryAggregator } from "./services/multiRepositoryAggregatorService";
+import { MCPConfigService } from "./services/mcpConfigManager";
+import { StatusBarService } from "./services/statusBarService";
 
 /**
  * Check for extension updates on activation
@@ -139,9 +63,10 @@ export async function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(telemetryService);
 
   const templateManager = new TemplateManager(context);
-  const mcpConfigManager = new MCPConfigManager();
-  const awesomeCopilotService = new AwesomeCopilotService(context);
+  const mcpConfigManager = new MCPConfigService();
+  const repositoryAggregator = new MultiRepositoryAggregator(context);
   const contentManager = new ContentManager(context);
+  const statusBarService = new StatusBarService(context);
 
   // Register NexkitPanel WebviewViewProvider for sidebar
   class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
@@ -149,7 +74,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     constructor(
       private readonly _extensionUri: vscode.Uri,
-      private readonly _awesomeCopilotService: AwesomeCopilotService,
+      private readonly _repositoryAggregator: MultiRepositoryAggregator,
       private readonly _contentManager: ContentManager
     ) {}
 
@@ -281,82 +206,107 @@ export async function activate(context: vscode.ExtensionContext) {
             });
             break;
 
-          case "loadAwesomeItems":
+          case "loadRepositories":
             try {
-              console.log("[Nexkit] Loading awesome items from GitHub...");
-              // Fetch items from GitHub
-              const agents = await this._awesomeCopilotService.fetchAgents();
-              console.log(`[Nexkit] Fetched ${agents.length} agents`);
-              const prompts = await this._awesomeCopilotService.fetchPrompts();
-              console.log(`[Nexkit] Fetched ${prompts.length} prompts`);
-              const instructions =
-                await this._awesomeCopilotService.fetchInstructions();
-              console.log(
-                `[Nexkit] Fetched ${instructions.length} instructions`
-              );
+              console.log("[Nexkit] Loading items from all repositories...");
 
-              // Get installed items
+              // Fetch all items at once, grouped by repository and category
+              const repositories = await this._repositoryAggregator.fetchAllItemsFromAllRepositories();
               const installed = await this._contentManager.getInstalledItems();
-              console.log(
-                `[Nexkit] Found ${installed.agents.size} installed agents, ${installed.prompts.size} prompts, ${installed.instructions.size} instructions`
-              );
+              
+              // Detect filename conflicts across repositories
+              const conflicts: Record<ContentCategory, Set<string>> = {
+                agents: new Set(),
+                prompts: new Set(),
+                instructions: new Set(),
+                chatmodes: new Set(),
+              };
 
-              // Send to webview
+              const categories = ["agents", "prompts", "instructions", "chatmodes"] as const;
+              for (const category of categories) {
+                const filenameToRepos = new Map<string, string[]>();
+                
+                // Collect all repositories that have each filename
+                for (const [repoName, repoData] of Object.entries(repositories)) {
+                  for (const item of repoData[category] || []) {
+                    const repos = filenameToRepos.get(item.name) || [];
+                    repos.push(repoName);
+                    filenameToRepos.set(item.name, repos);
+                  }
+                }
+                
+                // Mark files that appear in multiple repositories and are installed
+                for (const [filename, repos] of filenameToRepos.entries()) {
+                  if (repos.length > 1 && installed[category].has(filename)) {
+                    conflicts[category].add(filename);
+                  }
+                }
+              }
+              
+              console.log(`[Nexkit] Loaded ${Object.keys(repositories).length} repositories`);
+
               webviewView.webview.postMessage({
-                command: "awesomeItemsLoaded",
-                items: { agents, prompts, instructions },
+                command: "repositoriesLoaded",
+                repositories,
                 installed: {
                   agents: Array.from(installed.agents),
                   prompts: Array.from(installed.prompts),
                   instructions: Array.from(installed.instructions),
+                  chatmodes: Array.from(installed.chatmodes),
+                },
+                conflicts: {
+                  agents: Array.from(conflicts.agents),
+                  prompts: Array.from(conflicts.prompts),
+                  instructions: Array.from(conflicts.instructions),
+                  chatmodes: Array.from(conflicts.chatmodes),
                 },
               });
             } catch (error) {
-              console.error("[Nexkit] Error loading awesome items:", error);
+              console.error("[Nexkit] Error loading repositories:", error);
               webviewView.webview.postMessage({
-                command: "awesomeItemsError",
+                command: "repositoriesError",
                 error: error instanceof Error ? error.message : String(error),
               });
             }
             break;
 
+          case "refreshRepositories":
+            try {
+              console.log("[Nexkit] Refreshing all repositories...");
+              this._repositoryAggregator.refreshAll();
+              // Trigger reload
+              webviewView.webview.postMessage({ command: "loadRepositories" });
+              vscode.window.showInformationMessage("Repositories refreshed successfully");
+            } catch (error) {
+              console.error("[Nexkit] Error refreshing repositories:", error);
+              vscode.window.showErrorMessage(`Failed to refresh repositories: ${error}`);
+            }
+            break;
+
           case "installItem":
             try {
-              const { category, item } = message;
-              // Download file content
-              const content = await this._awesomeCopilotService.downloadFile(
-                item.rawUrl
-              );
-              // Install file
-              await this._contentManager.installFile(
-                category,
-                item.name,
-                content
-              );
-              // Notify webview
+              const { item } = message;
+              const content = await this._repositoryAggregator.downloadFile(item.rawUrl);
+              await this._contentManager.installItem(item, content);
               webviewView.webview.postMessage({
                 command: "itemInstalled",
-                category,
+                category: item.category,
                 itemName: item.name,
               });
             } catch (error) {
               console.error("Error installing item:", error);
-              vscode.window.showErrorMessage(
-                `Failed to install item: ${error}`
-              );
+              vscode.window.showErrorMessage(`Failed to install item: ${error}`);
             }
             break;
 
           case "removeItem":
             try {
-              const { category, item } = message;
-              // Remove file
-              await this._contentManager.removeFile(category, item.name);
-              // Notify webview
+              const { category, itemName } = message;
+              await this._contentManager.removeFile(category, itemName);
               webviewView.webview.postMessage({
                 command: "itemRemoved",
                 category,
-                itemName: item.name,
+                itemName,
               });
             } catch (error) {
               console.error("Error removing item:", error);
@@ -376,7 +326,7 @@ export async function activate(context: vscode.ExtensionContext) {
   // Create and register the webview provider
   const nexkitPanelProvider = new NexkitPanelViewProvider(
     context.extensionUri,
-    awesomeCopilotService,
+    repositoryAggregator,
     contentManager
   );
   context.subscriptions.push(
@@ -397,19 +347,11 @@ export async function activate(context: vscode.ExtensionContext) {
     })
   );
 
-  // Create status bar item
-  const statusBarItem = vscode.window.createStatusBarItem(
-    vscode.StatusBarAlignment.Right,
-    100
-  );
-  statusBarItem.command = "nexus-nexkit-vscode.checkExtensionUpdate";
-  context.subscriptions.push(statusBarItem);
-
-  // Update status bar
-  updateStatusBar(statusBarItem, context);
+  // Initialize status bar service
+  await statusBarService.updateStatusBar();
 
   // Check for required MCP servers on activation
-  checkRequiredMCPs(mcpConfigManager);
+  mcpConfigManager.checkRequiredMCPs();
 
   // Check for extension updates on activation
   checkForExtensionUpdates(context);
@@ -551,11 +493,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 true,
                 vscode.ConfigurationTarget.Workspace
               );
-              await config.update(
-                "workspace.languages",
-                wizardResult.languages,
-                vscode.ConfigurationTarget.Workspace
-              );
+              
               await config.update(
                 "workspace.mcpServers",
                 deploymentConfig.workspaceMCPs,
@@ -566,11 +504,6 @@ export async function activate(context: vscode.ExtensionContext) {
               await config.update(
                 "init.createVscodeSettings",
                 wizardResult.createVscodeSettings,
-                vscode.ConfigurationTarget.Workspace
-              );
-              await config.update(
-                "init.createGitignore",
-                wizardResult.createGitignore,
                 vscode.ConfigurationTarget.Workspace
               );
             }

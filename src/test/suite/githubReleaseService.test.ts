@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { GitHubReleaseService } from '../../githubReleaseService';
+import { GitHubReleaseService } from '../../services/githubReleaseService';
 
 suite('Unit: GitHubReleaseService', () => {
 	test('should instantiate GitHubReleaseService', () => {

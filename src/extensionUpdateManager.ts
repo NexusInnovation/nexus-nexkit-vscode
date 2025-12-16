@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
-import { GitHubReleaseService, ReleaseInfo } from "./githubReleaseService";
+import { GitHubReleaseService, ReleaseInfo } from "./services/githubReleaseService";
 
 export interface ExtensionUpdateInfo {
   currentVersion: string;
@@ -12,12 +12,8 @@ export interface ExtensionUpdateInfo {
 }
 
 export class ExtensionUpdateManager {
-  private githubService: GitHubReleaseService;
+  private githubService: GitHubReleaseService = new GitHubReleaseService();
   private extensionId = "nexusinno.nexus-nexkit-vscode";
-
-  constructor(context: vscode.ExtensionContext) {
-    this.githubService = new GitHubReleaseService(context);
-  }
 
   /**
    * Get current extension version from package.json

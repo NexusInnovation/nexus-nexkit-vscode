@@ -88,33 +88,15 @@
     "configuration": {
       "title": "Nexkit",
       "properties": {
-        "nexkit.init.promptForLanguages": {
-          "type": "boolean",
-          "default": true,
-          "description": "Prompt for programming languages during project initialization."
-        },
         "nexkit.init.createVscodeSettings": {
           "type": "boolean",
           "default": true,
           "description": "Create .vscode/settings.json during initialization."
         },
-        "nexkit.init.createGitignore": {
-          "type": "boolean",
-          "default": true,
-          "description": "Create .gitignore during initialization."
-        },
         "nexkit.workspace.initialized": {
           "type": "boolean",
           "default": false,
           "description": "Indicates if the workspace has been initialized with Nexkit."
-        },
-        "nexkit.workspace.languages": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [],
-          "description": "List of programming languages selected for the workspace."
         },
         "nexkit.workspace.mcpServers": {
           "type": "array",
@@ -153,6 +135,62 @@
           "type": "string",
           "default": "",
           "description": "Azure Application Insights connection string (optional, for custom telemetry endpoint)."
+        },
+        "nexkit.repositories": {
+          "type": "array",
+          "default": [],
+          "description": "Additional repository sources for agents, prompts, and instructions. Default repositories (Nexus Templates and Awesome Copilot) are always included.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Display name for the repository"
+              },
+              "url": {
+                "type": "string",
+                "description": "GitHub repository URL (e.g., https://github.com/owner/repo)"
+              },
+              "branch": {
+                "type": "string",
+                "default": "main",
+                "description": "Git branch to use"
+              },
+              "enabled": {
+                "type": "boolean",
+                "default": true,
+                "description": "Enable or disable this repository"
+              },
+              "requireAuth": {
+                "type": "boolean",
+                "default": false,
+                "description": "Whether this repository requires GitHub authentication"
+              },
+              "paths": {
+                "type": "object",
+                "description": "Paths to different content types in the repository",
+                "properties": {
+                  "agents": {
+                    "type": "string",
+                    "description": "Path to agents directory"
+                  },
+                  "prompts": {
+                    "type": "string",
+                    "description": "Path to prompts directory"
+                  },
+                  "instructions": {
+                    "type": "string",
+                    "description": "Path to instructions directory"
+                  },
+                  "chatmodes": {
+                    "type": "string",
+                    "description": "Path to chatmodes directory"
+                  }
+                }
+              }
+            },
+            "required": ["name", "url", "paths"]
+          }
         }
       }
     }

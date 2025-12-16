@@ -1,6 +1,6 @@
 import * as assert from "assert";
 import * as vscode from "vscode";
-import { GitHubReleaseService } from "../../githubReleaseService";
+import { GitHubReleaseService } from "../../services/githubReleaseService";
 
 /**
  * Helper function to test keeping auth header through redirects

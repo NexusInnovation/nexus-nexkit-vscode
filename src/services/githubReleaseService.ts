@@ -16,9 +16,7 @@ export class GitHubReleaseService {
   private static readonly BASE_URL = "https://api.github.com";
   private static readonly GITHUB_AUTH_PROVIDER_ID = "github";
   private static readonly REQUIRED_SCOPES = ["repo"];
-
-  constructor(private readonly context: vscode.ExtensionContext) {}
-
+  
   /**
    * Get GitHub authentication session with required scopes
    * @param createIfNone If true, prompt user to sign in if not authenticated

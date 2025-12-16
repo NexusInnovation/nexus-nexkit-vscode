@@ -2,7 +2,7 @@ import * as assert from "assert";
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
-import { ContentManager } from "../../contentManager";
+import { ContentManager } from "../../services/contentManagerService";
 
 suite("ContentManager Test Suite", () => {
   let manager: ContentManager;
@@ -235,32 +235,6 @@ suite("ContentManager Test Suite", () => {
           // Ignore cleanup errors
         }
         throw error;
-      }
-    });
-
-    test("Should get installed count for category", async function () {
-      if (!testWorkspaceRoot) {
-        this.skip();
-        return;
-      }
-
-      const initialCount = await manager.getInstalledCount("agents");
-      assert.ok(typeof initialCount === "number");
-      assert.ok(initialCount >= 0);
-    });
-
-    test("Should list files in category", async function () {
-      if (!testWorkspaceRoot) {
-        this.skip();
-        return;
-      }
-
-      const files = await manager.listFiles("agents");
-      assert.ok(Array.isArray(files));
-
-      // All files should end with .agent.md
-      for (const file of files) {
-        assert.ok(file.endsWith(".agent.md"));
       }
     });
 

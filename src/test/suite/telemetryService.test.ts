@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import * as vscode from "vscode";
 import * as sinon from "sinon";
-import { TelemetryService } from "../../telemetryService";
+import { TelemetryService } from "../../services/telemetryService";
 
 suite("TelemetryService Test Suite", () => {
   let context: vscode.ExtensionContext;
