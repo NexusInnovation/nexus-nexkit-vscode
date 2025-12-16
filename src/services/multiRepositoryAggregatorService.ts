@@ -77,9 +77,9 @@ export class MultiRepositoryAggregatorService {
   }
 
   /**
-   * Refresh all repository caches
+   * Clear all repository caches
    */
-  refreshAll(): void {
+  clearAll(): void {
     this.services.clear();
   }
 

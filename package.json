@@ -57,11 +57,6 @@
         "category": "Nexkit"
       },
       {
-        "command": "nexus-nexkit-vscode.updateTemplates",
-        "title": "Nexkit: Update Templates",
-        "category": "Nexkit"
-      },
-      {
         "command": "nexus-nexkit-vscode.reinitializeProject",
         "title": "Nexkit: Re-initialize Project",
         "category": "Nexkit"
@@ -93,6 +88,11 @@
           "type": "boolean",
           "default": true,
           "description": "Create .vscode/settings.json during initialization."
+        },
+        "nexkit.init.createVscodeExtensions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Create .vscode/extensions.json with recommended extensions during initialization."
         },
         "nexkit.workspace.initialized": {
           "type": "boolean",
@@ -161,11 +161,6 @@
                 "type": "boolean",
                 "default": true,
                 "description": "Enable or disable this repository"
-              },
-              "requireAuth": {
-                "type": "boolean",
-                "default": false,
-                "description": "Whether this repository requires GitHub authentication"
               },
               "paths": {
                 "type": "object",

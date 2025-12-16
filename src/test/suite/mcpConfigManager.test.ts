@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { MCPConfigManager } from "../../services/mcpConfigManager";
+import { MCPConfigManager } from "../../services/mcpConfigService";
 
 suite("Unit: MCPConfigManager", () => {
   test("should instantiate MCPConfigManager", () => {

@@ -1,3 +1,5 @@
+// todo: review this file
+
 /**
  * Generates HTML for the Nexkit webview panel
  */
@@ -111,9 +113,6 @@ export class WebviewTemplate {
     
     <button id="reinitializeProjectBtn" onclick="sendCommand('reinitializeProject')" style="display: none;" disabled>Re-initialize Project</button>
     <p class="button-description disabled" id="reinitializeProjectBtnDesc" style="display: none;">Reset project configuration and redeploy templates</p>
-    
-    <button id="updateTemplatesBtn" onclick="sendCommand('updateTemplates')" disabled>Update Nexkit Templates</button>
-    <p class="button-description disabled" id="updateTemplatesBtnDesc">Update templates to the latest version from the extension</p>
     
     <button id="installUserMCPsBtn" onclick="sendCommand('installUserMCPs')">Install User MCP Servers</button>
     <p class="button-description" id="installUserMCPsBtnDesc">Install required MCP servers for enhanced AI capabilities</p>

@@ -58,8 +58,7 @@ async function fetchWithRedirectsKeepAuth(
  */
 suite("GitHub Download Diagnostic Tests", () => {
   let service: GitHubReleaseService;
-  const testVsixUrl =
-    "https://github.com/NexusInnovation/nexus-nexkit-vscode/releases/download/v0.3.7/nexkit-vscode.vsix";
+  const testVsixUrl = "https://github.com/NexusInnovation/nexus-nexkit-vscode/releases/download/v0.3.7/nexkit-vscode.vsix";
 
   setup(() => {
     const mockContext = {
@@ -122,9 +121,7 @@ suite("GitHub Download Diagnostic Tests", () => {
           });
 
           console.log(`Redirect response status: ${response2.status}`);
-          console.log(
-            `Redirect response headers: ${JSON.stringify(Object.fromEntries(response2.headers.entries()), null, 2)}`
-          );
+          console.log(`Redirect response headers: ${JSON.stringify(Object.fromEntries(response2.headers.entries()), null, 2)}`);
 
           // Test 3: Following redirect without Auth header
           console.log("Test 3: Following redirect without Auth header");
@@ -140,11 +137,7 @@ suite("GitHub Download Diagnostic Tests", () => {
 
           console.log(`No-auth redirect response status: ${response3.status}`);
           console.log(
-            `No-auth redirect response headers: ${JSON.stringify(
-              Object.fromEntries(response3.headers.entries()),
-              null,
-              2
-            )}`
+            `No-auth redirect response headers: ${JSON.stringify(Object.fromEntries(response3.headers.entries()), null, 2)}`
           );
         }
       }

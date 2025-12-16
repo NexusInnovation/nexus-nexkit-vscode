@@ -55,12 +55,7 @@ export function deepMerge(source: any, target: any): any {
   const result: any = { ...source };
   for (const key in target) {
     if (Object.prototype.hasOwnProperty.call(target, key)) {
-      if (
-        target[key] &&
-        typeof target[key] === "object" &&
-        !Array.isArray(target[key]) &&
-        !Array.isArray(source[key])
-      ) {
+      if (target[key] && typeof target[key] === "object" && !Array.isArray(target[key]) && !Array.isArray(source[key])) {
         result[key] = deepMerge(source[key] ?? {}, target[key]);
       } else {
         // Primitive, array, or only one side is object - target wins

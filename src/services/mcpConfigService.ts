@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import { getWorkspaceRoot, checkFileExists } from "../helpers/fileSystemHelper";
+import { SettingsManager } from "../config/settingsManager";
 
 export interface MCPConfig {
   servers: { [serverName: string]: MCPServerConfig };
@@ -196,8 +197,7 @@ export class MCPConfigService {
 
       if (missing.length > 0) {
         // Check if user has dismissed this notification before
-        const config = vscode.workspace.getConfiguration("nexkit");
-        const dismissed = config.get("mcpSetup.dismissed", false);
+        const dismissed = SettingsManager.isMcpSetupDismissed();
 
         if (!dismissed) {
           const result = await vscode.window.showInformationMessage(
@@ -210,7 +210,7 @@ export class MCPConfigService {
           if (result === "Install") {
             vscode.commands.executeCommand("nexus-nexkit-vscode.installUserMCPs");
           } else if (result === "Don't Ask Again") {
-            await config.update("mcpSetup.dismissed", true, vscode.ConfigurationTarget.Global);
+            await SettingsManager.setMcpSetupDismissed(true, vscode.ConfigurationTarget.Global);
           }
         }
       }

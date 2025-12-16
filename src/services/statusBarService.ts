@@ -22,8 +22,7 @@ export class StatusBarService {
    */
   async updateStatusBar(): Promise<void> {
     try {
-      const extensionVersion =
-        vscode.extensions.getExtension("nexusinno.nexus-nexkit-vscode")?.packageJSON.version || "0.0.0";
+      const extensionVersion = vscode.extensions.getExtension("nexusinno.nexus-nexkit-vscode")?.packageJSON.version || "0.0.0";
       const extensionUpdateInfo = await this.extensionUpdateService.checkForExtensionUpdate();
 
       if (extensionUpdateInfo) {

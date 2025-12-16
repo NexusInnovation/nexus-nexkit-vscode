@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import * as appInsights from "applicationinsights";
 import * as os from "os";
 import * as https from "https";
+import { SettingsManager } from "../config/settingsManager";
 
 /**
  * Telemetry service for tracking extension usage, commands, errors, and performance metrics
@@ -21,8 +22,7 @@ export class TelemetryService {
 
   constructor(private context: vscode.ExtensionContext) {
     this.sessionId = this.generateSessionId();
-    this.extensionVersion =
-      vscode.extensions.getExtension("nexusinno.nexus-nexkit-vscode")?.packageJSON.version || "unknown";
+    this.extensionVersion = vscode.extensions.getExtension("nexusinno.nexus-nexkit-vscode")?.packageJSON.version || "unknown";
     this.activationTime = Date.now();
     this.username = this.getUsername();
   }
@@ -151,13 +151,13 @@ export class TelemetryService {
    */
   private isTelemetryEnabled(): boolean {
     // Check VS Code global telemetry setting
-    const vscodeTelemetryLevel = vscode.workspace.getConfiguration("telemetry").get<string>("telemetryLevel", "all");
+    const vscodeTelemetryLevel = SettingsManager.getVSCodeTelemetryLevel();
     if (vscodeTelemetryLevel === "off") {
       return false;
     }
 
     // Check Nexkit-specific telemetry setting
-    const nexkitTelemetryEnabled = vscode.workspace.getConfiguration("nexkit").get<boolean>("telemetry.enabled", true);
+    const nexkitTelemetryEnabled = SettingsManager.isNexkitTelemetryEnabled();
     return nexkitTelemetryEnabled;
   }
 
@@ -172,9 +172,7 @@ export class TelemetryService {
     }
 
     // Priority 2: VS Code configuration (user can override)
-    const configConnectionString = vscode.workspace
-      .getConfiguration("nexkit")
-      .get<string>("telemetry.connectionString");
+    const configConnectionString = SettingsManager.getTelemetryConnectionString();
     if (configConnectionString) {
       return configConnectionString;
     }
@@ -337,11 +335,7 @@ export class TelemetryService {
   /**
    * Track a custom event
    */
-  public trackEvent(
-    eventName: string,
-    properties?: { [key: string]: string },
-    measurements?: { [key: string]: number }
-  ): void {
+  public trackEvent(eventName: string, properties?: { [key: string]: string }, measurements?: { [key: string]: number }): void {
     if (!this.isEnabled || !this.client) {
       return;
     }

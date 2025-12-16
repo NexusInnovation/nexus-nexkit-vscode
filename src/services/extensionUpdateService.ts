@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import { GitHubReleaseService, ReleaseInfo } from "./githubReleaseService";
+import { SettingsManager } from "../config/settingsManager";
 
 export interface ExtensionUpdateInfo {
   currentVersion: string;
@@ -243,15 +244,14 @@ export class ExtensionUpdateService {
    * Check if automatic update checks are enabled
    */
   shouldCheckForExtensionUpdates(): boolean {
-    const config = vscode.workspace.getConfiguration("nexkit");
-    const autoCheck = config.get("extension.autoCheckUpdates", true);
+    const autoCheck = SettingsManager.isAutoCheckUpdatesEnabled();
 
     if (!autoCheck) {
       return false;
     }
 
-    const intervalHours = config.get("extension.updateCheckInterval", 24);
-    const lastCheck = config.get("extension.lastUpdateCheck", 0) as number;
+    const intervalHours = SettingsManager.getUpdateCheckIntervalHours();
+    const lastCheck = SettingsManager.getLastUpdateCheck();
     const now = Date.now();
     const hoursSinceLastCheck = (now - lastCheck) / (1000 * 60 * 60);
 
@@ -262,8 +262,7 @@ export class ExtensionUpdateService {
    * Update the last check timestamp
    */
   async updateLastCheckTimestamp(): Promise<void> {
-    const config = vscode.workspace.getConfiguration("nexkit");
-    await config.update("extension.lastUpdateCheck", Date.now(), vscode.ConfigurationTarget.Global);
+    await SettingsManager.setLastUpdateCheck(Date.now(), vscode.ConfigurationTarget.Global);
   }
 
   /**

@@ -296,8 +296,7 @@ suite("Unit: TemplateManager - discoverAlwaysDeployFiles", () => {
     // Verify chatmodes are sorted
     const chatmodeFiles = result.filter((f: string) => f.includes("/chatmodes/"));
     assert.ok(
-      chatmodeFiles.indexOf(".github/chatmodes/debug.chatmode.md") <
-        chatmodeFiles.indexOf(".github/chatmodes/plan.chatmode.md")
+      chatmodeFiles.indexOf(".github/chatmodes/debug.chatmode.md") < chatmodeFiles.indexOf(".github/chatmodes/plan.chatmode.md")
     );
   });
 

@@ -46,12 +46,7 @@ suite("TelemetryService Test Suite", () => {
     test("Should initialize without errors when telemetry is disabled", async () => {
       // Mock telemetry as disabled
       sandbox.stub(vscode.workspace, "getConfiguration").returns({
-        get: sandbox
-          .stub()
-          .withArgs("telemetryLevel", "all")
-          .returns("off")
-          .withArgs("telemetry.enabled", true)
-          .returns(true),
+        get: sandbox.stub().withArgs("telemetryLevel", "all").returns("off").withArgs("telemetry.enabled", true).returns(true),
       } as any);
 
       await telemetryService.initialize();

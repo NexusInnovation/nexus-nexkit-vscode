@@ -21,7 +21,6 @@ suite("Unit: Extension Activation", () => {
     const commands = await vscode.commands.getCommands(true);
     const nexkitCommands = [
       "nexus-nexkit-vscode.initProject",
-      "nexus-nexkit-vscode.updateTemplates",
       "nexus-nexkit-vscode.checkExtensionUpdate",
       "nexus-nexkit-vscode.installUserMCPs",
       "nexus-nexkit-vscode.configureAzureDevOps",

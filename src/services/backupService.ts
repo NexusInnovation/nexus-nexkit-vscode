@@ -9,7 +9,7 @@ export class BackupService {
   /**
    * Create backup of existing directory
    */
-  async backupDirectory(sourcePath: string): Promise<string | null> {
+  public async backupDirectory(sourcePath: string): Promise<string | null> {
     if (!(await checkFileExists(sourcePath))) {
       return null; // Nothing to backup
     }
@@ -25,7 +25,7 @@ export class BackupService {
   /**
    * List available backups
    */
-  async listBackups(targetRoot: string, directoryName: string): Promise<string[]> {
+  public async listBackups(targetRoot: string, directoryName: string): Promise<string[]> {
     try {
       const entries = await fs.promises.readdir(targetRoot);
       return entries
@@ -40,7 +40,7 @@ export class BackupService {
   /**
    * Restore from a specific backup
    */
-  async restoreBackup(targetRoot: string, directoryName: string, backupName: string): Promise<void> {
+  public async restoreBackup(targetRoot: string, directoryName: string, backupName: string): Promise<void> {
     const directoryPath = path.join(targetRoot, directoryName);
     const backupPath = path.join(targetRoot, backupName);
 
@@ -83,7 +83,7 @@ export class BackupService {
   /**
    * Clean up old backups based on retention policy
    */
-  async cleanupBackups(targetRoot: string, directoryName: string, retentionDays: number): Promise<void> {
+  public async cleanupBackups(targetRoot: string, directoryName: string, retentionDays: number): Promise<void> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
 

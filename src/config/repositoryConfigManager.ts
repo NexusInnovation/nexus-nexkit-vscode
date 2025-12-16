@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { ItemCategory } from "../types/categories";
+import { SettingsManager } from "./settingsManager";
 
 /**
  * Repository configuration structure
@@ -23,8 +24,6 @@ export interface InternalRepositoryConfig extends RepositoryConfig {
  * Manages repository configurations from VS Code settings
  */
 export class RepositoryConfigManager {
-  private static readonly CONFIG_KEY = "nexkit.repositories";
-
   /**
    * Get default repository configurations
    */
@@ -41,26 +40,30 @@ export class RepositoryConfigManager {
           chatmodes: "chatmodes",
         },
       },
-      {
-        name: "Awesome Copilot",
-        url: "https://github.com/github/awesome-copilot",
-        enabled: true,
-        removable: true,
-        paths: {
-          agents: "agents",
-          prompts: "prompts",
-          instructions: "instructions",
-        },
-      },
     ];
+  }
+
+  /**
+   * Get Awesome Copilot repository configuration
+   */
+  static getAwesomeCopilotRepository(): RepositoryConfig {
+    return {
+      name: "Awesome Copilot",
+      url: "https://github.com/github/awesome-copilot",
+      enabled: true,
+      paths: {
+        agents: "agents",
+        prompts: "prompts",
+        instructions: "instructions",
+      },
+    };
   }
 
   /**
    * Get all configured repositories
    */
   static getRepositories(): InternalRepositoryConfig[] {
-    const config = vscode.workspace.getConfiguration();
-    const userRepos = config.get<RepositoryConfig[]>(RepositoryConfigManager.CONFIG_KEY, []);
+    const userRepos = SettingsManager.getRepositories<RepositoryConfig>();
 
     // Merge with defaults, ensuring non-removable defaults are always present
     const defaults = RepositoryConfigManager.getDefaultRepositories();

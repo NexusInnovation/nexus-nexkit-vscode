@@ -245,12 +245,7 @@ export class GitHubReleaseService {
     const headers: Record<string, string> = { ...(init.headers || {}) };
 
     // List of GitHub-related domains that should keep the Authorization header
-    const githubDomains = [
-      "github.com",
-      "api.github.com",
-      "codeload.github.com",
-      "objects-origin.githubusercontent.com",
-    ];
+    const githubDomains = ["github.com", "api.github.com", "codeload.github.com", "objects-origin.githubusercontent.com"];
 
     while (redirects <= maxRedirects) {
       const response = await fetch(currentUrl, {
