@@ -3,7 +3,7 @@
 import * as vscode from "vscode";
 import { InitWizard } from "./initWizard";
 import { NexkitPanel } from "./nexkitPanel";
-import { ExtensionUpdateManager } from "./extensionUpdateManager";
+import { ExtensionUpdateService } from "./services/extensionUpdateService";
 import { TelemetryService } from "./services/telemetryService";
 import { MCPConfigService } from "./services/mcpConfigManager";
 import { StatusBarService } from "./services/statusBarService";
@@ -26,7 +26,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const repositoryAggregator = new MultiRepositoryAggregator(context);
   const contentManager = new ContentManager(context);
   const statusBarService = new StatusBarService(context);
-  const extensionUpdateManager = new ExtensionUpdateManager();
+  const extensionUpdateService = new ExtensionUpdateService();
 
   // Register NexkitPanel WebviewViewProvider for sidebar
   class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
@@ -272,7 +272,7 @@ export async function activate(context: vscode.ExtensionContext) {
   mcpConfigManager.checkRequiredMCPs();
 
   // Check for extension updates on activation
-  extensionUpdateManager.checkForExtensionUpdatesOnActivation();
+  extensionUpdateService.checkForExtensionUpdatesOnActivation();
 
   // Register commands
   const initProjectDisposable = vscode.commands.registerCommand("nexus-nexkit-vscode.initProject", async () => {
@@ -725,7 +725,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 message: "Checking GitHub releases...",
               });
 
-              const updateInfo = await extensionUpdateManager.checkForExtensionUpdate();
+              const updateInfo = await extensionUpdateService.checkForExtensionUpdate();
 
               if (!updateInfo) {
                 vscode.window.showInformationMessage("Nexkit extension is up to date!");
@@ -738,7 +738,7 @@ export async function activate(context: vscode.ExtensionContext) {
               });
 
               // Prompt user for update action
-              await extensionUpdateManager.promptUserForUpdate(updateInfo);
+              await extensionUpdateService.promptUserForUpdate(updateInfo);
             }
           );
         } catch (error) {

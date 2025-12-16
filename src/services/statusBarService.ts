@@ -1,17 +1,17 @@
 import * as vscode from "vscode";
-import { ExtensionUpdateManager } from "../extensionUpdateManager";
+import { ExtensionUpdateService } from "./extensionUpdateService";
 
 /**
  * Service for managing the Nexkit status bar item
  */
 export class StatusBarService {
   private statusBarItem: vscode.StatusBarItem;
-  private extensionUpdateManager: ExtensionUpdateManager;
+  private extensionUpdateService: ExtensionUpdateService;
 
   constructor(context: vscode.ExtensionContext) {
     this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     this.statusBarItem.command = "nexus-nexkit-vscode.checkExtensionUpdate";
-    this.extensionUpdateManager = new ExtensionUpdateManager();
+    this.extensionUpdateService = new ExtensionUpdateService();
 
     // Register for disposal
     context.subscriptions.push(this.statusBarItem);
@@ -24,7 +24,7 @@ export class StatusBarService {
     try {
       const extensionVersion =
         vscode.extensions.getExtension("nexusinno.nexus-nexkit-vscode")?.packageJSON.version || "0.0.0";
-      const extensionUpdateInfo = await this.extensionUpdateManager.checkForExtensionUpdate();
+      const extensionUpdateInfo = await this.extensionUpdateService.checkForExtensionUpdate();
 
       if (extensionUpdateInfo) {
         this.statusBarItem.text = `$(cloud-download) Nexkit v${extensionVersion}`;

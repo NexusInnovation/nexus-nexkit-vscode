@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
-import { GitHubReleaseService, ReleaseInfo } from "./services/githubReleaseService";
+import { GitHubReleaseService, ReleaseInfo } from "./githubReleaseService";
 
 export interface ExtensionUpdateInfo {
   currentVersion: string;
@@ -11,7 +11,7 @@ export interface ExtensionUpdateInfo {
   vsixPath?: string;
 }
 
-export class ExtensionUpdateManager {
+export class ExtensionUpdateService {
   private githubService: GitHubReleaseService = new GitHubReleaseService();
   private extensionId = "nexusinno.nexus-nexkit-vscode";
 
