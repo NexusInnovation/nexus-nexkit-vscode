@@ -168,7 +168,6 @@ export class WebviewTemplate {
     let expandedRepositories = new Set();
     let repositories = {};
     let installedItems = { agents: new Set(), prompts: new Set(), instructions: new Set(), chatmodes: new Set() };
-    let conflictItems = { agents: new Set(), prompts: new Set(), instructions: new Set(), chatmodes: new Set() };
     let allItemsLoaded = false;
     let searchActive = false;
     let searchResults = {};
@@ -246,11 +245,16 @@ export class WebviewTemplate {
         searchResults = {};
         
         for (const [repoName, repoData] of Object.entries(repositories)) {
-            searchResults[repoName] = {};
+            searchResults[repoName] = {
+                agents: [],
+                prompts: [],
+                instructions: [],
+                chatmodes: []
+            };
+            
             for (const [category, items] of Object.entries(repoData)) {
                 searchResults[repoName][category] = items.filter(item => {
                     const normalizedName = item.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-                    
                     return normalizedName.includes(normalizedQuery);
                 });
                 totalResults += searchResults[repoName][category].length;
@@ -290,12 +294,10 @@ export class WebviewTemplate {
         
         if (isChecked) {
             installedItems[category].add(itemName);
-            // Remove from conflicts if it was there (user is choosing this version)
-            conflictItems[category].delete(itemName);
             sendCommand('installItem', { item });
         } else {
             installedItems[category].delete(itemName);
-            sendCommand('removeItem', { category, itemName });
+            sendCommand('uninstallItem', { item });
         }
         
         updateBadges();
@@ -358,7 +360,6 @@ export class WebviewTemplate {
     
     function renderItem(repoName, category, item, searchQuery) {
         const isInstalled = installedItems[category].has(item.name);
-        const isConflict = conflictItems[category].has(item.name);
         const itemId = sanitizeId(repoName + '-' + category + '-' + item.name);
         
         let displayName = item.name;
@@ -373,20 +374,16 @@ export class WebviewTemplate {
             displayName = highlightText(displayName);
         }
         
-        // Add indicator for conflicts
-        const conflictIndicator = isConflict ? '<span style="color: #ff9800; margin-left: 6px;" title="This file exists in multiple repositories. Click to install this version.">⚠</span>' : '';
-        
         return \`
             <div class="item">
                 <input 
                     type="checkbox" 
                     id="\${itemId}" 
-                    \${isInstalled && !isConflict ? 'checked' : ''}
-                    \${isConflict ? 'indeterminate' : ''}
+                    \${isInstalled ? 'checked' : ''}
                     onchange="handleCheckboxChange('\${repoName}', '\${category}', '\${item.name}', this.checked)"
                 />
                 <label class="item-info" for="\${itemId}">
-                    <div class="item-name">\${displayName}\${conflictIndicator}</div>
+                    <div class="item-name">\${displayName}</div>
                 </label>
             </div>
         \`;
@@ -408,44 +405,39 @@ export class WebviewTemplate {
         }
         
         if (message.command === 'repositoriesLoaded') {
-            repositories = message.repositories;
+            // Transform flat repository items array to grouped by category
+            repositories = {};
+            for (const [repoName, items] of Object.entries(message.repositories)) {
+                repositories[repoName] = {
+                    agents: [],
+                    prompts: [],
+                    instructions: [],
+                    chatmodes: []
+                };
+                
+                for (const item of items) {
+                    repositories[repoName][item.category].push(item);
+                }
+            }
+            
             installedItems = {
                 agents: new Set(message.installed.agents || []),
                 prompts: new Set(message.installed.prompts || []),
                 instructions: new Set(message.installed.instructions || []),
                 chatmodes: new Set(message.installed.chatmodes || [])
             };
-            conflictItems = {
-                agents: new Set(message.conflicts?.agents || []),
-                prompts: new Set(message.conflicts?.prompts || []),
-                instructions: new Set(message.conflicts?.instructions || []),
-                chatmodes: new Set(message.conflicts?.chatmodes || [])
-            };
             allItemsLoaded = true;
-            
-            // Set indeterminate state on checkboxes for conflicts
-            setTimeout(() => {
-                for (const category of ['agents', 'prompts', 'instructions', 'chatmodes']) {
-                    for (const filename of conflictItems[category]) {
-                        // Find all checkboxes for this filename across all repos
-                        const checkboxes = document.querySelectorAll(\`input[type="checkbox"][onchange*="'\${filename}'"]\`);
-                        checkboxes.forEach(checkbox => {
-                            checkbox.indeterminate = true;
-                        });
-                    }
-                }
-            }, 0);
             
             renderRepositories();
         }
         
         if (message.command === 'itemInstalled') {
-            installedItems[message.category].add(message.itemName);
+            installedItems[message.item.category].add(message.item.name);
             updateBadges();
         }
         
-        if (message.command === 'itemRemoved') {
-            installedItems[message.category].delete(message.itemName);
+        if (message.command === 'itemUninstalled') {
+            installedItems[message.item.category].delete(message.item.name);
             updateBadges();
         }
         

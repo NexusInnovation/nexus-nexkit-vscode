@@ -135,7 +135,7 @@ export async function activate(context: vscode.ExtensionContext) {
               await vscodeWorkspaceService.deployVscodeExtensions(workspaceFolder.uri.fsPath);
             }
 
-            // install md files (all the required md files from the nekxit)
+            // todo: install md files (all the required md files from the nekxit)
 
             progress.report({
               increment: 20,
