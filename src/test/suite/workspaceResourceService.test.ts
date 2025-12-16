@@ -2,10 +2,10 @@ import * as assert from "assert";
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
-import { ContentManager } from "../../services/contentManagerService";
+import { WorkspaceResourceService } from "../../services/workspaceAIResourceService";
 
-suite("ContentManager Test Suite", () => {
-  let manager: ContentManager;
+suite("WorkspaceResourceService Test Suite", () => {
+  let manager: WorkspaceResourceService;
   let context: vscode.ExtensionContext;
   let testWorkspaceRoot: string;
 
@@ -39,7 +39,7 @@ suite("ContentManager Test Suite", () => {
       logUri: vscode.Uri.file(__dirname),
     } as any;
 
-    manager = new ContentManager(context);
+    manager = new WorkspaceResourceService();
 
     // Setup test workspace if available
     if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {

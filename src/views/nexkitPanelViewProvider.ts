@@ -1,17 +1,17 @@
 import * as vscode from "vscode";
 import { WebviewTemplate } from "./WebviewTemplate";
-import { MultiRepositoryAggregatorService } from "../services/multiRepositoryAggregatorService";
-import { ContentManagerService } from "../services/contentManagerService";
 import { TelemetryService } from "../services/telemetryService";
 import { getExtensionVersion } from "../helpers/extensionHelper";
 import { SettingsManager } from "../config/settingsManager";
+import { MultiRepositoryAggregatorService } from "../services/multiRepositoryAggregatorService";
+import { WorkspaceAIResourceService } from "../services/workspaceAIResourceService";
 
 export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;
 
   constructor(
     private readonly _repositoryAggregator: MultiRepositoryAggregatorService,
-    private readonly _contentManager: ContentManagerService,
+    private readonly _contentManager: WorkspaceAIResourceService,
     private readonly _telemetryService: TelemetryService
   ) {}
 

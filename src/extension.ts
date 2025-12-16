@@ -7,13 +7,13 @@ import { TelemetryService } from "./services/telemetryService";
 import { MCPConfigService } from "./services/mcpConfigService";
 import { StatusBarService } from "./services/statusBarService";
 import { MultiRepositoryAggregatorService } from "./services/multiRepositoryAggregatorService";
-import { ContentManagerService } from "./services/contentManagerService";
 import { SettingsManager } from "./config/settingsManager";
 import { RepositoryConfigManager } from "./config/repositoryConfigManager";
 import { NexkitPanelViewProvider } from "./views/nexkitPanelViewProvider";
 import { BackupService } from "./services/backupService";
 import { GitIgnoreService } from "./services/gitIgnoreService";
 import { VscodeWorkspaceService } from "./services/vscodeWorkspaceService";
+import { WorkspaceAIResourceService } from "./services/workspaceAIResourceService";
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -30,7 +30,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const mcpConfigService = new MCPConfigService();
   const repositoryAggregatorService = new MultiRepositoryAggregatorService();
-  const contentManagerService = new ContentManagerService();
+  const workspaceAIResourceService = new WorkspaceAIResourceService();
   const statusBarService = new StatusBarService(context);
   const extensionUpdateService = new ExtensionUpdateService();
   const backupService = new BackupService();
@@ -38,7 +38,11 @@ export async function activate(context: vscode.ExtensionContext) {
   const vscodeWorkspaceService = new VscodeWorkspaceService(context);
 
   // Create and register the webview provider
-  const nexkitPanelProvider = new NexkitPanelViewProvider(repositoryAggregatorService, contentManagerService, telemetryService);
+  const nexkitPanelProvider = new NexkitPanelViewProvider(
+    repositoryAggregatorService,
+    workspaceAIResourceService,
+    telemetryService
+  );
 
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider("nexkitPanelView", nexkitPanelProvider, {
@@ -94,6 +98,8 @@ export async function activate(context: vscode.ExtensionContext) {
         }
 
         // Show progress
+        let deploymentSummary = { installed: 0, failed: 0, categories: {} as Record<string, number> };
+
         await vscode.window.withProgress(
           {
             location: vscode.ProgressLocation.Notification,
@@ -135,7 +141,14 @@ export async function activate(context: vscode.ExtensionContext) {
               await vscodeWorkspaceService.deployVscodeExtensions(workspaceFolder.uri.fsPath);
             }
 
-            // todo: install md files (all the required md files from the nekxit)
+            // Deploy default resources (agents, prompts, chatmodes) from Nexus Templates
+            deploymentSummary = await workspaceAIResourceService.deployDefaultResources();
+
+            console.log(
+              `Deployed ${deploymentSummary.installed} resources:`,
+              deploymentSummary.categories,
+              deploymentSummary.failed > 0 ? `(${deploymentSummary.failed} failed)` : ""
+            );
 
             progress.report({
               increment: 20,
@@ -156,7 +169,12 @@ export async function activate(context: vscode.ExtensionContext) {
           }
         );
 
-        vscode.window.showInformationMessage("Nexkit project initialized successfully!");
+        // Show success message with deployment summary
+        const categorySummary = Object.entries(deploymentSummary.categories)
+          .map(([cat, count]) => `${count} ${cat}`)
+          .join(", ");
+        const summaryMessage = deploymentSummary.installed > 0 ? ` Installed ${categorySummary}.` : "";
+        vscode.window.showInformationMessage(`Nexkit project initialized successfully!${summaryMessage}`);
       } catch (error) {
         vscode.window.showErrorMessage(`Failed to initialize project: ${error}`);
         throw error;

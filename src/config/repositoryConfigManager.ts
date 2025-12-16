@@ -27,20 +27,18 @@ export class RepositoryConfigManager {
   /**
    * Get default repository configurations
    */
-  static getDefaultRepositories(): InternalRepositoryConfig[] {
-    return [
-      {
-        name: "Nexus Templates",
-        url: "https://github.com/NexusInnovation/nexus-nexkit-templates",
-        enabled: true,
-        removable: false,
-        paths: {
-          prompts: "prompts",
-          instructions: "instructions",
-          chatmodes: "chatmodes",
-        },
+  static getDefaultRepository(): InternalRepositoryConfig {
+    return {
+      name: "Nexus Templates",
+      url: "https://github.com/NexusInnovation/nexus-nexkit-templates",
+      enabled: true,
+      removable: false,
+      paths: {
+        prompts: "prompts",
+        instructions: "instructions",
+        chatmodes: "chatmodes",
       },
-    ];
+    };
   }
 
   /**
@@ -66,8 +64,8 @@ export class RepositoryConfigManager {
     const userRepos = SettingsManager.getRepositories<RepositoryConfig>();
 
     // Merge with defaults, ensuring non-removable defaults are always present
-    const defaults = RepositoryConfigManager.getDefaultRepositories();
-    const merged: InternalRepositoryConfig[] = [...defaults];
+    const defaultRepo = RepositoryConfigManager.getDefaultRepository();
+    const merged: InternalRepositoryConfig[] = [defaultRepo];
 
     // Add user repositories that aren't duplicates (all user repos are removable)
     for (const userRepo of userRepos) {
