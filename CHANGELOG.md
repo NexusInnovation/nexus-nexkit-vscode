@@ -1,3 +1,8 @@
+## 0.6.0 (2025-12-16)
+
+* Merge pull request #42 from NexusInnovation/feature/test-ci-minor-version-bump ([7c0165a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/7c0165a)), closes [#42](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/42)
+* feat(ci): Update .gitignore and test minor version bump ([96dcdea](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/96dcdea))
+
 ## <small>0.5.5 (2025-12-15)</small>
 
 * Merge branch 'chore/semantic-release-ci' of https://github.com/NexusInnovation/nexus-nexkit-vscode i ([364d1a0](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/364d1a0))
