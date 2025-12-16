@@ -18,11 +18,9 @@ specs/
 
 # End Nexkit exclusions
 
-# BEGIN NexKit
-.specify/
-.github/**/nexkit.*
-.github/chatmodes/
-.github/instructions/
-# END NexKit
-
 .vscode/
+.github/agents/
+.github/prompts/
+.github/instructions/
+.github/chatmodes/
+AGENTS.md
