@@ -17,7 +17,8 @@
     "Other"
   ],
   "dependencies": {
-    "applicationinsights": "^2.9.6"
+    "applicationinsights": "^2.9.6",
+    "prettier": "^3.7.4"
   },
   "activationEvents": [
     "onStartupFinished"
@@ -189,7 +190,11 @@
                 }
               }
             },
-            "required": ["name", "url", "paths"]
+            "required": [
+              "name",
+              "url",
+              "paths"
+            ]
           }
         }
       }
@@ -212,6 +217,7 @@
     "test:integration": "node ./out/test/runTest.js --grep 'Integration'",
     "test:coverage": "nyc --reporter=lcovonly --reporter=text node ./out/test/runTest.js",
     "lint": "eslint src --ext ts",
+    "format": "prettier --write \"**/*.ts\"",
     "version:bump": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md",
     "publish-private": "npm version patch --tag-version-prefix=v && git push && git push --tags",
     "release": "semantic-release",
@@ -221,8 +227,8 @@
     "@commitlint/cli": "^19.4.0",
     "@commitlint/config-conventional": "^19.4.0",
     "@cyclonedx/cyclonedx-npm": "^1.19.3",
-    "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/exec": "^7.0.3",
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/github": "^11.0.6",
@@ -230,6 +236,7 @@
     "@types/adm-zip": "^0.5.7",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
+    "@types/sinon": "^17.0.3",
     "@types/vscode": "^1.105.0",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0",
@@ -244,7 +251,6 @@
     "nyc": "^15.1.0",
     "semantic-release": "^24.2.0",
     "sinon": "^19.0.2",
-    "@types/sinon": "^17.0.3",
     "typescript": "^5.9.3"
   }
 }

@@ -1,8 +1,8 @@
-import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as path from 'path';
-import * as os from 'os';
-import { getWorkspaceRoot, checkFileExists } from '../helpers/fileSystemHelper';
+import * as vscode from "vscode";
+import * as fs from "fs";
+import * as path from "path";
+import * as os from "os";
+import { getWorkspaceRoot, checkFileExists } from "../helpers/fileSystemHelper";
 
 export interface MCPConfig {
   servers: { [serverName: string]: MCPServerConfig };
@@ -31,16 +31,16 @@ export class MCPConfigService {
   private async updateMCPConfig(
     configPath: string,
     updates: {
-      serversToAdd?: { [name: string]: MCPServerConfig },
-      serversToRemove?: string[],
-      inputsToAdd?: any[],
-      otherUpdates?: any
+      serversToAdd?: { [name: string]: MCPServerConfig };
+      serversToRemove?: string[];
+      inputsToAdd?: any[];
+      otherUpdates?: any;
     }
   ): Promise<void> {
     // Read existing config
     let config: any = { servers: {} };
     try {
-      const content = await fs.promises.readFile(configPath, 'utf8');
+      const content = await fs.promises.readFile(configPath, "utf8");
       config = JSON.parse(content);
     } catch {
       // File doesn't exist or invalid - start fresh
@@ -88,7 +88,7 @@ export class MCPConfigService {
     // Write back
     const configDir = path.dirname(configPath);
     await fs.promises.mkdir(configDir, { recursive: true });
-    await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2), 'utf8');
+    await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2), "utf8");
   }
   /**
    * Get the path to user-level MCP config file
@@ -97,18 +97,16 @@ export class MCPConfigService {
     const platform = os.platform();
     let configDir: string;
 
-    if (platform === 'win32') {
-      configDir = path.join(os.homedir(), 'AppData', 'Roaming', 'Code', 'User');
-    } else if (platform === 'darwin') {
-      configDir = path.join(os.homedir(), 'Library', 'Application Support', 'Code', 'User');
+    if (platform === "win32") {
+      configDir = path.join(os.homedir(), "AppData", "Roaming", "Code", "User");
+    } else if (platform === "darwin") {
+      configDir = path.join(os.homedir(), "Library", "Application Support", "Code", "User");
     } else {
-      configDir = path.join(os.homedir(), '.config', 'Code', 'User');
+      configDir = path.join(os.homedir(), ".config", "Code", "User");
     }
 
-    return path.join(configDir, 'mcp.json');
+    return path.join(configDir, "mcp.json");
   }
-
-
 
   /**
    * Read user-level MCP configuration
@@ -117,7 +115,7 @@ export class MCPConfigService {
     const configPath = this.getUserMCPConfigPath();
 
     try {
-      const content = await fs.promises.readFile(configPath, 'utf8');
+      const content = await fs.promises.readFile(configPath, "utf8");
       return JSON.parse(content);
     } catch (error) {
       // Return empty config if file doesn't exist or is invalid
@@ -125,17 +123,15 @@ export class MCPConfigService {
     }
   }
 
-
-
   /**
    * Read workspace-level MCP configuration
    */
   async readWorkspaceMCPConfig(): Promise<MCPConfig> {
     const workspaceRoot = getWorkspaceRoot();
-    const configPath = path.join(workspaceRoot, '.vscode', 'mcp.json');
+    const configPath = path.join(workspaceRoot, ".vscode", "mcp.json");
 
     try {
-      const content = await fs.promises.readFile(configPath, 'utf8');
+      const content = await fs.promises.readFile(configPath, "utf8");
       return JSON.parse(content);
     } catch (error) {
       // Return empty config if file doesn't exist or is invalid
@@ -161,7 +157,7 @@ export class MCPConfigService {
       }
 
       // For npx commands, check if args are provided
-      if (server.command === 'npx' && (!server.args || server.args.length === 0)) {
+      if (server.command === "npx" && (!server.args || server.args.length === 0)) {
         return false;
       }
 
@@ -174,8 +170,8 @@ export class MCPConfigService {
   /**
    * Check if required user-level MCP servers are configured
    */
-  async checkRequiredUserMCPs(): Promise<{ configured: string[], missing: string[] }> {
-    const requiredServers = ['context7', 'sequential-thinking'];
+  async checkRequiredUserMCPs(): Promise<{ configured: string[]; missing: string[] }> {
+    const requiredServers = ["context7", "sequential-thinking"];
     const configured: string[] = [];
     const missing: string[] = [];
 
@@ -214,11 +210,7 @@ export class MCPConfigService {
           if (result === "Install") {
             vscode.commands.executeCommand("nexus-nexkit-vscode.installUserMCPs");
           } else if (result === "Don't Ask Again") {
-            await config.update(
-              "mcpSetup.dismissed",
-              true,
-              vscode.ConfigurationTarget.Global
-            );
+            await config.update("mcpSetup.dismissed", true, vscode.ConfigurationTarget.Global);
           }
         }
       }
@@ -233,7 +225,7 @@ export class MCPConfigService {
   async addUserMCPServer(serverName: string, serverConfig: MCPServerConfig): Promise<void> {
     const configPath = this.getUserMCPConfigPath();
     await this.updateMCPConfig(configPath, {
-      serversToAdd: { [serverName]: serverConfig }
+      serversToAdd: { [serverName]: serverConfig },
     });
   }
 
@@ -242,9 +234,9 @@ export class MCPConfigService {
    */
   async addWorkspaceMCPServer(serverName: string, serverConfig: MCPServerConfig): Promise<void> {
     const workspaceRoot = getWorkspaceRoot();
-    const configPath = path.join(workspaceRoot, '.vscode', 'mcp.json');
+    const configPath = path.join(workspaceRoot, ".vscode", "mcp.json");
     await this.updateMCPConfig(configPath, {
-      serversToAdd: { [serverName]: serverConfig }
+      serversToAdd: { [serverName]: serverConfig },
     });
   }
 
@@ -254,11 +246,8 @@ export class MCPConfigService {
    * @param mcpServers Array of MCP server identifiers to configure (e.g., ['azureDevOps'])
    * @param targetRoot Root directory of the workspace
    */
-  async deployWorkspaceMCPServers(
-    mcpServers: string[],
-    targetRoot: string
-  ): Promise<void> {
-    const mcpConfigPath = path.join(targetRoot, '.vscode', 'mcp.json');
+  async deployWorkspaceMCPServers(mcpServers: string[], targetRoot: string): Promise<void> {
+    const mcpConfigPath = path.join(targetRoot, ".vscode", "mcp.json");
     const mcpDir = path.dirname(mcpConfigPath);
 
     await fs.promises.mkdir(mcpDir, { recursive: true });
@@ -267,55 +256,46 @@ export class MCPConfigService {
     let config: any = { servers: {} };
     if (await checkFileExists(mcpConfigPath)) {
       try {
-        const existingContent = await fs.promises.readFile(
-          mcpConfigPath,
-          'utf8'
-        );
+        const existingContent = await fs.promises.readFile(mcpConfigPath, "utf8");
         config = JSON.parse(existingContent);
         if (!config.servers) {
           config.servers = {};
         }
       } catch (error) {
-        console.warn('Existing mcp.json is invalid, starting fresh:', error);
+        console.warn("Existing mcp.json is invalid, starting fresh:", error);
         config = { servers: {} };
       }
     }
 
     // Add Azure DevOps MCP if selected
-    if (mcpServers.includes('azureDevOps')) {
+    if (mcpServers.includes("azureDevOps")) {
       if (!config.inputs) {
         config.inputs = [];
       }
       // Check if input already exists
-      const adoInputExists = config.inputs.some(
-        (input: any) => input.id === 'ado_org'
-      );
+      const adoInputExists = config.inputs.some((input: any) => input.id === "ado_org");
       if (!adoInputExists) {
         config.inputs.push({
-          id: 'ado_org',
-          type: 'promptString',
+          id: "ado_org",
+          type: "promptString",
           description: "Azure DevOps organization name (e.g. 'contoso')",
         });
       }
       // Add or update the server (overwrite if exists, preserving user's choice to update)
       config.servers.azureDevOps = {
-        command: 'npx',
-        args: ['-y', '@azure-devops/mcp', '${input:ado_org}'],
+        command: "npx",
+        args: ["-y", "@azure-devops/mcp", "${input:ado_org}"],
       };
     }
 
     // Add additional MCP servers as needed
     for (const serverName of mcpServers) {
-      if (serverName !== 'azureDevOps') {
+      if (serverName !== "azureDevOps") {
         // Handle other server types in the future
         console.log(`MCP server ${serverName} not yet implemented`);
       }
     }
 
-    await fs.promises.writeFile(
-      mcpConfigPath,
-      JSON.stringify(config, null, 2),
-      'utf8'
-    );
+    await fs.promises.writeFile(mcpConfigPath, JSON.stringify(config, null, 2), "utf8");
   }
 }

@@ -34,13 +34,7 @@ suite("Unit: Extension Activation", () => {
     });
 
     test("Activation events should include onStartupFinished", () => {
-      const packageJsonPath = path.join(
-        __dirname,
-        "..",
-        "..",
-        "..",
-        "package.json"
-      );
+      const packageJsonPath = path.join(__dirname, "..", "..", "..", "package.json");
       const packageJsonRaw = fs.readFileSync(packageJsonPath, "utf8");
       const packageJson = JSON.parse(packageJsonRaw);
       assert.ok(

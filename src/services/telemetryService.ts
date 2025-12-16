@@ -22,8 +22,7 @@ export class TelemetryService {
   constructor(private context: vscode.ExtensionContext) {
     this.sessionId = this.generateSessionId();
     this.extensionVersion =
-      vscode.extensions.getExtension("nexusinno.nexus-nexkit-vscode")
-        ?.packageJSON.version || "unknown";
+      vscode.extensions.getExtension("nexusinno.nexus-nexkit-vscode")?.packageJSON.version || "unknown";
     this.activationTime = Date.now();
     this.username = this.getUsername();
   }
@@ -152,17 +151,13 @@ export class TelemetryService {
    */
   private isTelemetryEnabled(): boolean {
     // Check VS Code global telemetry setting
-    const vscodeTelemetryLevel = vscode.workspace
-      .getConfiguration("telemetry")
-      .get<string>("telemetryLevel", "all");
+    const vscodeTelemetryLevel = vscode.workspace.getConfiguration("telemetry").get<string>("telemetryLevel", "all");
     if (vscodeTelemetryLevel === "off") {
       return false;
     }
 
     // Check Nexkit-specific telemetry setting
-    const nexkitTelemetryEnabled = vscode.workspace
-      .getConfiguration("nexkit")
-      .get<boolean>("telemetry.enabled", true);
+    const nexkitTelemetryEnabled = vscode.workspace.getConfiguration("nexkit").get<boolean>("telemetry.enabled", true);
     return nexkitTelemetryEnabled;
   }
 
@@ -171,8 +166,7 @@ export class TelemetryService {
    */
   private getConnectionString(): string | undefined {
     // Priority 1: Environment variable (for development)
-    const envConnectionString =
-      process.env.APPLICATIONINSIGHTS_CONNECTION_STRING;
+    const envConnectionString = process.env.APPLICATIONINSIGHTS_CONNECTION_STRING;
     if (envConnectionString) {
       return envConnectionString;
     }
@@ -244,10 +238,7 @@ export class TelemetryService {
   /**
    * Track command execution
    */
-  public trackCommand(
-    commandName: string,
-    properties?: { [key: string]: string }
-  ): void {
+  public trackCommand(commandName: string, properties?: { [key: string]: string }): void {
     if (!this.isEnabled || !this.client) {
       return;
     }
@@ -267,10 +258,7 @@ export class TelemetryService {
   /**
    * Track chat command usage from @nexkit participant
    */
-  public trackChatCommand(
-    commandName: string,
-    properties?: { [key: string]: string | number | boolean }
-  ): void {
+  public trackChatCommand(commandName: string, properties?: { [key: string]: string | number | boolean }): void {
     if (!this.isEnabled || !this.client) {
       return;
     }
@@ -291,10 +279,7 @@ export class TelemetryService {
         ...stringProperties,
       },
       measurements: {
-        duration:
-          properties && typeof properties["durationMs"] === "number"
-            ? properties["durationMs"]
-            : 0,
+        duration: properties && typeof properties["durationMs"] === "number" ? properties["durationMs"] : 0,
       },
     });
 
@@ -333,10 +318,7 @@ export class TelemetryService {
   /**
    * Track an error or exception
    */
-  public trackError(
-    error: Error,
-    properties?: { [key: string]: string }
-  ): void {
+  public trackError(error: Error, properties?: { [key: string]: string }): void {
     if (!this.isEnabled || !this.client) {
       return;
     }
@@ -379,11 +361,7 @@ export class TelemetryService {
   /**
    * Track a performance metric
    */
-  public trackMetric(
-    name: string,
-    value: number,
-    properties?: { [key: string]: string }
-  ): void {
+  public trackMetric(name: string, value: number, properties?: { [key: string]: string }): void {
     if (!this.isEnabled || !this.client) {
       return;
     }

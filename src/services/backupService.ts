@@ -40,11 +40,7 @@ export class BackupService {
   /**
    * Restore from a specific backup
    */
-  async restoreBackup(
-    targetRoot: string,
-    directoryName: string,
-    backupName: string
-  ): Promise<void> {
+  async restoreBackup(targetRoot: string, directoryName: string, backupName: string): Promise<void> {
     const directoryPath = path.join(targetRoot, directoryName);
     const backupPath = path.join(targetRoot, backupName);
 
@@ -87,11 +83,7 @@ export class BackupService {
   /**
    * Clean up old backups based on retention policy
    */
-  async cleanupBackups(
-    targetRoot: string,
-    directoryName: string,
-    retentionDays: number
-  ): Promise<void> {
+  async cleanupBackups(targetRoot: string, directoryName: string, retentionDays: number): Promise<void> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
 

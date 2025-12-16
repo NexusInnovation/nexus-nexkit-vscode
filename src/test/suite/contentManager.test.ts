@@ -42,10 +42,7 @@ suite("ContentManager Test Suite", () => {
     manager = new ContentManager(context);
 
     // Setup test workspace if available
-    if (
-      vscode.workspace.workspaceFolders &&
-      vscode.workspace.workspaceFolders.length > 0
-    ) {
+    if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
       testWorkspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
     }
   });
@@ -79,10 +76,7 @@ suite("ContentManager Test Suite", () => {
   });
 
   test("Should throw error when no workspace is open", async () => {
-    if (
-      !vscode.workspace.workspaceFolders ||
-      vscode.workspace.workspaceFolders.length === 0
-    ) {
+    if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
       const getRoot = (manager as any).getWorkspaceRoot.bind(manager);
       assert.throws(() => getRoot(), /No workspace folder open/);
     } else {
@@ -112,10 +106,7 @@ suite("ContentManager Test Suite", () => {
       }
 
       // Check for non-existent file
-      const isInstalled = await manager.isInstalled(
-        "agents",
-        "non-existent.agent.md"
-      );
+      const isInstalled = await manager.isInstalled("agents", "non-existent.agent.md");
       assert.strictEqual(isInstalled, false);
     });
 
@@ -137,12 +128,7 @@ suite("ContentManager Test Suite", () => {
         assert.strictEqual(isInstalled, true);
 
         // Verify content
-        const filePath = path.join(
-          testWorkspaceRoot,
-          ".github",
-          "agents",
-          testFilename
-        );
+        const filePath = path.join(testWorkspaceRoot, ".github", "agents", testFilename);
         const content = await fs.promises.readFile(filePath, "utf8");
         assert.strictEqual(content, testContent);
 
@@ -154,10 +140,7 @@ suite("ContentManager Test Suite", () => {
         await manager.removeFile("agents", testFilename);
 
         // Verify file is removed
-        const isStillInstalled = await manager.isInstalled(
-          "agents",
-          testFilename
-        );
+        const isStillInstalled = await manager.isInstalled("agents", testFilename);
         assert.strictEqual(isStillInstalled, false);
 
         // Check it's not in installed items
@@ -189,10 +172,7 @@ suite("ContentManager Test Suite", () => {
         assert.strictEqual(isInstalled, true);
 
         await manager.removeFile("prompts", testFilename);
-        const isStillInstalled = await manager.isInstalled(
-          "prompts",
-          testFilename
-        );
+        const isStillInstalled = await manager.isInstalled("prompts", testFilename);
         assert.strictEqual(isStillInstalled, false);
       } catch (error) {
         try {
@@ -211,22 +191,15 @@ suite("ContentManager Test Suite", () => {
       }
 
       const testFilename = "test-instructions.instructions.md";
-      const testContent =
-        '---\ndescription: Test instructions\napplyTo: "**/*.ts"\n---\n\n# Test Instructions';
+      const testContent = '---\ndescription: Test instructions\napplyTo: "**/*.ts"\n---\n\n# Test Instructions';
 
       try {
         await manager.installFile("instructions", testFilename, testContent);
-        const isInstalled = await manager.isInstalled(
-          "instructions",
-          testFilename
-        );
+        const isInstalled = await manager.isInstalled("instructions", testFilename);
         assert.strictEqual(isInstalled, true);
 
         await manager.removeFile("instructions", testFilename);
-        const isStillInstalled = await manager.isInstalled(
-          "instructions",
-          testFilename
-        );
+        const isStillInstalled = await manager.isInstalled("instructions", testFilename);
         assert.strictEqual(isStillInstalled, false);
       } catch (error) {
         try {

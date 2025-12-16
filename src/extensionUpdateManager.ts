@@ -63,22 +63,16 @@ export class ExtensionUpdateManager {
    * @param updateInfo Update information including release data
    * @returns Path to downloaded .vsix file
    */
-  async downloadExtensionVsix(
-    updateInfo: ExtensionUpdateInfo
-  ): Promise<string> {
+  async downloadExtensionVsix(updateInfo: ExtensionUpdateInfo): Promise<string> {
     try {
-      const vsixAsset = updateInfo.releaseInfo.assets.find((asset) =>
-        asset.name.endsWith(".vsix")
-      );
+      const vsixAsset = updateInfo.releaseInfo.assets.find((asset) => asset.name.endsWith(".vsix"));
 
       if (!vsixAsset) {
         throw new Error("No .vsix file found in release assets");
       }
 
       // Download .vsix file
-      const vsixBuffer = await this.githubService.downloadVsixAsset(
-        updateInfo.releaseInfo
-      );
+      const vsixBuffer = await this.githubService.downloadVsixAsset(updateInfo.releaseInfo);
 
       // Save to temp directory
       const tempDir = os.tmpdir();
@@ -196,10 +190,7 @@ export class ExtensionUpdateManager {
             )
             .then(async (selection) => {
               if (selection === "Open File Location") {
-                await vscode.commands.executeCommand(
-                  "revealFileInOS",
-                  vscode.Uri.file(vsixPath)
-                );
+                await vscode.commands.executeCommand("revealFileInOS", vscode.Uri.file(vsixPath));
               } else if (selection === "Install Now") {
                 await this.installExtension(vsixPath);
               }
@@ -272,11 +263,7 @@ export class ExtensionUpdateManager {
    */
   async updateLastCheckTimestamp(): Promise<void> {
     const config = vscode.workspace.getConfiguration("nexkit");
-    await config.update(
-      "extension.lastUpdateCheck",
-      Date.now(),
-      vscode.ConfigurationTarget.Global
-    );
+    await config.update("extension.lastUpdateCheck", Date.now(), vscode.ConfigurationTarget.Global);
   }
 
   /**
@@ -287,9 +274,7 @@ export class ExtensionUpdateManager {
       const tempDir = os.tmpdir();
       const files = await fs.promises.readdir(tempDir);
 
-      const vsixFiles = files.filter(
-        (f) => f.startsWith("nexkit-vscode-") && f.endsWith(".vsix")
-      );
+      const vsixFiles = files.filter((f) => f.startsWith("nexkit-vscode-") && f.endsWith(".vsix"));
 
       // Keep only the 2 most recent files
       if (vsixFiles.length > 2) {
@@ -305,6 +290,40 @@ export class ExtensionUpdateManager {
       }
     } catch (error) {
       console.error("Error cleaning up old .vsix files:", error);
+    }
+  }
+
+  /**
+   * Check for extension updates on activation and prompt user if available
+   */
+  async checkForExtensionUpdatesOnActivation(): Promise<void> {
+    try {
+      if (this.shouldCheckForExtensionUpdates()) {
+        const updateInfo = await this.checkForExtensionUpdate();
+
+        if (updateInfo) {
+          const result = await vscode.window.showInformationMessage(
+            `Nexkit extension ${updateInfo.latestVersion} available!`,
+            "Update Now",
+            "Remind Later"
+          );
+
+          if (result === "Update Now") {
+            await this.promptUserForUpdate(updateInfo);
+          }
+        }
+
+        // Update timestamp after check
+        await this.updateLastCheckTimestamp();
+      }
+    } catch (error) {
+      // Only log errors that aren't "no releases" errors
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (!errorMessage.includes("No releases")) {
+        console.error("Error checking for extension updates:", error);
+      } else {
+        console.log("[Nexkit] No releases available yet");
+      }
     }
   }
 }

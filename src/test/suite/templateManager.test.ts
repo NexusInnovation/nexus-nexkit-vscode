@@ -227,12 +227,7 @@ suite("Unit: TemplateManager - discoverAlwaysDeployFiles", () => {
     manager = new TemplateManager(mockContext);
 
     // Create the templates directory structure
-    const templatesDir = path.join(
-      tempDir,
-      "resources",
-      "templates",
-      ".github"
-    );
+    const templatesDir = path.join(tempDir, "resources", "templates", ".github");
     const chatmodesDir = path.join(templatesDir, "chatmodes");
 
     await fs.promises.mkdir(chatmodesDir, { recursive: true });
@@ -249,22 +244,10 @@ suite("Unit: TemplateManager - discoverAlwaysDeployFiles", () => {
 
   test("should discover all files from chatmodes directory", async () => {
     // Create test files
-    const chatmodesDir = path.join(
-      tempDir,
-      "resources",
-      "templates",
-      ".github",
-      "chatmodes"
-    );
+    const chatmodesDir = path.join(tempDir, "resources", "templates", ".github", "chatmodes");
 
-    await fs.promises.writeFile(
-      path.join(chatmodesDir, "debug.chatmode.md"),
-      "test content"
-    );
-    await fs.promises.writeFile(
-      path.join(chatmodesDir, "4.1-Beast.chatmode.md"),
-      "test content"
-    );
+    await fs.promises.writeFile(path.join(chatmodesDir, "debug.chatmode.md"), "test content");
+    await fs.promises.writeFile(path.join(chatmodesDir, "4.1-Beast.chatmode.md"), "test content");
 
     const result = await (manager as any).discoverAlwaysDeployFiles();
 
@@ -282,18 +265,9 @@ suite("Unit: TemplateManager - discoverAlwaysDeployFiles", () => {
   });
 
   test("should ignore non-markdown files", async () => {
-    const chatmodesDir = path.join(
-      tempDir,
-      "resources",
-      "templates",
-      ".github",
-      "chatmodes"
-    );
+    const chatmodesDir = path.join(tempDir, "resources", "templates", ".github", "chatmodes");
 
-    await fs.promises.writeFile(
-      path.join(chatmodesDir, "debug.chatmode.md"),
-      "test content"
-    );
+    await fs.promises.writeFile(path.join(chatmodesDir, "debug.chatmode.md"), "test content");
     await fs.promises.writeFile(path.join(chatmodesDir, "temp.txt"), "temp"); // Should be ignored
 
     const result = await (manager as any).discoverAlwaysDeployFiles();
@@ -311,30 +285,16 @@ suite("Unit: TemplateManager - discoverAlwaysDeployFiles", () => {
   });
 
   test("should sort files alphabetically for consistent ordering", async () => {
-    const chatmodesDir = path.join(
-      tempDir,
-      "resources",
-      "templates",
-      ".github",
-      "chatmodes"
-    );
+    const chatmodesDir = path.join(tempDir, "resources", "templates", ".github", "chatmodes");
 
     // Create files in non-alphabetical order
-    await fs.promises.writeFile(
-      path.join(chatmodesDir, "plan.chatmode.md"),
-      "test content"
-    );
-    await fs.promises.writeFile(
-      path.join(chatmodesDir, "debug.chatmode.md"),
-      "test content"
-    );
+    await fs.promises.writeFile(path.join(chatmodesDir, "plan.chatmode.md"), "test content");
+    await fs.promises.writeFile(path.join(chatmodesDir, "debug.chatmode.md"), "test content");
 
     const result = await (manager as any).discoverAlwaysDeployFiles();
 
     // Verify chatmodes are sorted
-    const chatmodeFiles = result.filter((f: string) =>
-      f.includes("/chatmodes/")
-    );
+    const chatmodeFiles = result.filter((f: string) => f.includes("/chatmodes/"));
     assert.ok(
       chatmodeFiles.indexOf(".github/chatmodes/debug.chatmode.md") <
         chatmodeFiles.indexOf(".github/chatmodes/plan.chatmode.md")
@@ -342,23 +302,11 @@ suite("Unit: TemplateManager - discoverAlwaysDeployFiles", () => {
   });
 
   test("should discover all files from prompts directory", async () => {
-    const promptsDir = path.join(
-      tempDir,
-      "resources",
-      "templates",
-      ".github",
-      "prompts"
-    );
+    const promptsDir = path.join(tempDir, "resources", "templates", ".github", "prompts");
 
     await fs.promises.mkdir(promptsDir, { recursive: true });
-    await fs.promises.writeFile(
-      path.join(promptsDir, "nexkit.implement.prompt.md"),
-      "test content"
-    );
-    await fs.promises.writeFile(
-      path.join(promptsDir, "nexkit.refine.prompt.md"),
-      "test content"
-    );
+    await fs.promises.writeFile(path.join(promptsDir, "nexkit.implement.prompt.md"), "test content");
+    await fs.promises.writeFile(path.join(promptsDir, "nexkit.refine.prompt.md"), "test content");
 
     const result = await (manager as any).discoverAlwaysDeployFiles();
 
@@ -367,32 +315,14 @@ suite("Unit: TemplateManager - discoverAlwaysDeployFiles", () => {
   });
 
   test("should discover both chatmodes and prompts together", async () => {
-    const chatmodesDir = path.join(
-      tempDir,
-      "resources",
-      "templates",
-      ".github",
-      "chatmodes"
-    );
-    const promptsDir = path.join(
-      tempDir,
-      "resources",
-      "templates",
-      ".github",
-      "prompts"
-    );
+    const chatmodesDir = path.join(tempDir, "resources", "templates", ".github", "chatmodes");
+    const promptsDir = path.join(tempDir, "resources", "templates", ".github", "prompts");
 
     await fs.promises.mkdir(chatmodesDir, { recursive: true });
     await fs.promises.mkdir(promptsDir, { recursive: true });
 
-    await fs.promises.writeFile(
-      path.join(chatmodesDir, "debug.chatmode.md"),
-      "test content"
-    );
-    await fs.promises.writeFile(
-      path.join(promptsDir, "nexkit.implement.prompt.md"),
-      "test content"
-    );
+    await fs.promises.writeFile(path.join(chatmodesDir, "debug.chatmode.md"), "test content");
+    await fs.promises.writeFile(path.join(promptsDir, "nexkit.implement.prompt.md"), "test content");
 
     const result = await (manager as any).discoverAlwaysDeployFiles();
 

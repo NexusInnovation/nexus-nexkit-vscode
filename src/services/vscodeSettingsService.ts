@@ -10,10 +10,7 @@ export class VscodeSettingsService {
    * Deploy VS Code settings
    * NON-DESTRUCTIVE: Deep merges with existing settings, user values take priority
    */
-  async deployVscodeSettings(
-    templateSettings: string,
-    targetRoot: string
-  ): Promise<void> {
+  async deployVscodeSettings(templateSettings: string, targetRoot: string): Promise<void> {
     const settingsPath = path.join(targetRoot, ".vscode", "settings.json");
     const settingsDir = path.dirname(settingsPath);
 
@@ -31,17 +28,10 @@ export class VscodeSettingsService {
         settings = deepMerge(settings, existingSettings);
       } catch (error) {
         // If existing settings are invalid JSON, log warning but preserve template
-        console.warn(
-          "Existing .vscode/settings.json is invalid JSON. Using template settings.",
-          error
-        );
+        console.warn("Existing .vscode/settings.json is invalid JSON. Using template settings.", error);
       }
     }
 
-    await fs.promises.writeFile(
-      settingsPath,
-      JSON.stringify(settings, null, 2),
-      "utf8"
-    );
+    await fs.promises.writeFile(settingsPath, JSON.stringify(settings, null, 2), "utf8");
   }
 }

@@ -33,9 +33,7 @@ export class GitHubRepositoryService {
 
   private cachedItems: RepositoryItem[] | null = null; // Cache for fetched items (infinite TTL for simplicity, manual refresh only)
 
-  constructor(
-    private readonly config: GitHubRepositoryConfig,
-  ) {}
+  constructor(private readonly config: GitHubRepositoryConfig) {}
 
   /**
    * Extract owner and repo name from GitHub URL
@@ -54,7 +52,7 @@ export class GitHubRepositoryService {
   private async getAuthHeaders(): Promise<Record<string, string>> {
     const headers: Record<string, string> = {
       "User-Agent": "Nexkit-VSCode-Extension",
-      "Accept": "application/vnd.github.v3+json",
+      Accept: "application/vnd.github.v3+json",
     };
 
     try {
@@ -96,7 +94,7 @@ export class GitHubRepositoryService {
           try {
             const branch = this.config.branch ?? "main";
             const apiUrl = `${GitHubRepositoryService.GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
-            
+
             const response = await fetch(apiUrl, { headers });
 
             if (!response.ok) {
@@ -107,7 +105,7 @@ export class GitHubRepositoryService {
               throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
             }
 
-            const contents = await response.json() as GitHubContentItem[];
+            const contents = (await response.json()) as GitHubContentItem[];
 
             for (const item of contents) {
               if (item.type !== "file" || !item.name.endsWith(".md")) continue;

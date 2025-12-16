@@ -81,16 +81,10 @@ suite("GitHub Download Diagnostic Tests", () => {
 
     try {
       // Get authentication session
-      const session = await vscode.authentication.getSession(
-        "github",
-        ["repo"],
-        { createIfNone: true, silent: false }
-      );
+      const session = await vscode.authentication.getSession("github", ["repo"], { createIfNone: true, silent: false });
 
       if (!session) {
-        console.log(
-          "No GitHub session available - skipping authenticated test"
-        );
+        console.log("No GitHub session available - skipping authenticated test");
         return;
       }
 
@@ -110,13 +104,7 @@ suite("GitHub Download Diagnostic Tests", () => {
       });
 
       console.log(`Response status: ${response1.status}`);
-      console.log(
-        `Response headers: ${JSON.stringify(
-          Object.fromEntries(response1.headers.entries()),
-          null,
-          2
-        )}`
-      );
+      console.log(`Response headers: ${JSON.stringify(Object.fromEntries(response1.headers.entries()), null, 2)}`);
 
       if (response1.status >= 300 && response1.status < 400) {
         const location = response1.headers.get("location");
@@ -135,11 +123,7 @@ suite("GitHub Download Diagnostic Tests", () => {
 
           console.log(`Redirect response status: ${response2.status}`);
           console.log(
-            `Redirect response headers: ${JSON.stringify(
-              Object.fromEntries(response2.headers.entries()),
-              null,
-              2
-            )}`
+            `Redirect response headers: ${JSON.stringify(Object.fromEntries(response2.headers.entries()), null, 2)}`
           );
 
           // Test 3: Following redirect without Auth header
@@ -190,11 +174,7 @@ suite("GitHub Download Diagnostic Tests", () => {
     this.timeout(30000);
 
     try {
-      const session = await vscode.authentication.getSession(
-        "github",
-        ["repo"],
-        { createIfNone: true, silent: false }
-      );
+      const session = await vscode.authentication.getSession("github", ["repo"], { createIfNone: true, silent: false });
 
       if (!session) {
         console.log("No GitHub session available - skipping test");
@@ -223,11 +203,7 @@ suite("GitHub Download Diagnostic Tests", () => {
     this.timeout(60000); // Increase timeout for downloads
 
     try {
-      const session = await vscode.authentication.getSession(
-        "github",
-        ["repo"],
-        { createIfNone: true, silent: false }
-      );
+      const session = await vscode.authentication.getSession("github", ["repo"], { createIfNone: true, silent: false });
 
       if (!session) {
         console.log("No GitHub session available - skipping test");
@@ -241,9 +217,7 @@ suite("GitHub Download Diagnostic Tests", () => {
       console.log(`Testing with release: ${release.tagName}`);
 
       try {
-        console.log(
-          "🔧 Testing new approach (GitHub API + improved redirect handling)..."
-        );
+        console.log("🔧 Testing new approach (GitHub API + improved redirect handling)...");
         const vsixData = await service.downloadVsixAsset(release);
         console.log(`✅ New approach: SUCCESS (${vsixData.byteLength} bytes)`);
 
@@ -255,9 +229,7 @@ suite("GitHub Download Diagnostic Tests", () => {
         if (header === "504b0304") {
           console.log("✅ Downloaded file has valid ZIP/VSIX header");
         } else {
-          console.log(
-            `⚠️  Downloaded file header: ${header} (expected: 504b0304)`
-          );
+          console.log(`⚠️  Downloaded file header: ${header} (expected: 504b0304)`);
         }
       } catch (error) {
         console.log(`❌ New approach: FAILED - ${error}`);
@@ -271,9 +243,7 @@ suite("GitHub Download Diagnostic Tests", () => {
       };
 
       console.log("\n🔧 Testing direct browser_download_url...");
-      const vsixAsset = release.assets.find((asset) =>
-        asset.name.endsWith(".vsix")
-      );
+      const vsixAsset = release.assets.find((asset) => asset.name.endsWith(".vsix"));
       if (vsixAsset) {
         try {
           const response = await fetch(vsixAsset.browserDownloadUrl, {
@@ -283,13 +253,9 @@ suite("GitHub Download Diagnostic Tests", () => {
 
           if (response.ok) {
             const data = await response.arrayBuffer();
-            console.log(
-              `✅ Direct URL with auto-redirect: SUCCESS (${data.byteLength} bytes)`
-            );
+            console.log(`✅ Direct URL with auto-redirect: SUCCESS (${data.byteLength} bytes)`);
           } else {
-            console.log(
-              `❌ Direct URL: FAILED - ${response.status} ${response.statusText}`
-            );
+            console.log(`❌ Direct URL: FAILED - ${response.status} ${response.statusText}`);
           }
         } catch (error) {
           console.log(`❌ Direct URL: FAILED - ${error}`);

@@ -16,14 +16,12 @@ export class GitHubReleaseService {
   private static readonly BASE_URL = "https://api.github.com";
   private static readonly GITHUB_AUTH_PROVIDER_ID = "github";
   private static readonly REQUIRED_SCOPES = ["repo"];
-  
+
   /**
    * Get GitHub authentication session with required scopes
    * @param createIfNone If true, prompt user to sign in if not authenticated
    */
-  private async getGitHubSession(
-    createIfNone: boolean = false
-  ): Promise<vscode.AuthenticationSession | undefined> {
+  private async getGitHubSession(createIfNone: boolean = false): Promise<vscode.AuthenticationSession | undefined> {
     try {
       const session = await vscode.authentication.getSession(
         GitHubReleaseService.GITHUB_AUTH_PROVIDER_ID,
@@ -41,9 +39,7 @@ export class GitHubReleaseService {
    * Get authentication headers for GitHub API requests
    * @param requireAuth If true, will prompt for authentication if not already authenticated
    */
-  private async getAuthHeaders(
-    requireAuth: boolean = true
-  ): Promise<Record<string, string>> {
+  private async getAuthHeaders(requireAuth: boolean = true): Promise<Record<string, string>> {
     const session = await this.getGitHubSession(requireAuth);
     const headers: Record<string, string> = {
       "User-Agent": "nexus-nexkit-vscode-Extension",
@@ -64,24 +60,16 @@ export class GitHubReleaseService {
   private async handleAuthError(response: Response): Promise<boolean> {
     // GitHub returns 404 for private repositories when not authenticated
     // This is a security feature to not reveal the existence of private repos
-    if (
-      response.status === 401 ||
-      response.status === 403 ||
-      response.status === 404
-    ) {
+    if (response.status === 401 || response.status === 403 || response.status === 404) {
       const message =
         response.status === 404
           ? "Repository not found. This may be a private repository. Please sign in to GitHub."
           : response.status === 401
-          ? "GitHub authentication required to access private repositories."
-          : "GitHub API rate limit exceeded or insufficient permissions.";
+            ? "GitHub authentication required to access private repositories."
+            : "GitHub API rate limit exceeded or insufficient permissions.";
 
       const signIn = "Sign In to GitHub";
-      const result = await vscode.window.showErrorMessage(
-        message,
-        signIn,
-        "Cancel"
-      );
+      const result = await vscode.window.showErrorMessage(message, signIn, "Cancel");
 
       if (result === signIn) {
         const session = await this.getGitHubSession(true);
@@ -103,12 +91,7 @@ export class GitHubReleaseService {
       let response = await fetch(url, { headers });
 
       // If we get 404, 401, or 403, it might be a private repo - try to authenticate and retry
-      if (
-        !response.ok &&
-        (response.status === 404 ||
-          response.status === 401 ||
-          response.status === 403)
-      ) {
+      if (!response.ok && (response.status === 404 || response.status === 401 || response.status === 403)) {
         const authenticated = await this.handleAuthError(response);
 
         if (authenticated) {
@@ -119,9 +102,7 @@ export class GitHubReleaseService {
       }
 
       if (!response.ok) {
-        throw new Error(
-          `GitHub API error: ${response.status} ${response.statusText}`
-        );
+        throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
       }
 
       const data = (await response.json()) as any;
@@ -144,9 +125,7 @@ export class GitHubReleaseService {
    * Download .vsix file from release assets
    */
   async downloadVsixAsset(release: ReleaseInfo): Promise<ArrayBuffer> {
-    const vsixAsset = release.assets.find((asset) =>
-      asset.name.endsWith(".vsix")
-    );
+    const vsixAsset = release.assets.find((asset) => asset.name.endsWith(".vsix"));
 
     if (!vsixAsset) {
       throw new Error(".vsix file not found in release assets");
@@ -174,12 +153,7 @@ export class GitHubReleaseService {
       });
 
       // Retry if authentication issue detected
-      if (
-        !response.ok &&
-        (response.status === 404 ||
-          response.status === 401 ||
-          response.status === 403)
-      ) {
+      if (!response.ok && (response.status === 404 || response.status === 401 || response.status === 403)) {
         const authenticated = await this.handleAuthError(response);
         if (authenticated) {
           headers = await this.getAuthHeaders(false);
@@ -191,9 +165,7 @@ export class GitHubReleaseService {
       }
 
       if (!response.ok) {
-        throw new Error(
-          `Failed to download .vsix: ${response.status} ${response.statusText}`
-        );
+        throw new Error(`Failed to download .vsix: ${response.status} ${response.statusText}`);
       }
 
       return await response.arrayBuffer();
@@ -211,12 +183,7 @@ export class GitHubReleaseService {
 
     let response = await this.fetchWithRedirectsPrivateRepo(url, { headers });
 
-    if (
-      !response.ok &&
-      (response.status === 404 ||
-        response.status === 401 ||
-        response.status === 403)
-    ) {
+    if (!response.ok && (response.status === 404 || response.status === 401 || response.status === 403)) {
       const authenticated = await this.handleAuthError(response);
       if (authenticated) {
         headers = await this.getAuthHeaders(false);
@@ -226,9 +193,7 @@ export class GitHubReleaseService {
     }
 
     if (!response.ok) {
-      throw new Error(
-        `Failed to download .vsix: ${response.status} ${response.statusText}`
-      );
+      throw new Error(`Failed to download .vsix: ${response.status} ${response.statusText}`);
     }
 
     return await response.arrayBuffer();
@@ -238,9 +203,7 @@ export class GitHubReleaseService {
    * Get .vsix asset URL from release
    */
   getVsixAssetUrl(release: ReleaseInfo): string | null {
-    const vsixAsset = release.assets.find((asset) =>
-      asset.name.endsWith(".vsix")
-    );
+    const vsixAsset = release.assets.find((asset) => asset.name.endsWith(".vsix"));
     return vsixAsset?.browserDownloadUrl || null;
   }
 
@@ -249,10 +212,7 @@ export class GitHubReleaseService {
    * Example: https://github.com/owner/repo/releases/download/v1.0.0/file.vsix
    * We need to get the asset ID via the API instead
    */
-  private async getAssetIdFromRelease(
-    release: ReleaseInfo,
-    assetName: string
-  ): Promise<number | null> {
+  private async getAssetIdFromRelease(release: ReleaseInfo, assetName: string): Promise<number | null> {
     try {
       const headers = await this.getAuthHeaders(false);
       const url = `${GitHubReleaseService.BASE_URL}/repos/${GitHubReleaseService.REPO_OWNER}/${GitHubReleaseService.REPO_NAME}/releases/tags/${release.tagName}`;
@@ -312,9 +272,7 @@ export class GitHubReleaseService {
 
       redirects += 1;
       if (redirects > maxRedirects) {
-        throw new Error(
-          `Too many redirects (${redirects}) attempting to fetch ${url}`
-        );
+        throw new Error(`Too many redirects (${redirects}) attempting to fetch ${url}`);
       }
 
       // Resolve relative locations against current URL

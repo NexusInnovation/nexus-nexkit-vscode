@@ -49,10 +49,7 @@ export class NexkitPanel {
   }
 
   // Helper to get HTML for a webview (static so other providers can use it)
-  public static getWebviewContent(
-    webview: vscode.Webview,
-    extensionUri: vscode.Uri
-  ): string {
+  public static getWebviewContent(webview: vscode.Webview, extensionUri: vscode.Uri): string {
     return WebviewTemplate.generateHTML();
   }
 
@@ -67,29 +64,16 @@ export class NexkitPanel {
       // Refresh data when revealing existing panel
       NexkitPanel.currentPanel.refresh();
     } else {
-      const panel = vscode.window.createWebviewPanel(
-        NexkitPanel.viewType,
-        "Nexkit Info & Actions",
-        column,
-        {
-          enableScripts: true,
-          retainContextWhenHidden: true,
-        }
-      );
-      NexkitPanel.currentPanel = new NexkitPanel(
-        panel,
-        extensionUri,
-        repositoryAggregator,
-        contentManager
-      );
+      const panel = vscode.window.createWebviewPanel(NexkitPanel.viewType, "Nexkit Info & Actions", column, {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+      });
+      NexkitPanel.currentPanel = new NexkitPanel(panel, extensionUri, repositoryAggregator, contentManager);
     }
   }
 
   private _getHtmlForWebview(): string {
-    return NexkitPanel.getWebviewContent(
-      this._panel.webview,
-      this._extensionUri
-    );
+    return NexkitPanel.getWebviewContent(this._panel.webview, this._extensionUri);
   }
 
   private _setWebviewMessageListener() {
@@ -99,8 +83,7 @@ export class NexkitPanel {
           // Webview is ready to receive messages
           await this._initializeVersionStatus();
           // Also send workspace state and initialization state
-          const hasWorkspace =
-            (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
+          const hasWorkspace = (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
           this._panel.webview.postMessage({
             hasWorkspace,
             isInitialized: this._isInitialized,
@@ -119,9 +102,7 @@ export class NexkitPanel {
           await this._removeItem(message.category, message.itemName);
           break;
         case "initProject":
-          await vscode.commands.executeCommand(
-            "nexus-nexkit-vscode.initProject"
-          );
+          await vscode.commands.executeCommand("nexus-nexkit-vscode.initProject");
           this._status = "Project initialized";
           this._version = await this._getExtensionVersion();
           this._isInitialized = await this._checkIsInitialized();
@@ -131,17 +112,13 @@ export class NexkitPanel {
           });
           break;
         case "updateTemplates":
-          await vscode.commands.executeCommand(
-            "nexus-nexkit-vscode.updateTemplates"
-          );
+          await vscode.commands.executeCommand("nexus-nexkit-vscode.updateTemplates");
           this._status = "Templates updated";
           this._version = await this._getExtensionVersion();
           this._postVersionStatus();
           break;
         case "reinitializeProject":
-          await vscode.commands.executeCommand(
-            "nexus-nexkit-vscode.reinitializeProject"
-          );
+          await vscode.commands.executeCommand("nexus-nexkit-vscode.reinitializeProject");
           this._status = "Project re-initialized";
           this._version = await this._getExtensionVersion();
           this._isInitialized = await this._checkIsInitialized();
@@ -151,16 +128,12 @@ export class NexkitPanel {
           });
           break;
         case "installUserMCPs":
-          await vscode.commands.executeCommand(
-            "nexus-nexkit-vscode.installUserMCPs"
-          );
+          await vscode.commands.executeCommand("nexus-nexkit-vscode.installUserMCPs");
           this._status = "User MCP servers installed";
           this._postVersionStatus();
           break;
         case "openSettings":
-          await vscode.commands.executeCommand(
-            "nexus-nexkit-vscode.openSettings"
-          );
+          await vscode.commands.executeCommand("nexus-nexkit-vscode.openSettings");
           this._status = "Settings opened";
           this._postVersionStatus();
           break;
@@ -237,19 +210,14 @@ export class NexkitPanel {
       });
     } catch (error) {
       console.error("Error installing item:", error);
-      vscode.window.showErrorMessage(
-        `Failed to install ${item.name}: ${error}`
-      );
+      vscode.window.showErrorMessage(`Failed to install ${item.name}: ${error}`);
     }
   }
 
   /**
    * Remove an item
    */
-  private async _removeItem(
-    category: ContentCategory,
-    itemName: string
-  ) {
+  private async _removeItem(category: ContentCategory, itemName: string) {
     try {
       // Remove file
       await this._contentManager.removeFile(category, itemName);
@@ -276,9 +244,7 @@ export class NexkitPanel {
 
   private async _getExtensionVersion(): Promise<string> {
     try {
-      const ext = vscode.extensions.getExtension(
-        "nexusinno.nexus-nexkit-vscode"
-      );
+      const ext = vscode.extensions.getExtension("nexusinno.nexus-nexkit-vscode");
       return ext?.packageJSON.version || "Unknown";
     } catch {
       return "Unknown";

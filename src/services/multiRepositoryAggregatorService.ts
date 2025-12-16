@@ -31,14 +31,12 @@ export class MultiRepositoryAggregatorService {
    */
   private createService(config: InternalRepositoryConfig): GitHubRepositoryService | null {
     try {
-      return new GitHubRepositoryService(
-        {
-          name: config.name,
-          url: config.url,
-          branch: config.branch,
-          paths: config.paths,
-        }
-      );
+      return new GitHubRepositoryService({
+        name: config.name,
+        url: config.url,
+        branch: config.branch,
+        paths: config.paths,
+      });
     } catch (error) {
       console.error(`Failed to create service for ${config.name}:`, error);
       return null;
@@ -51,14 +49,11 @@ export class MultiRepositoryAggregatorService {
   async fetchAllItemsFromAllRepositories(): Promise<{ [repoName: string]: RepositoryItem[] }> {
     const repositoryItems: { [repoName: string]: RepositoryItem[] } = {};
 
-    const fetchPromises = Array.from(this.services.values()).map(async service => {
+    const fetchPromises = Array.from(this.services.values()).map(async (service) => {
       try {
         repositoryItems[service.getRepositoryName()] = await service.fetchAllItems();
       } catch (error) {
-        console.error(
-          `Error fetching items from ${service.getRepositoryName()}:`,
-          error
-        );
+        console.error(`Error fetching items from ${service.getRepositoryName()}:`, error);
         // Continue with other repositories even if one fails
       }
     });

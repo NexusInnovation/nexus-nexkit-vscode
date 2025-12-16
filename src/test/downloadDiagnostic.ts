@@ -4,8 +4,7 @@ import * as vscode from "vscode";
  * Simple diagnostic script to test GitHub release downloads
  */
 async function testGitHubDownload() {
-  const testUrl =
-    "https://github.com/NexusInnovation/nexus-nexkit-vscode/releases/download/v0.3.7/nexkit-vscode.vsix";
+  const testUrl = "https://github.com/NexusInnovation/nexus-nexkit-vscode/releases/download/v0.3.7/nexkit-vscode.vsix";
 
   try {
     // Get authentication session
@@ -73,9 +72,7 @@ async function testGitHubDownload() {
 
         if (response3.ok) {
           const contentLength = response3.headers.get("content-length");
-          console.log(
-            `✅ Success without auth! Content length: ${contentLength}`
-          );
+          console.log(`✅ Success without auth! Content length: ${contentLength}`);
         }
       }
     }
@@ -101,10 +98,7 @@ async function testGitHubDownload() {
 
 // Export for use as a VS Code command
 export function activate(context: vscode.ExtensionContext) {
-  const disposable = vscode.commands.registerCommand(
-    "nexkit.testGitHubDownload",
-    testGitHubDownload
-  );
+  const disposable = vscode.commands.registerCommand("nexkit.testGitHubDownload", testGitHubDownload);
   context.subscriptions.push(disposable);
 
   // Run immediately when activated

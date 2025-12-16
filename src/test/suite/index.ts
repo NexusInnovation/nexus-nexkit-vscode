@@ -3,45 +3,45 @@
  * Configures test execution and reporting
  */
 
-import * as path from 'path';
-import * as Mocha from 'mocha';
-import { glob } from 'glob';
+import * as path from "path";
+import * as Mocha from "mocha";
+import { glob } from "glob";
 
 export function run(): Promise<void> {
-	// Create the mocha test runner
-	const mocha = new Mocha({
-		ui: 'tdd',
-		color: true,
-		timeout: 10000,
-		reporter: 'spec',
-	});
+  // Create the mocha test runner
+  const mocha = new Mocha({
+    ui: "tdd",
+    color: true,
+    timeout: 10000,
+    reporter: "spec",
+  });
 
-	const testsRoot = path.resolve(__dirname, '..');
+  const testsRoot = path.resolve(__dirname, "..");
 
-	return new Promise((resolve, reject) => {
-		// Find all test files
-		glob('**/**.test.js', { cwd: testsRoot })
-			.then((files) => {
-				// Add files to the test suite
-				files.forEach((f) => mocha.addFile(path.resolve(testsRoot, f)));
+  return new Promise((resolve, reject) => {
+    // Find all test files
+    glob("**/**.test.js", { cwd: testsRoot })
+      .then((files) => {
+        // Add files to the test suite
+        files.forEach((f) => mocha.addFile(path.resolve(testsRoot, f)));
 
-				try {
-					// Run the mocha test
-					mocha.run((failures) => {
-						if (failures > 0) {
-							reject(new Error(`${failures} tests failed.`));
-						} else {
-							resolve();
-						}
-					});
-				} catch (err) {
-					console.error(err);
-					reject(err);
-				}
-			})
-			.catch((err) => {
-				console.error('Error finding test files:', err);
-				reject(err);
-			});
-	});
+        try {
+          // Run the mocha test
+          mocha.run((failures) => {
+            if (failures > 0) {
+              reject(new Error(`${failures} tests failed.`));
+            } else {
+              resolve();
+            }
+          });
+        } catch (err) {
+          console.error(err);
+          reject(err);
+        }
+      })
+      .catch((err) => {
+        console.error("Error finding test files:", err);
+        reject(err);
+      });
+  });
 }

@@ -1,4 +1,4 @@
-import * as vscode from 'vscode';
+import * as vscode from "vscode";
 
 export interface InitWizardResult {
   enableAzureDevOps: boolean;
@@ -19,7 +19,7 @@ export class InitWizard {
 
       return {
         enableAzureDevOps,
-        createVscodeSettings
+        createVscodeSettings,
       };
     } catch (error) {
       vscode.window.showErrorMessage(`Wizard failed: ${error}`);
@@ -28,20 +28,20 @@ export class InitWizard {
   }
 
   private async confirmAzureDevOps(): Promise<boolean> {
-    const result = await vscode.window.showQuickPick(['Yes', 'No'], {
-      placeHolder: 'Enable Azure DevOps MCP for project-specific Azure integration?',
-      title: 'Nexkit Project Initialization - Step 1: Azure DevOps MCP'
+    const result = await vscode.window.showQuickPick(["Yes", "No"], {
+      placeHolder: "Enable Azure DevOps MCP for project-specific Azure integration?",
+      title: "Nexkit Project Initialization - Step 1: Azure DevOps MCP",
     });
 
-    return result === 'Yes';
+    return result === "Yes";
   }
 
   private async confirmVscodeSettings(): Promise<boolean> {
-    const result = await vscode.window.showQuickPick(['Yes', 'No'], {
-      placeHolder: 'Create .vscode/settings.json with recommended settings?',
-      title: 'Nexkit Project Initialization - Step 2: VS Code Settings'
+    const result = await vscode.window.showQuickPick(["Yes", "No"], {
+      placeHolder: "Create .vscode/settings.json with recommended settings?",
+      title: "Nexkit Project Initialization - Step 2: VS Code Settings",
     });
 
-    return result === 'Yes';
+    return result === "Yes";
   }
 }

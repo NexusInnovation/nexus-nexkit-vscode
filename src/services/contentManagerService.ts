@@ -76,9 +76,7 @@ export class ContentManagerService {
       // Write file (overwrites if it already exists)
       await fs.promises.writeFile(filePath, content, "utf8");
 
-      vscode.window.showInformationMessage(
-        `Installed ${item.name} from ${item.repository}`
-      );
+      vscode.window.showInformationMessage(`Installed ${item.name} from ${item.repository}`);
     } catch (error) {
       console.error(`Failed to install ${item.name}:`, error);
       vscode.window.showErrorMessage(`Failed to install ${item.name}: ${error}`);
@@ -94,18 +92,14 @@ export class ContentManagerService {
       const filePath = path.join(this.getCategoryPath(item.category), item.name);
       // Check if file exists
       if (!(await this.fileExists(filePath))) {
-        vscode.window.showWarningMessage(
-          `File ${item.name} not found in .github/${item.category}/`
-        );
+        vscode.window.showWarningMessage(`File ${item.name} not found in .github/${item.category}/`);
         return;
       }
 
       // Delete file
       await fs.promises.unlink(filePath);
 
-      vscode.window.showInformationMessage(
-        `Removed ${item.name} from .github/${item.category}/`
-      );
+      vscode.window.showInformationMessage(`Removed ${item.name} from .github/${item.category}/`);
     } catch (error) {
       console.error(`Failed to remove ${item.name}:`, error);
       vscode.window.showErrorMessage(`Failed to remove ${item.name}: ${error}`);

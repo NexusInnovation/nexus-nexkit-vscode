@@ -121,10 +121,7 @@ suite("TelemetryService Test Suite", () => {
         return "result";
       };
 
-      const result = await telemetryService.trackCommandExecution(
-        "testCommand",
-        testFn
-      );
+      const result = await telemetryService.trackCommandExecution("testCommand", testFn);
 
       assert.strictEqual(result, "result");
     });
@@ -179,11 +176,7 @@ suite("TelemetryService Test Suite", () => {
     });
 
     test("Should track event with measurements", () => {
-      telemetryService.trackEvent(
-        "customEvent",
-        { prop: "value" },
-        { metric1: 100, metric2: 200 }
-      );
+      telemetryService.trackEvent("customEvent", { prop: "value" }, { metric1: 100, metric2: 200 });
 
       // Should not throw
       assert.ok(telemetryService);
@@ -245,10 +238,7 @@ suite("TelemetryService Test Suite", () => {
     });
 
     test("Should track deactivation on dispose", () => {
-      const trackDeactivationSpy = sandbox.spy(
-        telemetryService,
-        "trackDeactivation"
-      );
+      const trackDeactivationSpy = sandbox.spy(telemetryService, "trackDeactivation");
 
       telemetryService.dispose();
 
@@ -383,34 +373,25 @@ suite("TelemetryService Test Suite", () => {
 
     test("Should handle mixed success and failure commands", async () => {
       // Successful command
-      const result1 = await telemetryService.trackCommandExecution(
-        "successCommand",
-        async () => {
-          return "success";
-        }
-      );
+      const result1 = await telemetryService.trackCommandExecution("successCommand", async () => {
+        return "success";
+      });
       assert.strictEqual(result1, "success");
 
       // Failed command
       try {
-        await telemetryService.trackCommandExecution(
-          "failCommand",
-          async () => {
-            throw new Error("Command failed");
-          }
-        );
+        await telemetryService.trackCommandExecution("failCommand", async () => {
+          throw new Error("Command failed");
+        });
         assert.fail("Should have thrown");
       } catch (error) {
         assert.ok(error instanceof Error);
       }
 
       // Another successful command
-      const result2 = await telemetryService.trackCommandExecution(
-        "successCommand2",
-        async () => {
-          return "success2";
-        }
-      );
+      const result2 = await telemetryService.trackCommandExecution("successCommand2", async () => {
+        return "success2";
+      });
       assert.strictEqual(result2, "success2");
     });
   });

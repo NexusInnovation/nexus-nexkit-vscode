@@ -60,10 +60,7 @@ export class RepositoryConfigManager {
    */
   static getRepositories(): InternalRepositoryConfig[] {
     const config = vscode.workspace.getConfiguration();
-    const userRepos = config.get<RepositoryConfig[]>(
-      RepositoryConfigManager.CONFIG_KEY,
-      []
-    );
+    const userRepos = config.get<RepositoryConfig[]>(RepositoryConfigManager.CONFIG_KEY, []);
 
     // Merge with defaults, ensuring non-removable defaults are always present
     const defaults = RepositoryConfigManager.getDefaultRepositories();
@@ -96,13 +93,13 @@ export class RepositoryConfigManager {
   //   repositories: InternalRepositoryConfig[]
   // ): Promise<void> {
   //   const config = vscode.workspace.getConfiguration();
-    
+
   //   // Only save user-added repositories (exclude defaults)
   //   const defaults = RepositoryConfigManager.getDefaultRepositories();
   //   const userRepos = repositories.filter(
   //     (repo) => !defaults.some((d) => d.url === repo.url) && repo.removable
   //   );
-    
+
   //   // Convert to public format (without removable flag)
   //   const publicRepos: RepositoryConfig[] = userRepos.map(repo => ({
   //     name: repo.name,
