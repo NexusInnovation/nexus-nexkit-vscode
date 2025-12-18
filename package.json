@@ -84,62 +84,10 @@
     "configuration": {
       "title": "Nexkit",
       "properties": {
-        "nexkit.init.createVscodeSettings": {
-          "type": "boolean",
-          "default": true,
-          "description": "Create .vscode/settings.json during initialization."
-        },
-        "nexkit.init.createVscodeExtensions": {
-          "type": "boolean",
-          "default": true,
-          "description": "Create .vscode/extensions.json with recommended extensions during initialization."
-        },
-        "nexkit.workspace.initialized": {
-          "type": "boolean",
-          "default": false,
-          "description": "Indicates if the workspace has been initialized with Nexkit."
-        },
-        "nexkit.workspace.mcpServers": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [],
-          "description": "List of MCP servers configured for the workspace."
-        },
-        "nexkit.extension.autoCheckUpdates": {
-          "type": "boolean",
-          "default": true,
-          "description": "Automatically check for extension updates on activation."
-        },
-        "nexkit.extension.updateCheckInterval": {
-          "type": "number",
-          "default": 24,
-          "description": "Hours between automatic extension update checks."
-        },
-        "nexkit.extension.lastUpdateCheck": {
-          "type": "number",
-          "default": 0,
-          "description": "Timestamp of last extension update check."
-        },
-        "nexkit.mcpSetup.dismissed": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether the user has dismissed the MCP setup notification."
-        },
-        "nexkit.telemetry.enabled": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable telemetry to help improve Nexkit. Respects VS Code's global telemetry setting. No personally identifiable information is collected."
-        },
-        "nexkit.telemetry.connectionString": {
-          "type": "string",
-          "default": "",
-          "description": "Azure Application Insights connection string (optional, for custom telemetry endpoint)."
-        },
-        "nexkit.repositories": {
+        "nexkit.workspace.repositories": {
           "type": "array",
           "default": [],
+          "scope": "window",
           "description": "Additional repository sources for agents, prompts, and instructions. Default repositories (Nexus Templates and Awesome Copilot) are always included.",
           "items": {
             "type": "object",
@@ -191,6 +139,42 @@
               "paths"
             ]
           }
+        },
+        "nexkit.extension.autoCheckUpdates": {
+          "type": "boolean",
+          "default": true,
+          "scope": "application",
+          "description": "Automatically check for extension updates on activation."
+        },
+        "nexkit.extension.updateCheckInterval": {
+          "type": "number",
+          "default": 24,
+          "scope": "application",
+          "description": "Hours between automatic extension update checks."
+        },
+        "nexkit.extension.lastUpdateCheck": {
+          "type": "number",
+          "default": 0,
+          "scope": "application",
+          "description": "Timestamp of last extension update check."
+        },
+        "nexkit.mcpSetup.dismissed": {
+          "type": "boolean",
+          "default": false,
+          "scope": "application",
+          "description": "Whether the user has dismissed the MCP setup notification."
+        },
+        "nexkit.telemetry.enabled": {
+          "type": "boolean",
+          "default": true,
+          "scope": "application",
+          "description": "Enable telemetry to help improve Nexkit. Respects VS Code's global telemetry setting. No personally identifiable information is collected."
+        },
+        "nexkit.telemetry.connectionString": {
+          "type": "string",
+          "default": "",
+          "scope": "application",
+          "description": "Azure Application Insights connection string (optional, for custom telemetry endpoint)."
         }
       }
     }

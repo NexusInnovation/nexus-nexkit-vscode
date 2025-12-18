@@ -4,17 +4,22 @@ import * as vscode from "vscode";
  * Centralized manager for all Nexkit extension settings
  */
 export class SettingsManager {
+  private static context: vscode.ExtensionContext;
+
   private static readonly NEXKIT_SECTION = "nexkit";
   private static readonly TELEMETRY_SECTION = "telemetry";
 
+  // Workspace state keys
+  private static readonly WORKSPACE_INITIALIZED_KEY = "workspaceInitialized";
+
   // Workspace settings
-  private static readonly WORKSPACE_INITIALIZED = "workspace.initialized";
   private static readonly WORKSPACE_MCP_SERVERS = "workspace.mcpServers";
-  private static readonly INIT_CREATE_VSCODE_SETTINGS = "init.createVscodeSettings";
-  private static readonly INIT_CREATE_VSCODE_EXTENSIONS = "init.createVscodeExtensions";
 
   // MCP Setup settings
   private static readonly MCP_SETUP_DISMISSED = "mcpSetup.dismissed";
+
+  // Repository settings
+  private static readonly REPOSITORIES = "workspace.repositories";
 
   // Telemetry settings
   private static readonly TELEMETRY_ENABLED = "telemetry.enabled";
@@ -26,19 +31,27 @@ export class SettingsManager {
   private static readonly EXTENSION_UPDATE_CHECK_INTERVAL = "extension.updateCheckInterval";
   private static readonly EXTENSION_LAST_UPDATE_CHECK = "extension.lastUpdateCheck";
 
-  // Repository settings
-  private static readonly REPOSITORIES = "repositories";
-
-  // Workspace Initialization
-  static isWorkspaceInitialized(): boolean {
-    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<boolean>(this.WORKSPACE_INITIALIZED, false);
+  /**
+   * Initialize the SettingsManager with the extension context
+   * Must be called during extension activation
+   */
+  static initialize(context: vscode.ExtensionContext): void {
+    this.context = context;
   }
 
-  static async setWorkspaceInitialized(
-    value: boolean,
-    target: vscode.ConfigurationTarget = vscode.ConfigurationTarget.Workspace
-  ): Promise<void> {
-    await vscode.workspace.getConfiguration(this.NEXKIT_SECTION).update(this.WORKSPACE_INITIALIZED, value, target);
+  // Workspace Initialization (using workspace state)
+  static isWorkspaceInitialized(): boolean {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    return this.context.workspaceState.get<boolean>(this.WORKSPACE_INITIALIZED_KEY, false);
+  }
+
+  static async setWorkspaceInitialized(value: boolean): Promise<void> {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    await this.context.workspaceState.update(this.WORKSPACE_INITIALIZED_KEY, value);
   }
 
   static getWorkspaceMcpServers(): string[] {
@@ -52,34 +65,27 @@ export class SettingsManager {
     await vscode.workspace.getConfiguration(this.NEXKIT_SECTION).update(this.WORKSPACE_MCP_SERVERS, servers, target);
   }
 
-  static async setInitCreateVscodeSettings(
-    value: boolean,
-    target: vscode.ConfigurationTarget = vscode.ConfigurationTarget.Workspace
-  ): Promise<void> {
-    await vscode.workspace.getConfiguration(this.NEXKIT_SECTION).update(this.INIT_CREATE_VSCODE_SETTINGS, value, target);
-  }
-
-  static getInitCreateVscodeExtensions(): boolean {
-    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<boolean>(this.INIT_CREATE_VSCODE_EXTENSIONS, true);
-  }
-
-  static async setInitCreateVscodeExtensions(
-    value: boolean,
-    target: vscode.ConfigurationTarget = vscode.ConfigurationTarget.Workspace
-  ): Promise<void> {
-    await vscode.workspace.getConfiguration(this.NEXKIT_SECTION).update(this.INIT_CREATE_VSCODE_EXTENSIONS, value, target);
-  }
-
   // MCP Setup
   static isMcpSetupDismissed(): boolean {
     return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<boolean>(this.MCP_SETUP_DISMISSED, false);
   }
 
-  static async setMcpSetupDismissed(
-    value: boolean,
-    target: vscode.ConfigurationTarget = vscode.ConfigurationTarget.Global
+  static async setMcpSetupDismissed(value: boolean): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .update(this.MCP_SETUP_DISMISSED, value, vscode.ConfigurationTarget.Global);
+  }
+
+  // Repositories
+  static getRepositories<T = any>(): T[] {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<T[]>(this.REPOSITORIES, []);
+  }
+
+  static async setRepositories<T = any>(
+    repositories: T[],
+    target: vscode.ConfigurationTarget = vscode.ConfigurationTarget.Workspace
   ): Promise<void> {
-    await vscode.workspace.getConfiguration(this.NEXKIT_SECTION).update(this.MCP_SETUP_DISMISSED, value, target);
+    await vscode.workspace.getConfiguration(this.NEXKIT_SECTION).update(this.REPOSITORIES, repositories, target);
   }
 
   // Telemetry
@@ -108,22 +114,9 @@ export class SettingsManager {
     return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<number>(this.EXTENSION_LAST_UPDATE_CHECK, 0);
   }
 
-  static async setLastUpdateCheck(
-    timestamp: number,
-    target: vscode.ConfigurationTarget = vscode.ConfigurationTarget.Global
-  ): Promise<void> {
-    await vscode.workspace.getConfiguration(this.NEXKIT_SECTION).update(this.EXTENSION_LAST_UPDATE_CHECK, timestamp, target);
-  }
-
-  // Repositories
-  static getRepositories<T = any>(): T[] {
-    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<T[]>(this.REPOSITORIES, []);
-  }
-
-  static async setRepositories<T = any>(
-    repositories: T[],
-    target: vscode.ConfigurationTarget = vscode.ConfigurationTarget.Global
-  ): Promise<void> {
-    await vscode.workspace.getConfiguration(this.NEXKIT_SECTION).update(this.REPOSITORIES, repositories, target);
+  static async setLastUpdateCheck(timestamp: number): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .update(this.EXTENSION_LAST_UPDATE_CHECK, timestamp, vscode.ConfigurationTarget.Global);
   }
 }

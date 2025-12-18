@@ -22,6 +22,9 @@ export async function activate(context: vscode.ExtensionContext) {
   // This line of code will only be executed once when your extension is activated
   console.log("Nexkit extension activated!");
 
+  // Initialize settings manager
+  SettingsManager.initialize(context);
+
   // Initialize telemetry service
   const telemetryService = new TelemetryService(context);
   await telemetryService.initialize();
@@ -158,13 +161,11 @@ export async function activate(context: vscode.ExtensionContext) {
             // Update workspace settings
             await SettingsManager.setWorkspaceInitialized(true);
             await SettingsManager.setWorkspaceMcpServers(mcpServers);
-            await SettingsManager.setInitCreateVscodeSettings(wizardResult.createVscodeSettings);
-            await SettingsManager.setInitCreateVscodeExtensions(wizardResult.createVscodeExtensions);
 
             // Add Awesome Copilot repository to workspace if selected
             if (wizardResult.enableAwesomeCopilot) {
               const awesomeCopilotRepo = RepositoryConfigManager.getAwesomeCopilotRepository();
-              await SettingsManager.setRepositories([awesomeCopilotRepo], vscode.ConfigurationTarget.Workspace);
+              await SettingsManager.setRepositories([awesomeCopilotRepo]);
             }
           }
         );
