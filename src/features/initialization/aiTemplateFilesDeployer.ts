@@ -1,18 +1,19 @@
-import { GitHubRepositoryService } from "../ai-resources/gitHubRepositoryService";
-import { RepositoryConfigManager } from "../ai-resources/repositoryConfigManager";
-import { ItemCategory } from "../ai-resources/resourceCategories";
-import { WorkspaceAIResourceService } from "../ai-resources/workspaceAIResourceService";
+import { AITemplateFileType } from "../ai-template-files/aiTemplateFile";
+import { AITemplateFilesManagerService } from "../ai-template-files/aiTemplateFilesManagerService";
+import { RepositoryTemplateConfigManager } from "../ai-template-files/repositoryTemplateConfigManagerService";
 
 export type DeploymentSummary = {
   installed: number;
   failed: number;
-  categories: Record<ItemCategory, number>;
+  types: Record<AITemplateFileType, number>;
 };
 
 /**
  * Service to deploy ai template files (agents, prompts, instructions, chatmodes) in the workspace
  */
 export class AITemplateFilesDeployer {
+  constructor(private readonly _aiTemplateFilesManager: AITemplateFilesManagerService) {}
+
   /**
    * Deploy ai template files from the Nexus Templates repository. Installs all agents, chatmodes and prompts (excludes instructions)
    */
@@ -20,40 +21,28 @@ export class AITemplateFilesDeployer {
     const summary = {
       installed: 0,
       failed: 0,
-      categories: {} as Record<ItemCategory, number>,
+      types: {} as Record<AITemplateFileType, number>,
     };
 
     try {
-      // Get the default Nexus Templates repository configuration
-      const defaultRepo = RepositoryConfigManager.getNexusTemplateRepositoryConfig();
-
-      if (!defaultRepo) {
-        console.error("No default repository found for deploying resources.");
-        return summary;
-      }
-
-      const githubService = new GitHubRepositoryService(defaultRepo);
-      const workspaceAIResourceService = new WorkspaceAIResourceService();
-
-      // Fetch all items from the repository
-      const allItems = await githubService.fetchAllItems();
+      // Fetch all templates from the repository
+      const allTemplates = await this._aiTemplateFilesManager.fetchTemplates(
+        RepositoryTemplateConfigManager.NexusTemplateRepoName
+      );
 
       // Filter out instructions
-      const itemsToDeploy = allItems.filter((item) => item.category !== "instructions");
+      const templatesToDeploy = allTemplates.filter((template) => template.type !== "instructions");
 
-      // Install each item in parallel
-      const installPromises = itemsToDeploy.map(async (item) => {
+      // Install each template in parallel
+      const installPromises = templatesToDeploy.map(async (template) => {
         try {
-          // Download file content
-          const content = await githubService.downloadFile(item);
+          // Install the template (silent mode)
+          await this._aiTemplateFilesManager.installTemplate(template, true);
 
-          // Install the item (silent mode)
-          await workspaceAIResourceService.installItem(item, content, true);
-
-          return { success: true, item };
+          return { success: true, template };
         } catch (error) {
-          console.error(`Failed to deploy ${item.name} from ${item.category}:`, error);
-          return { success: false, item, error };
+          console.error(`Failed to deploy ${template.name} from ${template.type}:`, error);
+          return { success: false, template, error };
         }
       });
 
@@ -63,10 +52,10 @@ export class AITemplateFilesDeployer {
       // Process results and update summary
       for (const result of results) {
         if (result.status === "fulfilled") {
-          const { success, item } = result.value;
+          const { success, template } = result.value;
           if (success) {
             summary.installed++;
-            summary.categories[item.category] = (summary.categories[item.category] || 0) + 1;
+            summary.types[template.type] = (summary.types[template.type] || 0) + 1;
           } else {
             summary.failed++;
           }

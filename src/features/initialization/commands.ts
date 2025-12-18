@@ -94,7 +94,7 @@ export function registerInitializeWorkspaceCommand(context: vscode.ExtensionCont
           // Show success message with deployment summary
           const summaryMessage =
             deploymentSummary.installed > 0
-              ? ` Installed ${Object.entries(deploymentSummary.categories)
+              ? ` Installed ${Object.entries(deploymentSummary.types)
                   .map(([cat, count]) => `${count} ${cat}`)
                   .join(", ")}.`
               : "";

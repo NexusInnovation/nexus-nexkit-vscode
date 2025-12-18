@@ -3,8 +3,8 @@ import { WebviewTemplate } from "./webviewTemplate";
 import { TelemetryService } from "../../shared/services/telemetryService";
 import { getExtensionVersion } from "../../shared/utils/extensionHelper";
 import { SettingsManager } from "../../core/settingsManager";
-import { MultiRepositoryAggregatorService } from "../ai-resources/multiRepositoryAggregatorService";
-import { WorkspaceAIResourceService } from "../ai-resources/workspaceAIResourceService";
+import { GitHubRepositoryManagerService } from "../ai-template-files/aiTemplateFilesManagerService";
+import { WorkspaceAIResourceService } from "../ai-template-files/workspaceAIResourceService";
 
 export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewId = "nexkitPanelView";
@@ -12,7 +12,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;
 
   constructor(
-    private readonly _repositoryAggregator: MultiRepositoryAggregatorService,
+    private readonly _gitHubRepositoryManager: GitHubRepositoryManagerService,
     private readonly _contentManager: WorkspaceAIResourceService,
     private readonly _telemetryService: TelemetryService
   ) {}
@@ -92,7 +92,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
           try {
             console.log("[Nexkit] Loading items from all repositories...");
 
-            const repositories = await this._repositoryAggregator.fetchAllItemsFromAllRepositories();
+            const repositories = await this._gitHubRepositoryManager.fetchAllItems();
             const installed = await this._contentManager.getInstalledItems();
 
             console.log(`[Nexkit] Loaded ${Object.keys(repositories).length} repositories`);
@@ -114,7 +114,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
         case "refreshRepositories":
           try {
             console.log("[Nexkit] Clearing all repository caches...");
-            this._repositoryAggregator.clearAll();
+            this._gitHubRepositoryManager.clearAllCaches();
             this._view!.webview.postMessage({ command: "loadRepositories" });
             vscode.window.showInformationMessage("Repositories refreshed successfully");
           } catch (error) {
@@ -126,7 +126,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
         case "installItem":
           try {
             const { item } = message;
-            const content = await this._repositoryAggregator.downloadFile(item);
+            const content = await this._gitHubRepositoryManager.downloadFile(item);
             await this._contentManager.installItem(item, content);
             this._view!.webview.postMessage({
               command: "itemInstalled",
