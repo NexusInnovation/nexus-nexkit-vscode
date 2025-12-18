@@ -1,11 +1,9 @@
 import * as vscode from "vscode";
 import { AITemplateFile, AITemplateFileType, InstalledTemplatesMap } from "../models/aiTemplateFile";
-import { AITemplateCollection } from "../models/aiTemplateCollection";
 import { RepositoryManager } from "./repositoryManager";
-import { TemplateFetcherService } from "./templateFetcherService";
+import { FetchAllResult, TemplateFetcherService } from "./templateFetcherService";
 import { TemplateDataStore } from "./templateDataStore";
 import { TemplateFileOperations, InstallOptions, BatchInstallSummary } from "./templateFileOperations";
-import { SettingsManager } from "../../../core/settingsManager";
 
 /**
  * Main facade service for AI template data management
@@ -48,9 +46,6 @@ export class AITemplateDataService implements vscode.Disposable {
 
     // Forward data change events
     this.onDataChanged = this.dataStore.onDataChanged;
-
-    // Watch for configuration changes
-    this.setupConfigurationWatcher();
   }
 
   /**
@@ -129,7 +124,7 @@ export class AITemplateDataService implements vscode.Disposable {
   /**
    * Refresh data from all repositories
    */
-  public async refresh(): Promise<void> {
+  public async refresh(): Promise<FetchAllResult | null> {
     try {
       // Reinitialize repositories (picks up config changes)
       this.repositoryManager.refresh();
@@ -141,6 +136,8 @@ export class AITemplateDataService implements vscode.Disposable {
       this.dataStore.updateCollection(result.allTemplates);
 
       console.log(`🔄 AI Templates refreshed: ${result.allTemplates.length} templates`);
+
+      return result;
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       this._onError.fire(err);
@@ -192,13 +189,6 @@ export class AITemplateDataService implements vscode.Disposable {
   }
 
   /**
-   * Get the complete collection
-   */
-  public getCollection(): AITemplateCollection {
-    return this.dataStore.getCollection();
-  }
-
-  /**
    * Install a template to the workspace
    */
   public async installTemplate(templateFile: AITemplateFile, options?: InstallOptions): Promise<void> {
@@ -236,13 +226,16 @@ export class AITemplateDataService implements vscode.Disposable {
   /**
    * Setup configuration change watcher
    */
-  private setupConfigurationWatcher(): void {
+  public setupConfigurationWatcher(): void {
     this.configChangeListener = vscode.workspace.onDidChangeConfiguration(async (e) => {
       // Check if repository configuration changed
       if (e.affectsConfiguration("nexkit.repositories")) {
         console.log("📝 Repository configuration changed, refreshing templates...");
         try {
-          await this.refresh();
+          const result = await this.refresh();
+          vscode.window.showInformationMessage(
+            `🔄 AI Templates refreshed due to configuration change. ${result?.allTemplates.length ?? 0} template(s) loaded.`
+          );
         } catch (error) {
           console.error("Failed to refresh after configuration change:", error);
         }

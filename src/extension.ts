@@ -48,6 +48,9 @@ export async function activate(context: vscode.ExtensionContext) {
     console.error("Failed to initialize AI template data:", error);
   });
 
+  // Watch for template repository configuration changes (to refetch templates)
+  services.aiTemplateData.setupConfigurationWatcher();
+
   // Propose to initialize workspace when changed
   context.subscriptions.push(
     vscode.workspace.onDidChangeWorkspaceFolders(() => {

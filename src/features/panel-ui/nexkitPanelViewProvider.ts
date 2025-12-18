@@ -3,8 +3,7 @@ import { WebviewTemplate } from "./webviewTemplate";
 import { TelemetryService } from "../../shared/services/telemetryService";
 import { getExtensionVersion } from "../../shared/utils/extensionHelper";
 import { SettingsManager } from "../../core/settingsManager";
-import { GitHubRepositoryManagerService } from "../ai-template-files/aiTemplateFilesManagerService";
-import { WorkspaceAIResourceService } from "../ai-template-files/workspaceAIResourceService";
+import { AITemplateDataService } from "../ai-template-files/services/aiTemplateDataService";
 
 export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewId = "nexkitPanelView";
@@ -12,8 +11,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;
 
   constructor(
-    private readonly _gitHubRepositoryManager: GitHubRepositoryManagerService,
-    private readonly _contentManager: WorkspaceAIResourceService,
+    private readonly _templateDataService: AITemplateDataService,
     private readonly _telemetryService: TelemetryService
   ) {}
 
@@ -92,8 +90,21 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
           try {
             console.log("[Nexkit] Loading items from all repositories...");
 
-            const repositories = await this._gitHubRepositoryManager.fetchAllItems();
-            const installed = await this._contentManager.getInstalledItems();
+            // Wait for data service to be ready
+            await this._templateDataService.waitForReady();
+
+            // Get all templates grouped by repository
+            const allTemplates = this._templateDataService.getAllTemplates();
+            const repositories: { [repoName: string]: any[] } = {};
+
+            for (const template of allTemplates) {
+              if (!repositories[template.repository]) {
+                repositories[template.repository] = [];
+              }
+              repositories[template.repository].push(template);
+            }
+
+            const installed = await this._templateDataService.getInstalledTemplates();
 
             console.log(`[Nexkit] Loaded ${Object.keys(repositories).length} repositories`);
 
@@ -113,8 +124,8 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
 
         case "refreshRepositories":
           try {
-            console.log("[Nexkit] Clearing all repository caches...");
-            this._gitHubRepositoryManager.clearAllCaches();
+            console.log("[Nexkit] Refreshing repositories...");
+            await this._templateDataService.refresh();
             this._view!.webview.postMessage({ command: "loadRepositories" });
             vscode.window.showInformationMessage("Repositories refreshed successfully");
           } catch (error) {
@@ -126,8 +137,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
         case "installItem":
           try {
             const { item } = message;
-            const content = await this._gitHubRepositoryManager.downloadFile(item);
-            await this._contentManager.installItem(item, content);
+            await this._templateDataService.installTemplate(item);
             this._view!.webview.postMessage({
               command: "itemInstalled",
               item,
@@ -141,7 +151,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
         case "uninstallItem":
           try {
             const { item } = message;
-            await this._contentManager.uninstallItem(item);
+            await this._templateDataService.uninstallTemplate(item);
             this._view!.webview.postMessage({
               command: "itemUninstalled",
               item,

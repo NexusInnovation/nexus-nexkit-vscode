@@ -1,102 +1,86 @@
 import * as vscode from "vscode";
-import { AITemplateCollection } from "../models/aiTemplateCollection";
 import { AITemplateFile, AITemplateFileType } from "../models/aiTemplateFile";
 
 /**
- * Thread-safe data store for AI template files
- * Holds the current collection and provides type-safe query methods
+ * Data store for AI template files with indexed queries
  */
 export class TemplateDataStore {
-  private _collection: AITemplateCollection = AITemplateCollection.empty();
+  private _templates: AITemplateFile[] = [];
+  private _byRepository: Map<string, AITemplateFile[]> = new Map();
+  private _byType: Map<AITemplateFileType, AITemplateFile[]> = new Map();
   private readonly _onDataChanged = new vscode.EventEmitter<void>();
 
-  /**
-   * Event emitted when data changes
-   */
   public readonly onDataChanged: vscode.Event<void> = this._onDataChanged.event;
 
   /**
-   * Update the entire collection
+   * Update the collection and rebuild indexes
    */
   public updateCollection(templates: AITemplateFile[]): void {
-    this._collection = new AITemplateCollection(templates);
+    this._templates = [...templates];
+    this.rebuildIndexes();
     this._onDataChanged.fire();
   }
 
   /**
-   * Get all templates
+   * Rebuild indexes for fast queries
    */
+  private rebuildIndexes(): void {
+    this._byRepository.clear();
+    this._byType.clear();
+
+    for (const template of this._templates) {
+      // Index by repository
+      const repoTemplates = this._byRepository.get(template.repository) || [];
+      repoTemplates.push(template);
+      this._byRepository.set(template.repository, repoTemplates);
+
+      // Index by type
+      const typeTemplates = this._byType.get(template.type) || [];
+      typeTemplates.push(template);
+      this._byType.set(template.type, typeTemplates);
+    }
+  }
+
   public getAll(): ReadonlyArray<AITemplateFile> {
-    return this._collection.getAll();
+    return this._templates;
   }
 
-  /**
-   * Get templates by repository name
-   */
   public getByRepository(repositoryName: string): ReadonlyArray<AITemplateFile> {
-    return this._collection.getByRepository(repositoryName);
+    return this._byRepository.get(repositoryName) || [];
   }
 
-  /**
-   * Get templates by type
-   */
   public getByType(type: AITemplateFileType): ReadonlyArray<AITemplateFile> {
-    return this._collection.getByType(type);
+    return this._byType.get(type) || [];
   }
 
-  /**
-   * Get templates by repository and type
-   */
   public getByRepositoryAndType(repositoryName: string, type: AITemplateFileType): ReadonlyArray<AITemplateFile> {
-    return this._collection.getByRepositoryAndType(repositoryName, type);
+    return this.getByRepository(repositoryName).filter((t) => t.type === type);
   }
 
-  /**
-   * Get all repository names
-   */
   public getRepositoryNames(): string[] {
-    return this._collection.getRepositoryNames();
+    return Array.from(this._byRepository.keys());
   }
 
-  /**
-   * Search templates by name
-   */
   public search(query: string): ReadonlyArray<AITemplateFile> {
-    return this._collection.search(query);
+    const lowerQuery = query.toLowerCase();
+    return this._templates.filter((t) => t.name.toLowerCase().includes(lowerQuery));
   }
 
-  /**
-   * Get the complete collection (immutable)
-   */
-  public getCollection(): AITemplateCollection {
-    return this._collection;
-  }
-
-  /**
-   * Check if store is empty
-   */
   public isEmpty(): boolean {
-    return this._collection.isEmpty;
+    return this._templates.length === 0;
   }
 
-  /**
-   * Get total count
-   */
   public getCount(): number {
-    return this._collection.count;
+    return this._templates.length;
   }
 
-  /**
-   * Clear all data
-   */
   public clear(): void {
-    this._collection = AITemplateCollection.empty();
+    this._templates = [];
+    this._byRepository.clear();
+    this._byType.clear();
     this._onDataChanged.fire();
   }
 
-  /**
-   * Dispose resources
-   */
   public dispose(): void {
     this._onDataChanged.dispose();
   }

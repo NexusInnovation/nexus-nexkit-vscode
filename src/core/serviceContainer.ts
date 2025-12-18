@@ -37,7 +37,6 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const telemetry = new TelemetryService(context);
   await telemetry.initialize();
   telemetry.trackActivation();
-  context.subscriptions.push(telemetry);
 
   // Initialize other services
   const extensionUpdate = new ExtensionUpdateService();
@@ -53,6 +52,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
 
   // Register for disposal
   context.subscriptions.push(aiTemplateData);
+  context.subscriptions.push(telemetry);
 
   return {
     telemetry,
