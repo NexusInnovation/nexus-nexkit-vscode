@@ -49,8 +49,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const mcpConfigDeployer = new MCPConfigDeployer();
   const recommendedExtensionsConfigDeployer = new RecommendedExtensionsConfigDeployer();
   const recommendedSettingsConfigDeployer = new RecommendedSettingsConfigDeployer();
-  const aiTemplateFilesDeployer = new AITemplateFilesDeployer(aiTemplateFilesManager);
-
+  const aiTemplateFilesDeployer = new AITemplateFilesDeployer(aiTemplateData);
 
   // Register for disposal
   context.subscriptions.push(aiTemplateData);
