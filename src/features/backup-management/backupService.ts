@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { checkFileExists, copyDirectory } from "../helpers/fileSystemHelper";
+import { fileExists, copyDirectory } from "../../shared/utils/fileSystemHelper";
 
 /**
  * Service for managing directory backups
@@ -10,7 +10,7 @@ export class BackupService {
    * Create backup of existing directory
    */
   public async backupDirectory(sourcePath: string): Promise<string | null> {
-    if (!(await checkFileExists(sourcePath))) {
+    if (!(await fileExists(sourcePath))) {
       return null; // Nothing to backup
     }
 
@@ -44,19 +44,19 @@ export class BackupService {
     const directoryPath = path.join(targetRoot, directoryName);
     const backupPath = path.join(targetRoot, backupName);
 
-    if (!(await checkFileExists(backupPath))) {
+    if (!(await fileExists(backupPath))) {
       throw new Error(`Backup ${backupName} not found`);
     }
 
     // Create temp backup of current state
     const tempBackup = `${directoryPath}.temp`;
-    if (await checkFileExists(directoryPath)) {
+    if (await fileExists(directoryPath)) {
       await copyDirectory(directoryPath, tempBackup);
     }
 
     try {
       // Remove current directory
-      if (await checkFileExists(directoryPath)) {
+      if (await fileExists(directoryPath)) {
         await fs.promises.rm(directoryPath, { recursive: true, force: true });
       }
 
@@ -64,13 +64,13 @@ export class BackupService {
       await copyDirectory(backupPath, directoryPath);
 
       // Clean up temp backup
-      if (await checkFileExists(tempBackup)) {
+      if (await fileExists(tempBackup)) {
         await fs.promises.rm(tempBackup, { recursive: true, force: true });
       }
     } catch (error) {
       // Restore temp backup if something went wrong
-      if (await checkFileExists(tempBackup)) {
-        if (await checkFileExists(directoryPath)) {
+      if (await fileExists(tempBackup)) {
+        if (await fileExists(directoryPath)) {
           await fs.promises.rm(directoryPath, { recursive: true, force: true });
         }
         await copyDirectory(tempBackup, directoryPath);

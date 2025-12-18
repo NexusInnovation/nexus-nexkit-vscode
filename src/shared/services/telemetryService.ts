@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as appInsights from "applicationinsights";
 import * as os from "os";
 import * as https from "https";
-import { SettingsManager } from "../config/settingsManager";
+import { SettingsManager } from "../../core/settingsManager";
 
 /**
  * Telemetry service for tracking extension usage, commands, errors, and performance metrics

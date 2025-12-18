@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { ItemCategory } from "../types/categories";
+import { ItemCategory } from "./resourceCategories";
 
 /**
  * Represents an item (md files for agents, prompts, instructions, chatmodes) from a github repository

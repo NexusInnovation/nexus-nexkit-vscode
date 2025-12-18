@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
-import { checkFileExists, deepMerge } from "../helpers/fileSystemHelper";
+import { fileExists, deepMerge } from "../../shared/utils/fileSystemHelper";
 
 /**
  * Service for managing VS Code workspace files (settings.json and extensions.json)
@@ -37,7 +37,7 @@ export class VscodeWorkspaceService {
 
     // Merge with existing settings if they exist (user settings take priority)
     let settings = templateSettings;
-    if (await checkFileExists(targetPath)) {
+    if (await fileExists(targetPath)) {
       const existingContent = await fs.promises.readFile(targetPath, "utf8");
       try {
         const existingSettings = JSON.parse(existingContent);
@@ -76,7 +76,7 @@ export class VscodeWorkspaceService {
 
     // Merge with existing extensions if they exist
     let extensions = templateExtensions;
-    if (await checkFileExists(targetPath)) {
+    if (await fileExists(targetPath)) {
       const existingContent = await fs.promises.readFile(targetPath, "utf8");
       try {
         const existingExtensions = JSON.parse(existingContent);

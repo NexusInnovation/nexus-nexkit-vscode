@@ -1,7 +1,7 @@
 {
   "name": "nexus-nexkit-vscode",
   "displayName": "Nexkit",
-  "description": "VS Code extension for Nexkit CLI",
+  "description": "VS Code extension for Nexkit",
   "version": "0.5.4",
   "publisher": "NexusInnovation",
   "private": true,
@@ -42,11 +42,6 @@
         "category": "Nexkit"
       },
       {
-        "command": "nexus-nexkit-vscode.configureAzureDevOps",
-        "title": "Nexkit: Enable Azure DevOps MCP",
-        "category": "Nexkit"
-      },
-      {
         "command": "nexus-nexkit-vscode.openSettings",
         "title": "Nexkit: Open Settings",
         "category": "Nexkit"
@@ -54,11 +49,6 @@
       {
         "command": "nexus-nexkit-vscode.restoreBackup",
         "title": "Nexkit: Restore Template Backup",
-        "category": "Nexkit"
-      },
-      {
-        "command": "nexus-nexkit-vscode.reinitializeProject",
-        "title": "Nexkit: Re-initialize Project",
         "category": "Nexkit"
       }
     ],

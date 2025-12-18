@@ -21,7 +21,6 @@ suite("Unit: Extension Activation", () => {
       "nexus-nexkit-vscode.initProject",
       "nexus-nexkit-vscode.checkExtensionUpdate",
       "nexus-nexkit-vscode.installUserMCPs",
-      "nexus-nexkit-vscode.configureAzureDevOps",
       "nexus-nexkit-vscode.openSettings",
       "nexus-nexkit-vscode.restoreBackup",
     ];

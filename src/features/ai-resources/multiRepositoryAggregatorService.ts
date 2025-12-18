@@ -1,5 +1,5 @@
 import { GitHubRepositoryService, RepositoryItem } from "./gitHubRepositoryService";
-import { RepositoryConfigManager, InternalRepositoryConfig } from "../config/repositoryConfigManager";
+import { RepositoryConfigManager, InternalRepositoryConfig } from "./repositoryConfigManager";
 
 /**
  * Aggregates items from multiple github repository sources.

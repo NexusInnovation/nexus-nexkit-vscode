@@ -2,8 +2,8 @@ import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
-import { GitHubReleaseService, ReleaseInfo } from "./githubReleaseService";
-import { SettingsManager } from "../config/settingsManager";
+import { GitHubReleaseService, ReleaseInfo } from "../ai-resources/githubReleaseService";
+import { SettingsManager } from "../../core/settingsManager";
 
 export interface ExtensionUpdateInfo {
   currentVersion: string;
@@ -262,7 +262,7 @@ export class ExtensionUpdateService {
    * Update the last check timestamp
    */
   async updateLastCheckTimestamp(): Promise<void> {
-    await SettingsManager.setLastUpdateCheck(Date.now(), vscode.ConfigurationTarget.Global);
+    await SettingsManager.setLastUpdateCheck(Date.now());
   }
 
   /**

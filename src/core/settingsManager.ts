@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
 /**
- * Centralized manager for all Nexkit extension settings
+ * Centralized manager for all Nexkit extension settings and workspace state
  */
 export class SettingsManager {
   private static context: vscode.ExtensionContext;
@@ -52,17 +52,6 @@ export class SettingsManager {
       throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
     }
     await this.context.workspaceState.update(this.WORKSPACE_INITIALIZED_KEY, value);
-  }
-
-  static getWorkspaceMcpServers(): string[] {
-    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<string[]>(this.WORKSPACE_MCP_SERVERS, []);
-  }
-
-  static async setWorkspaceMcpServers(
-    servers: string[],
-    target: vscode.ConfigurationTarget = vscode.ConfigurationTarget.Workspace
-  ): Promise<void> {
-    await vscode.workspace.getConfiguration(this.NEXKIT_SECTION).update(this.WORKSPACE_MCP_SERVERS, servers, target);
   }
 
   // MCP Setup

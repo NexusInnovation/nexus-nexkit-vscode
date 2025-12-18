@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
-import { WebviewTemplate } from "./WebviewTemplate";
-import { TelemetryService } from "../services/telemetryService";
-import { getExtensionVersion } from "../helpers/extensionHelper";
-import { SettingsManager } from "../config/settingsManager";
-import { MultiRepositoryAggregatorService } from "../services/multiRepositoryAggregatorService";
-import { WorkspaceAIResourceService } from "../services/workspaceAIResourceService";
+import { WebviewTemplate } from "./webviewTemplate";
+import { TelemetryService } from "../../shared/services/telemetryService";
+import { getExtensionVersion } from "../../shared/utils/extensionHelper";
+import { SettingsManager } from "../../core/settingsManager";
+import { MultiRepositoryAggregatorService } from "../ai-resources/multiRepositoryAggregatorService";
+import { WorkspaceAIResourceService } from "../ai-resources/workspaceAIResourceService";
 
 export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;

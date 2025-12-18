@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { checkFileExists } from "../helpers/fileSystemHelper";
+import { fileExists } from "../../shared/utils/fileSystemHelper";
 
 /**
  * Service for managing .gitignore file
@@ -25,7 +25,7 @@ export class GitIgnoreService {
     let content = "";
 
     // Read existing content if file exists
-    if (await checkFileExists(gitignorePath)) {
+    if (await fileExists(gitignorePath)) {
       content = await fs.promises.readFile(gitignorePath, "utf8");
     }
 

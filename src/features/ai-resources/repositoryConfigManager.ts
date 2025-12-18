@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { ItemCategory } from "../types/categories";
-import { SettingsManager } from "./settingsManager";
+import { ItemCategory } from "./resourceCategories";
+import { SettingsManager } from "../../core/settingsManager";
 
 /**
  * Repository configuration structure

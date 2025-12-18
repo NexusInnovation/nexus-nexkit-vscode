@@ -2,8 +2,8 @@ import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
-import { getWorkspaceRoot, checkFileExists } from "../helpers/fileSystemHelper";
-import { SettingsManager } from "../config/settingsManager";
+import { getWorkspaceRoot, fileExists } from "../../shared/utils/fileSystemHelper";
+import { SettingsManager } from "../../core/settingsManager";
 
 export interface MCPConfig {
   servers: { [serverName: string]: MCPServerConfig };
@@ -210,7 +210,7 @@ export class MCPConfigService {
           if (result === "Install") {
             vscode.commands.executeCommand("nexus-nexkit-vscode.installUserMCPs");
           } else if (result === "Don't Ask Again") {
-            await SettingsManager.setMcpSetupDismissed(true, vscode.ConfigurationTarget.Global);
+            await SettingsManager.setMcpSetupDismissed(true);
           }
         }
       }
@@ -254,7 +254,7 @@ export class MCPConfigService {
 
     // Read existing config or start fresh
     let config: any = { servers: {} };
-    if (await checkFileExists(mcpConfigPath)) {
+    if (await fileExists(mcpConfigPath)) {
       try {
         const existingContent = await fs.promises.readFile(mcpConfigPath, "utf8");
         config = JSON.parse(existingContent);

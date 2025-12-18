@@ -3,7 +3,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 
 /**
- * Check if file exists
+ * Check if file or directory exists
  */
 export async function fileExists(filePath: string): Promise<boolean> {
   try {
@@ -23,18 +23,6 @@ export function getWorkspaceRoot(): string {
     throw new Error("No workspace folder open");
   }
   return workspaceFolder.uri.fsPath;
-}
-
-/**
- * Check if file or directory exists
- */
-export async function checkFileExists(filePath: string): Promise<boolean> {
-  try {
-    await fs.promises.access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 /**
