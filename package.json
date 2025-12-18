@@ -27,8 +27,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "nexus-nexkit-vscode.initProject",
-        "title": "Nexkit: Initialize Project",
+        "command": "nexus-nexkit-vscode.initWorkspace",
+        "title": "Nexkit: Initialize Workspace",
         "category": "Nexkit"
       },
       {
@@ -82,8 +82,8 @@
         "nexkit.workspace.repositories": {
           "type": "array",
           "default": [],
-          "scope": "window",
-          "description": "Additional repository sources for agents, prompts, and instructions. Default repositories (Nexus Templates and Awesome Copilot) are always included.",
+          "scope": "application",
+          "description": "Additional repository sources for agents, prompts, and instructions. Default repositories \"Nexus Templates\" is always included.",
           "items": {
             "type": "object",
             "properties": {

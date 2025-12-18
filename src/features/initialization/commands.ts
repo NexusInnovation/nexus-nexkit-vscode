@@ -4,15 +4,16 @@ import { SettingsManager } from "../../core/settingsManager";
 import { RepositoryConfigManager } from "../ai-resources/repositoryConfigManager";
 import { InitWizard } from "./initWizard";
 import { registerCommand } from "../../shared/commands/commandRegistry";
+import { MCPConfigDeployer } from "./mcpConfigDeployer";
 
 /**
  * Register initialization-related commands
  */
-export function registerInitializationCommands(context: vscode.ExtensionContext, services: ServiceContainer): void {
+export function registerInitializeWorkspaceCommand(context: vscode.ExtensionContext, services: ServiceContainer): void {
   // Initialize Project command
   registerCommand(
     context,
-    "nexus-nexkit-vscode.initProject",
+    "nexus-nexkit-vscode.initWorkspace",
     async () => {
       const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
       if (!workspaceFolder) {
@@ -40,18 +41,15 @@ export function registerInitializationCommands(context: vscode.ExtensionContext,
         return; // User cancelled
       }
 
-      // Show progress
-      let deploymentSummary = { installed: 0, failed: 0, categories: {} as Record<string, number> };
-
       await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
-          title: "Initializing Nexkit project...",
+          title: "Initializing Nexkit workspace...",
           cancellable: false,
         },
         async (progress) => {
           progress.report({
-            increment: 10,
+            increment: 20,
             message: "Backing up existing templates...",
           });
 
@@ -63,29 +61,28 @@ export function registerInitializationCommands(context: vscode.ExtensionContext,
           }
 
           progress.report({
-            increment: 30,
-            message: "Preparing deployment configuration...",
+            increment: 40,
+            message: "Deploying workspace configs...",
           });
 
-          const mcpServers = wizardResult.enableAzureDevOps ? ["azureDevOps"] : [];
+          await services.gitIgnoreConfigDeployer.deployGitignore(workspaceFolder.uri.fsPath);
+          await services.recommendedExtensionsConfigDeployer.deployVscodeExtensions(workspaceFolder.uri.fsPath);
+          await services.recommendedSettingsConfigDeployer.deployVscodeSettings(workspaceFolder.uri.fsPath);
+
+          if (wizardResult.enableAzureDevOpsMcpServer) {
+            await services.mcpConfigDeployer.deployWorkspaceMCPServers(
+              [MCPConfigDeployer.AzureDevopsServerName],
+              workspaceFolder.uri.fsPath
+            );
+          }
 
           progress.report({
-            increment: 40,
-            message: "Deploying templates...",
+            increment: 20,
+            message: "Deploying workspace templates...",
           });
 
-          await services.mcpConfig.deployWorkspaceMCPServers(mcpServers, workspaceFolder.uri.fsPath);
-          await services.gitIgnore.createGitignore(workspaceFolder.uri.fsPath);
-
-          if (wizardResult.createVscodeSettings) {
-            await services.vscodeWorkspace.deployVscodeSettings(workspaceFolder.uri.fsPath);
-          }
-          if (wizardResult.createVscodeExtensions) {
-            await services.vscodeWorkspace.deployVscodeExtensions(workspaceFolder.uri.fsPath);
-          }
-
-          // Deploy default resources (agents, prompts, chatmodes) from Nexus Templates
-          deploymentSummary = await services.workspaceAIResource.deployDefaultResources();
+          // Deploy default template files (agents, prompts, chatmodes) from the Nexus Templates
+          const deploymentSummary = await services.templateFilesDeployer.deployTemplateFiles();
 
           console.log(
             `Deployed ${deploymentSummary.installed} resources:`,
@@ -102,7 +99,7 @@ export function registerInitializationCommands(context: vscode.ExtensionContext,
           await SettingsManager.setWorkspaceInitialized(true);
 
           // Add Awesome Copilot repository to workspace if selected
-          if (wizardResult.enableAwesomeCopilot) {
+          if (wizardResult.enableAwesomeCopilotRepoTemplates) {
             const awesomeCopilotRepo = RepositoryConfigManager.getAwesomeCopilotRepository();
             await SettingsManager.setRepositories([awesomeCopilotRepo]);
           }

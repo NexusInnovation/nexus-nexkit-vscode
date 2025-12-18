@@ -3,14 +3,13 @@ import * as path from "path";
 import { fileExists } from "../../shared/utils/fileHelper";
 
 /**
- * Service for managing .gitignore file
+ * Service for deploying .gitignore file to workspace
  */
-export class GitIgnoreService {
+export class GitIgnoreConfigDeployer {
   /**
-   * Create or update .gitignore file with NexKit patterns
-   * Preserves existing content by using delimited section markers
+   * Create or update .gitignore file with NexKit patterns. Preserves existing content by using delimited section markers
    */
-  async createGitignore(targetRoot: string): Promise<void> {
+  public async deployGitignore(targetRoot: string): Promise<void> {
     const gitignorePath = path.join(targetRoot, ".gitignore");
 
     // Define NexKit section with clear delimiters

@@ -3,7 +3,7 @@ import * as path from "path";
 import { fileExists } from "../../shared/utils/fileHelper";
 
 /**
- * Deploy MCP configuration in a workspace
+ * Service to deploy MCP configuration in a workspace
  */
 export class MCPConfigDeployer {
   public static readonly AzureDevopsServerName = "azureDevOps";

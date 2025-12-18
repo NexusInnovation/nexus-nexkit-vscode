@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { SettingsManager } from "./core/settingsManager";
 import { initializeServices } from "./core/serviceContainer";
 import { NexkitPanelViewProvider } from "./features/panel-ui/nexkitPanelViewProvider";
-import { registerInitializationCommands } from "./features/initialization";
+import { registerInitializeWorkspaceCommand } from "./features/initialization/commands";
 import { registerInstallUserMCPsCommand } from "./features/mcp-management/commands";
 import { registerCleanupBackupCommand, registerRestoreBackupCommand } from "./features/backup-management/commands";
 import { registerSettingsCommands } from "./shared/commands/settingsCommand";
@@ -22,7 +22,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const services = await initializeServices(context);
 
   // Register all commands
-  registerInitializationCommands(context, services);
+  registerInitializeWorkspaceCommand(context, services);
   registerInstallUserMCPsCommand(context, services);
   registerRestoreBackupCommand(context, services);
   registerCleanupBackupCommand(context, services);

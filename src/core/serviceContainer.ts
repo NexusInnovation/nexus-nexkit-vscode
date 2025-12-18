@@ -5,9 +5,12 @@ import { MultiRepositoryAggregatorService } from "../features/ai-resources/multi
 import { WorkspaceAIResourceService } from "../features/ai-resources/workspaceAIResourceService";
 import { UpdateStatusBarService } from "../features/extension-updates/updateStatusBarService";
 import { BackupService } from "../features/backup-management/backupService";
-import { GitIgnoreService } from "../features/initialization/gitIgnoreService";
-import { VscodeWorkspaceService } from "../features/initialization/vscodeWorkspaceService";
 import { ExtensionUpdateService } from "../features/extension-updates/extensionUpdateService";
+import { GitIgnoreConfigDeployer } from "../features/initialization/gitIgnoreConfigDeployer";
+import { MCPConfigDeployer } from "../features/initialization/mcpConfigDeployer";
+import { RecommendedExtensionsConfigDeployer } from "../features/initialization/recommendedExtensionsConfigDeployer";
+import { RecommendedSettingsConfigDeployer } from "../features/initialization/recommendedSettingsConfigDeployer";
+import { TemplateFilesDeployer } from "../features/initialization/templateFilesDeployer";
 
 /**
  * Service container for dependency injection
@@ -21,8 +24,11 @@ export interface ServiceContainer {
   updateStatusBar: UpdateStatusBarService;
   extensionUpdate: ExtensionUpdateService;
   backup: BackupService;
-  gitIgnore: GitIgnoreService;
-  vscodeWorkspace: VscodeWorkspaceService;
+  gitIgnoreConfigDeployer: GitIgnoreConfigDeployer;
+  mcpConfigDeployer: MCPConfigDeployer;
+  recommendedExtensionsConfigDeployer: RecommendedExtensionsConfigDeployer;
+  recommendedSettingsConfigDeployer: RecommendedSettingsConfigDeployer;
+  templateFilesDeployer: TemplateFilesDeployer;
 }
 
 /**
@@ -41,9 +47,12 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const repositoryAggregator = new MultiRepositoryAggregatorService();
   const workspaceAIResource = new WorkspaceAIResourceService();
   const backup = new BackupService();
-  const gitIgnore = new GitIgnoreService();
-  const vscodeWorkspace = new VscodeWorkspaceService(context);
   const updateStatusBar = new UpdateStatusBarService(context, extensionUpdate);
+  const gitIgnoreConfigDeployer = new GitIgnoreConfigDeployer();
+  const mcpConfigDeployer = new MCPConfigDeployer();
+  const recommendedExtensionsConfigDeployer = new RecommendedExtensionsConfigDeployer();
+  const recommendedSettingsConfigDeployer = new RecommendedSettingsConfigDeployer();
+  const templateFilesDeployer = new TemplateFilesDeployer();
 
   return {
     telemetry,
@@ -53,7 +62,10 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     updateStatusBar,
     extensionUpdate,
     backup,
-    gitIgnore,
-    vscodeWorkspace,
+    gitIgnoreConfigDeployer,
+    mcpConfigDeployer,
+    recommendedExtensionsConfigDeployer,
+    recommendedSettingsConfigDeployer,
+    templateFilesDeployer,
   };
 }
