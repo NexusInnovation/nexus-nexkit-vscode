@@ -3,11 +3,11 @@ import { TelemetryService } from "../shared/services/telemetryService";
 import { MCPConfigService } from "../features/mcp-management/mcpConfigService";
 import { MultiRepositoryAggregatorService } from "../features/ai-resources/multiRepositoryAggregatorService";
 import { WorkspaceAIResourceService } from "../features/ai-resources/workspaceAIResourceService";
-import { StatusBarService } from "../features/extension-updates/updateStatusBarService";
-import { ExtensionUpdateService } from "../features/extension-updates/extensionUpdateService";
+import { UpdateStatusBarService } from "../features/extension-updates/updateStatusBarService";
 import { BackupService } from "../features/backup-management/backupService";
 import { GitIgnoreService } from "../features/initialization/gitIgnoreService";
 import { VscodeWorkspaceService } from "../features/initialization/vscodeWorkspaceService";
+import { ExtensionUpdateService } from "../features/extension-updates/extensionUpdateService";
 
 /**
  * Service container for dependency injection
@@ -18,7 +18,7 @@ export interface ServiceContainer {
   mcpConfig: MCPConfigService;
   repositoryAggregator: MultiRepositoryAggregatorService;
   workspaceAIResource: WorkspaceAIResourceService;
-  statusBar: StatusBarService;
+  updateStatusBar: UpdateStatusBarService;
   extensionUpdate: ExtensionUpdateService;
   backup: BackupService;
   gitIgnore: GitIgnoreService;
@@ -36,17 +36,24 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   context.subscriptions.push(telemetry);
 
   // Initialize other services
-  const services: ServiceContainer = {
-    telemetry,
-    mcpConfig: new MCPConfigService(),
-    repositoryAggregator: new MultiRepositoryAggregatorService(),
-    workspaceAIResource: new WorkspaceAIResourceService(),
-    statusBar: new StatusBarService(context),
-    extensionUpdate: new ExtensionUpdateService(),
-    backup: new BackupService(),
-    gitIgnore: new GitIgnoreService(),
-    vscodeWorkspace: new VscodeWorkspaceService(context),
-  };
+  const extensionUpdate = new ExtensionUpdateService();
+  const mcpConfig = new MCPConfigService();
+  const repositoryAggregator = new MultiRepositoryAggregatorService();
+  const workspaceAIResource = new WorkspaceAIResourceService();
+  const backup = new BackupService();
+  const gitIgnore = new GitIgnoreService();
+  const vscodeWorkspace = new VscodeWorkspaceService(context);
+  const updateStatusBar = new UpdateStatusBarService(context, extensionUpdate);
 
-  return services;
+  return {
+    telemetry,
+    mcpConfig,
+    repositoryAggregator,
+    workspaceAIResource,
+    updateStatusBar,
+    extensionUpdate,
+    backup,
+    gitIgnore,
+    vscodeWorkspace,
+  };
 }

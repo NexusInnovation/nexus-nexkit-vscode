@@ -74,4 +74,56 @@ export function registerBackupCommands(context: vscode.ExtensionContext, service
     },
     services.telemetry
   );
+
+  registerCommand(
+    context,
+    "nexus-nexkit-vscode.cleanupBackup",
+    async () => {
+      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+      if (!workspaceFolder) {
+        vscode.window.showErrorMessage("No workspace folder open");
+        return;
+      }
+
+      const backups = await services.backup.listBackups(workspaceFolder.uri.fsPath, ".github");
+
+      if (backups.length === 0) {
+        vscode.window.showInformationMessage("No backups available to cleanup");
+        return;
+      }
+
+      const confirm = await vscode.window.showWarningMessage(
+        `This will permanently delete all ${backups.length} template backup${backups.length > 1 ? "s" : ""}. This action cannot be undone. Continue?`,
+        { modal: true },
+        "Delete All"
+      );
+
+      if (confirm !== "Delete All") {
+        return;
+      }
+
+      await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: "Deleting backups...",
+          cancellable: false,
+        },
+        async (progress) => {
+          progress.report({
+            increment: 50,
+            message: "Removing all backups...",
+          });
+          await services.backup.cleanupBackups(workspaceFolder.uri.fsPath, ".github", 0);
+
+          progress.report({
+            increment: 50,
+            message: "Cleanup completed",
+          });
+        }
+      );
+
+      vscode.window.showInformationMessage(`Successfully deleted all ${backups.length} backup${backups.length > 1 ? "s" : ""}!`);
+    },
+    services.telemetry
+  );
 }

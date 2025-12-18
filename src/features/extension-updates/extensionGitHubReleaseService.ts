@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-export interface ReleaseInfo {
+export interface GitHubReleaseInfo {
   tagName: string;
   publishedAt: string;
   assets: Array<{
@@ -10,7 +10,7 @@ export interface ReleaseInfo {
   }>;
 }
 
-export class GitHubReleaseService {
+export class ExtensionGitHubReleaseService {
   private static readonly REPO_OWNER = "NexusInnovation";
   private static readonly REPO_NAME = "nexus-nexkit-vscode";
   private static readonly BASE_URL = "https://api.github.com";
@@ -24,8 +24,8 @@ export class GitHubReleaseService {
   private async getGitHubSession(createIfNone: boolean = false): Promise<vscode.AuthenticationSession | undefined> {
     try {
       const session = await vscode.authentication.getSession(
-        GitHubReleaseService.GITHUB_AUTH_PROVIDER_ID,
-        GitHubReleaseService.REQUIRED_SCOPES,
+        ExtensionGitHubReleaseService.GITHUB_AUTH_PROVIDER_ID,
+        ExtensionGitHubReleaseService.REQUIRED_SCOPES,
         { createIfNone, silent: !createIfNone }
       );
       return session;
@@ -82,8 +82,8 @@ export class GitHubReleaseService {
   /**
    * Fetch the latest release information from GitHub
    */
-  async fetchLatestRelease(): Promise<ReleaseInfo> {
-    const url = `${GitHubReleaseService.BASE_URL}/repos/${GitHubReleaseService.REPO_OWNER}/${GitHubReleaseService.REPO_NAME}/releases/latest`;
+  async fetchLatestRelease(): Promise<GitHubReleaseInfo> {
+    const url = `${ExtensionGitHubReleaseService.BASE_URL}/repos/${ExtensionGitHubReleaseService.REPO_OWNER}/${ExtensionGitHubReleaseService.REPO_NAME}/releases/latest`;
 
     try {
       // First attempt: Try with existing session silently
@@ -124,7 +124,7 @@ export class GitHubReleaseService {
   /**
    * Download .vsix file from release assets
    */
-  async downloadVsixAsset(release: ReleaseInfo): Promise<ArrayBuffer> {
+  async downloadVsixAsset(release: GitHubReleaseInfo): Promise<ArrayBuffer> {
     const vsixAsset = release.assets.find((asset) => asset.name.endsWith(".vsix"));
 
     if (!vsixAsset) {
@@ -141,7 +141,7 @@ export class GitHubReleaseService {
       }
 
       // Use GitHub API endpoint for private repository access
-      const apiUrl = `${GitHubReleaseService.BASE_URL}/repos/${GitHubReleaseService.REPO_OWNER}/${GitHubReleaseService.REPO_NAME}/releases/assets/${assetId}`;
+      const apiUrl = `${ExtensionGitHubReleaseService.BASE_URL}/repos/${ExtensionGitHubReleaseService.REPO_OWNER}/${ExtensionGitHubReleaseService.REPO_NAME}/releases/assets/${assetId}`;
 
       // First attempt with existing session silently
       let headers = await this.getAuthHeaders(false);
@@ -202,7 +202,7 @@ export class GitHubReleaseService {
   /**
    * Get .vsix asset URL from release
    */
-  getVsixAssetUrl(release: ReleaseInfo): string | null {
+  getVsixAssetUrl(release: GitHubReleaseInfo): string | null {
     const vsixAsset = release.assets.find((asset) => asset.name.endsWith(".vsix"));
     return vsixAsset?.browserDownloadUrl || null;
   }
@@ -212,10 +212,10 @@ export class GitHubReleaseService {
    * Example: https://github.com/owner/repo/releases/download/v1.0.0/file.vsix
    * We need to get the asset ID via the API instead
    */
-  private async getAssetIdFromRelease(release: ReleaseInfo, assetName: string): Promise<number | null> {
+  private async getAssetIdFromRelease(release: GitHubReleaseInfo, assetName: string): Promise<number | null> {
     try {
       const headers = await this.getAuthHeaders(false);
-      const url = `${GitHubReleaseService.BASE_URL}/repos/${GitHubReleaseService.REPO_OWNER}/${GitHubReleaseService.REPO_NAME}/releases/tags/${release.tagName}`;
+      const url = `${ExtensionGitHubReleaseService.BASE_URL}/repos/${ExtensionGitHubReleaseService.REPO_OWNER}/${ExtensionGitHubReleaseService.REPO_NAME}/releases/tags/${release.tagName}`;
 
       const response = await fetch(url, { headers });
       if (!response.ok) {

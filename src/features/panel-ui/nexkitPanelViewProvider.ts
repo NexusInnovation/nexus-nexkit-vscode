@@ -10,10 +10,19 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;
 
   constructor(
+    context: vscode.ExtensionContext,
     private readonly _repositoryAggregator: MultiRepositoryAggregatorService,
     private readonly _contentManager: WorkspaceAIResourceService,
     private readonly _telemetryService: TelemetryService
-  ) {}
+  ) {
+    // Listen for workspace folder changes
+    context.subscriptions.push(
+      vscode.workspace.onDidChangeWorkspaceFolders(() => {
+        const hasWorkspace = (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
+        this.updateWorkspaceState(hasWorkspace);
+      })
+    );
+  }
 
   async resolveWebviewView(webviewView: vscode.WebviewView): Promise<void> {
     this._view = webviewView;
@@ -146,7 +155,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
     if (!this._view) return;
 
     this._view.webview.postMessage({
-      version: getExtensionVersion(),
+      version: getExtensionVersion() || "Unknown",
       status,
       isInitialized: SettingsManager.isWorkspaceInitialized(),
       ...additionalData,

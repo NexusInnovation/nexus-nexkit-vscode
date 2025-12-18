@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { CATEGORIES, ItemCategory } from "./resourceCategories";
 import { RepositoryItem, GitHubRepositoryService } from "./gitHubRepositoryService";
-import { fileExists, getWorkspaceRoot } from "../../shared/utils/fileSystemHelper";
+import { fileExists, getWorkspaceRoot } from "../../shared/utils/fileHelper";
 import { RepositoryConfigManager } from "./repositoryConfigManager";
 
 export type InstalledItemsMap = Record<ItemCategory, string[]>;

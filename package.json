@@ -2,7 +2,7 @@
   "name": "nexus-nexkit-vscode",
   "displayName": "Nexkit",
   "description": "VS Code extension for Nexkit",
-  "version": "0.5.4",
+  "version": "0.6.0",
   "publisher": "NexusInnovation",
   "private": true,
   "license": "MIT",
@@ -49,6 +49,11 @@
       {
         "command": "nexus-nexkit-vscode.restoreBackup",
         "title": "Nexkit: Restore Template Backup",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.cleanupBackup",
+        "title": "Nexkit: Cleanup Template Backups",
         "category": "Nexkit"
       }
     ],

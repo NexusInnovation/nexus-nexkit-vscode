@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { fileExists, copyDirectory } from "../../shared/utils/fileSystemHelper";
+import { fileExists, copyDirectory } from "../../shared/utils/fileHelper";
 
 /**
  * Service for managing directory backups

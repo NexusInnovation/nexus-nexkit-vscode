@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
-import { fileExists, deepMerge } from "../../shared/utils/fileSystemHelper";
+import { fileExists, deepMerge } from "../../shared/utils/fileHelper";
 
 /**
  * Service for managing VS Code workspace files (settings.json and extensions.json)

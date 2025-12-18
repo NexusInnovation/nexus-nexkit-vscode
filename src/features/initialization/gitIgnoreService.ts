@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { fileExists } from "../../shared/utils/fileSystemHelper";
+import { fileExists } from "../../shared/utils/fileHelper";
 
 /**
  * Service for managing .gitignore file

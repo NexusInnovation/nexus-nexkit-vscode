@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
-import { getWorkspaceRoot, fileExists } from "../../shared/utils/fileSystemHelper";
+import { getWorkspaceRoot, fileExists } from "../../shared/utils/fileHelper";
 import { SettingsManager } from "../../core/settingsManager";
 
 export interface MCPConfig {

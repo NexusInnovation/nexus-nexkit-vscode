@@ -5,8 +5,8 @@ import { NexkitPanelViewProvider } from "./features/panel-ui/nexkitPanelViewProv
 import { registerInitializationCommands } from "./features/initialization";
 import { registerMcpCommands } from "./features/mcp-management";
 import { registerBackupCommands } from "./features/backup-management";
-import { registerUpdateCommands } from "./features/extension-updates";
 import { registerSettingsCommands } from "./shared/commands/settingsCommand";
+import { registerUpdateCommands } from "./features/extension-updates/checkUpdateCommand";
 
 /**
  * Extension activation
@@ -23,6 +23,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Register webview panel
   const nexkitPanelProvider = new NexkitPanelViewProvider(
+    context,
     services.repositoryAggregator,
     services.workspaceAIResource,
     services.telemetry
@@ -30,26 +31,19 @@ export async function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider("nexkitPanelView", nexkitPanelProvider, {
-      webviewOptions: { retainContextWhenHidden: true },
+      webviewOptions: { retainContextWhenHidden: true }, // todo: maybe disable retainContextWhenHidden for performance
     })
   );
 
-  // Listen for workspace folder changes
-  context.subscriptions.push(
-    vscode.workspace.onDidChangeWorkspaceFolders(() => {
-      const hasWorkspace = (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
-      nexkitPanelProvider.updateWorkspaceState(hasWorkspace);
-    })
-  );
+  // Check for extension updates on activation & cleanup old .vsix files
+  services.extensionUpdate.checkForExtensionUpdatesOnActivation();
+  services.extensionUpdate.cleanupOldVsixFilesOnActivation();
 
   // Initialize status bar
-  await services.statusBar.updateStatusBar();
+  services.updateStatusBar.initializeUpdateStatusBar();
 
   // Check for required MCP servers on activation
   services.mcpConfig.checkRequiredMCPs();
-
-  // Check for extension updates on activation
-  services.extensionUpdate.checkForExtensionUpdatesOnActivation();
 
   // Register all commands
   registerInitializationCommands(context, services);

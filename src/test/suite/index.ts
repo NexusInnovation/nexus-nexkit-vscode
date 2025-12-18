@@ -20,7 +20,9 @@ export function run(): Promise<void> {
 
   return new Promise((resolve, reject) => {
     // Find all test files
-    glob("**/**.test.js", { cwd: testsRoot })
+    // Only load tests from the suite folder. This avoids picking up stray compiled
+    // test artifacts (e.g., out/test/*.test.js) that may remain after refactors.
+    glob("suite/**/*.test.js", { cwd: testsRoot })
       .then((files) => {
         // Add files to the test suite
         files.forEach((f) => mocha.addFile(path.resolve(testsRoot, f)));
