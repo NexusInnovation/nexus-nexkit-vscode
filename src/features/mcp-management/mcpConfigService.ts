@@ -4,7 +4,7 @@ import * as path from "path";
 import * as fs from "fs";
 import { SettingsManager } from "../../core/settingsManager";
 import { Commands } from "../../shared/constants/commands";
-import { getWorkspaceRoot, fileExists } from "../../shared/utils/fileHelper";
+import { getWorkspaceRoot } from "../../shared/utils/fileHelper";
 
 export interface MCPConfig {
   servers: { [serverName: string]: MCPServerConfig };
