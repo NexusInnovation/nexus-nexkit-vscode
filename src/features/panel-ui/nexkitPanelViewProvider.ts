@@ -7,14 +7,17 @@ import { MultiRepositoryAggregatorService } from "../ai-resources/multiRepositor
 import { WorkspaceAIResourceService } from "../ai-resources/workspaceAIResourceService";
 
 export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
+  public static readonly viewId = "nexkitPanelView";
+
   private _view?: vscode.WebviewView;
 
   constructor(
-    context: vscode.ExtensionContext,
     private readonly _repositoryAggregator: MultiRepositoryAggregatorService,
     private readonly _contentManager: WorkspaceAIResourceService,
     private readonly _telemetryService: TelemetryService
-  ) {
+  ) {}
+
+  public initialize(context: vscode.ExtensionContext) {
     // Listen for workspace folder changes
     context.subscriptions.push(
       vscode.workspace.onDidChangeWorkspaceFolders(() => {
@@ -22,25 +25,32 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
         this.updateWorkspaceState(hasWorkspace);
       })
     );
+
+    // Register the webview view provider
+    context.subscriptions.push(
+      vscode.window.registerWebviewViewProvider(NexkitPanelViewProvider.viewId, this, {
+        webviewOptions: { retainContextWhenHidden: true }, // todo: maybe disable retainContextWhenHidden for performance
+      })
+    );
   }
 
-  async resolveWebviewView(webviewView: vscode.WebviewView): Promise<void> {
+  public async resolveWebviewView(webviewView: vscode.WebviewView): Promise<void> {
     this._view = webviewView;
 
-    webviewView.webview.options = {
+    this._view.webview.options = {
       enableScripts: true,
     };
 
     // Generate webview HTML
-    webviewView.webview.html = WebviewTemplate.generateHTML();
+    this._view.webview.html = WebviewTemplate.generateHTML();
 
     // Set up message listener
-    webviewView.webview.onDidReceiveMessage(async (message) => {
+    this._view.webview.onDidReceiveMessage(async (message) => {
       switch (message.command) {
         case "ready":
           // Webview is ready - send initial version, status, workspace and initialization state
           const hasWorkspace = (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
-          this._postStatusMessage("Ready", { hasWorkspace });
+          this.postStatusMessage("Ready", { hasWorkspace });
           break;
 
         case "initProject":
@@ -49,7 +59,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
             source: "webview",
           });
           await vscode.commands.executeCommand("nexus-nexkit-vscode.initProject");
-          this._postStatusMessage("Project initialized");
+          this.postStatusMessage("Project initialized");
           break;
 
         case "reinitializeProject":
@@ -58,7 +68,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
             source: "webview",
           });
           await vscode.commands.executeCommand("nexus-nexkit-vscode.reinitializeProject");
-          this._postStatusMessage("Project re-initialized");
+          this.postStatusMessage("Project re-initialized");
           break;
 
         case "installUserMCPs":
@@ -67,7 +77,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
             source: "webview",
           });
           await vscode.commands.executeCommand("nexus-nexkit-vscode.installUserMCPs");
-          this._postStatusMessage("User MCP servers installed");
+          this.postStatusMessage("User MCP servers installed");
           break;
 
         case "openSettings":
@@ -87,14 +97,14 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
 
             console.log(`[Nexkit] Loaded ${Object.keys(repositories).length} repositories`);
 
-            webviewView.webview.postMessage({
+            this._view!.webview.postMessage({
               command: "repositoriesLoaded",
               repositories,
               installed,
             });
           } catch (error) {
             console.error("[Nexkit] Error loading repositories:", error);
-            webviewView.webview.postMessage({
+            this._view!.webview.postMessage({
               command: "repositoriesError",
               error: error instanceof Error ? error.message : String(error),
             });
@@ -105,7 +115,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
           try {
             console.log("[Nexkit] Clearing all repository caches...");
             this._repositoryAggregator.clearAll();
-            webviewView.webview.postMessage({ command: "loadRepositories" });
+            this._view!.webview.postMessage({ command: "loadRepositories" });
             vscode.window.showInformationMessage("Repositories refreshed successfully");
           } catch (error) {
             console.error("[Nexkit] Error refreshing repositories:", error);
@@ -118,7 +128,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
             const { item } = message;
             const content = await this._repositoryAggregator.downloadFile(item);
             await this._contentManager.installItem(item, content);
-            webviewView.webview.postMessage({
+            this._view!.webview.postMessage({
               command: "itemInstalled",
               item,
             });
@@ -132,7 +142,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
           try {
             const { item } = message;
             await this._contentManager.uninstallItem(item);
-            webviewView.webview.postMessage({
+            this._view!.webview.postMessage({
               command: "itemUninstalled",
               item,
             });
@@ -145,13 +155,13 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
     });
   }
 
-  public updateWorkspaceState(hasWorkspace: boolean) {
+  private updateWorkspaceState(hasWorkspace: boolean) {
     if (this._view) {
       this._view.webview.postMessage({ hasWorkspace });
     }
   }
 
-  private _postStatusMessage(status: string, additionalData?: Record<string, any>): void {
+  private postStatusMessage(status: string, additionalData?: Record<string, any>): void {
     if (!this._view) return;
 
     this._view.webview.postMessage({

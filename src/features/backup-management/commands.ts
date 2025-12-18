@@ -5,7 +5,7 @@ import { registerCommand } from "../../shared/commands/commandRegistry";
 /**
  * Register backup management commands
  */
-export function registerBackupCommands(context: vscode.ExtensionContext, services: ServiceContainer): void {
+export function registerRestoreBackupCommand(context: vscode.ExtensionContext, services: ServiceContainer): void {
   registerCommand(
     context,
     "nexus-nexkit-vscode.restoreBackup",
@@ -74,7 +74,9 @@ export function registerBackupCommands(context: vscode.ExtensionContext, service
     },
     services.telemetry
   );
+}
 
+export function registerCleanupBackupCommand(context: vscode.ExtensionContext, services: ServiceContainer): void {
   registerCommand(
     context,
     "nexus-nexkit-vscode.cleanupBackup",

@@ -3,10 +3,10 @@ import { SettingsManager } from "./core/settingsManager";
 import { initializeServices } from "./core/serviceContainer";
 import { NexkitPanelViewProvider } from "./features/panel-ui/nexkitPanelViewProvider";
 import { registerInitializationCommands } from "./features/initialization";
-import { registerMcpCommands } from "./features/mcp-management";
-import { registerBackupCommands } from "./features/backup-management";
+import { registerInstallUserMCPsCommand } from "./features/mcp-management/commands";
+import { registerCleanupBackupCommand, registerRestoreBackupCommand } from "./features/backup-management/commands";
 import { registerSettingsCommands } from "./shared/commands/settingsCommand";
-import { registerUpdateCommands } from "./features/extension-updates/checkUpdateCommand";
+import { registerCheckExtensionUpdateCommand } from "./features/extension-updates/commands";
 
 /**
  * Extension activation
@@ -21,19 +21,21 @@ export async function activate(context: vscode.ExtensionContext) {
   // Initialize all services
   const services = await initializeServices(context);
 
+  // Register all commands
+  registerInitializationCommands(context, services);
+  registerInstallUserMCPsCommand(context, services);
+  registerRestoreBackupCommand(context, services);
+  registerCleanupBackupCommand(context, services);
+  registerCheckExtensionUpdateCommand(context, services);
+  registerSettingsCommands(context, services);
+
   // Register webview panel
   const nexkitPanelProvider = new NexkitPanelViewProvider(
-    context,
     services.repositoryAggregator,
     services.workspaceAIResource,
     services.telemetry
   );
-
-  context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider("nexkitPanelView", nexkitPanelProvider, {
-      webviewOptions: { retainContextWhenHidden: true }, // todo: maybe disable retainContextWhenHidden for performance
-    })
-  );
+  nexkitPanelProvider.initialize(context);
 
   // Check for extension updates on activation & cleanup old .vsix files
   services.extensionUpdate.checkForExtensionUpdatesOnActivation();
@@ -43,14 +45,15 @@ export async function activate(context: vscode.ExtensionContext) {
   services.updateStatusBar.initializeUpdateStatusBar();
 
   // Check for required MCP servers on activation
-  services.mcpConfig.checkRequiredMCPs();
+  services.mcpConfig.promptInstallRequiredMCPsOnActivation();
 
-  // Register all commands
-  registerInitializationCommands(context, services);
-  registerMcpCommands(context, services);
-  registerBackupCommands(context, services);
-  registerUpdateCommands(context, services);
-  registerSettingsCommands(context, services);
+  // Propose to initialize workspace when changed
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeWorkspaceFolders(() => {
+      const hasWorkspace = (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
+      // todo: check if workspace is already initialized
+    })
+  );
 }
 
 // This method is called when your extension is deactivated

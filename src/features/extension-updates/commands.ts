@@ -5,7 +5,7 @@ import { registerCommand } from "../../shared/commands/commandRegistry";
 /**
  * Register extension update commands
  */
-export function registerUpdateCommands(context: vscode.ExtensionContext, services: ServiceContainer): void {
+export function registerCheckExtensionUpdateCommand(context: vscode.ExtensionContext, services: ServiceContainer): void {
   registerCommand(
     context,
     "nexus-nexkit-vscode.checkExtensionUpdate",

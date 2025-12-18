@@ -1,11 +1,12 @@
 import * as vscode from "vscode";
 import { ServiceContainer } from "../../core/serviceContainer";
 import { registerCommand } from "../../shared/commands/commandRegistry";
+import { MCPConfigService } from "./mcpConfigService";
 
 /**
  * Register MCP management commands
  */
-export function registerMcpCommands(context: vscode.ExtensionContext, services: ServiceContainer): void {
+export function registerInstallUserMCPsCommand(context: vscode.ExtensionContext, services: ServiceContainer): void {
   registerCommand(
     context,
     "nexus-nexkit-vscode.installUserMCPs",
@@ -22,8 +23,7 @@ export function registerMcpCommands(context: vscode.ExtensionContext, services: 
             message: "Checking existing configuration...",
           });
 
-          // Check what's already configured
-          const { configured, missing } = await services.mcpConfig.checkRequiredUserMCPs();
+          const { missing } = await services.mcpConfig.checkRequiredUserMCPs();
 
           if (missing.length === 0) {
             vscode.window.showInformationMessage("All required MCP servers are already configured!");
@@ -37,13 +37,13 @@ export function registerMcpCommands(context: vscode.ExtensionContext, services: 
 
           // Install missing servers
           for (const server of missing) {
-            if (server === "context7") {
-              await services.mcpConfig.addUserMCPServer("context7", {
+            if (server === MCPConfigService.Context7ServerName) {
+              await services.mcpConfig.addUserMCPServer(MCPConfigService.Context7ServerName, {
                 command: "npx",
                 args: ["-y", "@upstash/context7-mcp"],
               });
-            } else if (server === "sequential-thinking") {
-              await services.mcpConfig.addUserMCPServer("sequential-thinking", {
+            } else if (server === MCPConfigService.SequentialThinkingServerName) {
+              await services.mcpConfig.addUserMCPServer(MCPConfigService.SequentialThinkingServerName, {
                 command: "npx",
                 args: ["-y", "@modelcontextprotocol/server-sequential-thinking"],
               });
