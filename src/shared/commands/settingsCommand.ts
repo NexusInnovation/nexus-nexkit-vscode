@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { ServiceContainer } from "../../core/serviceContainer";
 import { registerCommand } from "./commandRegistry";
+import { Commands } from "../constants/commands";
 
 /**
  * Register settings-related commands
@@ -8,7 +9,7 @@ import { registerCommand } from "./commandRegistry";
 export function registerSettingsCommands(context: vscode.ExtensionContext, services: ServiceContainer): void {
   registerCommand(
     context,
-    "nexus-nexkit-vscode.openSettings",
+    Commands.OPEN_SETTINGS,
     async () => {
       await vscode.commands.executeCommand("workbench.action.openSettings", "nexkit");
     },

@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { ServiceContainer } from "../../core/serviceContainer";
 import { registerCommand } from "../../shared/commands/commandRegistry";
 import { MCPConfigService } from "./mcpConfigService";
+import { Commands } from "../../shared/constants/commands";
 
 /**
  * Register MCP management commands
@@ -9,7 +10,7 @@ import { MCPConfigService } from "./mcpConfigService";
 export function registerInstallUserMCPsCommand(context: vscode.ExtensionContext, services: ServiceContainer): void {
   registerCommand(
     context,
-    "nexus-nexkit-vscode.installUserMCPs",
+    Commands.INSTALL_USER_MCPS,
     async () => {
       await vscode.window.withProgress(
         {

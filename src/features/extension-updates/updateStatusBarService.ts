@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { ExtensionUpdateService } from "./extensionUpdateService";
 import { getExtensionVersion } from "../../shared/utils/extensionHelper";
+import { Commands } from "../../shared/constants/commands";
 
 /**
  * Service for managing the Nexkit update status bar item (status bar to show update status)
@@ -39,7 +40,7 @@ export class UpdateStatusBarService {
       this.statusBarItem.text = `$(warning) Nexkit`;
       this.statusBarItem.tooltip = "Error checking update status";
     } finally {
-      this.statusBarItem.command = "nexus-nexkit-vscode.checkExtensionUpdate";
+      this.statusBarItem.command = Commands.CHECK_EXTENSION_UPDATE;
       this.statusBarItem.show();
     }
   }

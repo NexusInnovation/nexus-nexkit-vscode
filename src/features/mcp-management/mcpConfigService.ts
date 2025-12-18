@@ -1,9 +1,10 @@
 import * as vscode from "vscode";
-import * as fs from "fs";
-import * as path from "path";
 import * as os from "os";
-import { getWorkspaceRoot, fileExists } from "../../shared/utils/fileHelper";
+import * as path from "path";
+import * as fs from "fs";
 import { SettingsManager } from "../../core/settingsManager";
+import { Commands } from "../../shared/constants/commands";
+import { getWorkspaceRoot, fileExists } from "../../shared/utils/fileHelper";
 
 export interface MCPConfig {
   servers: { [serverName: string]: MCPServerConfig };
@@ -66,7 +67,7 @@ export class MCPConfigService {
           );
 
           if (result === "Install") {
-            vscode.commands.executeCommand("nexus-nexkit-vscode.installUserMCPs");
+            vscode.commands.executeCommand(Commands.INSTALL_USER_MCPS);
           } else if (result === "Don't Ask Again") {
             await SettingsManager.setMcpSetupDismissed(true);
           }

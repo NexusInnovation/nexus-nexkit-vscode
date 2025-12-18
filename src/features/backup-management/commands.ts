@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { ServiceContainer } from "../../core/serviceContainer";
 import { registerCommand } from "../../shared/commands/commandRegistry";
+import { Commands } from "../../shared/constants/commands";
 
 /**
  * Register backup management commands
@@ -8,7 +9,7 @@ import { registerCommand } from "../../shared/commands/commandRegistry";
 export function registerRestoreBackupCommand(context: vscode.ExtensionContext, services: ServiceContainer): void {
   registerCommand(
     context,
-    "nexus-nexkit-vscode.restoreBackup",
+    Commands.RESTORE_BACKUP,
     async () => {
       const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
       if (!workspaceFolder) {
@@ -79,7 +80,7 @@ export function registerRestoreBackupCommand(context: vscode.ExtensionContext, s
 export function registerCleanupBackupCommand(context: vscode.ExtensionContext, services: ServiceContainer): void {
   registerCommand(
     context,
-    "nexus-nexkit-vscode.cleanupBackup",
+    Commands.CLEANUP_BACKUP,
     async () => {
       const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
       if (!workspaceFolder) {

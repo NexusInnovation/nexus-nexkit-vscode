@@ -4,6 +4,7 @@ import { SettingsManager } from "../../core/settingsManager";
 import { InitWizard } from "./initWizard";
 import { registerCommand } from "../../shared/commands/commandRegistry";
 import { MCPConfigDeployer } from "./mcpConfigDeployer";
+import { Commands } from "../../shared/constants/commands";
 
 /**
  * Register initialization-related commands
@@ -12,7 +13,7 @@ export function registerInitializeWorkspaceCommand(context: vscode.ExtensionCont
   // Initialize Project command
   registerCommand(
     context,
-    "nexus-nexkit-vscode.initWorkspace",
+    Commands.INIT_WORKSPACE,
     async () => {
       const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
       if (!workspaceFolder) {
@@ -93,10 +94,12 @@ export function registerInitializeWorkspaceCommand(context: vscode.ExtensionCont
 
           // Show success message with deployment summary
           const summaryMessage =
-            deploymentSummary.installed > 0
-              ? ` Installed ${Object.entries(deploymentSummary.types)
-                  .map(([cat, count]) => `${count} ${cat}`)
-                  .join(", ")}.`
+            deploymentSummary != null
+              ? deploymentSummary.installed > 0
+                ? ` Installed ${Object.entries(deploymentSummary.types)
+                    .map(([cat, count]) => `${count} ${cat}`)
+                    .join(", ")}.`
+                : ""
               : "";
           vscode.window.showInformationMessage(`Nexkit project initialized successfully!${summaryMessage}`);
         }

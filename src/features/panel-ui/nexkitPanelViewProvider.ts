@@ -4,6 +4,7 @@ import { TelemetryService } from "../../shared/services/telemetryService";
 import { getExtensionVersion } from "../../shared/utils/extensionHelper";
 import { SettingsManager } from "../../core/settingsManager";
 import { AITemplateDataService } from "../ai-template-files/services/aiTemplateDataService";
+import { Commands } from "../../shared/constants/commands";
 
 export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewId = "nexkitPanelView";
@@ -56,7 +57,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
             buttonName: "initProject",
             source: "webview",
           });
-          await vscode.commands.executeCommand("nexus-nexkit-vscode.initProject");
+          await vscode.commands.executeCommand(Commands.INIT_WORKSPACE);
           this.postStatusMessage("Project initialized");
           break;
 
@@ -65,7 +66,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
             buttonName: "reinitializeProject",
             source: "webview",
           });
-          await vscode.commands.executeCommand("nexus-nexkit-vscode.reinitializeProject");
+          await vscode.commands.executeCommand(Commands.INIT_WORKSPACE);
           this.postStatusMessage("Project re-initialized");
           break;
 
@@ -74,7 +75,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
             buttonName: "installUserMCPs",
             source: "webview",
           });
-          await vscode.commands.executeCommand("nexus-nexkit-vscode.installUserMCPs");
+          await vscode.commands.executeCommand(Commands.INSTALL_USER_MCPS);
           this.postStatusMessage("User MCP servers installed");
           break;
 
@@ -83,7 +84,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
             buttonName: "openSettings",
             source: "webview",
           });
-          await vscode.commands.executeCommand("nexus-nexkit-vscode.openSettings");
+          await vscode.commands.executeCommand(Commands.OPEN_SETTINGS);
           break;
 
         case "loadRepositories":

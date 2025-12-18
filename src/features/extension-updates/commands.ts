@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { ServiceContainer } from "../../core/serviceContainer";
 import { registerCommand } from "../../shared/commands/commandRegistry";
+import { Commands } from "../../shared/constants/commands";
 
 /**
  * Register extension update commands
@@ -8,7 +9,7 @@ import { registerCommand } from "../../shared/commands/commandRegistry";
 export function registerCheckExtensionUpdateCommand(context: vscode.ExtensionContext, services: ServiceContainer): void {
   registerCommand(
     context,
-    "nexus-nexkit-vscode.checkExtensionUpdate",
+    Commands.CHECK_EXTENSION_UPDATE,
     async () => {
       await vscode.window.withProgress(
         {

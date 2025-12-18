@@ -10,6 +10,7 @@ import { MCPConfigDeployer } from "../features/initialization/mcpConfigDeployer"
 import { RecommendedExtensionsConfigDeployer } from "../features/initialization/recommendedExtensionsConfigDeployer";
 import { RecommendedSettingsConfigDeployer } from "../features/initialization/recommendedSettingsConfigDeployer";
 import { AITemplateFilesDeployer } from "../features/initialization/aiTemplateFilesDeployer";
+import { WorkspaceInitPromptService } from "../features/initialization/workspaceInitPromptService";
 
 /**
  * Service container for dependency injection
@@ -27,6 +28,7 @@ export interface ServiceContainer {
   recommendedExtensionsConfigDeployer: RecommendedExtensionsConfigDeployer;
   recommendedSettingsConfigDeployer: RecommendedSettingsConfigDeployer;
   aiTemplateFilesDeployer: AITemplateFilesDeployer;
+  workspaceInitPrompt: WorkspaceInitPromptService;
 }
 
 /**
@@ -49,6 +51,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const recommendedExtensionsConfigDeployer = new RecommendedExtensionsConfigDeployer();
   const recommendedSettingsConfigDeployer = new RecommendedSettingsConfigDeployer();
   const aiTemplateFilesDeployer = new AITemplateFilesDeployer(aiTemplateData);
+  const workspaceInitPrompt = new WorkspaceInitPromptService();
 
   // Register for disposal
   context.subscriptions.push(aiTemplateData);
@@ -66,5 +69,6 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     recommendedExtensionsConfigDeployer,
     recommendedSettingsConfigDeployer,
     aiTemplateFilesDeployer,
+    workspaceInitPrompt,
   };
 }

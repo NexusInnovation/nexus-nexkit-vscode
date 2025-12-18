@@ -2,13 +2,12 @@ import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
+import { Commands } from "../../shared/constants/commands";
 
 const EXTENSION_NAME = "nexus-nexkit-vscode";
 
 function getNexkitExtension(): vscode.Extension<any> | undefined {
-  return vscode.extensions.all.find(
-    (e) => e.packageJSON?.name === EXTENSION_NAME
-  );
+  return vscode.extensions.all.find((e) => e.packageJSON?.name === EXTENSION_NAME);
 }
 
 suite("Unit: Extension Activation", () => {
@@ -16,10 +15,7 @@ suite("Unit: Extension Activation", () => {
 
   test("Extension should be present", () => {
     const ext = getNexkitExtension();
-    assert.ok(
-      ext,
-      `Expected extension with name '${EXTENSION_NAME}' to be present in the extension host.`
-    );
+    assert.ok(ext, `Expected extension with name '${EXTENSION_NAME}' to be present in the extension host.`);
   });
 
   test("Should activate extension", async () => {
@@ -37,11 +33,11 @@ suite("Unit: Extension Activation", () => {
 
     const commands = await vscode.commands.getCommands(true);
     const nexkitCommands = [
-      "nexus-nexkit-vscode.initProject",
-      "nexus-nexkit-vscode.checkExtensionUpdate",
-      "nexus-nexkit-vscode.installUserMCPs",
-      "nexus-nexkit-vscode.openSettings",
-      "nexus-nexkit-vscode.restoreBackup",
+      Commands.INIT_WORKSPACE,
+      Commands.CHECK_EXTENSION_UPDATE,
+      Commands.INSTALL_USER_MCPS,
+      Commands.OPEN_SETTINGS,
+      Commands.RESTORE_BACKUP,
     ];
 
     nexkitCommands.forEach((cmd) => {
@@ -50,13 +46,7 @@ suite("Unit: Extension Activation", () => {
   });
 
   test("Activation events should include onStartupFinished", () => {
-    const packageJsonPath = path.join(
-      __dirname,
-      "..",
-      "..",
-      "..",
-      "package.json"
-    );
+    const packageJsonPath = path.join(__dirname, "..", "..", "..", "package.json");
     const packageJsonRaw = fs.readFileSync(packageJsonPath, "utf8");
     const packageJson = JSON.parse(packageJsonRaw);
     assert.ok(

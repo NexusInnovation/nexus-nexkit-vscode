@@ -43,6 +43,9 @@ export async function activate(context: vscode.ExtensionContext) {
   // Check for required MCP servers on activation
   services.mcpConfig.promptInstallRequiredMCPsOnActivation();
 
+  // Prompt for workspace initialization if needed
+  services.workspaceInitPrompt.promptInitWorkspaceOnWorkspaceChange();
+
   // Initialize AI template data asynchronously (don't block extension activation)
   services.aiTemplateData.initialize().catch((error) => {
     console.error("Failed to initialize AI template data:", error);
@@ -54,8 +57,7 @@ export async function activate(context: vscode.ExtensionContext) {
   // Propose to initialize workspace when changed
   context.subscriptions.push(
     vscode.workspace.onDidChangeWorkspaceFolders(() => {
-      const hasWorkspace = (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
-      // todo: check if workspace is already initialized
+      services.workspaceInitPrompt.promptInitWorkspaceOnWorkspaceChange();
     })
   );
 }

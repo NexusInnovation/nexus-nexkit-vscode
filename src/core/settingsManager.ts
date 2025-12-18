@@ -11,6 +11,7 @@ export class SettingsManager {
 
   // Workspace state keys
   private static readonly WORKSPACE_INITIALIZED_KEY = "workspaceInitialized";
+  private static readonly WORKSPACE_INIT_PROMPT_DISMISSED_KEY = "workspaceInitPromptDismissed";
 
   // Workspace settings
   private static readonly WORKSPACE_MCP_SERVERS = "workspace.mcpServers";
@@ -52,6 +53,21 @@ export class SettingsManager {
       throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
     }
     await this.context.workspaceState.update(this.WORKSPACE_INITIALIZED_KEY, value);
+  }
+
+  // Workspace Initialization Prompt (using workspace state)
+  static isWorkspaceInitPromptDismissed(): boolean {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    return this.context.workspaceState.get<boolean>(this.WORKSPACE_INIT_PROMPT_DISMISSED_KEY, false);
+  }
+
+  static async setWorkspaceInitPromptDismissed(value: boolean): Promise<void> {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    await this.context.workspaceState.update(this.WORKSPACE_INIT_PROMPT_DISMISSED_KEY, value);
   }
 
   // MCP Setup
