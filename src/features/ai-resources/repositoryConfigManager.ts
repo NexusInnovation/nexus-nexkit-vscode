@@ -1,11 +1,7 @@
-import * as vscode from "vscode";
 import { ItemCategory } from "./resourceCategories";
 import { SettingsManager } from "../../core/settingsManager";
 
-/**
- * Repository configuration structure
- */
-export interface RepositoryConfig {
+export interface TemplateRepositoryConfig {
   name: string;
   url: string;
   branch?: string;
@@ -14,25 +10,17 @@ export interface RepositoryConfig {
 }
 
 /**
- * Internal repository configuration with additional metadata
- */
-export interface InternalRepositoryConfig extends RepositoryConfig {
-  removable: boolean;
-}
-
-/**
  * Manages repository configurations from VS Code settings
  */
 export class RepositoryConfigManager {
   /**
-   * Get default repository configurations
+   * Get the Nexus Templates repository configuration
    */
-  static getDefaultRepository(): InternalRepositoryConfig {
+  static getNexusTemplateRepositoryConfig(): TemplateRepositoryConfig {
     return {
       name: "Nexus Templates",
       url: "https://github.com/NexusInnovation/nexus-nexkit-templates",
       enabled: true,
-      removable: false,
       paths: {
         prompts: "prompts",
         instructions: "instructions",
@@ -42,36 +30,20 @@ export class RepositoryConfigManager {
   }
 
   /**
-   * Get Awesome Copilot repository configuration
-   */
-  static getAwesomeCopilotRepository(): RepositoryConfig {
-    return {
-      name: "Awesome Copilot",
-      url: "https://github.com/github/awesome-copilot",
-      enabled: true,
-      paths: {
-        agents: "agents",
-        prompts: "prompts",
-        instructions: "instructions",
-      },
-    };
-  }
-
-  /**
    * Get all configured repositories
    */
-  static getRepositories(): InternalRepositoryConfig[] {
-    const userRepos = SettingsManager.getRepositories<RepositoryConfig>();
+  public static getRepositories(): TemplateRepositoryConfig[] {
+    const userRepos = SettingsManager.getRepositories<TemplateRepositoryConfig>();
 
     // Merge with defaults, ensuring non-removable defaults are always present
-    const defaultRepo = RepositoryConfigManager.getDefaultRepository();
-    const merged: InternalRepositoryConfig[] = [defaultRepo];
+    const defaultRepo = RepositoryConfigManager.getNexusTemplateRepositoryConfig();
+    const merged: TemplateRepositoryConfig[] = [defaultRepo];
 
     // Add user repositories that aren't duplicates (all user repos are removable)
     for (const userRepo of userRepos) {
       const isDuplicate = merged.some((r) => r.url === userRepo.url);
       if (!isDuplicate) {
-        merged.push({ ...userRepo, removable: true });
+        merged.push(userRepo);
       }
     }
 
@@ -81,7 +53,7 @@ export class RepositoryConfigManager {
   /**
    * Get only enabled repositories
    */
-  static getEnabledRepositories(): InternalRepositoryConfig[] {
+  static getEnabledRepositories(): TemplateRepositoryConfig[] {
     return RepositoryConfigManager.getRepositories().filter((r) => r.enabled);
   }
 }

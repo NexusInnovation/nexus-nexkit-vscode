@@ -111,9 +111,6 @@ export class WebviewTemplate {
     <button id="initializeProjectBtn" onclick="sendCommand('initProject')" disabled>Initialize Project</button>
     <p class="button-description disabled" id="initializeProjectBtnDesc">Set up Nexkit templates and configuration for your workspace</p>
     
-    <button id="reinitializeProjectBtn" onclick="sendCommand('reinitializeProject')" style="display: none;" disabled>Re-initialize Project</button>
-    <p class="button-description disabled" id="reinitializeProjectBtnDesc" style="display: none;">Reset project configuration and redeploy templates</p>
-    
     <button id="installUserMCPsBtn" onclick="sendCommand('installUserMCPs')">Install User MCP Servers</button>
     <p class="button-description" id="installUserMCPsBtnDesc">Install required MCP servers for enhanced AI capabilities</p>
     

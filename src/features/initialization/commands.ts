@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import { ServiceContainer } from "../../core/serviceContainer";
 import { SettingsManager } from "../../core/settingsManager";
-import { RepositoryConfigManager } from "../ai-resources/repositoryConfigManager";
 import { InitWizard } from "./initWizard";
 import { registerCommand } from "../../shared/commands/commandRegistry";
 import { MCPConfigDeployer } from "./mcpConfigDeployer";
@@ -82,13 +81,7 @@ export function registerInitializeWorkspaceCommand(context: vscode.ExtensionCont
           });
 
           // Deploy default template files (agents, prompts, chatmodes) from the Nexus Templates
-          const deploymentSummary = await services.templateFilesDeployer.deployTemplateFiles();
-
-          console.log(
-            `Deployed ${deploymentSummary.installed} resources:`,
-            deploymentSummary.categories,
-            deploymentSummary.failed > 0 ? `(${deploymentSummary.failed} failed)` : ""
-          );
+          const deploymentSummary = await services.aiTemplateFilesDeployer.deployTemplateFiles();
 
           progress.report({
             increment: 20,
@@ -98,31 +91,16 @@ export function registerInitializeWorkspaceCommand(context: vscode.ExtensionCont
           // Update workspace settings
           await SettingsManager.setWorkspaceInitialized(true);
 
-          // Add Awesome Copilot repository to workspace if selected
-          if (wizardResult.enableAwesomeCopilotRepoTemplates) {
-            const awesomeCopilotRepo = RepositoryConfigManager.getAwesomeCopilotRepository();
-            await SettingsManager.setRepositories([awesomeCopilotRepo]);
-          }
+          // Show success message with deployment summary
+          const summaryMessage =
+            deploymentSummary.installed > 0
+              ? ` Installed ${Object.entries(deploymentSummary.categories)
+                  .map(([cat, count]) => `${count} ${cat}`)
+                  .join(", ")}.`
+              : "";
+          vscode.window.showInformationMessage(`Nexkit project initialized successfully!${summaryMessage}`);
         }
       );
-
-      // Show success message with deployment summary
-      const categorySummary = Object.entries(deploymentSummary.categories)
-        .map(([cat, count]) => `${count} ${cat}`)
-        .join(", ");
-      const summaryMessage = deploymentSummary.installed > 0 ? ` Installed ${categorySummary}.` : "";
-      vscode.window.showInformationMessage(`Nexkit project initialized successfully!${summaryMessage}`);
-    },
-    services.telemetry
-  );
-
-  // todo: remove this
-  // Reinitialize Project command (delegates to init)
-  registerCommand(
-    context,
-    "nexus-nexkit-vscode.reinitializeProject",
-    async () => {
-      await vscode.commands.executeCommand("nexus-nexkit-vscode.initProject");
     },
     services.telemetry
   );

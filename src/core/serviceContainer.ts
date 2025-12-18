@@ -10,7 +10,7 @@ import { GitIgnoreConfigDeployer } from "../features/initialization/gitIgnoreCon
 import { MCPConfigDeployer } from "../features/initialization/mcpConfigDeployer";
 import { RecommendedExtensionsConfigDeployer } from "../features/initialization/recommendedExtensionsConfigDeployer";
 import { RecommendedSettingsConfigDeployer } from "../features/initialization/recommendedSettingsConfigDeployer";
-import { TemplateFilesDeployer } from "../features/initialization/templateFilesDeployer";
+import { AITemplateFilesDeployer } from "../features/initialization/aiTemplateFilesDeployer";
 
 /**
  * Service container for dependency injection
@@ -28,7 +28,7 @@ export interface ServiceContainer {
   mcpConfigDeployer: MCPConfigDeployer;
   recommendedExtensionsConfigDeployer: RecommendedExtensionsConfigDeployer;
   recommendedSettingsConfigDeployer: RecommendedSettingsConfigDeployer;
-  templateFilesDeployer: TemplateFilesDeployer;
+  aiTemplateFilesDeployer: AITemplateFilesDeployer;
 }
 
 /**
@@ -52,7 +52,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const mcpConfigDeployer = new MCPConfigDeployer();
   const recommendedExtensionsConfigDeployer = new RecommendedExtensionsConfigDeployer();
   const recommendedSettingsConfigDeployer = new RecommendedSettingsConfigDeployer();
-  const templateFilesDeployer = new TemplateFilesDeployer();
+  const aiTemplateFilesDeployer = new AITemplateFilesDeployer();
 
   return {
     telemetry,
@@ -66,6 +66,6 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     mcpConfigDeployer,
     recommendedExtensionsConfigDeployer,
     recommendedSettingsConfigDeployer,
-    templateFilesDeployer,
+    aiTemplateFilesDeployer,
   };
 }

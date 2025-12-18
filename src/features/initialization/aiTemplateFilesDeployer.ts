@@ -3,14 +3,20 @@ import { RepositoryConfigManager } from "../ai-resources/repositoryConfigManager
 import { ItemCategory } from "../ai-resources/resourceCategories";
 import { WorkspaceAIResourceService } from "../ai-resources/workspaceAIResourceService";
 
+export type DeploymentSummary = {
+  installed: number;
+  failed: number;
+  categories: Record<ItemCategory, number>;
+};
+
 /**
- * Service to deploy template files (agents, prompts, instructions, chatmodes) in the workspace
+ * Service to deploy ai template files (agents, prompts, instructions, chatmodes) in the workspace
  */
-export class TemplateFilesDeployer {
+export class AITemplateFilesDeployer {
   /**
-   * Deploy template files from the Nexus Templates repository. Installs all agents, chatmodes and prompts (excludes instructions)
+   * Deploy ai template files from the Nexus Templates repository. Installs all agents, chatmodes and prompts (excludes instructions)
    */
-  async deployTemplateFiles(): Promise<{ installed: number; failed: number; categories: Record<ItemCategory, number> }> {
+  async deployTemplateFiles(): Promise<DeploymentSummary> {
     const summary = {
       installed: 0,
       failed: 0,
@@ -19,7 +25,7 @@ export class TemplateFilesDeployer {
 
     try {
       // Get the default Nexus Templates repository configuration
-      const defaultRepo = RepositoryConfigManager.getDefaultRepository();
+      const defaultRepo = RepositoryConfigManager.getNexusTemplateRepositoryConfig();
 
       if (!defaultRepo) {
         console.error("No default repository found for deploying resources.");

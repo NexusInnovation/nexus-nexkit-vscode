@@ -81,7 +81,16 @@
       "properties": {
         "nexkit.workspace.repositories": {
           "type": "array",
-          "default": [],
+          "default": [{
+            "name": "Awesome Copilot",
+            "url": "https://github.com/github/awesome-copilot",
+            "enabled": true,
+            "paths": {
+              "agents": "agents",
+              "prompts": "prompts",
+              "instructions": "instructions"
+            }
+          }],
           "scope": "application",
           "description": "Additional repository sources for agents, prompts, and instructions. Default repositories \"Nexus Templates\" is always included.",
           "items": {
