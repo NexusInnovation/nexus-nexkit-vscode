@@ -1,73 +1,38 @@
-import { AITemplateFileType } from "../ai-template-files/aiTemplateFile";
-import { AITemplateFilesManagerService } from "../ai-template-files/aiTemplateFilesManagerService";
-import { RepositoryTemplateConfigManager } from "../ai-template-files/repositoryTemplateConfigManagerService";
-
-export type DeploymentSummary = {
-  installed: number;
-  failed: number;
-  types: Record<AITemplateFileType, number>;
-};
+import { AITemplateDataService } from "../ai-template-files/services/aiTemplateDataService";
+import { RepositoryConfigManager } from "../ai-template-files/models/repositoryConfig";
+import { BatchInstallSummary } from "../ai-template-files/services/templateFileOperations";
 
 /**
- * Service to deploy ai template files (agents, prompts, instructions, chatmodes) in the workspace
+ * Service to deploy AI template files during initialization
+ * Separates deployment logic from the main data service
  */
 export class AITemplateFilesDeployer {
-  constructor(private readonly _aiTemplateFilesManager: AITemplateFilesManagerService) {}
+  constructor(private readonly templateDataService: AITemplateDataService) {}
 
   /**
-   * Deploy ai template files from the Nexus Templates repository. Installs all agents, chatmodes and prompts (excludes instructions)
+   * Deploy AI template files from the Nexus Templates repository
+   * Installs all agents, chatmodes and prompts (excludes instructions)
    */
-  async deployTemplateFiles(): Promise<DeploymentSummary> {
-    const summary = {
-      installed: 0,
-      failed: 0,
-      types: {} as Record<AITemplateFileType, number>,
-    };
-
+  public async deployTemplateFiles(): Promise<BatchInstallSummary | null> {
     try {
-      // Fetch all templates from the repository
-      const allTemplates = await this._aiTemplateFilesManager.fetchTemplates(
-        RepositoryTemplateConfigManager.NexusTemplateRepoName
-      );
+      // Wait for data service to be ready
+      await this.templateDataService.waitForReady();
 
-      // Filter out instructions
-      const templatesToDeploy = allTemplates.filter((template) => template.type !== "instructions");
+      // Get templates from the Nexus repository
+      const templates = this.templateDataService.getTemplatesByRepository(RepositoryConfigManager.NEXUS_TEMPLATE_REPO_NAME);
 
-      // Install each template in parallel
-      const installPromises = templatesToDeploy.map(async (template) => {
-        try {
-          // Install the template (silent mode)
-          await this._aiTemplateFilesManager.installTemplate(template, true);
+      // Filter out instructions (we don't want to install them by default)
+      const templatesToDeploy = templates.filter((template) => template.type !== "instructions");
 
-          return { success: true, template };
-        } catch (error) {
-          console.error(`Failed to deploy ${template.name} from ${template.type}:`, error);
-          return { success: false, template, error };
-        }
-      });
-
-      // Wait for all installations to complete
-      const results = await Promise.allSettled(installPromises);
-
-      // Process results and update summary
-      for (const result of results) {
-        if (result.status === "fulfilled") {
-          const { success, template } = result.value;
-          if (success) {
-            summary.installed++;
-            summary.types[template.type] = (summary.types[template.type] || 0) + 1;
-          } else {
-            summary.failed++;
-          }
-        } else {
-          summary.failed++;
-        }
+      if (templatesToDeploy.length === 0) {
+        console.warn("No templates found to deploy from Nexus Templates repository");
+        return null;
       }
+
+      return await this.templateDataService.installBatch(templatesToDeploy, { silent: true, overwrite: true });
     } catch (error) {
       console.error("Failed to deploy default resources:", error);
-      // Don't throw, return summary as-is
+      return null;
     }
-
-    return summary;
   }
 }

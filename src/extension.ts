@@ -30,11 +30,7 @@ export async function activate(context: vscode.ExtensionContext) {
   registerSettingsCommands(context, services);
 
   // Register webview panel
-  const nexkitPanelProvider = new NexkitPanelViewProvider(
-    services.repositoryAggregator,
-    services.workspaceAIResource,
-    services.telemetry
-  );
+  const nexkitPanelProvider = new NexkitPanelViewProvider(services.aiTemplateData, services.telemetry);
   nexkitPanelProvider.initialize(context);
 
   // Check for extension updates on activation & cleanup old .vsix files
@@ -46,6 +42,11 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Check for required MCP servers on activation
   services.mcpConfig.promptInstallRequiredMCPsOnActivation();
+
+  // Initialize AI template data asynchronously (don't block extension activation)
+  services.aiTemplateData.initialize().catch((error) => {
+    console.error("Failed to initialize AI template data:", error);
+  });
 
   // Propose to initialize workspace when changed
   context.subscriptions.push(

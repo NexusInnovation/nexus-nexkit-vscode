@@ -18,3 +18,8 @@ export const AI_TEMPLATE_FILE_TYPES = ["agents", "prompts", "instructions", "cha
  * Types of ai template files
  */
 export type AITemplateFileType = (typeof AI_TEMPLATE_FILE_TYPES)[number];
+
+/**
+ * Map of installed templates organized by type in the workspace
+ */
+export type InstalledTemplatesMap = Record<AITemplateFileType, string[]>;

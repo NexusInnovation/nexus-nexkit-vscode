@@ -1,10 +1,10 @@
-import { SettingsManager } from "../../core/settingsManager";
+import { SettingsManager } from "../../../core/settingsManager";
 import { AITemplateFileType } from "./aiTemplateFile";
 
 /**
  * Configuration required for a template GitHub repository (users can add custom ones in the extension settings)
  */
-export interface RepositoryTemplateConfig {
+export interface RepositoryConfig {
   name: string; // Display name for the repository
   url: string; // GitHub repository URL
   branch?: string; // Branch to fetch content from (default: "main")
@@ -15,15 +15,15 @@ export interface RepositoryTemplateConfig {
 /**
  * Manages repository configurations from VS Code settings
  */
-export class RepositoryTemplateConfigManager {
-  public static readonly NexusTemplateRepoName = "Nexus Templates";
+export class RepositoryConfigManager {
+  public static readonly NEXUS_TEMPLATE_REPO_NAME = "Nexus Templates";
 
   /**
-   * Get the Nexus Templates repository configuration
+   * Get the Nexus Templates repository configuration (default repository)
    */
-  public static getNexusTemplateRepositoryConfig(): RepositoryTemplateConfig {
+  public static getNexusTemplateRepositoryConfig(): RepositoryConfig {
     return {
-      name: RepositoryTemplateConfigManager.NexusTemplateRepoName,
+      name: RepositoryConfigManager.NEXUS_TEMPLATE_REPO_NAME,
       url: "https://github.com/NexusInnovation/nexus-nexkit-templates",
       enabled: true,
       paths: {
@@ -35,20 +35,20 @@ export class RepositoryTemplateConfigManager {
   }
 
   /**
-   * Get all configured repositories
+   * Get all configured repositories (default + user-defined)
    */
-  public static getRepositories(): RepositoryTemplateConfig[] {
-    const userRepos = SettingsManager.getRepositories<RepositoryTemplateConfig>();
+  public static getRepositories(): RepositoryConfig[] {
+    const userRepos = SettingsManager.getRepositories<RepositoryConfig>();
 
     // Merge with defaults, ensuring non-removable defaults are always present
-    const defaultRepo = RepositoryTemplateConfigManager.getNexusTemplateRepositoryConfig();
-    const merged: RepositoryTemplateConfig[] = [defaultRepo];
+    const defaultRepo = RepositoryConfigManager.getNexusTemplateRepositoryConfig();
+    const merged: RepositoryConfig[] = [defaultRepo];
 
     // Track names and URLs to detect duplicates
     const seenNames = new Set<string>([defaultRepo.name]);
     const seenUrls = new Set<string>([defaultRepo.url]);
 
-    // Add user repositories that aren't duplicates (all user repos are removable)
+    // Add user repositories that aren't duplicates
     for (const userRepo of userRepos) {
       const isDuplicateUrl = merged.some((r) => r.url === userRepo.url);
       if (!isDuplicateUrl) {
@@ -74,7 +74,7 @@ export class RepositoryTemplateConfigManager {
   /**
    * Get only enabled repositories
    */
-  static getEnabledRepositories(): RepositoryTemplateConfig[] {
-    return RepositoryTemplateConfigManager.getRepositories().filter((r) => r.enabled);
+  public static getEnabledRepositories(): RepositoryConfig[] {
+    return RepositoryConfigManager.getRepositories().filter((r) => r.enabled);
   }
 }

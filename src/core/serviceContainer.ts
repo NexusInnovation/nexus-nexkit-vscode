@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { TelemetryService } from "../shared/services/telemetryService";
 import { MCPConfigService } from "../features/mcp-management/mcpConfigService";
-import { AITemplateFilesManagerService } from "../features/ai-template-files/aiTemplateFilesManagerService";
+import { AITemplateDataService } from "../features/ai-template-files/services/aiTemplateDataService";
 import { UpdateStatusBarService } from "../features/extension-updates/updateStatusBarService";
 import { BackupService } from "../features/backup-management/backupService";
 import { ExtensionUpdateService } from "../features/extension-updates/extensionUpdateService";
@@ -18,7 +18,7 @@ import { AITemplateFilesDeployer } from "../features/initialization/aiTemplateFi
 export interface ServiceContainer {
   telemetry: TelemetryService;
   mcpConfig: MCPConfigService;
-  aiTemplateFilesManager: AITemplateFilesManagerService;
+  aiTemplateData: AITemplateDataService;
   updateStatusBar: UpdateStatusBarService;
   extensionUpdate: ExtensionUpdateService;
   backup: BackupService;
@@ -42,7 +42,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   // Initialize other services
   const extensionUpdate = new ExtensionUpdateService();
   const mcpConfig = new MCPConfigService();
-  const aiTemplateFilesManager = new AITemplateFilesManagerService();
+  const aiTemplateData = new AITemplateDataService();
   const backup = new BackupService();
   const updateStatusBar = new UpdateStatusBarService(context, extensionUpdate);
   const gitIgnoreConfigDeployer = new GitIgnoreConfigDeployer();
@@ -51,10 +51,14 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const recommendedSettingsConfigDeployer = new RecommendedSettingsConfigDeployer();
   const aiTemplateFilesDeployer = new AITemplateFilesDeployer(aiTemplateFilesManager);
 
+
+  // Register for disposal
+  context.subscriptions.push(aiTemplateData);
+
   return {
     telemetry,
     mcpConfig,
-    aiTemplateFilesManager,
+    aiTemplateData,
     updateStatusBar,
     extensionUpdate,
     backup,

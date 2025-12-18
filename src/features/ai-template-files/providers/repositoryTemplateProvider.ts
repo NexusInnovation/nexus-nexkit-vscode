@@ -1,28 +1,36 @@
 import * as vscode from "vscode";
-import { AITemplateFile, AITemplateFileType } from "./aiTemplateFile";
-import { RepositoryTemplateConfig } from "./repositoryTemplateConfigManagerService";
+import { AITemplateFile, AITemplateFileType } from "../models/aiTemplateFile";
+import { RepositoryConfig } from "../models/repositoryConfig";
 
 /**
- * GitHub repository service implementation.
- * Handles fetching content from GitHub repositories (public and private), listing templates by type, and downloading template contents.
+ * GitHub API content item
  */
-export class RepositoryTemplateService {
+interface GitHubContentItem {
+  name: string;
+  path: string;
+  download_url: string;
+  type: string;
+}
+
+/**
+ * Provider for fetching templates from a single GitHub repository.
+ * Handles authentication, API calls, and downloading template contents.
+ */
+export class RepositoryTemplateProvider {
   private static readonly GITHUB_API_BASE = "https://api.github.com";
   private static readonly GITHUB_AUTH_PROVIDER_ID = "github";
   private static readonly GITHUB_SCOPES = ["repo"];
 
-  private cachedTemplates: AITemplateFile[] | null = null; // Cache for fetched ai template files (infinite TTL for simplicity, manual refresh only)
-
-  constructor(private readonly config: RepositoryTemplateConfig) {
-    if (!config.enabled) throw new Error(`Repository is disabled: ${config.name}`);
+  constructor(private readonly config: RepositoryConfig) {
+    if (!config.enabled) {
+      throw new Error(`Repository is disabled: ${config.name}`);
+    }
   }
 
   /**
-   * Fetch all templates from all configured paths at once
+   * Fetch all templates from all configured paths
    */
   public async fetchAllTemplates(): Promise<AITemplateFile[]> {
-    if (this.cachedTemplates) return this.cachedTemplates!;
-
     try {
       const { owner, repo } = this.parseGitHubUrl();
       const headers = await this.getAuthHeaders();
@@ -38,7 +46,7 @@ export class RepositoryTemplateService {
         const fetchPromise = (async () => {
           try {
             const branch = this.config.branch ?? "main";
-            const apiUrl = `${RepositoryTemplateService.GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
+            const apiUrl = `${RepositoryTemplateProvider.GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
 
             const response = await fetch(apiUrl, { headers });
 
@@ -65,7 +73,7 @@ export class RepositoryTemplateService {
             }
           } catch (error) {
             console.error(`Error fetching ${type} from ${this.config.name}:`, error);
-            // Continue with other types even if one fails
+            throw error; // Propagate error for better error tracking
           }
         })();
 
@@ -74,9 +82,6 @@ export class RepositoryTemplateService {
 
       // Wait for all fetches to complete
       await Promise.all(fetchPromises);
-
-      // Update cache
-      this.cachedTemplates = allTemplates;
 
       return allTemplates;
     } catch (error) {
@@ -112,10 +117,10 @@ export class RepositoryTemplateService {
   }
 
   /**
-   * Clear cache to force refresh
+   * Get repository configuration
    */
-  public clearCache(): void {
-    this.cachedTemplates = null;
+  public getConfig(): RepositoryConfig {
+    return this.config;
   }
 
   /**
@@ -130,7 +135,7 @@ export class RepositoryTemplateService {
   }
 
   /**
-   * Get GitHub authentication session (always required)
+   * Get GitHub authentication headers
    */
   private async getAuthHeaders(): Promise<Record<string, string>> {
     const headers: Record<string, string> = {
@@ -140,8 +145,8 @@ export class RepositoryTemplateService {
 
     try {
       const session = await vscode.authentication.getSession(
-        RepositoryTemplateService.GITHUB_AUTH_PROVIDER_ID,
-        RepositoryTemplateService.GITHUB_SCOPES,
+        RepositoryTemplateProvider.GITHUB_AUTH_PROVIDER_ID,
+        RepositoryTemplateProvider.GITHUB_SCOPES,
         { createIfNone: true }
       );
       if (session) {
@@ -154,11 +159,4 @@ export class RepositoryTemplateService {
 
     return headers;
   }
-}
-
-interface GitHubContentItem {
-  name: string;
-  path: string;
-  download_url: string;
-  type: string;
 }
