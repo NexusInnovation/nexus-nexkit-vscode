@@ -14,10 +14,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
   private _context?: vscode.ExtensionContext;
   private _messageHandler?: NexkitPanelMessageHandler;
 
-  constructor(
-    private readonly _templateDataService: AITemplateDataService,
-    private readonly _telemetryService: TelemetryService
-  ) {}
+  constructor(private readonly _telemetryService: TelemetryService) {}
 
   public initialize(context: vscode.ExtensionContext) {
     this._context = context;

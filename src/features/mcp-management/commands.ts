@@ -12,7 +12,7 @@ export function registerInstallUserMCPsCommand(context: vscode.ExtensionContext,
     context,
     Commands.INSTALL_USER_MCPS,
     async () => {
-      await vscode.window.withProgress(
+      const hasChanged = await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
           title: "Installing user MCP servers...",
@@ -28,7 +28,7 @@ export function registerInstallUserMCPsCommand(context: vscode.ExtensionContext,
 
           if (missing.length === 0) {
             vscode.window.showInformationMessage("All required MCP servers are already configured!");
-            return;
+            return false;
           }
 
           progress.report({
@@ -55,8 +55,14 @@ export function registerInstallUserMCPsCommand(context: vscode.ExtensionContext,
             increment: 25,
             message: "Installation complete",
           });
+
+          return true;
         }
       );
+
+      if (!hasChanged) {
+        return;
+      }
 
       vscode.window
         .showInformationMessage(
