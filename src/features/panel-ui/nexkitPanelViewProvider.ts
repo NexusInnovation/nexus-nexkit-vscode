@@ -1,15 +1,18 @@
 import * as vscode from "vscode";
-import { WebviewTemplate } from "./webviewTemplate";
+import * as fs from "fs";
 import { TelemetryService } from "../../shared/services/telemetryService";
-import { getExtensionVersion } from "../../shared/utils/extensionHelper";
-import { SettingsManager } from "../../core/settingsManager";
 import { AITemplateDataService } from "../ai-template-files/services/aiTemplateDataService";
-import { Commands } from "../../shared/constants/commands";
+import { NexkitPanelMessageHandler } from "./nexkitPanelMessageHandler";
 
+/**
+ * Provides the Nexkit panel webview and handles its lifecycle
+ */
 export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewId = "nexkitPanelView";
 
   private _view?: vscode.WebviewView;
+  private _context?: vscode.ExtensionContext;
+  private _messageHandler?: NexkitPanelMessageHandler;
 
   constructor(
     private readonly _templateDataService: AITemplateDataService,
@@ -17,11 +20,15 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
   ) {}
 
   public initialize(context: vscode.ExtensionContext) {
+    this._context = context;
+
+    // Initialize message handler
+    this._messageHandler = new NexkitPanelMessageHandler(() => this._view, this._telemetryService);
+
     // Listen for workspace folder changes
     context.subscriptions.push(
       vscode.workspace.onDidChangeWorkspaceFolders(() => {
-        const hasWorkspace = (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
-        this.updateWorkspaceState(hasWorkspace);
+        this._messageHandler?.sendWorkspaceState();
       })
     );
 
@@ -38,148 +45,56 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
 
     this._view.webview.options = {
       enableScripts: true,
+      localResourceRoots: [
+        vscode.Uri.joinPath(this._context!.extensionUri, "out"),
+        vscode.Uri.joinPath(this._context!.extensionUri, "src", "features", "panel-ui", "webview"),
+      ],
     };
 
     // Generate webview HTML
-    this._view.webview.html = WebviewTemplate.generateHTML();
+    this._view.webview.html = this.buildWebviewHtml(this._view.webview);
 
-    // Set up message listener
+    // Set up message listener - delegate to message handler
     this._view.webview.onDidReceiveMessage(async (message) => {
-      switch (message.command) {
-        case "ready":
-          // Webview is ready - send initial version, status, workspace and initialization state
-          const hasWorkspace = (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
-          this.postStatusMessage("Ready", { hasWorkspace });
-          break;
-
-        case "initProject":
-          this._telemetryService.trackEvent("ui.button.clicked", {
-            buttonName: "initProject",
-            source: "webview",
-          });
-          await vscode.commands.executeCommand(Commands.INIT_WORKSPACE);
-          this.postStatusMessage("Project initialized");
-          break;
-
-        case "reinitializeProject":
-          this._telemetryService.trackEvent("ui.button.clicked", {
-            buttonName: "reinitializeProject",
-            source: "webview",
-          });
-          await vscode.commands.executeCommand(Commands.INIT_WORKSPACE);
-          this.postStatusMessage("Project re-initialized");
-          break;
-
-        case "installUserMCPs":
-          this._telemetryService.trackEvent("ui.button.clicked", {
-            buttonName: "installUserMCPs",
-            source: "webview",
-          });
-          await vscode.commands.executeCommand(Commands.INSTALL_USER_MCPS);
-          this.postStatusMessage("User MCP servers installed");
-          break;
-
-        case "openSettings":
-          this._telemetryService.trackEvent("ui.button.clicked", {
-            buttonName: "openSettings",
-            source: "webview",
-          });
-          await vscode.commands.executeCommand(Commands.OPEN_SETTINGS);
-          break;
-
-        case "loadRepositories":
-          try {
-            console.log("[Nexkit] Loading items from all repositories...");
-
-            // Wait for data service to be ready
-            await this._templateDataService.waitForReady();
-
-            // Get all templates grouped by repository
-            const allTemplates = this._templateDataService.getAllTemplates();
-            const repositories: { [repoName: string]: any[] } = {};
-
-            for (const template of allTemplates) {
-              if (!repositories[template.repository]) {
-                repositories[template.repository] = [];
-              }
-              repositories[template.repository].push(template);
-            }
-
-            const installed = await this._templateDataService.getInstalledTemplates();
-
-            console.log(`[Nexkit] Loaded ${Object.keys(repositories).length} repositories`);
-
-            this._view!.webview.postMessage({
-              command: "repositoriesLoaded",
-              repositories,
-              installed,
-            });
-          } catch (error) {
-            console.error("[Nexkit] Error loading repositories:", error);
-            this._view!.webview.postMessage({
-              command: "repositoriesError",
-              error: error instanceof Error ? error.message : String(error),
-            });
-          }
-          break;
-
-        case "refreshRepositories":
-          try {
-            console.log("[Nexkit] Refreshing repositories...");
-            await this._templateDataService.refresh();
-            this._view!.webview.postMessage({ command: "loadRepositories" });
-            vscode.window.showInformationMessage("Repositories refreshed successfully");
-          } catch (error) {
-            console.error("[Nexkit] Error refreshing repositories:", error);
-            vscode.window.showErrorMessage(`Failed to refresh repositories: ${error}`);
-          }
-          break;
-
-        case "installItem":
-          try {
-            const { item } = message;
-            await this._templateDataService.installTemplate(item);
-            this._view!.webview.postMessage({
-              command: "itemInstalled",
-              item,
-            });
-          } catch (error) {
-            console.error("Error installing item:", error);
-            vscode.window.showErrorMessage(`Failed to install item: ${error}`);
-          }
-          break;
-
-        case "uninstallItem":
-          try {
-            const { item } = message;
-            await this._templateDataService.uninstallTemplate(item);
-            this._view!.webview.postMessage({
-              command: "itemUninstalled",
-              item,
-            });
-          } catch (error) {
-            console.error("Error uninstalling item:", error);
-            vscode.window.showErrorMessage(`Failed to uninstall item: ${error}`);
-          }
-          break;
-      }
+      await this._messageHandler?.handleMessage(message);
     });
   }
 
-  private updateWorkspaceState(hasWorkspace: boolean) {
-    if (this._view) {
-      this._view.webview.postMessage({ hasWorkspace });
+  /**
+   * Builds the complete HTML content for the webview
+   */
+  private buildWebviewHtml(webview: vscode.Webview): string {
+    // Get paths to resources
+    const htmlPath = vscode.Uri.joinPath(this._context!.extensionUri, "src", "features", "panel-ui", "webview", "index.html");
+    const styleUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._context!.extensionUri, "src", "features", "panel-ui", "webview", "styles.css")
+    );
+    const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._context!.extensionUri, "out", "webview.js"));
+
+    // Generate a nonce for CSP
+    const nonce = this.getNonce();
+
+    // Read HTML template
+    let html = fs.readFileSync(htmlPath.fsPath, "utf8");
+
+    // Replace placeholders
+    html = html.replace(/\{\{nonce\}\}/g, nonce);
+    html = html.replace(/\{\{styleUri\}\}/g, styleUri.toString());
+    html = html.replace(/\{\{scriptUri\}\}/g, scriptUri.toString());
+    html = html.replace(/\{\{cspSource\}\}/g, webview.cspSource);
+
+    return html;
+  }
+
+  /**
+   * Generates a random nonce for CSP
+   */
+  private getNonce(): string {
+    let text = "";
+    const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    for (let i = 0; i < 32; i++) {
+      text += possible.charAt(Math.floor(Math.random() * possible.length));
     }
-  }
-
-  private postStatusMessage(status: string, additionalData?: Record<string, any>): void {
-    if (!this._view) return;
-
-    this._view.webview.postMessage({
-      version: getExtensionVersion() || "Unknown",
-      status,
-      isInitialized: SettingsManager.isWorkspaceInitialized(),
-      ...additionalData,
-    });
+    return text;
   }
 }
