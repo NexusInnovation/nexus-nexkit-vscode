@@ -72,3 +72,123 @@ body {
     opacity: 0.6;
     font-style: italic;
 }
+
+/* Template Management Section */
+.template-section {
+    margin-top: 32px;
+    border-top: 1px solid var(--vscode-panel-border);
+    padding-top: 20px;
+}
+
+.template-section h2 {
+    font-size: 1.1em;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+    color: var(--vscode-foreground);
+}
+
+/* Empty State */
+.empty-message {
+    font-size: 0.9em;
+    color: var(--vscode-descriptionForeground);
+    font-style: italic;
+    margin: 12px 0;
+}
+
+/* Repository Section */
+.repository-section {
+    margin-bottom: 20px;
+}
+
+.repository-name {
+    font-size: 1em;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    color: var(--vscode-foreground);
+}
+
+/* Type Section (Collapsible) */
+.type-section {
+    margin-bottom: 8px;
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 4px;
+    background-color: var(--vscode-sideBar-background);
+}
+
+.type-header {
+    padding: 8px 12px;
+    font-size: 0.9em;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    color: var(--vscode-foreground);
+}
+
+.type-header::-webkit-details-marker {
+    display: none;
+}
+
+.type-header::before {
+    content: "▶";
+    display: inline-block;
+    width: 12px;
+    margin-right: 6px;
+    transition: transform 0.2s ease;
+    font-size: 0.8em;
+}
+
+details[open] > .type-header::before {
+    transform: rotate(90deg);
+}
+
+.type-header:hover {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+/* Template List */
+.template-list {
+    padding: 8px 12px 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* Template Item */
+.template-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px;
+}
+
+.template-checkbox {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+    margin: 0;
+}
+
+.template-checkbox:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.template-label {
+    font-size: 0.9em;
+    cursor: pointer;
+    user-select: none;
+    color: var(--vscode-foreground);
+    flex: 1;
+}
+
+.template-label:hover {
+    color: var(--vscode-textLink-foreground);
+}
+
+.template-checkbox:disabled + .template-label {
+    cursor: not-allowed;
+    opacity: 0.6;
+}

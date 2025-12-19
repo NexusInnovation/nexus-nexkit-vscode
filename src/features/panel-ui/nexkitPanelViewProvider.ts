@@ -14,18 +14,21 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
   private _context?: vscode.ExtensionContext;
   private _messageHandler?: NexkitPanelMessageHandler;
 
-  constructor(private readonly _telemetryService: TelemetryService) {}
+  constructor(
+    private readonly _telemetryService: TelemetryService,
+    private readonly _aiTemplateDataService: AITemplateDataService
+  ) {}
 
   public initialize(context: vscode.ExtensionContext) {
     this._context = context;
 
     // Initialize message handler
-    this._messageHandler = new NexkitPanelMessageHandler(() => this._view, this._telemetryService);
+    this._messageHandler = new NexkitPanelMessageHandler(() => this._view, this._telemetryService, this._aiTemplateDataService);
 
     // Listen for workspace folder changes
     context.subscriptions.push(
       vscode.workspace.onDidChangeWorkspaceFolders(() => {
-        this._messageHandler?.sendWorkspaceState();
+        this._messageHandler?.onWorkspaceChanged();
       })
     );
 
@@ -54,6 +57,13 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
     // Set up message listener - delegate to message handler
     this._view.webview.onDidReceiveMessage(async (message) => {
       await this._messageHandler?.handleMessage(message);
+    });
+
+    // Refresh template data when view becomes visible
+    this._view.onDidChangeVisibility(() => {
+      if (this._view?.visible) {
+        this._messageHandler?.onWorkspaceChanged();
+      }
     });
   }
 

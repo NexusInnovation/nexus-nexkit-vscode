@@ -39,12 +39,14 @@
       {
         "command": "nexus-nexkit-vscode.installUserMCPs",
         "title": "Nexkit: Install User MCP Servers",
-        "category": "Nexkit"
+        "category": "Nexkit",
+        "icon": "$(server-process)"
       },
       {
         "command": "nexus-nexkit-vscode.openSettings",
         "title": "Nexkit: Open Settings",
-        "category": "Nexkit"
+        "category": "Nexkit",
+        "icon": "$(gear)"
       },
       {
         "command": "nexus-nexkit-vscode.restoreBackup",
@@ -57,6 +59,20 @@
         "category": "Nexkit"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "nexus-nexkit-vscode.installUserMCPs",
+          "when": "view == nexkitPanelView",
+          "group": "navigation"
+        },
+        {
+          "command": "nexus-nexkit-vscode.openSettings",
+          "when": "view == nexkitPanelView",
+          "group": "navigation"
+        }
+      ]
+    },
     "viewsContainers": {
       "activitybar": [
         {
@@ -70,7 +86,6 @@
       "nexkit-sidebar": [
         {
           "id": "nexkitPanelView",
-          "name": "Nexkit Home",
           "icon": "media/Nexus_Symbole_MONOCHROME.svg",
           "type": "webview"
         }
