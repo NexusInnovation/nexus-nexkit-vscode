@@ -62,20 +62,38 @@ This project adheres to professional standards of collaboration. Please be respe
 ```
 nexus-nexkit-vscode/
 ├── .github/
-│   ├── workflows/          # CI/CD pipelines
-│   ├── dependabot.yml      # Dependency automation
+│   ├── workflows/              # CI/CD pipelines
+│   │   └── ci-cd.yml           # Main CI/CD workflow
+│   ├── dependabot.yml          # Dependency automation
 │   └── PULL_REQUEST_TEMPLATE.md
 ├── src/
-│   ├── extension.ts        # Main extension entry point
-│   ├── templateManager.ts  # Template deployment logic
-│   ├── mcpConfigManager.ts # MCP configuration
-│   ├── versionManager.ts   # Version checking
-│   └── test/              # Test suite
-├── resources/
-│   └── templates/         # Template files
-├── esbuild.config.js      # Build configuration
-├── package.json
-└── tsconfig.json
+│   ├── extension.ts            # Main extension entry point
+│   ├── core/
+│   │   ├── serviceContainer.ts # Dependency injection container
+│   │   └── settingsManager.ts  # VS Code settings facade
+│   ├── features/
+│   │   ├── ai-template-files/  # Template repository management
+│   │   │   ├── models/         # Data models
+│   │   │   ├── providers/      # Template providers
+│   │   │   └── services/       # Business logic
+│   │   ├── backup-management/  # Backup/restore services
+│   │   ├── extension-updates/  # Extension update system
+│   │   ├── initialization/     # Workspace initialization
+│   │   ├── mcp-management/     # MCP configuration
+│   │   └── panel-ui/           # Webview sidebar panel
+│   │       └── webview/        # HTML/CSS/TS for webview
+│   ├── shared/
+│   │   ├── commands/           # Command registration
+│   │   ├── constants/          # Shared constants
+│   │   ├── services/           # Shared services (telemetry)
+│   │   └── utils/              # Utility functions
+│   └── test/                   # Test suite
+├── docs/                       # Additional documentation
+├── media/                      # Icons and assets
+├── infrastructure/             # Azure telemetry configuration
+├── esbuild.config.js           # Build configuration
+├── package.json                # Extension manifest
+└── tsconfig.json               # TypeScript configuration
 ```
 
 ### Available Scripts
@@ -148,30 +166,33 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/) f
 
 ### Scopes (Optional but Recommended)
 
-- `templates` - Template deployment and management
+- `ai-templates` - AI template fetching and management
 - `mcp` - MCP server configuration
-- `wizard` - Initialization wizard
-- `panel` - Webview panel
-- `version` - Version management
+- `init` - Workspace initialization
+- `panel` - Webview sidebar panel
+- `updates` - Extension update system
+- `backup` - Backup/restore functionality
+- `telemetry` - Telemetry services
 - `deps` - Dependency updates
 - `ci` - CI/CD changes
+- `docs` - Documentation updates
 
 ### Examples
 
 ```bash
 # Feature
-feat(templates): add support for Go language templates
+feat(ai-templates): add support for chatmodes template type
 
 # Bug fix
-fix(mcp): resolve config path resolution on macOS
+fix(mcp): resolve config path resolution on Windows
 
 # Documentation
-docs: update installation instructions
+docs(readme): update installation instructions with screenshots
 
 # Breaking change
-feat(api)!: change template deployment interface
+feat(init)!: change workspace initialization flow
 
-BREAKING CHANGE: Template deployment now requires explicit language selection
+BREAKING CHANGE: Workspace initialization now requires explicit confirmation
 ```
 
 ### Validation
@@ -213,16 +234,17 @@ npm run test:coverage
 import * as assert from "assert";
 import * as vscode from "vscode";
 
-suite("Unit: TemplateManager", () => {
-  test("Should deploy templates successfully", async () => {
+suite("Unit: AITemplateDataService", () => {
+  test("Should initialize and fetch templates successfully", async () => {
     // Arrange
-    const manager = new TemplateManager();
+    const service = new AITemplateDataService();
 
     // Act
-    const result = await manager.deployTemplates();
+    await service.initialize();
+    const templates = service.getAllTemplates();
 
     // Assert
-    assert.ok(result);
+    assert.ok(templates.length > 0);
   });
 });
 ```
