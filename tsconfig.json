@@ -9,13 +9,17 @@
 		"sourceMap": true,
 		"inlineSourceMap": false,
 		"inlineSources": false,
-		"sourceRoot": "../src",
-		"rootDir": "src",
+		"rootDir": ".",
 		"strict": true,
 		"forceConsistentCasingInFileNames": true
 	},
+	"include": [
+		"src/**/*",
+		"test/**/*"
+	],
 	"exclude": [
 		"node_modules",
-		".vscode-test"
+		".vscode-test",
+		"src/test"
 	]
 }
