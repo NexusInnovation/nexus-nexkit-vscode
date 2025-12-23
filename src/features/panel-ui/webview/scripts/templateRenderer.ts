@@ -91,7 +91,7 @@ function createTypeSection(
   // Summary (clickable header) with count
   const summary = document.createElement("summary");
   summary.className = "type-header";
-  summary.textContent = `${capitalizeFirst(type)} (${installedCount}/${totalCount})`;
+  summary.textContent = `${getTypeDisplayName(type)} (${installedCount}/${totalCount})`;
   details.appendChild(summary);
 
   // Template list
@@ -106,6 +106,24 @@ function createTypeSection(
   details.appendChild(list);
 
   return details;
+}
+
+/**
+ * Get display name for template type
+ */
+function getTypeDisplayName(type: string): string {
+  switch (type) {
+    case "agents":
+      return "🤖 Agents";
+    case "prompts":
+      return "🎯 Prompts";
+    case "instructions":
+      return "📋 Instructions";
+    case "chatmodes":
+      return "🤖 Chat Modes";
+    default:
+      return capitalizeFirst(type);
+  }
 }
 
 /**
