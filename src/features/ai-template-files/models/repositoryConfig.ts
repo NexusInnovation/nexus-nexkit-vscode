@@ -29,7 +29,7 @@ export class RepositoryConfigManager {
       paths: {
         prompts: "prompts",
         instructions: "instructions",
-        chatmodes: "chatmodes",
+        agents: "agents",
       },
     };
   }

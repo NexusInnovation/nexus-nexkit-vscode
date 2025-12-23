@@ -11,9 +11,8 @@ export class MCPConfigDeployer {
   /**
    * Deploy workspace MCP configuration for project initialization
    * NON-DESTRUCTIVE: Merges with existing configuration
-   * @param mcpServers Array of MCP server identifiers to configure (e.g., ['azureDevOps'])
    */
-  public async deployWorkspaceMCPServers(mcpServers: string[], targetRoot: string): Promise<void> {
+  public async deployWorkspaceMCPServers(targetRoot: string): Promise<void> {
     const mcpConfigPath = path.join(targetRoot, ".vscode", "mcp.json");
     const mcpDir = path.dirname(mcpConfigPath);
 
@@ -33,6 +32,8 @@ export class MCPConfigDeployer {
         config = { servers: {} };
       }
     }
+
+    const mcpServers = [MCPConfigDeployer.AzureDevopsServerName];
 
     // Add Azure DevOps MCP if selected
     if (mcpServers.includes(MCPConfigDeployer.AzureDevopsServerName)) {

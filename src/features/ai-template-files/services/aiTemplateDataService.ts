@@ -234,7 +234,7 @@ export class AITemplateDataService implements vscode.Disposable {
         try {
           const result = await this.refresh();
           vscode.window.showInformationMessage(
-            `🔄 AI Templates refreshed due to configuration change. ${result?.allTemplates.length ?? 0} template(s) loaded.`
+            `AI Templates refreshed due to configuration change. ${result?.allTemplates.length ?? 0} template(s) loaded.`
           );
         } catch (error) {
           console.error("Failed to refresh after configuration change:", error);

@@ -26,6 +26,11 @@ export class NexkitPanelMessageHandler {
       ["installTemplate", this.handleInstallTemplate.bind(this)],
       ["uninstallTemplate", this.handleUninstallTemplate.bind(this)],
     ]);
+
+    this._aiTemplateDataService.onDataChanged(() => {
+      // Notify webview of template data changes
+      this.handleGetTemplateData({ command: "getTemplateData" });
+    });
   }
 
   /**

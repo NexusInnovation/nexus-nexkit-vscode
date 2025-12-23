@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import { ServiceContainer } from "../../core/serviceContainer";
 import { SettingsManager } from "../../core/settingsManager";
-import { InitWizard } from "./initWizard";
 import { registerCommand } from "../../shared/commands/commandRegistry";
 import { MCPConfigDeployer } from "./mcpConfigDeployer";
 import { Commands } from "../../shared/constants/commands";
@@ -34,74 +33,41 @@ export function registerInitializeWorkspaceCommand(context: vscode.ExtensionCont
         }
       }
 
-      // Run initialization wizard
-      const wizard = new InitWizard();
-      const wizardResult = await wizard.run();
-      if (!wizardResult) {
-        return; // User cancelled
-      }
-
       await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
           title: "Initializing Nexkit workspace...",
           cancellable: false,
         },
-        async (progress) => {
-          progress.report({
-            increment: 20,
-            message: "Backing up existing templates...",
-          });
-
+        async () => {
           // Backup existing .github directory if it exists
           const githubPath = vscode.Uri.joinPath(workspaceFolder.uri, ".github").fsPath;
           const backupPath = await services.backup.backupDirectory(githubPath);
-          if (backupPath) {
-            console.log(`Backed up existing templates to: ${backupPath}`);
-          }
 
-          progress.report({
-            increment: 40,
-            message: "Deploying workspace configs...",
-          });
-
+          // Deploy configuration files
           await services.gitIgnoreConfigDeployer.deployGitignore(workspaceFolder.uri.fsPath);
           await services.recommendedExtensionsConfigDeployer.deployVscodeExtensions(workspaceFolder.uri.fsPath);
           await services.recommendedSettingsConfigDeployer.deployVscodeSettings(workspaceFolder.uri.fsPath);
-
-          if (wizardResult.enableAzureDevOpsMcpServer) {
-            await services.mcpConfigDeployer.deployWorkspaceMCPServers(
-              [MCPConfigDeployer.AzureDevopsServerName],
-              workspaceFolder.uri.fsPath
-            );
-          }
-
-          progress.report({
-            increment: 20,
-            message: "Deploying workspace templates...",
-          });
+          await services.mcpConfigDeployer.deployWorkspaceMCPServers(workspaceFolder.uri.fsPath);
 
           // Deploy default template files (agents, prompts, chatmodes) from the Nexus Templates
           const deploymentSummary = await services.aiTemplateFilesDeployer.deployTemplateFiles();
-
-          progress.report({
-            increment: 20,
-            message: "Updating workspace settings...",
-          });
 
           // Update workspace settings
           await SettingsManager.setWorkspaceInitialized(true);
 
           // Show success message with deployment summary
-          const summaryMessage =
-            deploymentSummary != null
-              ? deploymentSummary.installed > 0
-                ? ` Installed ${Object.entries(deploymentSummary.types)
-                    .map(([cat, count]) => `${count} ${cat}`)
-                    .join(", ")}.`
-                : ""
-              : "";
-          vscode.window.showInformationMessage(`Nexkit project initialized successfully!${summaryMessage}`);
+          let resultMessage = "Nexkit project initialized successfully!";
+
+          if (deploymentSummary != null && deploymentSummary.installed > 0) {
+            resultMessage += ` Installed ${deploymentSummary.installed} templates.`;
+          }
+
+          if (backupPath) {
+            resultMessage += ` Backed up existing templates to: ${backupPath}.`;
+          }
+
+          vscode.window.showInformationMessage(`${resultMessage}`);
         }
       );
     },

@@ -20,7 +20,7 @@ export class SettingsManager {
   private static readonly MCP_SETUP_DISMISSED = "mcpSetup.dismissed";
 
   // Repository settings
-  private static readonly REPOSITORIES = "workspace.repositories";
+  private static readonly REPOSITORIES = "repositories";
 
   // Telemetry settings
   private static readonly TELEMETRY_ENABLED = "telemetry.enabled";

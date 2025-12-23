@@ -60,6 +60,7 @@ body {
     color: var(--vscode-descriptionForeground);
     margin: 0;
     line-height: 1.4;
+    min-height: 3.6em; /* Reserve space for ~3 lines of text (1.4 line-height * 3 = 4.2, minus some padding) */
 }
 
 .button-description.disabled {
@@ -75,9 +76,9 @@ body {
 
 /* Template Management Section */
 .template-section {
-    margin-top: 32px;
+    margin-top: 8px;
     border-top: 1px solid var(--vscode-panel-border);
-    padding-top: 20px;
+    padding-top: 12px;
 }
 
 .template-section h2 {
