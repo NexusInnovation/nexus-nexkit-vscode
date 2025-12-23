@@ -120,7 +120,6 @@ nexus-nexkit-vscode/
    ```
 
 2. **Make your changes**
-
    - Follow TypeScript and VS Code extension best practices
    - Write tests for new functionality
    - Update documentation as needed
@@ -282,14 +281,12 @@ suite("Unit: AITemplateDataService", () => {
    ```
 
 2. **Create Pull Request** on GitHub
-
    - Use the PR template
    - Link related issues
    - Describe changes clearly
    - Add screenshots/videos for UI changes
 
 3. **Address review feedback**
-
    - Respond to comments
    - Make requested changes
    - Push updates to the same branch

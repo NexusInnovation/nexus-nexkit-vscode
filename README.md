@@ -17,7 +17,6 @@ Access all commands via Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
   - Recommended VS Code settings and extensions
   - Workspace-level MCP server configuration
   - .gitignore configuration for Nexkit files
-  
 - **Nexkit: Check for Updates** - Check for and install extension updates automatically
 
 - **Nexkit: Install User MCP Servers** - Install required MCP servers (Context7 and Sequential Thinking) to user-level VS Code configuration
@@ -31,6 +30,7 @@ Access all commands via Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
 ### Sidebar Panel
 
 A dedicated Nexkit sidebar in the Activity Bar provides:
+
 - Browse AI templates from all configured repositories
 - Install individual templates or batches
 - Quick access to settings and MCP installation
@@ -42,7 +42,7 @@ The extension fetches AI templates from GitHub repositories:
 
 - **Default Repository**: [Nexus Templates](https://github.com/NexusInnovation/nexus-nexkit-templates) (always enabled)
 - **Custom Repositories**: Add your own template repositories via settings
-- **Template Types**: 
+- **Template Types**:
   - **Agents**: GitHub Copilot custom agents
   - **Prompts**: Reusable AI prompts
   - **Instructions**: Language-specific coding guidelines
@@ -231,6 +231,7 @@ code /path/to/my-project
 See [GitHub Issues](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues) for known issues and bug reports.
 
 Common issues:
+
 - **GitHub API Rate Limiting**: Template fetching may be throttled with unauthenticated requests
 - **VSIX Download**: Some corporate networks may block direct GitHub asset downloads
 
@@ -241,6 +242,7 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed release notes and version history.
 ### Current Version: 0.6.0
 
 Latest features include:
+
 - Multi-repository AI template management
 - Webview sidebar panel for browsing templates
 - Automated extension update system

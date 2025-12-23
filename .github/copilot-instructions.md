@@ -5,12 +5,14 @@
 This is a VS Code extension that manages AI templates (agents, prompts, instructions, chatmodes) from GitHub repositories and provides workspace initialization, MCP server configuration, and automated extension updates.
 
 **Key Technologies:**
+
 - TypeScript 5.x
 - VS Code Extension API 1.105.0+
 - esbuild for bundling
 - Mocha for testing
 
 **Core Principles:**
+
 - **SOLID**: Single responsibility, dependency injection via ServiceContainer
 - **DRY**: Reusable services and utilities
 - **KISS**: Simple, maintainable code over clever abstractions
@@ -155,6 +157,7 @@ try {
 **Location**: `src/features/ai-template-files/`
 
 **Key Services**:
+
 - `AITemplateDataService`: Main facade for template operations
 - `RepositoryManager`: Manages repository configurations
 - `TemplateFetcherService`: Fetches from GitHub API
@@ -162,12 +165,14 @@ try {
 - `TemplateFileOperations`: File I/O for template installation
 
 **Template Types**:
+
 - `agents`: GitHub Copilot custom agents
 - `prompts`: Reusable AI prompts
 - `instructions`: Language-specific coding guidelines
 - `chatmodes`: Specialized chat modes
 
 **Data Flow**:
+
 1. User configures repos in settings (`nexkit.repositories`)
 2. `AITemplateDataService.initialize()` fetches from all enabled repos
 3. Templates cached in `TemplateDataStore`
@@ -175,6 +180,7 @@ try {
 5. `TemplateFileOperations` creates files in `.github/` with automatic backup
 
 **Best Practices**:
+
 - Always wait for `AITemplateDataService.waitForReady()` before accessing templates
 - Use repository name as key for filtering templates
 - Create backups before overwriting files
@@ -185,11 +191,13 @@ try {
 **Location**: `src/features/mcp-management/`
 
 **Key Concepts**:
+
 - **User-level MCP**: `~/.vscode/mcp.json` (or `%APPDATA%` on Windows)
 - **Workspace-level MCP**: `.vscode/mcp.json`
 - **Required Servers**: Context7 and Sequential Thinking
 
 **Configuration Format**:
+
 ```json
 {
   "servers": {
@@ -202,6 +210,7 @@ try {
 ```
 
 **Best Practices**:
+
 - Always check if servers exist before prompting installation
 - Respect user dismissal (`nexkit.mcpSetup.dismissed`)
 - Preserve existing servers when updating config
@@ -213,11 +222,13 @@ try {
 **Location**: `src/features/extension-updates/`
 
 **Key Components**:
+
 - `ExtensionUpdateService`: Core update logic
 - `ExtensionGitHubReleaseService`: GitHub API integration
 - `UpdateStatusBarService`: Status bar item management
 
 **Update Flow**:
+
 1. Check GitHub releases API for latest version
 2. Compare with current version using semantic versioning
 3. Download `.vsix` to temp directory
@@ -226,6 +237,7 @@ try {
 6. Clean up old `.vsix` files on activation
 
 **Best Practices**:
+
 - Respect `nexkit.extension.autoCheckUpdates` setting
 - Honor `nexkit.extension.updateCheckInterval` for throttling
 - Update `nexkit.extension.lastUpdateCheck` after each check
@@ -237,6 +249,7 @@ try {
 **Location**: `src/features/initialization/`
 
 **Initialization Steps**:
+
 1. Check if workspace already initialized
 2. Backup existing `.github` directory
 3. Deploy configuration files:
@@ -249,6 +262,7 @@ try {
 
 **Deployers Pattern**:
 Each deployer follows the same interface:
+
 ```typescript
 export class MyConfigDeployer {
   public async deployConfig(workspaceRoot: string): Promise<void> {
@@ -258,6 +272,7 @@ export class MyConfigDeployer {
 ```
 
 **Best Practices**:
+
 - Always confirm before re-initializing
 - Create backups before destructive operations
 - Deploy silently (no prompts during batch operations)
@@ -268,12 +283,14 @@ export class MyConfigDeployer {
 **Location**: `src/features/panel-ui/`
 
 **Architecture**:
+
 - `NexkitPanelViewProvider`: Webview lifecycle management
 - `NexkitPanelMessageHandler`: Message passing between webview and extension
 - `webview/main.ts`: Webview client-side TypeScript
 - `webview/index.html`: Webview HTML template
 
 **Message Protocol**:
+
 ```typescript
 // Extension → Webview
 webview.postMessage({ type: "templatesData", templates: [...] });
@@ -287,6 +304,7 @@ webview.onDidReceiveMessage((message) => {
 ```
 
 **Best Practices**:
+
 - Use typed message interfaces (`src/features/panel-ui/types/webviewMessages.ts`)
 - Sanitize all user inputs from webview
 - Use VS Code Webview UI Toolkit for consistent styling
@@ -298,18 +316,21 @@ webview.onDidReceiveMessage((message) => {
 **Location**: `src/shared/services/telemetryService.ts`
 
 **What to Track**:
+
 - Extension activation/deactivation
 - Command executions (with command name, no user data)
 - Errors and exceptions (without PII)
 - Performance metrics (operation duration)
 
 **What NOT to Track**:
+
 - File names, paths, or contents
 - User settings or configuration values
 - Workspace or project names
 - IP addresses (masked by Application Insights)
 
 **Best Practices**:
+
 - Respect VS Code global telemetry setting
 - Respect `nexkit.telemetry.enabled` setting
 - Use `TelemetryService.trackEvent()` for events
@@ -380,6 +401,7 @@ npm run test:coverage # With coverage
 ### Fetching from GitHub API
 
 Use the pattern in `TemplateFetcherService`:
+
 ```typescript
 const response = await fetch(url, {
   headers: {
@@ -406,6 +428,7 @@ This project uses **semantic-release** with **Conventional Commits**:
 - GitHub releases created with `.vsix` assets
 
 **Do NOT manually**:
+
 - Bump version in `package.json`
 - Create git tags
 - Edit CHANGELOG.md manually
