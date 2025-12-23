@@ -133,12 +133,17 @@ body {
 }
 
 .type-header::before {
-    content: "▶";
+    content: "";
     display: inline-block;
-    width: 12px;
-    margin-right: 6px;
+    width: 0;
+    height: 0;
+    border-left: 5px solid var(--vscode-foreground);
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    margin-right: 8px;
+    margin-left: 2px;
     transition: transform 0.2s ease;
-    font-size: 0.8em;
+    opacity: 0.8;
 }
 
 details[open] > .type-header::before {
