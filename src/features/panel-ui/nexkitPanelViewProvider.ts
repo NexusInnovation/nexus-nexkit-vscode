@@ -33,11 +33,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
     );
 
     // Register the webview view provider
-    context.subscriptions.push(
-      vscode.window.registerWebviewViewProvider(NexkitPanelViewProvider.viewId, this, {
-        webviewOptions: { retainContextWhenHidden: true }, // todo: maybe disable retainContextWhenHidden for performance
-      })
-    );
+    context.subscriptions.push(vscode.window.registerWebviewViewProvider(NexkitPanelViewProvider.viewId, this));
   }
 
   public async resolveWebviewView(webviewView: vscode.WebviewView): Promise<void> {
