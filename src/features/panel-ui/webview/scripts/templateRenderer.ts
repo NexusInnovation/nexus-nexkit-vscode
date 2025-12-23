@@ -96,6 +96,11 @@ function createTypeSection(
     ? templates.filter((t) => t.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : templates;
 
+  // If searching and no matches, don't render this section at all
+  if (isSearching && filteredTemplates.length === 0) {
+    return null as any; // Return null to skip rendering empty sections
+  }
+
   // Calculate installed count for this type
   const installedList = installedTemplates[type as keyof InstalledTemplatesMap] || [];
   const installedCount = templates.filter((t) => installedList.includes(t.name)).length;
@@ -126,22 +131,10 @@ function createTypeSection(
   const list = document.createElement("div");
   list.className = "template-list";
 
-  if (filteredTemplates.length === 0) {
-    // Show appropriate empty message
-    const emptyMessage = document.createElement("p");
-    emptyMessage.className = "empty-message";
-    if (isSearching) {
-      emptyMessage.textContent = "No templates match your search";
-    } else {
-      emptyMessage.textContent = "No templates available";
-    }
-    list.appendChild(emptyMessage);
-  } else {
-    filteredTemplates.forEach((template) => {
-      const item = createTemplateItem(template, templateService);
-      list.appendChild(item);
-    });
-  }
+  filteredTemplates.forEach((template) => {
+    const item = createTemplateItem(template, templateService);
+    list.appendChild(item);
+  });
 
   details.appendChild(list);
 
@@ -200,7 +193,9 @@ function createRepositorySection(
         expansionStates,
         searchQuery
       );
-      section.appendChild(typeSection);
+      if (typeSection) {
+        section.appendChild(typeSection);
+      }
     }
   });
 

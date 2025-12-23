@@ -31,6 +31,8 @@ let initProjectBtnText: HTMLSpanElement;
 let initProjectBtnDesc: HTMLParagraphElement;
 let templateContainer: HTMLDivElement;
 let templateSearch: HTMLInputElement;
+let searchClearBtn: HTMLButtonElement;
+let collapseAllBtn: HTMLButtonElement;
 
 // Global workspace state
 const workspaceState = {
@@ -168,6 +170,8 @@ function initialize(): void {
   initProjectBtnDesc = document.getElementById("initProjectBtnDesc") as HTMLParagraphElement;
   templateContainer = document.getElementById("templateContainer") as HTMLDivElement;
   templateSearch = document.getElementById("templateSearch") as HTMLInputElement;
+  searchClearBtn = document.getElementById("searchClearBtn") as HTMLButtonElement;
+  collapseAllBtn = document.getElementById("collapseAllBtn") as HTMLButtonElement;
 
   // Initialize template service
   templateService.initialize();
@@ -195,10 +199,39 @@ function initialize(): void {
   // Search input handler
   templateSearch.addEventListener("input", (e) => {
     currentSearchQuery = (e.target as HTMLInputElement).value.trim();
+
+    // Toggle clear button visibility
+    searchClearBtn.style.display = currentSearchQuery.length > 0 ? "block" : "none";
+
     const repositories = templateService.getRepositories();
     const installed = templateService.getInstalledTemplates();
     const expansionStates = getExpansionStates();
     renderTemplateManagement(repositories, templateService, installed, expansionStates, currentSearchQuery, templateContainer);
+  });
+
+  // Clear button handler
+  searchClearBtn.addEventListener("click", () => {
+    templateSearch.value = "";
+    currentSearchQuery = "";
+    searchClearBtn.style.display = "none";
+
+    const repositories = templateService.getRepositories();
+    const installed = templateService.getInstalledTemplates();
+    const expansionStates = getExpansionStates();
+    renderTemplateManagement(repositories, templateService, installed, expansionStates, currentSearchQuery, templateContainer);
+  });
+
+  // Collapse all button handler
+  collapseAllBtn.addEventListener("click", () => {
+    const details = templateContainer.querySelectorAll<HTMLDetailsElement>(".type-section");
+    details.forEach((detail) => {
+      detail.open = false;
+      const repository = detail.getAttribute("data-repository");
+      const type = detail.getAttribute("data-type");
+      if (repository && type) {
+        setSectionExpanded(repository, type, false);
+      }
+    });
   });
 
   // Event delegation for tracking section expansion state
