@@ -30,6 +30,7 @@ let initProjectBtn: HTMLButtonElement;
 let initProjectBtnText: HTMLSpanElement;
 let initProjectBtnDesc: HTMLParagraphElement;
 let templateContainer: HTMLDivElement;
+let templateSearch: HTMLInputElement;
 
 // Global workspace state
 const workspaceState = {
@@ -37,8 +38,62 @@ const workspaceState = {
   isInitialized: false,
 };
 
+// Search state
+let currentSearchQuery = "";
+
 // Template service
 const templateService = new TemplateService(vscode);
+
+// Expansion state management
+interface WebviewState {
+  expandedSections: Record<string, boolean>;
+}
+
+/**
+ * Get the saved webview state
+ */
+function getState(): WebviewState {
+  const state = vscode.getState();
+  return state || { expandedSections: {} };
+}
+
+/**
+ * Save the webview state
+ */
+function saveState(state: WebviewState): void {
+  vscode.setState(state);
+}
+
+/**
+ * Set expansion state for a section
+ */
+function setSectionExpanded(repository: string, type: string, expanded: boolean): void {
+  const state = getState();
+  const key = `${repository}::${type}`;
+  state.expandedSections[key] = expanded;
+  saveState(state);
+}
+
+/**
+ * Get all expansion states
+ */
+function getExpansionStates(): Record<string, boolean> {
+  return getState().expandedSections;
+}
+
+/**
+ * Capture current expansion state from the DOM before re-rendering
+ */
+function captureCurrentExpansionState(): void {
+  const details = templateContainer.querySelectorAll<HTMLDetailsElement>(".type-section");
+  details.forEach((detail) => {
+    const repository = detail.getAttribute("data-repository");
+    const type = detail.getAttribute("data-type");
+    if (repository && type) {
+      setSectionExpanded(repository, type, detail.open);
+    }
+  });
+}
 
 /**
  * Send a command to the extension
@@ -112,24 +167,51 @@ function initialize(): void {
   initProjectBtnText = document.getElementById("initProjectBtnText") as HTMLSpanElement;
   initProjectBtnDesc = document.getElementById("initProjectBtnDesc") as HTMLParagraphElement;
   templateContainer = document.getElementById("templateContainer") as HTMLDivElement;
+  templateSearch = document.getElementById("templateSearch") as HTMLInputElement;
 
   // Initialize template service
   templateService.initialize();
 
   // Subscribe to template data updates
   templateService.onTemplateDataUpdate((repositories) => {
+    captureCurrentExpansionState();
     const installed = templateService.getInstalledTemplates();
-    renderTemplateManagement(repositories, templateService, installed, templateContainer);
+    const expansionStates = getExpansionStates();
+    renderTemplateManagement(repositories, templateService, installed, expansionStates, currentSearchQuery, templateContainer);
   });
 
   // Subscribe to installed templates updates
   templateService.onInstalledTemplatesUpdate((installed) => {
-    updateCheckboxStates(installed);
+    // Capture current state before re-rendering
+    captureCurrentExpansionState();
 
-    // Also update the counts in section headers
     const repositories = templateService.getRepositories();
     if (repositories.length > 0) {
-      renderTemplateManagement(repositories, templateService, installed, templateContainer);
+      const expansionStates = getExpansionStates();
+      renderTemplateManagement(repositories, templateService, installed, expansionStates, currentSearchQuery, templateContainer);
+    }
+  });
+
+  // Search input handler
+  templateSearch.addEventListener("input", (e) => {
+    currentSearchQuery = (e.target as HTMLInputElement).value.trim();
+    const repositories = templateService.getRepositories();
+    const installed = templateService.getInstalledTemplates();
+    const expansionStates = getExpansionStates();
+    renderTemplateManagement(repositories, templateService, installed, expansionStates, currentSearchQuery, templateContainer);
+  });
+
+  // Event delegation for tracking section expansion state
+  templateContainer.addEventListener("toggle", (e) => {
+    const target = e.target as HTMLDetailsElement;
+    if (target.tagName === "DETAILS" && target.classList.contains("type-section")) {
+      // Extract repository and type from data attributes
+      const repository = target.getAttribute("data-repository");
+      const type = target.getAttribute("data-type");
+
+      if (repository && type) {
+        setSectionExpanded(repository, type, target.open);
+      }
     }
   });
 

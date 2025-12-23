@@ -78,30 +78,70 @@ function createTypeSection(
   type: string,
   templates: TemplateFileData[],
   templateService: TemplateService,
-  installedTemplates: InstalledTemplatesMap
+  installedTemplates: InstalledTemplatesMap,
+  repository: string,
+  expansionStates: Record<string, boolean>,
+  searchQuery: string
 ): HTMLElement {
   const details = document.createElement("details");
   details.className = "type-section";
+
+  // Add data attributes for event delegation
+  details.setAttribute("data-repository", repository);
+  details.setAttribute("data-type", type);
+
+  // Filter templates based on search query
+  const isSearching = searchQuery.length > 0;
+  const filteredTemplates = isSearching
+    ? templates.filter((t) => t.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    : templates;
 
   // Calculate installed count for this type
   const installedList = installedTemplates[type as keyof InstalledTemplatesMap] || [];
   const installedCount = templates.filter((t) => installedList.includes(t.name)).length;
   const totalCount = templates.length;
 
+  // Determine if section should be open
+  const stateKey = `${repository}::${type}`;
+  const savedState = expansionStates[stateKey];
+
+  // Auto-expand if searching and has matches, otherwise use saved state or default
+  if (isSearching && filteredTemplates.length > 0) {
+    details.open = true;
+  }
+
   // Summary (clickable header) with count
   const summary = document.createElement("summary");
   summary.className = "type-header";
-  summary.textContent = `${getTypeDisplayName(type)} (${installedCount}/${totalCount})`;
+
+  // Show result count when searching, otherwise show installed/total
+  if (isSearching) {
+    summary.textContent = `${getTypeDisplayName(type)} (${filteredTemplates.length} ${filteredTemplates.length === 1 ? "result" : "results"})`;
+  } else {
+    summary.textContent = `${getTypeDisplayName(type)} (${installedCount}/${totalCount})`;
+  }
   details.appendChild(summary);
 
   // Template list
   const list = document.createElement("div");
   list.className = "template-list";
 
-  templates.forEach((template) => {
-    const item = createTemplateItem(template, templateService);
-    list.appendChild(item);
-  });
+  if (filteredTemplates.length === 0) {
+    // Show appropriate empty message
+    const emptyMessage = document.createElement("p");
+    emptyMessage.className = "empty-message";
+    if (isSearching) {
+      emptyMessage.textContent = "No templates match your search";
+    } else {
+      emptyMessage.textContent = "No templates available";
+    }
+    list.appendChild(emptyMessage);
+  } else {
+    filteredTemplates.forEach((template) => {
+      const item = createTemplateItem(template, templateService);
+      list.appendChild(item);
+    });
+  }
 
   details.appendChild(list);
 
@@ -132,7 +172,9 @@ function getTypeDisplayName(type: string): string {
 function createRepositorySection(
   repo: RepositoryTemplateData,
   templateService: TemplateService,
-  installedTemplates: InstalledTemplatesMap
+  installedTemplates: InstalledTemplatesMap,
+  expansionStates: Record<string, boolean>,
+  searchQuery: string
 ): HTMLElement {
   const section = document.createElement("div");
   section.className = "repository-section";
@@ -149,7 +191,15 @@ function createRepositorySection(
   types.forEach((type) => {
     const templates = repo.types[type];
     if (templates.length > 0) {
-      const typeSection = createTypeSection(type, templates, templateService, installedTemplates);
+      const typeSection = createTypeSection(
+        type,
+        templates,
+        templateService,
+        installedTemplates,
+        repo.name,
+        expansionStates,
+        searchQuery
+      );
       section.appendChild(typeSection);
     }
   });
@@ -164,6 +214,8 @@ export function renderTemplateManagement(
   repositories: RepositoryTemplateData[],
   templateService: TemplateService,
   installedTemplates: InstalledTemplatesMap,
+  expansionStates: Record<string, boolean>,
+  searchQuery: string,
   containerElement: HTMLElement
 ): void {
   if (!containerElement) return;
@@ -182,7 +234,7 @@ export function renderTemplateManagement(
 
   // Render each repository
   repositories.forEach((repo) => {
-    const repoSection = createRepositorySection(repo, templateService, installedTemplates);
+    const repoSection = createRepositorySection(repo, templateService, installedTemplates, expansionStates, searchQuery);
     containerElement.appendChild(repoSection);
   });
 }

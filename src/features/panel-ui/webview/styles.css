@@ -84,8 +84,31 @@ body {
 .template-section h2 {
     font-size: 1.1em;
     font-weight: 600;
-    margin: 0 0 16px 0;
+    margin: 0 0 12px 0;
     color: var(--vscode-foreground);
+}
+
+/* Search Input */
+.search-input {
+    width: 100%;
+    padding: 8px 12px;
+    margin-bottom: 16px;
+    font-family: var(--vscode-font-family);
+    font-size: 0.9em;
+    color: var(--vscode-input-foreground);
+    background-color: var(--vscode-input-background);
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 4px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.search-input:focus {
+    border-color: var(--vscode-focusBorder);
+}
+
+.search-input::placeholder {
+    color: var(--vscode-input-placeholderForeground);
 }
 
 /* Empty State */
