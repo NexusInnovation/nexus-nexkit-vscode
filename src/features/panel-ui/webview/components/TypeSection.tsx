@@ -1,0 +1,100 @@
+/**
+ * TypeSection Component
+ * Collapsible section for a specific template type (agents, prompts, etc.)
+ */
+
+import { useRef, useEffect } from "preact/hooks";
+import { TemplateFileData, InstalledTemplatesMap } from "../types";
+import { TemplateItem } from "./TemplateItem";
+
+interface TypeSectionProps {
+  type: string;
+  templates: TemplateFileData[];
+  repository: string;
+  installedTemplates: InstalledTemplatesMap;
+  isExpanded: boolean;
+  onToggle: (expanded: boolean) => void;
+  onInstall: (template: TemplateFileData) => void;
+  onUninstall: (template: TemplateFileData) => void;
+  isTemplateInstalled: (template: TemplateFileData) => boolean;
+  searchQuery: string;
+}
+
+const TYPE_DISPLAY_NAMES: Record<string, string> = {
+  agents: "🤖 Agents",
+  prompts: "🎯 Prompts",
+  instructions: "📋 Instructions",
+  chatmodes: "🤖 Chat Modes",
+};
+
+export function TypeSection({
+  type,
+  templates,
+  repository,
+  installedTemplates,
+  isExpanded,
+  onToggle,
+  onInstall,
+  onUninstall,
+  isTemplateInstalled,
+  searchQuery,
+}: TypeSectionProps) {
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+
+  // Filter templates based on search query
+  const isSearching = searchQuery.length > 0;
+  const filteredTemplates = isSearching
+    ? templates.filter((t) => t.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    : templates;
+
+  // Don't render if searching and no matches
+  if (isSearching && filteredTemplates.length === 0) {
+    return null;
+  }
+
+  // Calculate counts
+  const installedList = installedTemplates[type as keyof InstalledTemplatesMap] || [];
+  const installedCount = templates.filter((t) => installedList.includes(t.name)).length;
+  const totalCount = templates.length;
+
+  // Sync the expanded state with the details element
+  useEffect(() => {
+    if (detailsRef.current) {
+      detailsRef.current.open = isSearching ? true : isExpanded;
+    }
+  }, [isExpanded, isSearching]);
+
+  const handleToggle = () => {
+    if (!isSearching && detailsRef.current) {
+      onToggle(detailsRef.current.open);
+    }
+  };
+
+  const displayName = TYPE_DISPLAY_NAMES[type] || type.charAt(0).toUpperCase() + type.slice(1);
+  const headerText = isSearching
+    ? `${displayName} (${filteredTemplates.length} ${filteredTemplates.length === 1 ? "result" : "results"})`
+    : `${displayName} (${installedCount}/${totalCount})`;
+
+  return (
+    <details
+      ref={detailsRef}
+      class="type-section"
+      data-repository={repository}
+      data-type={type}
+      onToggle={handleToggle}
+    >
+      <summary class="type-header">{headerText}</summary>
+      <div class="template-list">
+        {filteredTemplates.map((template) => (
+          <TemplateItem
+            key={`${template.repository}::${template.type}::${template.name}`}
+            template={template}
+            isInstalled={isTemplateInstalled(template)}
+            onInstall={onInstall}
+            onUninstall={onUninstall}
+          />
+        ))}
+      </div>
+    </details>
+  );
+}

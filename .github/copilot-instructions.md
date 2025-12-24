@@ -284,32 +284,79 @@ export class MyConfigDeployer {
 
 **Architecture**:
 
-- `NexkitPanelViewProvider`: Webview lifecycle management
-- `NexkitPanelMessageHandler`: Message passing between webview and extension
-- `webview/main.ts`: Webview client-side TypeScript
-- `webview/index.html`: Webview HTML template
+The webview is built with **Preact** for better performance and modularity:
+
+- `NexkitPanelViewProvider`: Webview lifecycle management (extension side)
+- `NexkitPanelMessageHandler`: Message passing between webview and extension (extension side)
+- `webview/main.tsx`: Preact app entry point
+- `webview/index.html`: Minimal HTML shell
+- `webview/components/`: Preact components (App, ActionsSection, TemplateSection, etc.)
+- `webview/hooks/`: Custom Preact hooks for state management
+- `webview/services/`: VSCodeMessenger for communication
+- `webview/types/`: TypeScript type definitions
+
+**Component Structure**:
+
+```
+components/
+├── App.tsx                   # Root component
+├── ActionsSection.tsx        # Workspace initialization button
+├── TemplateSection.tsx       # Template management container
+├── SearchBar.tsx             # Search input with debouncing
+├── RepositorySection.tsx     # Repository display
+├── TypeSection.tsx           # Collapsible type section
+└── TemplateItem.tsx          # Individual template checkbox
+```
+
+**Custom Hooks**:
+
+- `useVSCodeAPI()`: Access to VSCodeMessenger singleton
+- `useWorkspaceState()`: Workspace initialization state management
+- `useTemplateData()`: Template data and operations (install/uninstall)
+- `useDebounce()`: Debounce search input
+- `useExpansionState()`: Persistent section expansion state (stored in VS Code state API)
 
 **Message Protocol**:
 
 ```typescript
-// Extension → Webview
-webview.postMessage({ type: "templatesData", templates: [...] });
+// Extension → Webview (via VSCodeMessenger)
+messenger.onMessage("templateDataUpdate", (message) => {
+  setTemplates(message.repositories);
+});
 
 // Webview → Extension
-webview.onDidReceiveMessage((message) => {
-  if (message.type === "installTemplate") {
-    // Handle installation
-  }
+messenger.sendMessage({
+  command: "installTemplate",
+  template: templateData,
 });
 ```
 
 **Best Practices**:
 
+- Use functional components with hooks (no class components)
+- Keep components small and focused (single responsibility)
 - Use typed message interfaces (`src/features/panel-ui/types/webviewMessages.ts`)
-- Sanitize all user inputs from webview
-- Use VS Code Webview UI Toolkit for consistent styling
-- Update webview when data changes (listen to events)
-- Use `acquireVsCodeApi()` in webview for message passing
+- Leverage custom hooks for state logic (don't put business logic in components)
+- Use debouncing for search/filter operations (`useDebounce` hook)
+- Persist UI state in VS Code state API (expansion states, etc.)
+- Use `VSCodeMessenger` class for all extension communication
+- Follow Preact conventions (JSX, hooks, functional patterns)
+
+**Adding New Features**:
+
+1. Create a new component in `webview/components/` if UI is needed
+2. Create custom hooks in `webview/hooks/` for state management
+3. Update message types in `types/webviewMessages.ts` if new messages are needed
+4. Handle new messages in `NexkitPanelMessageHandler` (extension side)
+5. Use existing CSS variables for theming (maintain VS Code theme compatibility)
+
+**Build Configuration**:
+
+- Preact dependencies are in `devDependencies` (bundled by esbuild)
+- esbuild config includes JSX transform (`jsx: 'automatic'`, `jsxImportSource: 'preact'`)
+- Entry point is `webview/main.tsx`
+- Output is `out/webview.js` (bundled, minified in production)
+- Preact (~3KB gzipped) is included in the bundle, not as external dependency
 
 ### Telemetry
 

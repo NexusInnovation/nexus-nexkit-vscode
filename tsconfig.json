@@ -3,7 +3,8 @@
 		"module": "commonjs",
 		"target": "ES2022",
 		"lib": [
-			"ES2022"
+			"ES2022",
+			"DOM"
 		],
 		"outDir": "out",
 		"sourceMap": true,
@@ -11,7 +12,9 @@
 		"inlineSources": false,
 		"rootDir": ".",
 		"strict": true,
-		"forceConsistentCasingInFileNames": true
+		"forceConsistentCasingInFileNames": true,
+		"jsx": "react-jsx",
+		"jsxImportSource": "preact"
 	},
 	"include": [
 		"src/**/*",

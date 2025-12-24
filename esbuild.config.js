@@ -48,7 +48,7 @@ async function main() {
 
 	// Webview bundle
 	const webviewCtx = await esbuild.context({
-		entryPoints: ['src/features/panel-ui/webview/main.ts'],
+		entryPoints: ['src/features/panel-ui/webview/main.tsx'],
 		bundle: true,
 		format: 'iife',
 		minify: production,
@@ -56,6 +56,8 @@ async function main() {
 		platform: 'browser',
 		outfile: 'out/webview.js',
 		logLevel: 'silent',
+		jsx: 'automatic',
+		jsxImportSource: 'preact',
 		plugins: [
 			esbuildProblemMatcherPlugin,
 		],
