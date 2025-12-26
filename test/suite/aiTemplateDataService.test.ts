@@ -4,14 +4,27 @@
  */
 
 import * as assert from "assert";
+import * as vscode from "vscode";
 import { AITemplateDataService } from "../../src/features/ai-template-files/services/aiTemplateDataService";
 import { AITemplateFileType } from "../../src/features/ai-template-files/models/aiTemplateFile";
+import { InstalledTemplatesStateManager } from "../../src/features/ai-template-files/services/installedTemplatesStateManager";
 
 suite("Unit: AITemplateDataService", () => {
   let service: AITemplateDataService;
+  let mockContext: vscode.ExtensionContext;
+  let stateManager: InstalledTemplatesStateManager;
 
   setup(() => {
-    service = new AITemplateDataService();
+    // Create mock context
+    mockContext = {
+      workspaceState: {
+        get: () => undefined,
+        update: async () => {},
+      },
+    } as any;
+
+    stateManager = new InstalledTemplatesStateManager(mockContext);
+    service = new AITemplateDataService(stateManager);
   });
 
   teardown(() => {
@@ -62,9 +75,20 @@ suite("Unit: AITemplateDataService", () => {
 
 suite("Integration: AITemplateDataService Initialization", () => {
   let service: AITemplateDataService;
+  let mockContext: vscode.ExtensionContext;
+  let stateManager: InstalledTemplatesStateManager;
 
   setup(() => {
-    service = new AITemplateDataService();
+    // Create mock context
+    mockContext = {
+      workspaceState: {
+        get: () => undefined,
+        update: async () => {},
+      },
+    } as any;
+
+    stateManager = new InstalledTemplatesStateManager(mockContext);
+    service = new AITemplateDataService(stateManager);
   });
 
   teardown(() => {

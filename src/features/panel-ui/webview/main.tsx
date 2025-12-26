@@ -1,8 +1,3 @@
-/**
- * Webview main entry point
- * Initializes the Preact application
- */
-
 import { render } from "preact";
 import { App } from "./components/App";
 

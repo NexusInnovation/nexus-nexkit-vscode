@@ -11,6 +11,7 @@ import { RecommendedExtensionsConfigDeployer } from "../features/initialization/
 import { RecommendedSettingsConfigDeployer } from "../features/initialization/recommendedSettingsConfigDeployer";
 import { AITemplateFilesDeployer } from "../features/initialization/aiTemplateFilesDeployer";
 import { WorkspaceInitPromptService } from "../features/initialization/workspaceInitPromptService";
+import { InstalledTemplatesStateManager } from "../features/ai-template-files/services/installedTemplatesStateManager";
 
 /**
  * Service container for dependency injection
@@ -20,6 +21,7 @@ export interface ServiceContainer {
   telemetry: TelemetryService;
   mcpConfig: MCPConfigService;
   aiTemplateData: AITemplateDataService;
+  installedTemplatesState: InstalledTemplatesStateManager;
   updateStatusBar: UpdateStatusBarService;
   extensionUpdate: ExtensionUpdateService;
   backup: BackupService;
@@ -43,7 +45,8 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   // Initialize other services
   const extensionUpdate = new ExtensionUpdateService();
   const mcpConfig = new MCPConfigService();
-  const aiTemplateData = new AITemplateDataService();
+  const installedTemplatesState = new InstalledTemplatesStateManager(context);
+  const aiTemplateData = new AITemplateDataService(installedTemplatesState);
   const backup = new BackupService();
   const updateStatusBar = new UpdateStatusBarService(context, extensionUpdate);
   const gitIgnoreConfigDeployer = new GitIgnoreConfigDeployer();
@@ -61,6 +64,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     telemetry,
     mcpConfig,
     aiTemplateData,
+    installedTemplatesState,
     updateStatusBar,
     extensionUpdate,
     backup,

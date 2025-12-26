@@ -53,6 +53,7 @@ suite("Unit: ServiceContainer", () => {
     assert.ok(services.telemetry, "TelemetryService should be initialized");
     assert.ok(services.mcpConfig, "MCPConfigService should be initialized");
     assert.ok(services.aiTemplateData, "AITemplateDataService should be initialized");
+    assert.ok(services.installedTemplatesState, "InstalledTemplatesStateManager should be initialized");
     assert.ok(services.updateStatusBar, "UpdateStatusBarService should be initialized");
     assert.ok(services.extensionUpdate, "ExtensionUpdateService should be initialized");
     assert.ok(services.backup, "BackupService should be initialized");

@@ -28,9 +28,6 @@ export function useWorkspaceState() {
       }
     });
 
-    // Request initial state
-    messenger.sendMessage({ command: "ready" });
-
     return unsubscribe;
   }, [messenger]);
 
@@ -38,7 +35,7 @@ export function useWorkspaceState() {
    * Trigger workspace initialization
    */
   const initializeWorkspace = () => {
-    messenger.sendMessage({ command: "initProject" });
+    messenger.sendMessage({ command: "initWorkspace" });
   };
 
   return {

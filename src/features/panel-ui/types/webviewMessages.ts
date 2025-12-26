@@ -1,42 +1,13 @@
-/**
- * Type definitions for messages exchanged between the webview and extension
- */
-
-/**
- * Template file data for webview display
- */
-export interface TemplateFileData {
-  name: string;
-  type: string;
-  rawUrl: string;
-  repository: string;
-  repositoryUrl: string;
-}
-
-/**
- * Repository with organized templates by type
- */
-export interface RepositoryTemplateData {
-  name: string;
-  url: string;
-  types: {
-    agents: TemplateFileData[];
-    prompts: TemplateFileData[];
-    instructions: TemplateFileData[];
-    chatmodes: TemplateFileData[];
-  };
-}
+import { AITemplateFile, RepositoryTemplatesMap } from "../../ai-template-files/models/aiTemplateFile";
 
 /**
  * Messages sent FROM the webview TO the extension
  */
 export type WebviewMessage =
-  | { command: "ready" }
-  | { command: "initProject" }
+  | { command: "initWorkspace" }
   | { command: "getTemplateData" }
-  | { command: "getInstalledTemplates" }
-  | { command: "installTemplate"; template: TemplateFileData }
-  | { command: "uninstallTemplate"; template: TemplateFileData };
+  | { command: "installTemplate"; template: AITemplateFile }
+  | { command: "uninstallTemplate"; template: AITemplateFile };
 
 /**
  * Messages sent FROM the extension TO the webview
@@ -49,7 +20,7 @@ export type ExtensionMessage =
     }
   | {
       command: "templateDataUpdate";
-      repositories: RepositoryTemplateData[];
+      repositories: RepositoryTemplatesMap[];
     }
   | {
       command: "installedTemplatesUpdate";

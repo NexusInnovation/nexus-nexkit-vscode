@@ -1,11 +1,6 @@
-/**
- * TypeSection Component
- * Collapsible section for a specific template type (agents, prompts, etc.)
- */
-
 import { useRef, useEffect } from "preact/hooks";
-import { TemplateFileData, InstalledTemplatesMap } from "../types";
-import { TemplateItem } from "./TemplateItem";
+import { TemplateFileData, InstalledTemplatesMap } from "../../types";
+import { TemplateItem } from "../atoms/TemplateItem";
 
 interface TypeSectionProps {
   type: string;
@@ -27,6 +22,10 @@ const TYPE_DISPLAY_NAMES: Record<string, string> = {
   chatmodes: "🤖 Chat Modes",
 };
 
+/**
+ * TypeSection Component
+ * Collapsible section for a specific template type (agents, prompts, etc.)
+ */
 export function TypeSection({
   type,
   templates,
@@ -70,7 +69,7 @@ export function TypeSection({
     }
   };
 
-  const displayName = TYPE_DISPLAY_NAMES[type] || type.charAt(0).toUpperCase() + type.slice(1);
+  const displayName = TYPE_DISPLAY_NAMES[type];
   const headerText = isSearching
     ? `${displayName} (${filteredTemplates.length} ${filteredTemplates.length === 1 ? "result" : "results"})`
     : `${displayName} (${installedCount}/${totalCount})`;

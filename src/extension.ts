@@ -51,6 +51,9 @@ export async function activate(context: vscode.ExtensionContext) {
     console.error("Failed to initialize AI template data:", error);
   });
 
+  // Sync installed templates state with filesystem on activation
+  services.aiTemplateData.syncInstalledTemplates();
+
   // Watch for template repository configuration changes (to refetch templates)
   services.aiTemplateData.setupConfigurationWatcher();
 

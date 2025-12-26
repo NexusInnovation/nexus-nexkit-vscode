@@ -1,9 +1,10 @@
 import * as vscode from "vscode";
-import { AITemplateFile, AITemplateFileType, InstalledTemplatesMap } from "../models/aiTemplateFile";
+import { AITemplateFile, AITemplateFileType, InstalledTemplatesMap, RepositoryTemplatesMap } from "../models/aiTemplateFile";
 import { RepositoryManager } from "./repositoryManager";
 import { FetchAllResult, TemplateFetcherService } from "./templateFetcherService";
 import { TemplateDataStore } from "./templateDataStore";
 import { TemplateFileOperations, InstallOptions, BatchInstallSummary } from "./templateFileOperations";
+import { InstalledTemplatesStateManager } from "./installedTemplatesStateManager";
 
 /**
  * Main facade service for AI template data management
@@ -14,6 +15,7 @@ export class AITemplateDataService implements vscode.Disposable {
   private readonly fetcherService: TemplateFetcherService;
   private readonly dataStore: TemplateDataStore;
   private readonly fileOperations: TemplateFileOperations;
+  private readonly stateManager: InstalledTemplatesStateManager;
 
   private _isReady = false;
   private _isInitializing = false;
@@ -38,11 +40,12 @@ export class AITemplateDataService implements vscode.Disposable {
    */
   public readonly onError: vscode.Event<Error> = this._onError.event;
 
-  constructor() {
+  constructor(stateManager: InstalledTemplatesStateManager) {
+    this.stateManager = stateManager;
     this.repositoryManager = new RepositoryManager();
     this.fetcherService = new TemplateFetcherService(this.repositoryManager);
     this.dataStore = new TemplateDataStore();
-    this.fileOperations = new TemplateFileOperations(this.fetcherService);
+    this.fileOperations = new TemplateFileOperations(this.fetcherService, this.stateManager);
 
     // Forward data change events
     this.onDataChanged = this.dataStore.onDataChanged;
@@ -205,15 +208,51 @@ export class AITemplateDataService implements vscode.Disposable {
   /**
    * Get all installed templates
    */
-  public async getInstalledTemplates(): Promise<InstalledTemplatesMap> {
+  public getInstalledTemplates(): InstalledTemplatesMap {
     return this.fileOperations.getInstalledTemplates();
+  }
+
+  /**
+   * Get repository templates map
+   */
+  public getRepositoryTemplatesMap(): RepositoryTemplatesMap[] {
+    const allTemplates = this.dataStore.getAll();
+
+    const result: Record<string, RepositoryTemplatesMap> = {};
+
+    for (const template of allTemplates) {
+      if (!result[template.repository]) {
+        result[template.repository] = {
+          agents: [],
+          prompts: [],
+          instructions: [],
+          chatmodes: [],
+        };
+      }
+      result[template.repository][template.type].push(template);
+    }
+
+    return Object.keys(result).map((repo) => result[repo]);
   }
 
   /**
    * Check if a template is installed
    */
-  public async isTemplateInstalled(templateFile: AITemplateFile): Promise<boolean> {
+  public isTemplateInstalled(templateFile: AITemplateFile): boolean {
     return this.fileOperations.isTemplateInstalled(templateFile);
+  }
+
+  /**
+   * Sync installed templates state with filesystem
+   * Removes orphaned entries where files were deleted externally
+   * Should be called on extension activation and when panel opens
+   */
+  public async syncInstalledTemplates(): Promise<void> {
+    try {
+      await this.stateManager.syncWithFileSystem();
+    } catch (error) {
+      console.error("Failed to sync installed templates:", error);
+    }
   }
 
   /**

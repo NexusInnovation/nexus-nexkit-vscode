@@ -49,9 +49,21 @@ export function useExpansionState() {
     [getExpansionStates]
   );
 
+  /**
+   * Check if a section is expanded
+   */
+  const collapseAll = useCallback(() => {
+    const currentState = messenger.getState<WebviewPersistentState>() || {
+      expandedSections: {},
+    };
+    currentState.expandedSections = {};
+    messenger.setState(currentState);
+  }, [getExpansionStates]);
+
   return {
     getExpansionStates,
     setSectionExpanded,
     isSectionExpanded,
+    collapseAll,
   };
 }

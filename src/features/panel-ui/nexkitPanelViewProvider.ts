@@ -28,7 +28,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
     // Listen for workspace folder changes
     context.subscriptions.push(
       vscode.workspace.onDidChangeWorkspaceFolders(() => {
-        this._messageHandler?.onWorkspaceChanged();
+        this._messageHandler?.initialize();
       })
     );
 
@@ -55,10 +55,10 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
       await this._messageHandler?.handleMessage(message);
     });
 
-    // Refresh template data when view becomes visible
+    // Sync installed templates and refresh when view becomes visible
     this._view.onDidChangeVisibility(() => {
       if (this._view?.visible) {
-        this._messageHandler?.onWorkspaceChanged();
+        this._messageHandler?.initialize();
       }
     });
   }

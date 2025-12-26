@@ -1,10 +1,5 @@
-/**
- * TemplateItem Component
- * Individual template checkbox with label
- */
-
 import { useState } from "preact/hooks";
-import { TemplateFileData } from "../types";
+import { TemplateFileData } from "../../types";
 
 interface TemplateItemProps {
   template: TemplateFileData;
@@ -13,17 +8,18 @@ interface TemplateItemProps {
   onUninstall: (template: TemplateFileData) => void;
 }
 
+/**
+ * TemplateItem Component
+ * Individual template checkbox with label
+ */
 export function TemplateItem({
   template,
   isInstalled,
   onInstall,
   onUninstall,
 }: TemplateItemProps) {
-  const [isProcessing, setIsProcessing] = useState(false);
-
   const handleChange = async (e: Event) => {
     const checked = (e.target as HTMLInputElement).checked;
-    setIsProcessing(true);
 
     try {
       if (checked) {
@@ -31,13 +27,8 @@ export function TemplateItem({
       } else {
         onUninstall(template);
       }
-      // Note: The checkbox state will be updated when the installed templates list is refreshed
     } catch (error) {
       console.error("Failed to change template state:", error);
-    } finally {
-      // Keep disabled until the state refresh comes through
-      // The parent component will re-render with the new state
-      setTimeout(() => setIsProcessing(false), 500);
     }
   };
 
@@ -51,7 +42,6 @@ export function TemplateItem({
         id={templateId}
         class="template-checkbox"
         checked={isInstalled}
-        disabled={isProcessing}
         onChange={handleChange}
       />
       <label htmlFor={templateId} class="template-label">

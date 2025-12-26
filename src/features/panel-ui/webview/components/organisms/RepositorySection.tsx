@@ -1,10 +1,5 @@
-/**
- * RepositorySection Component
- * Displays a repository with its template types
- */
-
-import { RepositoryTemplateData, InstalledTemplatesMap, TemplateFileData } from "../types";
-import { TypeSection } from "./TypeSection";
+import { RepositoryTemplateData, InstalledTemplatesMap, TemplateFileData } from "../../types";
+import { TypeSection } from "../molecules/TypeSection";
 
 interface RepositorySectionProps {
   repository: RepositoryTemplateData;
@@ -24,6 +19,10 @@ const TEMPLATE_TYPES: Array<keyof RepositoryTemplateData["types"]> = [
   "chatmodes",
 ];
 
+/**
+ * RepositorySection Component
+ * Displays a repository with its template types
+ */
 export function RepositorySection({
   repository,
   installedTemplates,

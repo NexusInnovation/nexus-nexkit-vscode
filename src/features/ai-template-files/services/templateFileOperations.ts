@@ -1,9 +1,10 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
-import { AI_TEMPLATE_FILE_TYPES, AITemplateFile, AITemplateFileType, InstalledTemplatesMap } from "../models/aiTemplateFile";
+import { AITemplateFile, AITemplateFileType, InstalledTemplatesMap } from "../models/aiTemplateFile";
 import { fileExists, getWorkspaceRoot } from "../../../shared/utils/fileHelper";
 import { TemplateFetcherService } from "./templateFetcherService";
+import { InstalledTemplatesStateManager } from "./installedTemplatesStateManager";
 
 /**
  * Options for installing a template
@@ -27,7 +28,10 @@ export interface BatchInstallSummary {
  * Handles installing, uninstalling, and checking installed templates
  */
 export class TemplateFileOperations {
-  constructor(private readonly fetcherService: TemplateFetcherService) {}
+  constructor(
+    private readonly fetcherService: TemplateFetcherService,
+    private readonly stateManager: InstalledTemplatesStateManager
+  ) {}
 
   /**
    * Get the directory path for a type of template
@@ -64,6 +68,9 @@ export class TemplateFileOperations {
       // Write file (overwrites if it already exists)
       await fs.promises.writeFile(filePath, content, "utf8");
 
+      // Add to installed state
+      await this.stateManager.addInstalledTemplate(templateFile);
+
       if (!silent) {
         vscode.window.showInformationMessage(`Installed "${templateFile.name}" from '${templateFile.repository}'`);
       }
@@ -94,6 +101,9 @@ export class TemplateFileOperations {
       // Delete file
       await fs.promises.unlink(filePath);
 
+      // Remove from installed state
+      await this.stateManager.removeInstalledTemplate(templateFile);
+
       if (!silent) {
         vscode.window.showInformationMessage(`Removed ${templateFile.name} from .github/${templateFile.type}/`);
       }
@@ -108,33 +118,10 @@ export class TemplateFileOperations {
 
   /**
    * Get all installed templates organized by type
+   * Uses workspace state as source of truth
    */
-  public async getInstalledTemplates(): Promise<InstalledTemplatesMap> {
-    const installed: InstalledTemplatesMap = {
-      agents: [],
-      prompts: [],
-      instructions: [],
-      chatmodes: [],
-    };
-
-    for (const type of AI_TEMPLATE_FILE_TYPES) {
-      try {
-        const dirPath = this.getTemplateTypePath(type);
-        if (await fileExists(dirPath)) {
-          const files = await fs.promises.readdir(dirPath);
-          files.forEach((file) => {
-            if (file.endsWith(".md")) {
-              installed[type].push(file);
-            }
-          });
-        }
-      } catch (error) {
-        console.error(`Error scanning ${type} directory:`, error);
-        // Continue with other categories
-      }
-    }
-
-    return installed;
+  public getInstalledTemplates(): InstalledTemplatesMap {
+    return this.stateManager.getInstalledTemplatesMap();
   }
 
   /**
@@ -170,9 +157,9 @@ export class TemplateFileOperations {
 
   /**
    * Check if a template is installed
+   * Uses workspace state as source of truth
    */
-  public async isTemplateInstalled(templateFile: AITemplateFile): Promise<boolean> {
-    const filePath = path.join(this.getTemplateTypePath(templateFile.type), templateFile.name);
-    return await fileExists(filePath);
+  public isTemplateInstalled(templateFile: AITemplateFile): boolean {
+    return this.stateManager.isTemplateInstalled(templateFile);
   }
 }

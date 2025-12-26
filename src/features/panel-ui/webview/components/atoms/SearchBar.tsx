@@ -1,13 +1,12 @@
-/**
- * SearchBar Component
- * Search input with clear button
- */
-
 interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
 }
 
+/**
+ * SearchBar Component
+ * Search input with clear button
+ */
 export function SearchBar({ value, onChange }: SearchBarProps) {
   const handleClear = () => {
     onChange("");

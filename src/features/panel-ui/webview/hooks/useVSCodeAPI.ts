@@ -3,7 +3,7 @@
  * Provides access to the messenger singleton
  */
 
-import { useEffect, useRef } from "preact/hooks";
+import { useRef } from "preact/hooks";
 import { VSCodeMessenger } from "../services/vscodeMessenger";
 
 // Singleton messenger instance

@@ -23,3 +23,8 @@ export type AITemplateFileType = (typeof AI_TEMPLATE_FILE_TYPES)[number];
  * Map of installed templates organized by type in the workspace
  */
 export type InstalledTemplatesMap = Record<AITemplateFileType, string[]>;
+
+/**
+ * Map of templates organized by repository and type
+ */
+export type RepositoryTemplatesMap = Record<AITemplateFileType, AITemplateFile[]>;

@@ -1,8 +1,3 @@
-/**
- * Custom hook for template data management
- * Manages template repositories, installed templates, and operations
- */
-
 import { useState, useEffect, useCallback } from "preact/hooks";
 import { useVSCodeAPI } from "./useVSCodeAPI";
 import { RepositoryTemplateData, TemplateFileData, InstalledTemplatesMap } from "../types";
@@ -36,10 +31,6 @@ export function useTemplateData() {
         setInstalledTemplates(message.installed);
       }
     });
-
-    // Request initial data
-    messenger.sendMessage({ command: "getTemplateData" });
-    messenger.sendMessage({ command: "getInstalledTemplates" });
 
     return () => {
       unsubscribeTemplateData();
