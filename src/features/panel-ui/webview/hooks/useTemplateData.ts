@@ -66,11 +66,13 @@ export function useTemplateData() {
 
   /**
    * Check if a template is installed
+   * Checks using repository-qualified identifier: "repository::templateName"
    */
   const isTemplateInstalled = useCallback(
     (template: AITemplateFile): boolean => {
       const installedList = installedTemplates[template.type as keyof InstalledTemplatesMap] || [];
-      return installedList.includes(template.name);
+      const qualifiedName = `${template.repository}::${template.name}`;
+      return installedList.includes(qualifiedName);
     },
     [installedTemplates]
   );

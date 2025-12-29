@@ -106,7 +106,8 @@ export class InstalledTemplatesStateManager {
 
   /**
    * Get installed templates organized by type (for webview compatibility)
-   * Returns map of type -> array of template names
+   * Returns map of type -> array of repository-qualified template identifiers
+   * Format: "repository::templateName"
    */
   public getInstalledTemplatesMap(): Record<AITemplateFileType, string[]> {
     const state = this.getState();
@@ -118,8 +119,9 @@ export class InstalledTemplatesStateManager {
     };
 
     for (const template of state.templates) {
-      if (!map[template.type].includes(template.name)) {
-        map[template.type].push(template.name);
+      const qualifiedName = `${template.repository}::${template.name}`;
+      if (!map[template.type].includes(qualifiedName)) {
+        map[template.type].push(qualifiedName);
       }
     }
 

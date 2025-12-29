@@ -5,12 +5,14 @@ import { SearchBar } from "../atoms/SearchBar";
 import { RepositorySection } from "./RepositorySection";
 import { useTemplateData } from "../../hooks/useTemplateData";
 import { CollapseAllButton } from "../atoms/CollapseAllButton";
+import { useWorkspaceState } from "../../hooks/useWorkspaceState";
 
 /**
  * TemplateSection Component
  * Main template management section with search and collapse all functionality
  */
 export function TemplateSection() {
+  const { workspaceState } = useWorkspaceState();
   const {
       repositories,
       installedTemplates,
@@ -28,6 +30,8 @@ export function TemplateSection() {
     // This is a workaround to trigger the collapse effect
     setSearchQuery((prev) => prev);
   };
+
+  if (!workspaceState.hasWorkspace) return null;
 
   if (repositories.length === 0) {
     return (
