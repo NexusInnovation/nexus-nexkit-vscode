@@ -4,6 +4,7 @@ import { AITemplateFile, RepositoryTemplatesMap } from "../../ai-template-files/
  * Messages sent FROM the webview TO the extension
  */
 export type WebviewMessage =
+  | { command: "webviewReady" }
   | { command: "initWorkspace" }
   | { command: "getTemplateData" }
   | { command: "installTemplate"; template: AITemplateFile }

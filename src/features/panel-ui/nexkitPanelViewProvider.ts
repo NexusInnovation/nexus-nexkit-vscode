@@ -54,13 +54,6 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
     this._view.webview.onDidReceiveMessage(async (message) => {
       await this._messageHandler?.handleMessage(message);
     });
-
-    // Sync installed templates and refresh when view becomes visible
-    this._view.onDidChangeVisibility(() => {
-      if (this._view?.visible) {
-        this._messageHandler?.initialize();
-      }
-    });
   }
 
   /**

@@ -1,11 +1,11 @@
 import { useState } from "preact/hooks";
-import { TemplateFileData } from "../../types";
+import { AITemplateFile } from "../../../../ai-template-files/models/aiTemplateFile";
 
 interface TemplateItemProps {
-  template: TemplateFileData;
+  template: AITemplateFile;
   isInstalled: boolean;
-  onInstall: (template: TemplateFileData) => void;
-  onUninstall: (template: TemplateFileData) => void;
+  onInstall: (template: AITemplateFile) => void;
+  onUninstall: (template: AITemplateFile) => void;
 }
 
 /**

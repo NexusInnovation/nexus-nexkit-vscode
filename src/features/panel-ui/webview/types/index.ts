@@ -3,14 +3,7 @@
  * Re-exported from the main types file for convenience
  */
 
-export type { TemplateFileData, RepositoryTemplateData, WebviewMessage, ExtensionMessage } from "../../types/webviewMessages";
-
-export interface InstalledTemplatesMap {
-  agents: string[];
-  prompts: string[];
-  instructions: string[];
-  chatmodes: string[];
-}
+export type { WebviewMessage, ExtensionMessage } from "../../types/webviewMessages";
 
 export interface WorkspaceState {
   hasWorkspace: boolean;

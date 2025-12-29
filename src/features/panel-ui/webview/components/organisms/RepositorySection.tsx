@@ -1,23 +1,16 @@
-import { RepositoryTemplateData, InstalledTemplatesMap, TemplateFileData } from "../../types";
+import { AI_TEMPLATE_FILE_TYPES, AITemplateFile, InstalledTemplatesMap, RepositoryTemplatesMap } from "../../../../ai-template-files/models/aiTemplateFile";
 import { TypeSection } from "../molecules/TypeSection";
 
 interface RepositorySectionProps {
-  repository: RepositoryTemplateData;
+  repository: RepositoryTemplatesMap;
   installedTemplates: InstalledTemplatesMap;
   isSectionExpanded: (repository: string, type: string) => boolean;
   setSectionExpanded: (repository: string, type: string, expanded: boolean) => void;
-  onInstall: (template: TemplateFileData) => void;
-  onUninstall: (template: TemplateFileData) => void;
-  isTemplateInstalled: (template: TemplateFileData) => boolean;
+  onInstall: (template: AITemplateFile) => void;
+  onUninstall: (template: AITemplateFile) => void;
+  isTemplateInstalled: (template: AITemplateFile) => boolean;
   searchQuery: string;
 }
-
-const TEMPLATE_TYPES: Array<keyof RepositoryTemplateData["types"]> = [
-  "agents",
-  "prompts",
-  "instructions",
-  "chatmodes",
-];
 
 /**
  * RepositorySection Component
@@ -36,7 +29,7 @@ export function RepositorySection({
   return (
     <div class="repository-section">
       <h3 class="repository-name">{repository.name}</h3>
-      {TEMPLATE_TYPES.map((type) => {
+      {AI_TEMPLATE_FILE_TYPES.map((type) => {
         const templates = repository.types[type];
         if (templates.length === 0) return null;
 

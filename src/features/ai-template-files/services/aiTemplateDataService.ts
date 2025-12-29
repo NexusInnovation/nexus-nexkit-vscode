@@ -223,13 +223,16 @@ export class AITemplateDataService implements vscode.Disposable {
     for (const template of allTemplates) {
       if (!result[template.repository]) {
         result[template.repository] = {
-          agents: [],
-          prompts: [],
-          instructions: [],
-          chatmodes: [],
+          name: template.repository,
+          types: {
+            agents: [],
+            prompts: [],
+            instructions: [],
+            chatmodes: [],
+          },
         };
       }
-      result[template.repository][template.type].push(template);
+      result[template.repository].types[template.type].push(template);
     }
 
     return Object.keys(result).map((repo) => result[repo]);

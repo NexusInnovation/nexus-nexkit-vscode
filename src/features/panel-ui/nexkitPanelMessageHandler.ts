@@ -3,7 +3,6 @@ import { TelemetryService } from "../../shared/services/telemetryService";
 import { SettingsManager } from "../../core/settingsManager";
 import { Commands } from "../../shared/constants/commands";
 import { AITemplateDataService } from "../ai-template-files/services/aiTemplateDataService";
-import { AITemplateFile, AITemplateFileType } from "../ai-template-files/models/aiTemplateFile";
 import { WebviewMessage, ExtensionMessage } from "./types/webviewMessages";
 
 /**
@@ -27,6 +26,7 @@ export class NexkitPanelMessageHandler {
     private readonly _aiTemplateDataService: AITemplateDataService
   ) {
     this._messageHandlers = new Map([
+      ["webviewReady", this.handleWebviewReady.bind(this)],
       ["initWorkspace", this.handleInitWorkspace.bind(this)],
       ["getTemplateData", this.handleGetTemplateData.bind(this)],
       ["installTemplate", this.handleInstallTemplate.bind(this)],
@@ -57,9 +57,10 @@ export class NexkitPanelMessageHandler {
   // MESSAGE HANDLERS - Process webview requests
   // ============================================================================
 
-  /**
-   * Handle: User clicked "Initialize Workspace" button
-   */
+  private async handleWebviewReady(message: WebviewMessage): Promise<void> {
+    await this.initialize();
+  }
+
   private async handleInitWorkspace(message: WebviewMessage): Promise<void> {
     this.trackWebviewAction("initWorkspace");
     await vscode.commands.executeCommand(Commands.INIT_WORKSPACE);

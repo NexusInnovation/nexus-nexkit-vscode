@@ -1,17 +1,17 @@
 import { useRef, useEffect } from "preact/hooks";
-import { TemplateFileData, InstalledTemplatesMap } from "../../types";
 import { TemplateItem } from "../atoms/TemplateItem";
+import { AITemplateFile, InstalledTemplatesMap } from "../../../../ai-template-files/models/aiTemplateFile";
 
 interface TypeSectionProps {
   type: string;
-  templates: TemplateFileData[];
+  templates: AITemplateFile[];
   repository: string;
   installedTemplates: InstalledTemplatesMap;
   isExpanded: boolean;
   onToggle: (expanded: boolean) => void;
-  onInstall: (template: TemplateFileData) => void;
-  onUninstall: (template: TemplateFileData) => void;
-  isTemplateInstalled: (template: TemplateFileData) => boolean;
+  onInstall: (template: AITemplateFile) => void;
+  onUninstall: (template: AITemplateFile) => void;
+  isTemplateInstalled: (template: AITemplateFile) => boolean;
   searchQuery: string;
 }
 

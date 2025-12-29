@@ -27,4 +27,7 @@ export type InstalledTemplatesMap = Record<AITemplateFileType, string[]>;
 /**
  * Map of templates organized by repository and type
  */
-export type RepositoryTemplatesMap = Record<AITemplateFileType, AITemplateFile[]>;
+export type RepositoryTemplatesMap = {
+  name: string;
+  types: Record<AITemplateFileType, AITemplateFile[]>;
+};
