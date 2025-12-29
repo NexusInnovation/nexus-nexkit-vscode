@@ -1,3 +1,7 @@
+## 0.7.0-beta.1 (2025-12-29)
+
+* feat: complete refactor ([9b24c3a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9b24c3a))
+
 ## 0.6.0 (2025-12-16)
 
 * Merge pull request #42 from NexusInnovation/feature/test-ci-minor-version-bump ([7c0165a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/7c0165a)), closes [#42](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/42)
