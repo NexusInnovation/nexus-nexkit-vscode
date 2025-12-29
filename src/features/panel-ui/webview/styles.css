@@ -19,18 +19,18 @@ body {
 .actions-section {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 12px;
 }
 
 .action-item {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
 }
 
 .action-button {
-    padding: 10px 16px;
-    font-size: 1em;
+    padding: 8px;
+    font-size: 0.9em;
     font-weight: 500;
     border: none;
     border-radius: 4px;
@@ -56,11 +56,10 @@ body {
 }
 
 .button-description {
-    font-size: 0.85em;
+    font-size: 0.8em;
     color: var(--vscode-descriptionForeground);
     margin: 0;
-    line-height: 1.4;
-    min-height: 3.6em; /* Reserve space for ~3 lines of text (1.4 line-height * 3 = 4.2, minus some padding) */
+    min-height: 3em;
 }
 
 .button-description.disabled {
