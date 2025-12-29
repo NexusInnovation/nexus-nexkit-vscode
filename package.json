@@ -1,8 +1,8 @@
 {
   "name": "nexus-nexkit-vscode",
   "displayName": "Nexkit",
-  "description": "VS Code extension for Nexkit CLI",
-  "version": "0.6.0",
+  "description": "VS Code extension for Nexkit",
+  "version": "0.7.0-beta.2",
   "publisher": "NexusInnovation",
   "private": true,
   "license": "MIT",
@@ -17,17 +17,27 @@
     "Other"
   ],
   "dependencies": {
-    "applicationinsights": "^2.9.6"
+    "applicationinsights": "^2.9.6",
+    "prettier": "^3.7.4"
   },
   "activationEvents": [
     "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "icons": {
+      "custom-mcp": {
+        "description": "MCP icon",
+        "default": {
+          "fontPath": "media/mcp.woff",
+          "fontCharacter": "\\E900"
+        }
+      }
+    },
     "commands": [
       {
-        "command": "nexus-nexkit-vscode.initProject",
-        "title": "Nexkit: Initialize Project",
+        "command": "nexus-nexkit-vscode.initWorkspace",
+        "title": "Nexkit: Initialize Workspace",
         "category": "Nexkit"
       },
       {
@@ -38,17 +48,14 @@
       {
         "command": "nexus-nexkit-vscode.installUserMCPs",
         "title": "Nexkit: Install User MCP Servers",
-        "category": "Nexkit"
-      },
-      {
-        "command": "nexus-nexkit-vscode.configureAzureDevOps",
-        "title": "Nexkit: Enable Azure DevOps MCP",
-        "category": "Nexkit"
+        "category": "Nexkit",
+        "icon": "$(custom-mcp)"
       },
       {
         "command": "nexus-nexkit-vscode.openSettings",
         "title": "Nexkit: Open Settings",
-        "category": "Nexkit"
+        "category": "Nexkit",
+        "icon": "$(gear)"
       },
       {
         "command": "nexus-nexkit-vscode.restoreBackup",
@@ -56,16 +63,30 @@
         "category": "Nexkit"
       },
       {
-        "command": "nexus-nexkit-vscode.updateTemplates",
-        "title": "Nexkit: Update Templates",
+        "command": "nexus-nexkit-vscode.cleanupBackup",
+        "title": "Nexkit: Cleanup Template Backups",
         "category": "Nexkit"
       },
       {
-        "command": "nexus-nexkit-vscode.reinitializeProject",
-        "title": "Nexkit: Re-initialize Project",
+        "command": "nexus-nexkit-vscode.updateInstalledTemplates",
+        "title": "Nexkit: Update Installed Templates",
         "category": "Nexkit"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "nexus-nexkit-vscode.installUserMCPs",
+          "when": "view == nexkitPanelView",
+          "group": "navigation"
+        },
+        {
+          "command": "nexus-nexkit-vscode.openSettings",
+          "when": "view == nexkitPanelView",
+          "group": "navigation"
+        }
+      ]
+    },
     "viewsContainers": {
       "activitybar": [
         {
@@ -79,79 +100,110 @@
       "nexkit-sidebar": [
         {
           "id": "nexkitPanelView",
-          "name": "Nexkit Home",
           "icon": "media/Nexus_Symbole_MONOCHROME.svg",
-          "type": "webview"
+          "type": "webview",
+          "name": "Home"
         }
       ]
     },
     "configuration": {
       "title": "Nexkit",
       "properties": {
-        "nexkit.init.promptForLanguages": {
-          "type": "boolean",
-          "default": true,
-          "description": "Prompt for programming languages during project initialization."
-        },
-        "nexkit.init.createVscodeSettings": {
-          "type": "boolean",
-          "default": true,
-          "description": "Create .vscode/settings.json during initialization."
-        },
-        "nexkit.init.createGitignore": {
-          "type": "boolean",
-          "default": true,
-          "description": "Create .gitignore during initialization."
-        },
-        "nexkit.workspace.initialized": {
-          "type": "boolean",
-          "default": false,
-          "description": "Indicates if the workspace has been initialized with Nexkit."
-        },
-        "nexkit.workspace.languages": {
+        "nexkit.repositories": {
           "type": "array",
+          "default": [
+            {
+              "name": "Awesome Copilot",
+              "url": "https://github.com/github/awesome-copilot",
+              "enabled": true,
+              "paths": {
+                "agents": "agents",
+                "prompts": "prompts",
+                "instructions": "instructions"
+              }
+            }
+          ],
+          "scope": "application",
+          "description": "Additional repository sources for agents, prompts, and instructions. Default repositories \"Nexus Templates\" is always included.",
           "items": {
-            "type": "string"
-          },
-          "default": [],
-          "description": "List of programming languages selected for the workspace."
-        },
-        "nexkit.workspace.mcpServers": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [],
-          "description": "List of MCP servers configured for the workspace."
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Display name for the repository"
+              },
+              "url": {
+                "type": "string",
+                "description": "GitHub repository URL (e.g., https://github.com/owner/repo)"
+              },
+              "branch": {
+                "type": "string",
+                "default": "main",
+                "description": "Git branch to use"
+              },
+              "enabled": {
+                "type": "boolean",
+                "default": true,
+                "description": "Enable or disable this repository"
+              },
+              "paths": {
+                "type": "object",
+                "description": "Paths to different content types in the repository",
+                "properties": {
+                  "agents": {
+                    "type": "string",
+                    "description": "Path to agents directory"
+                  },
+                  "prompts": {
+                    "type": "string",
+                    "description": "Path to prompts directory"
+                  },
+                  "instructions": {
+                    "type": "string",
+                    "description": "Path to instructions directory"
+                  },
+                  "chatmodes": {
+                    "type": "string",
+                    "description": "Path to chatmodes directory"
+                  }
+                }
+              }
+            },
+            "required": [
+              "name",
+              "url",
+              "paths"
+            ]
+          }
         },
         "nexkit.extension.autoCheckUpdates": {
           "type": "boolean",
           "default": true,
+          "scope": "application",
           "description": "Automatically check for extension updates on activation."
         },
         "nexkit.extension.updateCheckInterval": {
           "type": "number",
           "default": 24,
+          "scope": "application",
           "description": "Hours between automatic extension update checks."
-        },
-        "nexkit.extension.lastUpdateCheck": {
-          "type": "number",
-          "default": 0,
-          "description": "Timestamp of last extension update check."
         },
         "nexkit.mcpSetup.dismissed": {
           "type": "boolean",
           "default": false,
+          "scope": "application",
           "description": "Whether the user has dismissed the MCP setup notification."
         },
         "nexkit.telemetry.enabled": {
           "type": "boolean",
           "default": true,
+          "scope": "application",
           "description": "Enable telemetry to help improve Nexkit. Respects VS Code's global telemetry setting. No personally identifiable information is collected."
         },
         "nexkit.telemetry.connectionString": {
           "type": "string",
           "default": "",
+          "scope": "application",
           "description": "Azure Application Insights connection string (optional, for custom telemetry endpoint)."
         }
       }
@@ -159,21 +211,22 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
-    "compile": "tsc -p ./",
-    "build": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "package": "npm run check:types && npm run lint && npm run esbuild-base -- --minify",
-    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
-    "esbuild": "npm run esbuild-base -- --sourcemap",
-    "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
+    "compile": "npm run esbuild",
+    "build": "npm run esbuild",
+    "watch": "node esbuild.config.js --watch",
+    "package": "npm run check:types && npm run lint && node esbuild.config.js --production",
+    "esbuild-base": "node esbuild.config.js",
+    "esbuild": "node esbuild.config.js",
+    "esbuild-watch": "node esbuild.config.js --watch",
     "check:types": "tsc --noEmit",
     "test-compile": "tsc -p ./",
     "pretest": "npm run test-compile && npm run lint",
     "test": "node ./out/test/runTest.js",
-    "test:unit": "node ./out/test/runTest.js --grep 'Unit'",
-    "test:integration": "node ./out/test/runTest.js --grep 'Integration'",
+    "test:unit": "node ./out/test/runTest.js",
+    "test:integration": "node ./out/test/runTest.js",
     "test:coverage": "nyc --reporter=lcovonly --reporter=text node ./out/test/runTest.js",
     "lint": "eslint src --ext ts",
+    "format": "prettier --write \"**/*.ts\"",
     "version:bump": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md",
     "publish-private": "npm version patch --tag-version-prefix=v && git push && git push --tags",
     "release": "semantic-release",
@@ -183,8 +236,9 @@
     "@commitlint/cli": "^19.4.0",
     "@commitlint/config-conventional": "^19.4.0",
     "@cyclonedx/cyclonedx-npm": "^1.19.3",
-    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@preact/preset-vite": "^2.9.2",
     "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/exec": "^7.0.3",
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/github": "^11.0.6",
@@ -192,6 +246,7 @@
     "@types/adm-zip": "^0.5.7",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
+    "@types/sinon": "^17.0.3",
     "@types/vscode": "^1.105.0",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0",
@@ -204,9 +259,9 @@
     "glob": "^11.0.0",
     "mocha": "^10.0.10",
     "nyc": "^15.1.0",
+    "preact": "^10.25.4",
     "semantic-release": "^24.2.0",
     "sinon": "^19.0.2",
-    "@types/sinon": "^17.0.3",
     "typescript": "^5.9.3"
   }
 }

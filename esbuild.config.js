@@ -4,6 +4,8 @@
  */
 
 const esbuild = require('esbuild');
+const fs = require('fs');
+const path = require('path');
 
 const production = process.argv.includes('--production');
 const watch = process.argv.includes('--watch');
@@ -28,8 +30,38 @@ const esbuildProblemMatcherPlugin = {
 	},
 };
 
+/**
+ * Plugin to copy static webview files to output directory
+ */
+const copyStaticFilesPlugin = {
+	name: 'copy-static-files',
+	setup(build) {
+		build.onEnd(() => {
+			const webviewSourceDir = path.join(__dirname, 'src', 'features', 'panel-ui', 'webview');
+			const webviewOutputDir = path.join(__dirname, 'out', 'webview');
+
+			// Create output directory if it doesn't exist
+			if (!fs.existsSync(webviewOutputDir)) {
+				fs.mkdirSync(webviewOutputDir, { recursive: true });
+			}
+
+			// Copy HTML and CSS files
+			const filesToCopy = ['index.html', 'styles.css'];
+			filesToCopy.forEach(file => {
+				const source = path.join(webviewSourceDir, file);
+				const dest = path.join(webviewOutputDir, file);
+				if (fs.existsSync(source)) {
+					fs.copyFileSync(source, dest);
+					console.log(`[copy] ${file} -> out/webview/${file}`);
+				}
+			});
+		});
+	},
+};
+
 async function main() {
-	const ctx = await esbuild.context({
+	// Extension bundle
+	const extensionCtx = await esbuild.context({
 		entryPoints: ['src/extension.ts'],
 		bundle: true,
 		format: 'cjs',
@@ -44,11 +76,33 @@ async function main() {
 			esbuildProblemMatcherPlugin,
 		],
 	});
+
+	// Webview bundle
+	const webviewCtx = await esbuild.context({
+		entryPoints: ['src/features/panel-ui/webview/main.tsx'],
+		bundle: true,
+		format: 'iife',
+		minify: production,
+		sourcemap: !production,
+		platform: 'browser',
+		outfile: 'out/webview.js',
+		logLevel: 'silent',
+		jsx: 'automatic',
+		jsxImportSource: 'preact',
+		plugins: [
+			esbuildProblemMatcherPlugin,
+			copyStaticFilesPlugin,
+		],
+	});
+
 	if (watch) {
-		await ctx.watch();
+		await extensionCtx.watch();
+		await webviewCtx.watch();
 	} else {
-		await ctx.rebuild();
-		await ctx.dispose();
+		await extensionCtx.rebuild();
+		await webviewCtx.rebuild();
+		await extensionCtx.dispose();
+		await webviewCtx.dispose();
 	}
 }
 

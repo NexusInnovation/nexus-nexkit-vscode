@@ -1,0 +1,270 @@
+/* Nexkit Panel Styles */
+
+/* Base Styles */
+body {
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    color: var(--vscode-foreground);
+    background-color: var(--vscode-editor-background);
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    padding: 16px;
+    max-width: 100%;
+}
+
+/* Actions Section */
+.actions-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.action-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.action-button {
+    padding: 10px 16px;
+    font-size: 1em;
+    font-weight: 500;
+    border: none;
+    border-radius: 4px;
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.action-button:hover:not(:disabled) {
+    background-color: var(--vscode-button-hoverBackground);
+}
+
+.action-button:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.action-button:disabled {
+    background-color: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.button-description {
+    font-size: 0.85em;
+    color: var(--vscode-descriptionForeground);
+    margin: 0;
+    line-height: 1.4;
+    min-height: 3.6em; /* Reserve space for ~3 lines of text (1.4 line-height * 3 = 4.2, minus some padding) */
+}
+
+.button-description.disabled {
+    opacity: 0.6;
+}
+
+/* Loading States */
+.loading {
+    display: inline-block;
+    opacity: 0.6;
+    font-style: italic;
+}
+
+/* Template Management Section */
+.template-section {
+    margin-top: 8px;
+    border-top: 1px solid var(--vscode-panel-border);
+    padding-top: 12px;
+}
+
+.template-section h2 {
+    font-size: 1.1em;
+    font-weight: 600;
+    margin: 0;
+    color: var(--vscode-foreground);
+}
+
+/* Section Header */
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.collapse-all-btn {
+    background: none;
+    border: none;
+    color: var(--vscode-foreground);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    opacity: 0.7;
+    transition: opacity 0.15s ease;
+}
+
+.collapse-all-btn:hover {
+    opacity: 1;
+}
+
+/* Search Input */
+.search-wrapper {
+    position: relative;
+    margin-bottom: 16px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 8px 36px 8px 12px;
+    font-family: var(--vscode-font-family);
+    font-size: 0.9em;
+    color: var(--vscode-input-foreground);
+    background-color: var(--vscode-input-background);
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 4px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.search-input:focus {
+    border-color: var(--vscode-focusBorder);
+}
+
+.search-input::placeholder {
+    color: var(--vscode-input-placeholderForeground);
+}
+
+.search-clear-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--vscode-input-foreground);
+    cursor: pointer;
+    padding: 4px 6px;
+    font-size: 14px;
+    line-height: 1;
+    opacity: 0.6;
+    transition: opacity 0.15s ease;
+}
+
+.search-clear-btn:hover {
+    opacity: 1;
+}
+
+/* Empty State */
+.empty-message {
+    font-size: 0.9em;
+    color: var(--vscode-descriptionForeground);
+    font-style: italic;
+    margin: 12px 0;
+}
+
+/* Repository Section */
+.repository-section {
+    margin-bottom: 20px;
+}
+
+.repository-name {
+    font-size: 1em;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    color: var(--vscode-foreground);
+}
+
+/* Type Section (Collapsible) */
+.type-section {
+    margin-bottom: 8px;
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 4px;
+    background-color: var(--vscode-sideBar-background);
+}
+
+.type-header {
+    padding: 8px 12px;
+    font-size: 0.9em;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    color: var(--vscode-foreground);
+}
+
+.type-header::-webkit-details-marker {
+    display: none;
+}
+
+.type-header::before {
+    content: "";
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-left: 5px solid var(--vscode-foreground);
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    margin-right: 8px;
+    margin-left: 2px;
+    transition: transform 0.2s ease;
+    opacity: 0.8;
+}
+
+details[open] > .type-header::before {
+    transform: rotate(90deg);
+}
+
+.type-header:hover {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+/* Template List */
+.template-list {
+    padding: 8px 12px 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* Template Item */
+.template-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px;
+}
+
+.template-checkbox {
+    cursor: pointer;
+    width: 12px;
+    height: 12px;
+    margin: 0;
+}
+
+.template-checkbox:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.template-label {
+    font-size: 0.9em;
+    cursor: pointer;
+    user-select: none;
+    color: var(--vscode-foreground);
+    flex: 1;
+}
+
+.template-label:hover {
+    color: var(--vscode-textLink-foreground);
+}
+
+.template-checkbox:disabled + .template-label {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
