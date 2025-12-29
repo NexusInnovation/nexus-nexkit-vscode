@@ -41,10 +41,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
 
     this._view.webview.options = {
       enableScripts: true,
-      localResourceRoots: [
-        vscode.Uri.joinPath(this._context!.extensionUri, "out"),
-        vscode.Uri.joinPath(this._context!.extensionUri, "src", "features", "panel-ui", "webview"),
-      ],
+      localResourceRoots: [vscode.Uri.joinPath(this._context!.extensionUri, "out")],
     };
 
     // Generate webview HTML
@@ -60,17 +57,15 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
    * Builds the complete HTML content for the webview
    */
   private buildWebviewHtml(webview: vscode.Webview): string {
-    // Get paths to resources
-    const htmlPath = vscode.Uri.joinPath(this._context!.extensionUri, "src", "features", "panel-ui", "webview", "index.html");
-    const styleUri = webview.asWebviewUri(
-      vscode.Uri.joinPath(this._context!.extensionUri, "src", "features", "panel-ui", "webview", "styles.css")
-    );
+    // Get paths to resources from output directory
+    const htmlPath = vscode.Uri.joinPath(this._context!.extensionUri, "out", "webview", "index.html");
+    const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._context!.extensionUri, "out", "webview", "styles.css"));
     const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._context!.extensionUri, "out", "webview.js"));
 
     // Generate a nonce for CSP
     const nonce = this.getNonce();
 
-    // Read HTML template
+    // Read HTML template from output directory
     let html = fs.readFileSync(htmlPath.fsPath, "utf8");
 
     // Replace placeholders

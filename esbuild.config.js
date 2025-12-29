@@ -4,6 +4,8 @@
  */
 
 const esbuild = require('esbuild');
+const fs = require('fs');
+const path = require('path');
 
 const production = process.argv.includes('--production');
 const watch = process.argv.includes('--watch');
@@ -24,6 +26,35 @@ const esbuildProblemMatcherPlugin = {
 				console.error(`    ${location.file}:${location.line}:${location.column}:`);
 			});
 			console.log('[watch] build finished');
+		});
+	},
+};
+
+/**
+ * Plugin to copy static webview files to output directory
+ */
+const copyStaticFilesPlugin = {
+	name: 'copy-static-files',
+	setup(build) {
+		build.onEnd(() => {
+			const webviewSourceDir = path.join(__dirname, 'src', 'features', 'panel-ui', 'webview');
+			const webviewOutputDir = path.join(__dirname, 'out', 'webview');
+
+			// Create output directory if it doesn't exist
+			if (!fs.existsSync(webviewOutputDir)) {
+				fs.mkdirSync(webviewOutputDir, { recursive: true });
+			}
+
+			// Copy HTML and CSS files
+			const filesToCopy = ['index.html', 'styles.css'];
+			filesToCopy.forEach(file => {
+				const source = path.join(webviewSourceDir, file);
+				const dest = path.join(webviewOutputDir, file);
+				if (fs.existsSync(source)) {
+					fs.copyFileSync(source, dest);
+					console.log(`[copy] ${file} -> out/webview/${file}`);
+				}
+			});
 		});
 	},
 };
@@ -60,6 +91,7 @@ async function main() {
 		jsxImportSource: 'preact',
 		plugins: [
 			esbuildProblemMatcherPlugin,
+			copyStaticFilesPlugin,
 		],
 	});
 
