@@ -10,6 +10,7 @@ export const Commands = {
   OPEN_SETTINGS: "nexus-nexkit-vscode.openSettings",
   RESTORE_BACKUP: "nexus-nexkit-vscode.restoreBackup",
   CLEANUP_BACKUP: "nexus-nexkit-vscode.cleanupBackup",
+  UPDATE_INSTALLED_TEMPLATES: "nexus-nexkit-vscode.updateInstalledTemplates",
 } as const;
 
 // Type-safe command names

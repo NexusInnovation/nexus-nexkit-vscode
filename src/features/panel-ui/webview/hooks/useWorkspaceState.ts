@@ -38,8 +38,16 @@ export function useWorkspaceState() {
     messenger.sendMessage({ command: "initWorkspace" });
   };
 
+  /**
+   * Trigger update of installed templates
+   */
+  const updateInstalledTemplates = () => {
+    messenger.sendMessage({ command: "updateInstalledTemplates" });
+  };
+
   return {
     workspaceState,
     initializeWorkspace,
+    updateInstalledTemplates,
   };
 }

@@ -4,7 +4,7 @@ import { useWorkspaceState } from "../../hooks/useWorkspaceState";
  * ActionsSection Component with main action buttons for the Nexkit webview panel
  */
 export function ActionsSection() {
-  const { workspaceState, initializeWorkspace } = useWorkspaceState();
+  const { workspaceState, initializeWorkspace, updateInstalledTemplates } = useWorkspaceState();
   
   const buttonText = workspaceState.isInitialized ? "Reinitialize Project" : "Initialize Project";
   const description = workspaceState.isInitialized
@@ -24,6 +24,19 @@ export function ActionsSection() {
         </button>
         <p class={`button-description ${!workspaceState.hasWorkspace ? "disabled" : ""}`}>
           {description}
+        </p>
+      </div>
+      <div class="action-item">
+        <button
+          id="updateTemplatesBtn"
+          class="action-button"
+          disabled={!workspaceState.hasWorkspace}
+          onClick={updateInstalledTemplates}
+        >
+          <span>Update Installed Templates</span>
+        </button>
+        <p class={`button-description ${!workspaceState.hasWorkspace ? "disabled" : ""}`}>
+          Update all installed templates to their latest versions from repositories.
         </p>
       </div>
     </div>

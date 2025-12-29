@@ -266,6 +266,48 @@ export class AITemplateDataService implements vscode.Disposable {
   }
 
   /**
+   * Update all installed templates to their latest versions
+   * First syncs with filesystem, then refetches and reinstalls all installed templates
+   */
+  public async updateInstalledTemplates(): Promise<BatchInstallSummary & { skipped: number }> {
+    // First sync with filesystem to ensure state is current
+    await this.syncInstalledTemplates();
+
+    // Get all currently installed templates from state
+    const installedRecords = this.stateManager.getInstalledTemplates();
+
+    // Get all available templates from data store
+    const allTemplates = this.dataStore.getAll();
+
+    // Match installed records with current templates from repositories
+    const templatesToUpdate: AITemplateFile[] = [];
+    let skippedCount = 0;
+
+    for (const record of installedRecords) {
+      // Find matching template in available templates
+      const matchingTemplate = allTemplates.find(
+        (t) => t.name === record.name && t.type === record.type && t.repository === record.repository
+      );
+
+      if (matchingTemplate) {
+        templatesToUpdate.push(matchingTemplate);
+      } else {
+        // Template no longer available in configured repositories - skip silently
+        console.log(`[Update] Skipping template ${record.name} from ${record.repository} (no longer available)`);
+        skippedCount++;
+      }
+    }
+
+    // Install batch without backups (overwrite existing)
+    const summary = await this.installBatch(templatesToUpdate, { silent: true, overwrite: true });
+
+    return {
+      ...summary,
+      skipped: skippedCount,
+    };
+  }
+
+  /**
    * Setup configuration change watcher
    */
   public setupConfigurationWatcher(): void {

@@ -31,6 +31,7 @@ export class NexkitPanelMessageHandler {
       ["getTemplateData", this.handleGetTemplateData.bind(this)],
       ["installTemplate", this.handleInstallTemplate.bind(this)],
       ["uninstallTemplate", this.handleUninstallTemplate.bind(this)],
+      ["updateInstalledTemplates", this.handleUpdateInstalledTemplates.bind(this)],
     ]);
 
     // Auto-refresh template data when it changes (e.g., after config update)
@@ -90,6 +91,12 @@ export class NexkitPanelMessageHandler {
     } catch (error) {
       console.error("Failed to uninstall template:", error);
     }
+  }
+
+  private async handleUpdateInstalledTemplates(message: WebviewMessage & { command: "updateInstalledTemplates" }): Promise<void> {
+    this.trackWebviewAction("updateInstalledTemplates");
+    await vscode.commands.executeCommand(Commands.UPDATE_INSTALLED_TEMPLATES);
+    this.sendInstalledTemplates();
   }
 
   private sendWorkspaceState(): void {

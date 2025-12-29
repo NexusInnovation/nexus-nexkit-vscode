@@ -66,6 +66,11 @@
         "command": "nexus-nexkit-vscode.cleanupBackup",
         "title": "Nexkit: Cleanup Template Backups",
         "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.updateInstalledTemplates",
+        "title": "Nexkit: Update Installed Templates",
+        "category": "Nexkit"
       }
     ],
     "menus": {

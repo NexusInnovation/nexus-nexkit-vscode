@@ -7,6 +7,7 @@ import { registerInstallUserMCPsCommand } from "./features/mcp-management/comman
 import { registerCleanupBackupCommand, registerRestoreBackupCommand } from "./features/backup-management/commands";
 import { registerSettingsCommands } from "./shared/commands/settingsCommand";
 import { registerCheckExtensionUpdateCommand } from "./features/extension-updates/commands";
+import { registerUpdateInstalledTemplatesCommand } from "./features/ai-template-files/commands";
 
 /**
  * Extension activation
@@ -27,6 +28,7 @@ export async function activate(context: vscode.ExtensionContext) {
   registerRestoreBackupCommand(context, services);
   registerCleanupBackupCommand(context, services);
   registerCheckExtensionUpdateCommand(context, services);
+  registerUpdateInstalledTemplatesCommand(context, services);
   registerSettingsCommands(context, services);
 
   // Register webview panel

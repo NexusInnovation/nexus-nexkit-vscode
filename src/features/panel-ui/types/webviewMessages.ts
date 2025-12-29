@@ -8,7 +8,8 @@ export type WebviewMessage =
   | { command: "initWorkspace" }
   | { command: "getTemplateData" }
   | { command: "installTemplate"; template: AITemplateFile }
-  | { command: "uninstallTemplate"; template: AITemplateFile };
+  | { command: "uninstallTemplate"; template: AITemplateFile }
+  | { command: "updateInstalledTemplates" };
 
 /**
  * Messages sent FROM the extension TO the webview

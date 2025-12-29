@@ -49,6 +49,7 @@ suite("Unit: AITemplateDataService", () => {
   test("Should have installation methods", () => {
     assert.strictEqual(typeof service.installTemplate, "function");
     assert.strictEqual(typeof service.installBatch, "function");
+    assert.strictEqual(typeof service.updateInstalledTemplates, "function");
   });
 
   test("Should have event emitters", () => {
