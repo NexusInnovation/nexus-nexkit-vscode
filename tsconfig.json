@@ -3,19 +3,26 @@
 		"module": "commonjs",
 		"target": "ES2022",
 		"lib": [
-			"ES2022"
+			"ES2022",
+			"DOM"
 		],
 		"outDir": "out",
 		"sourceMap": true,
 		"inlineSourceMap": false,
 		"inlineSources": false,
-		"sourceRoot": "../src",
-		"rootDir": "src",
+		"rootDir": ".",
 		"strict": true,
-		"forceConsistentCasingInFileNames": true
+		"forceConsistentCasingInFileNames": true,
+		"jsx": "react-jsx",
+		"jsxImportSource": "preact"
 	},
+	"include": [
+		"src/**/*",
+		"test/**/*"
+	],
 	"exclude": [
 		"node_modules",
-		".vscode-test"
+		".vscode-test",
+		"src/test"
 	]
 }
