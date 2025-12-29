@@ -240,7 +240,7 @@ try {
 
 - Respect `nexkit.extension.autoCheckUpdates` setting
 - Honor `nexkit.extension.updateCheckInterval` for throttling
-- Update `nexkit.extension.lastUpdateCheck` after each check
+- Update last check timestamp in GlobalState after each check
 - Handle GitHub API rate limiting gracefully
 - Clean up old downloads automatically
 

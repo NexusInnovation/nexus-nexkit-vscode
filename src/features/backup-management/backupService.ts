@@ -7,7 +7,7 @@ import { fileExists, copyDirectory } from "../../shared/utils/fileHelper";
  */
 export class BackupService {
   /**
-   * Create backup of existing directory
+   * Create backup of existing directory and delete original
    */
   public async backupDirectory(sourcePath: string): Promise<string | null> {
     if (!(await fileExists(sourcePath))) {
@@ -18,6 +18,7 @@ export class BackupService {
     const backupPath = `${sourcePath}.backup-${timestamp}`;
 
     await copyDirectory(sourcePath, backupPath);
+    await fs.promises.rm(sourcePath, { recursive: true, force: true });
 
     return backupPath;
   }

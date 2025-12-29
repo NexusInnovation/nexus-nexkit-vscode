@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from "preact/hooks";
 import { useVSCodeAPI } from "./useVSCodeAPI";
-import { RepositoryTemplateData, TemplateFileData, InstalledTemplatesMap } from "../types";
+import { AITemplateFile, InstalledTemplatesMap, RepositoryTemplatesMap } from "../../../ai-template-files/models/aiTemplateFile";
 
 /**
  * Hook to manage template data and operations
  */
 export function useTemplateData() {
   const messenger = useVSCodeAPI();
-  const [repositories, setRepositories] = useState<RepositoryTemplateData[]>([]);
+  const [repositories, setRepositories] = useState<RepositoryTemplatesMap[]>([]);
   const [installedTemplates, setInstalledTemplates] = useState<InstalledTemplatesMap>({
     agents: [],
     prompts: [],
@@ -42,7 +42,7 @@ export function useTemplateData() {
    * Install a template
    */
   const installTemplate = useCallback(
-    (template: TemplateFileData) => {
+    (template: AITemplateFile) => {
       messenger.sendMessage({
         command: "installTemplate",
         template,
@@ -55,7 +55,7 @@ export function useTemplateData() {
    * Uninstall a template
    */
   const uninstallTemplate = useCallback(
-    (template: TemplateFileData) => {
+    (template: AITemplateFile) => {
       messenger.sendMessage({
         command: "uninstallTemplate",
         template,
@@ -68,7 +68,7 @@ export function useTemplateData() {
    * Check if a template is installed
    */
   const isTemplateInstalled = useCallback(
-    (template: TemplateFileData): boolean => {
+    (template: AITemplateFile): boolean => {
       const installedList = installedTemplates[template.type as keyof InstalledTemplatesMap] || [];
       return installedList.includes(template.name);
     },

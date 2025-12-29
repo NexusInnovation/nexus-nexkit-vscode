@@ -8,12 +8,55 @@ import * as vscode from "vscode";
 import { SettingsManager } from "../../src/core/settingsManager";
 
 suite("Unit: SettingsManager", () => {
+  let mockContext: vscode.ExtensionContext;
+  let globalStateData: Map<string, any>;
+  let workspaceStateData: Map<string, any>;
+
+  setup(() => {
+    // Create mock state stores
+    globalStateData = new Map<string, any>();
+    workspaceStateData = new Map<string, any>();
+
+    mockContext = {
+      subscriptions: [],
+      workspaceState: {
+        get: (key: string, defaultValue?: any) => {
+          return workspaceStateData.has(key) ? workspaceStateData.get(key) : defaultValue;
+        },
+        update: async (key: string, value: any) => {
+          workspaceStateData.set(key, value);
+        },
+      },
+      globalState: {
+        get: (key: string, defaultValue?: any) => {
+          return globalStateData.has(key) ? globalStateData.get(key) : defaultValue;
+        },
+        update: async (key: string, value: any) => {
+          globalStateData.set(key, value);
+        },
+        setKeysForSync: () => {},
+      },
+      extensionUri: vscode.Uri.file(__dirname),
+      extensionPath: __dirname,
+      asAbsolutePath: (relativePath: string) => `${__dirname}/${relativePath}`,
+      storagePath: undefined,
+      globalStoragePath: __dirname,
+      logPath: __dirname,
+      extensionMode: vscode.ExtensionMode.Test,
+    } as any;
+
+    // Initialize SettingsManager with mock context
+    SettingsManager.initialize(mockContext);
+  });
+
   teardown(async () => {
-    // Clean up settings after each test
+    // Clean up global settings only (no workspace in tests)
     const config = vscode.workspace.getConfiguration("nexkit");
-    await config.update("workspace.initialized", undefined, vscode.ConfigurationTarget.Workspace);
-    await config.update("telemetry.enabled", undefined, vscode.ConfigurationTarget.Global);
     await config.update("mcpSetup.dismissed", undefined, vscode.ConfigurationTarget.Global);
+
+    // Clear state stores
+    globalStateData.clear();
+    workspaceStateData.clear();
   });
 
   test("Should get workspace initialized status", () => {

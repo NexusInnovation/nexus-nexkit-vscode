@@ -30,7 +30,9 @@ export class SettingsManager {
   // Extension update settings
   private static readonly EXTENSION_AUTO_CHECK_UPDATES = "extension.autoCheckUpdates";
   private static readonly EXTENSION_UPDATE_CHECK_INTERVAL = "extension.updateCheckInterval";
-  private static readonly EXTENSION_LAST_UPDATE_CHECK = "extension.lastUpdateCheck";
+
+  // Extension update state keys (GlobalState)
+  private static readonly EXTENSION_LAST_UPDATE_CHECK_STATE_KEY = "nexkit.extension.lastUpdateCheck";
 
   /**
    * Initialize the SettingsManager with the extension context
@@ -116,12 +118,16 @@ export class SettingsManager {
   }
 
   static getLastUpdateCheck(): number {
-    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<number>(this.EXTENSION_LAST_UPDATE_CHECK, 0);
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    return this.context.globalState.get<number>(this.EXTENSION_LAST_UPDATE_CHECK_STATE_KEY, 0);
   }
 
   static async setLastUpdateCheck(timestamp: number): Promise<void> {
-    await vscode.workspace
-      .getConfiguration(this.NEXKIT_SECTION)
-      .update(this.EXTENSION_LAST_UPDATE_CHECK, timestamp, vscode.ConfigurationTarget.Global);
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    await this.context.globalState.update(this.EXTENSION_LAST_UPDATE_CHECK_STATE_KEY, timestamp);
   }
 }

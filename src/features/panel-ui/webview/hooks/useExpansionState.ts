@@ -3,7 +3,7 @@
  * Stores section expansion state in VS Code persistent storage
  */
 
-import { useCallback } from "preact/hooks";
+import { useState, useEffect, useCallback } from "preact/hooks";
 import { useVSCodeAPI } from "./useVSCodeAPI";
 import { WebviewPersistentState } from "../types";
 
@@ -13,26 +13,30 @@ import { WebviewPersistentState } from "../types";
  */
 export function useExpansionState() {
   const messenger = useVSCodeAPI();
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
-  /**
-   * Get the current expansion state from VS Code storage
-   */
-  const getExpansionStates = useCallback((): Record<string, boolean> => {
+  // Initialize state from VS Code storage on mount
+  useEffect(() => {
     const state = messenger.getState<WebviewPersistentState>();
-    return state?.expandedSections || {};
+    setExpandedSections(state?.expandedSections || {});
   }, [messenger]);
+
+  // Sync state to VS Code storage whenever it changes
+  useEffect(() => {
+    const currentState = messenger.getState<WebviewPersistentState>() || { expandedSections: {} };
+    currentState.expandedSections = expandedSections;
+    messenger.setState(currentState);
+  }, [expandedSections, messenger]);
 
   /**
    * Set expansion state for a specific section
    */
   const setSectionExpanded = useCallback(
     (repository: string, type: string, expanded: boolean) => {
-      const currentState = messenger.getState<WebviewPersistentState>() || {
-        expandedSections: {},
-      };
-      const key = `${repository}::${type}`;
-      currentState.expandedSections[key] = expanded;
-      messenger.setState(currentState);
+      setExpandedSections((prev) => {
+        const key = `${repository}::${type}`;
+        return { ...prev, [key]: expanded };
+      });
     },
     [messenger]
   );
@@ -42,28 +46,15 @@ export function useExpansionState() {
    */
   const isSectionExpanded = useCallback(
     (repository: string, type: string): boolean => {
-      const states = getExpansionStates();
       const key = `${repository}::${type}`;
-      return states[key] ?? false;
+      return expandedSections[key] ?? false;
     },
-    [getExpansionStates]
+    [expandedSections]
   );
 
-  /**
-   * Check if a section is expanded
-   */
   const collapseAll = useCallback(() => {
-    const currentState = messenger.getState<WebviewPersistentState>() || {
-      expandedSections: {},
-    };
-    currentState.expandedSections = {};
-    messenger.setState(currentState);
-  }, [getExpansionStates]);
+    setExpandedSections({});
+  }, []);
 
-  return {
-    getExpansionStates,
-    setSectionExpanded,
-    isSectionExpanded,
-    collapseAll,
-  };
+  return { isSectionExpanded, setSectionExpanded, collapseAll };
 }

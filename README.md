@@ -132,7 +132,6 @@ Default includes the "Awesome Copilot" repository. The "Nexus Templates" reposit
 
 - **`nexkit.extension.autoCheckUpdates`** - Automatically check for updates on activation (default: `true`)
 - **`nexkit.extension.updateCheckInterval`** - Hours between update checks (default: `24`)
-- **`nexkit.extension.lastUpdateCheck`** - Timestamp of last update check (managed automatically)
 
 ### MCP Configuration
 

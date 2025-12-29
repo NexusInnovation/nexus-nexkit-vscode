@@ -181,12 +181,6 @@
           "scope": "application",
           "description": "Hours between automatic extension update checks."
         },
-        "nexkit.extension.lastUpdateCheck": {
-          "type": "number",
-          "default": 0,
-          "scope": "application",
-          "description": "Timestamp of last extension update check."
-        },
         "nexkit.mcpSetup.dismissed": {
           "type": "boolean",
           "default": false,
