@@ -53,7 +53,10 @@ export function TypeSection({
 
   // Calculate counts
   const installedList = installedTemplates[type as keyof InstalledTemplatesMap] || [];
-  const installedCount = templates.filter((t) => installedList.includes(t.name)).length;
+  const installedCount = templates.filter((t) => {
+    const qualifiedName = `${t.repository}::${t.name}`;
+    return installedList.includes(qualifiedName);
+  }).length;
   const totalCount = templates.length;
 
   // Sync the expanded state with the details element

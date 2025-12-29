@@ -22,6 +22,20 @@ body {
     gap: 12px;
 }
 
+.no-workspace-message {
+    padding: 16px;
+    background-color: var(--vscode-inputValidation-infoBackground);
+    border: 1px solid var(--vscode-inputValidation-infoBorder);
+    border-radius: 4px;
+    text-align: center;
+}
+
+.no-workspace-message p {
+    margin: 0;
+    color: var(--vscode-foreground);
+    font-size: 0.9em;
+}
+
 .action-item {
     display: flex;
     flex-direction: column;

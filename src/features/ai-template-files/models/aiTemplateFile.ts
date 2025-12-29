@@ -21,6 +21,7 @@ export type AITemplateFileType = (typeof AI_TEMPLATE_FILE_TYPES)[number];
 
 /**
  * Map of installed templates organized by type in the workspace
+ * Each entry is a string in the format "repository::templateName"
  */
 export type InstalledTemplatesMap = Record<AITemplateFileType, string[]>;
 
