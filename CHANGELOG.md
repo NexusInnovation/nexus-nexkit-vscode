@@ -1,3 +1,7 @@
+## 0.7.0-beta.2 (2025-12-29)
+
+* fix: build webview ([fa885de](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/fa885de))
+
 ## 0.7.0-beta.1 (2025-12-29)
 
 * feat: complete refactor ([9b24c3a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9b24c3a))
