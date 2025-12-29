@@ -41,7 +41,9 @@ export class RepositoryTemplateProvider {
       const fetchPromises: Promise<void>[] = [];
 
       for (const [type, path] of Object.entries(this.config.paths)) {
-        if (!path) continue;
+        if (!path) {
+          continue;
+        }
 
         const fetchPromise = (async () => {
           try {
@@ -61,7 +63,9 @@ export class RepositoryTemplateProvider {
             const contents = (await response.json()) as GitHubContentItem[];
 
             for (const item of contents) {
-              if (item.type !== "file" || !item.name.endsWith(".md")) continue;
+              if (item.type !== "file" || !item.name.endsWith(".md")) {
+                continue;
+              }
 
               allTemplates.push({
                 name: item.name,

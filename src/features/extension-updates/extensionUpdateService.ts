@@ -285,7 +285,9 @@ export class ExtensionUpdateService {
   private shouldCheckForExtensionUpdates(): boolean {
     const autoCheck = SettingsManager.isAutoCheckUpdatesEnabled();
 
-    if (!autoCheck) return false;
+    if (!autoCheck) {
+      return false;
+    }
 
     const intervalHours = SettingsManager.getUpdateCheckIntervalHours();
     const lastCheck = SettingsManager.getLastUpdateCheck();

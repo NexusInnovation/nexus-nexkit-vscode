@@ -59,7 +59,7 @@ export function registerInitializeWorkspaceCommand(context: vscode.ExtensionCont
           // Show success message with deployment summary
           let resultMessage = "Nexkit project initialized successfully!";
 
-          if (deploymentSummary != null && deploymentSummary.installed > 0) {
+          if (deploymentSummary !== null && deploymentSummary.installed > 0) {
             resultMessage += ` Installed ${deploymentSummary.installed} templates.`;
           }
 

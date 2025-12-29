@@ -2,17 +2,17 @@ import * as assert from "assert";
 import * as vscode from "vscode";
 import { Commands } from "../shared/constants/commands";
 
-const EXTENSION_NAME = "nexus-nexkit-vscode";
+const EXTENSION_ID = "NexusInnovation.nexus-nexkit-vscode";
 
 function getNexkitExtension(): vscode.Extension<any> | undefined {
-  return vscode.extensions.all.find((e) => e.packageJSON?.name === EXTENSION_NAME);
+  return vscode.extensions.getExtension(EXTENSION_ID);
 }
 
 suite("Unit: Extension Activation", () => {
   vscode.window.showInformationMessage("Running Nexkit extension tests");
 
   test("Extension should be present", () => {
-    assert.ok(getNexkitExtension(), `Expected extension with name '${EXTENSION_NAME}' to be present in the extension host.`);
+    assert.ok(getNexkitExtension(), `Expected extension with ID '${EXTENSION_ID}' to be present in the extension host.`);
   });
 
   test("Should activate extension", async () => {
