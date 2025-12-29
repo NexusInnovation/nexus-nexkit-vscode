@@ -11,34 +11,47 @@ export function ActionsSection() {
     ? "Reset and reconfigure Nexkit templates and configuration."
     : "Set up Nexkit templates and configuration for your workspace";
 
+  // Show message if no workspace is open
+  if (!workspaceState.hasWorkspace) {
+    return (
+      <div class="actions-section">
+        <div class="no-workspace-message">
+          <p>Please open a workspace to use Nexkit features.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div class="actions-section">
       <div class="action-item">
         <button
           id="initProjectBtn"
           class="action-button"
-          disabled={!workspaceState.hasWorkspace}
           onClick={initializeWorkspace}
         >
           <span>{buttonText}</span>
         </button>
-        <p class={`button-description ${!workspaceState.hasWorkspace ? "disabled" : ""}`}>
+        <p class="button-description">
           {description}
         </p>
       </div>
-      <div class="action-item">
-        <button
-          id="updateTemplatesBtn"
-          class="action-button"
-          disabled={!workspaceState.hasWorkspace}
-          onClick={updateInstalledTemplates}
-        >
-          <span>Update Installed Templates</span>
-        </button>
-        <p class={`button-description ${!workspaceState.hasWorkspace ? "disabled" : ""}`}>
-          Update all installed templates to their latest versions from repositories.
-        </p>
-      </div>
+      {
+        workspaceState.isInitialized && (
+          <div class="action-item">
+          <button
+            id="updateTemplatesBtn"
+            class="action-button"
+            onClick={updateInstalledTemplates}
+          >
+            <span>Update Installed Templates</span>
+          </button>
+          <p class="button-description">
+            Update all installed templates to their latest versions from repositories.
+          </p>
+          </div>
+        )
+      }
     </div>
   );
 }
