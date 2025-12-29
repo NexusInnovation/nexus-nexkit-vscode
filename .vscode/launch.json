@@ -21,7 +21,8 @@
 			"skipFiles": [
 				"<node_internals>/**"
 			],
-			"preLaunchTask": "npm: watch"
+			"preLaunchTask": "npm: watch",
+			"internalConsoleOptions": "openOnSessionStart"
 		},
 		{
 			"name": "Extension Tests",

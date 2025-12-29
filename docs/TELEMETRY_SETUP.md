@@ -221,7 +221,7 @@ customEvents
 customEvents
 | where timestamp > ago(7d)
 | where name == "command.executed"
-| summarize Count=count() by 
+| summarize Count=count() by
     Command=tostring(customDimensions.commandName),
     Username=tostring(customDimensions.username),
     IPAddress=tostring(customDimensions.ipAddress)
@@ -243,11 +243,11 @@ customEvents
 ```kql
 customEvents
 | where timestamp > ago(24h)
-| summarize 
-    Events=count(), 
+| summarize
+    Events=count(),
     Commands=countif(name == "command.executed"),
     Errors=countif(name == "error")
-by 
+by
     Username=tostring(customDimensions.username),
     IPAddress=tostring(customDimensions.ipAddress)
 | order by Events desc
@@ -336,7 +336,7 @@ The Nexkit extension is configured to send **live telemetry** to Azure Applicati
 **Real-time Events:**
 
 - Extension activation/deactivation
-- Command executions (e.g., `nexus-nexkit-vscode.initProject`)
+- Command executions (e.g., `nexus-nexkit-vscode.initWorkspace`)
 - Errors and exceptions with stack traces
 - Custom events and metrics
 
