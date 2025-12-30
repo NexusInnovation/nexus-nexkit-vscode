@@ -140,8 +140,8 @@ suite("Unit: InstalledTemplatesStateManager", () => {
 
     const map = stateManager.getInstalledTemplatesMap();
 
-    assert.ok(map.agents.includes("test.agent.md"));
-    assert.ok(map.prompts.includes("test.prompt.md"));
+    assert.ok(map.agents.includes("test-repo::test.agent.md"));
+    assert.ok(map.prompts.includes("test-repo::test.prompt.md"));
     assert.strictEqual(map.instructions.length, 0);
     assert.strictEqual(map.chatmodes.length, 0);
   });
