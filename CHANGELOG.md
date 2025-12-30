@@ -1,3 +1,19 @@
+## 1.0.0 (2025-12-30)
+
+* BREAKING CHANGE: [v1.0] Complete refactor ([7e487ba](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/7e487ba))
+* feat!: [v1.0] Refonte de l'extension et amélioration globale (#45) ([931f03e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/931f03e)), closes [#45](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/45)
+* feat!: [v1.0] Refonte de l'extension et amélioration globale (#47) ([2757937](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2757937)), closes [#47](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/47)
+* feat!: complete v1.0 refactor ([3e740b9](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3e740b9))
+
+
+### BREAKING CHANGE
+
+* Major refactor of the entire extension with new features and breaking changes.
+- Cleanup of old unused files
+- Template management via GitHub repositories
+- Preact-based frontend
+- Improved features and tests
+
 ## 0.7.0-beta.2 (2025-12-29)
 
 * fix: build webview ([fa885de](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/fa885de))
