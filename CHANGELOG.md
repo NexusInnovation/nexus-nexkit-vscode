@@ -1,3 +1,7 @@
+## <small>1.1.2 (2026-01-02)</small>
+
+* fix: test autoupdate ([29dae2b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/29dae2b))
+
 ## <small>1.1.1 (2026-01-02)</small>
 
 * fix: fix auto update package installation ([f0724df](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/f0724df))
