@@ -19,22 +19,12 @@ export function registerInstallUserMCPsCommand(context: vscode.ExtensionContext,
           cancellable: false,
         },
         async (progress) => {
-          progress.report({
-            increment: 25,
-            message: "Checking existing configuration...",
-          });
-
           const { missing } = await services.mcpConfig.checkRequiredUserMCPs();
 
           if (missing.length === 0) {
             vscode.window.showInformationMessage("All required MCP servers are already configured!");
             return false;
           }
-
-          progress.report({
-            increment: 50,
-            message: `Installing ${missing.join(", ")}...`,
-          });
 
           // Install missing servers
           for (const server of missing) {
@@ -50,11 +40,6 @@ export function registerInstallUserMCPsCommand(context: vscode.ExtensionContext,
               });
             }
           }
-
-          progress.report({
-            increment: 25,
-            message: "Installation complete",
-          });
 
           return true;
         }
