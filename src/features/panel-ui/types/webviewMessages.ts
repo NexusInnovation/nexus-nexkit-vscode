@@ -1,4 +1,5 @@
 import { AITemplateFile, RepositoryTemplatesMap } from "../../ai-template-files/models/aiTemplateFile";
+import { TemplateMetadata } from "../../ai-template-files/models/templateMetadata";
 
 /**
  * Messages sent FROM the webview TO the extension
@@ -9,7 +10,8 @@ export type WebviewMessage =
   | { command: "getTemplateData" }
   | { command: "installTemplate"; template: AITemplateFile }
   | { command: "uninstallTemplate"; template: AITemplateFile }
-  | { command: "updateInstalledTemplates" };
+  | { command: "updateInstalledTemplates" }
+  | { command: "getTemplateMetadata"; template: AITemplateFile };
 
 /**
  * Messages sent FROM the extension TO the webview
@@ -32,4 +34,10 @@ export type ExtensionMessage =
         instructions: string[];
         chatmodes: string[];
       };
+    }
+  | {
+      command: "templateMetadataResponse";
+      template: AITemplateFile;
+      metadata: TemplateMetadata | null;
+      error?: string;
     };

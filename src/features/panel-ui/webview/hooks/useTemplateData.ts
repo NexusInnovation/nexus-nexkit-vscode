@@ -19,17 +19,15 @@ export function useTemplateData() {
   useEffect(() => {
     // Listen for template data updates
     const unsubscribeTemplateData = messenger.onMessage("templateDataUpdate", (message) => {
-      if (message.command === "templateDataUpdate") {
-        setRepositories(message.repositories);
-        setIsLoading(false);
-      }
+      if (message.command !== "templateDataUpdate") return;
+      setRepositories(message.repositories);
+      setIsLoading(false);
     });
 
     // Listen for installed templates updates
     const unsubscribeInstalledTemplates = messenger.onMessage("installedTemplatesUpdate", (message) => {
-      if (message.command === "installedTemplatesUpdate") {
-        setInstalledTemplates(message.installed);
-      }
+      if (message.command !== "installedTemplatesUpdate") return;
+      setInstalledTemplates(message.installed);
     });
 
     return () => {
