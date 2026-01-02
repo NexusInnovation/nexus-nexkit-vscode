@@ -3,6 +3,7 @@ import { TelemetryService } from "../../shared/services/telemetryService";
 import { SettingsManager } from "../../core/settingsManager";
 import { Commands } from "../../shared/constants/commands";
 import { AITemplateDataService } from "../ai-template-files/services/aiTemplateDataService";
+import { TemplateMetadataService } from "../ai-template-files/services/templateMetadataService";
 import { WebviewMessage, ExtensionMessage } from "./types/webviewMessages";
 
 /**
@@ -23,7 +24,8 @@ export class NexkitPanelMessageHandler {
   constructor(
     private readonly getWebview: () => vscode.WebviewView | undefined,
     private readonly _telemetryService: TelemetryService,
-    private readonly _aiTemplateDataService: AITemplateDataService
+    private readonly _aiTemplateDataService: AITemplateDataService,
+    private readonly _templateMetadataService: TemplateMetadataService
   ) {
     this._messageHandlers = new Map([
       ["webviewReady", this.handleWebviewReady.bind(this)],
@@ -32,6 +34,7 @@ export class NexkitPanelMessageHandler {
       ["installTemplate", this.handleInstallTemplate.bind(this)],
       ["uninstallTemplate", this.handleUninstallTemplate.bind(this)],
       ["updateInstalledTemplates", this.handleUpdateInstalledTemplates.bind(this)],
+      ["getTemplateMetadata", this.handleGetTemplateMetadata.bind(this)],
     ]);
 
     // Auto-refresh template data when it changes (e.g., after config update)
@@ -97,6 +100,25 @@ export class NexkitPanelMessageHandler {
     this.trackWebviewAction("updateInstalledTemplates");
     await vscode.commands.executeCommand(Commands.UPDATE_INSTALLED_TEMPLATES);
     this.sendInstalledTemplates();
+  }
+
+  private async handleGetTemplateMetadata(message: WebviewMessage & { command: "getTemplateMetadata" }): Promise<void> {
+    try {
+      const metadata = await this._templateMetadataService.getMetadata(message.template);
+      this.sendToWebview({
+        command: "templateMetadataResponse",
+        template: message.template,
+        metadata,
+      });
+    } catch (error) {
+      console.error("Failed to get template metadata:", error);
+      this.sendToWebview({
+        command: "templateMetadataResponse",
+        template: message.template,
+        metadata: null,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   private sendWorkspaceState(): void {

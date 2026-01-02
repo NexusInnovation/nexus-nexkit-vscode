@@ -32,7 +32,7 @@ export async function activate(context: vscode.ExtensionContext) {
   registerSettingsCommands(context, services);
 
   // Register webview panel
-  const nexkitPanelProvider = new NexkitPanelViewProvider(services.telemetry, services.aiTemplateData);
+  const nexkitPanelProvider = new NexkitPanelViewProvider(services.telemetry, services.aiTemplateData, services.templateMetadata);
   nexkitPanelProvider.initialize(context);
 
   // Check for extension updates on activation & cleanup old .vsix files
