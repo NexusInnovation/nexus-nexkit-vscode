@@ -1,3 +1,7 @@
+## 1.1.0 (2026-01-02)
+
+* feat: add hover tooltip on templates (#48) ([ac25091](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ac25091)), closes [#48](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/48)
+
 ## 1.0.0 (2025-12-30)
 
 * BREAKING CHANGE: [v1.0] Complete refactor ([7e487ba](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/7e487ba))
