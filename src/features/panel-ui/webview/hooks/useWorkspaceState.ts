@@ -20,12 +20,11 @@ export function useWorkspaceState() {
   useEffect(() => {
     // Listen for workspace state updates from extension
     const unsubscribe = messenger.onMessage("workspaceStateUpdate", (message) => {
-      if (message.command === "workspaceStateUpdate") {
-        setWorkspaceState({
-          hasWorkspace: message.hasWorkspace,
-          isInitialized: message.isInitialized,
-        });
-      }
+      if (message.command !== "workspaceStateUpdate") return;
+      setWorkspaceState({
+        hasWorkspace: message.hasWorkspace,
+        isInitialized: message.isInitialized,
+      });
     });
 
     return unsubscribe;

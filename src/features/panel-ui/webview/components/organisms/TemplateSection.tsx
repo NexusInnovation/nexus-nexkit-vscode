@@ -6,6 +6,7 @@ import { RepositorySection } from "./RepositorySection";
 import { useTemplateData } from "../../hooks/useTemplateData";
 import { CollapseAllButton } from "../atoms/CollapseAllButton";
 import { useWorkspaceState } from "../../hooks/useWorkspaceState";
+import { TemplateMetadataProvider } from "../../contexts/TemplateMetadataContext";
 
 /**
  * TemplateSection Component
@@ -54,19 +55,21 @@ export function TemplateSection() {
       <SearchBar value={searchQuery} onChange={setSearchQuery} />
 
       <div id="templateContainer">
-        {repositories.map((repo) => (
-          <RepositorySection
-            key={repo.name}
-            repository={repo}
-            installedTemplates={installedTemplates}
-            isSectionExpanded={isSectionExpanded}
-            setSectionExpanded={setSectionExpanded}
-            onInstall={installTemplate}
-            onUninstall={uninstallTemplate}
-            isTemplateInstalled={isTemplateInstalled}
-            searchQuery={debouncedSearchQuery}
-          />
-        ))}
+        <TemplateMetadataProvider>
+          {repositories.map((repo) => (
+            <RepositorySection
+              key={repo.name}
+              repository={repo}
+              installedTemplates={installedTemplates}
+              isSectionExpanded={isSectionExpanded}
+              setSectionExpanded={setSectionExpanded}
+              onInstall={installTemplate}
+              onUninstall={uninstallTemplate}
+              isTemplateInstalled={isTemplateInstalled}
+              searchQuery={debouncedSearchQuery}
+            />
+          ))}
+        </TemplateMetadataProvider>
       </div>
     </div>
   );
