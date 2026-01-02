@@ -1,3 +1,7 @@
+## <small>1.1.1 (2026-01-02)</small>
+
+* fix: fix auto update package installation ([f0724df](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/f0724df))
+
 ## 1.1.0 (2026-01-02)
 
 * feat: add hover tooltip on templates (#48) ([ac25091](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ac25091)), closes [#48](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/48)
