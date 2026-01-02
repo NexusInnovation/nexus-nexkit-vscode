@@ -17,12 +17,7 @@ export function registerCheckExtensionUpdateCommand(context: vscode.ExtensionCon
           title: "Checking for extension updates...",
           cancellable: false,
         },
-        async (progress) => {
-          progress.report({
-            increment: 30,
-            message: "Checking GitHub releases...",
-          });
-
+        async () => {
           const updateInfo = await services.extensionUpdate.checkForExtensionUpdate();
 
           if (!updateInfo) {
@@ -30,13 +25,7 @@ export function registerCheckExtensionUpdateCommand(context: vscode.ExtensionCon
             return;
           }
 
-          progress.report({
-            increment: 70,
-            message: "Update available...",
-          });
-
-          // Prompt user for update action
-          await services.extensionUpdate.promptUserForUpdate(updateInfo);
+          services.extensionUpdate.promptUserForUpdate(updateInfo);
         }
       );
     },

@@ -43,7 +43,6 @@ export function registerRestoreBackupCommand(context: vscode.ExtensionContext, s
 
       const confirm = await vscode.window.showWarningMessage(
         `This will replace your current .github directory with the backup from ${selectedBackup.label}. Continue?`,
-        { modal: true },
         "Restore"
       );
 
@@ -57,17 +56,8 @@ export function registerRestoreBackupCommand(context: vscode.ExtensionContext, s
           title: "Restoring backup...",
           cancellable: false,
         },
-        async (progress) => {
-          progress.report({
-            increment: 50,
-            message: "Restoring templates...",
-          });
+        async () => {
           await services.backup.restoreBackup(workspaceFolder.uri.fsPath, ".github", selectedBackup.description);
-
-          progress.report({
-            increment: 50,
-            message: "Backup restored successfully",
-          });
         }
       );
 
@@ -97,7 +87,6 @@ export function registerCleanupBackupCommand(context: vscode.ExtensionContext, s
 
       const confirm = await vscode.window.showWarningMessage(
         `This will permanently delete all ${backups.length} template backup${backups.length > 1 ? "s" : ""}. This action cannot be undone. Continue?`,
-        { modal: true },
         "Delete All"
       );
 
@@ -108,20 +97,11 @@ export function registerCleanupBackupCommand(context: vscode.ExtensionContext, s
       await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
-          title: "Deleting backups...",
+          title: "Removing all backups...",
           cancellable: false,
         },
         async (progress) => {
-          progress.report({
-            increment: 50,
-            message: "Removing all backups...",
-          });
           await services.backup.cleanupBackups(workspaceFolder.uri.fsPath, ".github", 0);
-
-          progress.report({
-            increment: 50,
-            message: "Cleanup completed",
-          });
         }
       );
 
