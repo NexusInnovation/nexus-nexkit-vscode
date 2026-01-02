@@ -1,5 +1,5 @@
-import { useState } from "preact/hooks";
 import { AITemplateFile } from "../../../../ai-template-files/models/aiTemplateFile";
+import { TemplateInfoTooltip } from "./TemplateInfoTooltip";
 
 interface TemplateItemProps {
   template: AITemplateFile;
@@ -10,7 +10,7 @@ interface TemplateItemProps {
 
 /**
  * TemplateItem Component
- * Individual template checkbox with label
+ * Individual template checkbox with label and info tooltip
  */
 export function TemplateItem({
   template,
@@ -47,6 +47,8 @@ export function TemplateItem({
       <label htmlFor={templateId} class="template-label">
         {displayName}
       </label>
+
+      <TemplateInfoTooltip template={template} />
     </div>
   );
 }

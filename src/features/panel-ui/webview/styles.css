@@ -281,3 +281,74 @@ details[open] > .type-header::before {
     cursor: not-allowed;
     opacity: 0.6;
 }
+
+/* Template Info Button */
+.template-info-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--vscode-foreground);
+    opacity: 0.75;
+    transition: opacity 0.15s ease;
+}
+
+.template-info-button:hover {
+    opacity: 1;
+    color: var(--vscode-textLink-activeForeground);
+}
+
+.template-info-button:active {
+    transform: scale(0.95);
+}
+
+.template-info-button .codicon {
+    display: inline-block;
+}
+
+/* Template Tooltip */
+.template-tooltip {
+    position: fixed;
+    background-color: var(--vscode-editorHoverWidget-background);
+    border: 1px solid var(--vscode-editorHoverWidget-border);
+    border-radius: 4px;
+    padding: 8px 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    white-space: normal;
+    pointer-events: none;
+    box-sizing: border-box;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.tooltip-loading {
+    font-size: 0.85em;
+    color: var(--vscode-descriptionForeground);
+    font-style: italic;
+}
+
+.tooltip-error {
+    font-size: 0.85em;
+    color: var(--vscode-errorForeground);
+}
+
+.tooltip-name {
+    font-size: 0.9em;
+    font-weight: 600;
+    color: var(--vscode-editorHoverWidget-foreground);
+    margin-bottom: 4px;
+}
+
+.tooltip-description {
+    font-size: 0.85em;
+    color: var(--vscode-descriptionForeground);
+    line-height: 1.4;
+    margin: 0;
+}

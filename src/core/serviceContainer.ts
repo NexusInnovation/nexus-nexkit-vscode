@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { TelemetryService } from "../shared/services/telemetryService";
 import { MCPConfigService } from "../features/mcp-management/mcpConfigService";
 import { AITemplateDataService } from "../features/ai-template-files/services/aiTemplateDataService";
+import { TemplateMetadataService } from "../features/ai-template-files/services/templateMetadataService";
 import { UpdateStatusBarService } from "../features/extension-updates/updateStatusBarService";
 import { BackupService } from "../features/backup-management/backupService";
 import { ExtensionUpdateService } from "../features/extension-updates/extensionUpdateService";
@@ -12,6 +13,7 @@ import { RecommendedSettingsConfigDeployer } from "../features/initialization/re
 import { AITemplateFilesDeployer } from "../features/initialization/aiTemplateFilesDeployer";
 import { WorkspaceInitPromptService } from "../features/initialization/workspaceInitPromptService";
 import { InstalledTemplatesStateManager } from "../features/ai-template-files/services/installedTemplatesStateManager";
+import { RepositoryManager } from "../features/ai-template-files/services/repositoryManager";
 
 /**
  * Service container for dependency injection
@@ -21,6 +23,7 @@ export interface ServiceContainer {
   telemetry: TelemetryService;
   mcpConfig: MCPConfigService;
   aiTemplateData: AITemplateDataService;
+  templateMetadata: TemplateMetadataService;
   installedTemplatesState: InstalledTemplatesStateManager;
   updateStatusBar: UpdateStatusBarService;
   extensionUpdate: ExtensionUpdateService;
@@ -47,6 +50,9 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const mcpConfig = new MCPConfigService();
   const installedTemplatesState = new InstalledTemplatesStateManager(context);
   const aiTemplateData = new AITemplateDataService(installedTemplatesState);
+  const repositoryManager = new RepositoryManager();
+  repositoryManager.initialize();
+  const templateMetadata = new TemplateMetadataService(repositoryManager);
   const backup = new BackupService();
   const updateStatusBar = new UpdateStatusBarService(context, extensionUpdate);
   const gitIgnoreConfigDeployer = new GitIgnoreConfigDeployer();
@@ -64,6 +70,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     telemetry,
     mcpConfig,
     aiTemplateData,
+    templateMetadata,
     installedTemplatesState,
     updateStatusBar,
     extensionUpdate,
