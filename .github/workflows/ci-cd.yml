@@ -1,0 +1,242 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+    paths-ignore:
+      - "/*.md"
+      - "/docs/**/*"
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "20.x"
+
+jobs:
+  # Job 1: Code Quality & Testing
+  quality-gate:
+    name: Quality Gate (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Install Xvfb
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Start Xvfb
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 1920x1080x16 &
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type checking
+        run: npm run check:types
+
+      - name: Lint code
+        run: npm run lint
+
+      - name: Compile TypeScript
+        run: npm run test-compile
+
+      - name: Run tests
+        if: matrix.os != 'ubuntu-latest'
+        run: npm test
+      - name: Run tests (headless)
+        if: matrix.os == 'ubuntu-latest'
+        run: xvfb-run -a npm test
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}
+          path: test-results/
+          retention-days: 30
+
+  # Job 2: Code Coverage (Ubuntu only)
+  # coverage:
+  #   name: Code Coverage
+  #   runs-on: ubuntu-latest
+  #   needs: quality-gate
+  #   steps:
+  #     - name: Install Xvfb
+  #       run: sudo apt-get update && sudo apt-get install -y xvfb
+
+  #     - name: Start Xvfb
+  #       run: |
+  #         export DISPLAY=:99
+  #         Xvfb :99 -screen 0 1920x1080x16 &
+
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: ${{ env.NODE_VERSION }}
+  #         cache: 'npm'
+
+  #     - name: Install dependencies
+  #       run: npm ci
+
+  #     - name: Compile TypeScript
+  #       run: npm run test-compile
+
+  #     - name: Collect coverage
+  #       run: npm run test:coverage
+
+  #     - name: Upload coverage to artifact
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: coverage-report
+  #         path: coverage/
+  #         retention-days: 30
+
+  # Job 3: Security Scanning
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: npm audit --omit=dev --audit-level=high
+        continue-on-error: false
+
+      - name: Generate SBOM
+        run: |
+          mkdir -p sbom
+          npx @cyclonedx/cyclonedx-npm --output-file sbom/manifest.json --spec-version 1.5
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom/
+          retention-days: 90
+  # Job 4: CodeQL Analysis
+
+  # Job 5: Build & Package
+  build:
+    name: Build Extension
+    needs: [security]
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
+    outputs:
+      vsix-name: ${{ steps.package.outputs.vsix-name }}
+      vsix-size: ${{ steps.size.outputs.size }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build extension
+        run: npm run package
+
+      - name: Package extension
+        id: package
+        run: |
+          npx @vscode/vsce package --out nexkit-vscode.vsix
+          echo "vsix-name=nexkit-vscode.vsix" >> $GITHUB_OUTPUT
+
+      - name: Get package size
+        id: size
+        run: |
+          SIZE=$(stat -c%s nexkit-vscode.vsix)
+          echo "size=$SIZE" >> $GITHUB_OUTPUT
+          echo "Extension size: $(numfmt --to=iec-i --suffix=B $SIZE)"
+
+      - name: Check bundle size
+        run: |
+          MAX_SIZE=524288
+          ACTUAL_SIZE=${{ steps.size.outputs.size }}
+          if [ $ACTUAL_SIZE -gt $MAX_SIZE ]; then
+            echo "::warning::Extension size ($ACTUAL_SIZE bytes) exceeds target ($MAX_SIZE bytes)"
+          fi
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexkit-vscode-vsix
+          path: nexkit-vscode.vsix
+          retention-days: 30
+
+  # Job 6: Release (semantic-release)
+  release:
+    name: Release (semantic-release)
+    needs: [quality-gate, security]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && !contains(github.event.head_commit.message, '[skip ci]')
+    concurrency:
+      group: release-${{ github.ref }}
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Configure git author
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release
