@@ -40,21 +40,10 @@ export function registerInitializeWorkspaceCommand(context: vscode.ExtensionCont
           cancellable: false,
         },
         async () => {
-          // Backup existing .github directory if it exists
-          const githubPath = vscode.Uri.joinPath(workspaceFolder.uri, ".github").fsPath;
-          const backupPath = await services.backup.backupDirectory(githubPath);
-
-          // Deploy configuration files
-          await services.gitIgnoreConfigDeployer.deployGitignore(workspaceFolder.uri.fsPath);
-          await services.recommendedExtensionsConfigDeployer.deployVscodeExtensions(workspaceFolder.uri.fsPath);
-          await services.recommendedSettingsConfigDeployer.deployVscodeSettings(workspaceFolder.uri.fsPath);
-          await services.mcpConfigDeployer.deployWorkspaceMCPServers(workspaceFolder.uri.fsPath);
-
-          // Deploy default template files (agents, prompts, chatmodes) from the Nexus Templates
-          const deploymentSummary = await services.aiTemplateFilesDeployer.deployTemplateFiles();
-
-          // Update workspace settings
-          await SettingsManager.setWorkspaceInitialized(true);
+          const { deploymentSummary, backupPath } = await services.workspaceInitialization.initializeWorkspace(
+            workspaceFolder,
+            services
+          );
 
           // Show success message with deployment summary
           let resultMessage = "Nexkit project initialized successfully!";

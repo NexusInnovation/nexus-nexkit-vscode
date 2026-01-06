@@ -10,11 +10,7 @@ export function App() {
   const { workspace } = useAppState();
 
   if (!workspace.isReady) {
-    return (
-      <div class="container">
-        <p>Loading Nexkit...</p>
-      </div>
-    );
+    return null;
   }
 
   if (!workspace.hasWorkspace) {

@@ -40,13 +40,8 @@ export async function activate(context: vscode.ExtensionContext) {
   registerDeleteProfileCommand(context, services);
 
   // Register webview panel
-  const nexkitPanelProvider = new NexkitPanelViewProvider(
-    services.telemetry,
-    services.aiTemplateData,
-    services.templateMetadata,
-    services.profileService
-  );
-  nexkitPanelProvider.initialize(context);
+  const nexkitPanelProvider = new NexkitPanelViewProvider();
+  nexkitPanelProvider.initialize(context, services);
 
   // Check for extension updates on activation & cleanup old .vsix files
   services.extensionUpdate.checkForExtensionUpdatesOnActivation();

@@ -4,7 +4,9 @@ import { TelemetryService } from "../../shared/services/telemetryService";
 import { AITemplateDataService } from "../ai-template-files/services/aiTemplateDataService";
 import { TemplateMetadataService } from "../ai-template-files/services/templateMetadataService";
 import { ProfileService } from "../profile-management/services/profileService";
+import { WorkspaceInitializationService } from "../initialization/workspaceInitializationService";
 import { NexkitPanelMessageHandler } from "./nexkitPanelMessageHandler";
+import { ServiceContainer } from "../../core/serviceContainer";
 
 /**
  * Provides the Nexkit panel webview and handles its lifecycle
@@ -16,24 +18,11 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
   private _context?: vscode.ExtensionContext;
   private _messageHandler?: NexkitPanelMessageHandler;
 
-  constructor(
-    private readonly _telemetryService: TelemetryService,
-    private readonly _aiTemplateDataService: AITemplateDataService,
-    private readonly _templateMetadataService: TemplateMetadataService,
-    private readonly _profileService: ProfileService
-  ) {}
-
-  public initialize(context: vscode.ExtensionContext) {
+  public initialize(context: vscode.ExtensionContext, services: ServiceContainer) {
     this._context = context;
 
     // Initialize message handler
-    this._messageHandler = new NexkitPanelMessageHandler(
-      () => this._view,
-      this._telemetryService,
-      this._aiTemplateDataService,
-      this._templateMetadataService,
-      this._profileService
-    );
+    this._messageHandler = new NexkitPanelMessageHandler(() => this._view, services);
 
     // Listen for workspace folder changes
     context.subscriptions.push(

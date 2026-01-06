@@ -36,7 +36,7 @@ export function TypeSection({
   searchQuery,
 }: TypeSectionProps) {
   const detailsRef = useRef<HTMLDetailsElement>(null);
-  const [isExpanded, setIsExpanded] = useExpansionState(`${repository}::${type}`, true);
+  const [isExpanded, setIsExpanded] = useExpansionState(`${repository}::${type}`);
 
   // Filter templates based on search query
   const isSearching = searchQuery.length > 0;

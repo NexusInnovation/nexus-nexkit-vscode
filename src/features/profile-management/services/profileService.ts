@@ -11,6 +11,9 @@ import * as path from "path";
  * Service for managing template profiles
  */
 export class ProfileService {
+  private readonly _onProfilesChangedEmitter = new vscode.EventEmitter<void>();
+  public readonly onProfilesChanged: vscode.Event<void> = this._onProfilesChangedEmitter.event;
+
   constructor(
     private readonly installedTemplatesStateManager: InstalledTemplatesStateManager,
     private readonly aiTemplateDataService: AITemplateDataService,
@@ -61,6 +64,7 @@ export class ProfileService {
     }
 
     await SettingsManager.setProfiles(profiles);
+    this._onProfilesChangedEmitter.fire();
     return true;
   }
 
@@ -124,6 +128,7 @@ export class ProfileService {
       }
     }
 
+    this._onProfilesChangedEmitter.fire();
     return {
       installed,
       skipped,
@@ -150,6 +155,9 @@ export class ProfileService {
     const deletedCount = profiles.length - remainingProfiles.length;
 
     await SettingsManager.setProfiles(remainingProfiles);
+    if (deletedCount > 0) {
+      this._onProfilesChangedEmitter.fire();
+    }
     return deletedCount;
   }
 

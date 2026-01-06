@@ -1,11 +1,8 @@
 import * as vscode from "vscode";
-import { TelemetryService } from "../../shared/services/telemetryService";
 import { SettingsManager } from "../../core/settingsManager";
 import { Commands } from "../../shared/constants/commands";
-import { AITemplateDataService } from "../ai-template-files/services/aiTemplateDataService";
-import { TemplateMetadataService } from "../ai-template-files/services/templateMetadataService";
-import { ProfileService } from "../profile-management/services/profileService";
 import { WebviewMessage, ExtensionMessage } from "./types/webviewMessages";
+import { ServiceContainer } from "../../core/serviceContainer";
 
 /**
  * Handles message processing and business logic for the Nexkit panel webview
@@ -24,10 +21,7 @@ export class NexkitPanelMessageHandler {
 
   constructor(
     private readonly getWebview: () => vscode.WebviewView | undefined,
-    private readonly _telemetryService: TelemetryService,
-    private readonly _aiTemplateDataService: AITemplateDataService,
-    private readonly _templateMetadataService: TemplateMetadataService,
-    private readonly _profileService: ProfileService
+    private readonly _services: ServiceContainer
   ) {
     this._messageHandlers = new Map([
       ["webviewReady", this.handleWebviewReady.bind(this)],
@@ -42,7 +36,13 @@ export class NexkitPanelMessageHandler {
     ]);
 
     // Auto-refresh template data when it changes (e.g., after config update)
-    this._aiTemplateDataService.onDataChanged(() => this.sendTemplateData());
+    this._services.aiTemplateData.onDataChanged(() => this.sendTemplateData());
+
+    // Auto-refresh profiles when they change (e.g., after save/apply/delete)
+    this._services.profileService.onProfilesChanged(() => this.sendProfilesData());
+
+    // Auto-refresh all data when workspace is initialized
+    this._services.workspaceInitialization.onWorkspaceInitialized(() => this.initialize());
   }
 
   public async handleMessage(message: WebviewMessage): Promise<void> {
@@ -57,7 +57,7 @@ export class NexkitPanelMessageHandler {
   public async initialize(): Promise<void> {
     this.sendWorkspaceState();
     await this.sendTemplateData();
-    await this._aiTemplateDataService.syncInstalledTemplates();
+    await this._services.aiTemplateData.syncInstalledTemplates();
     this.sendInstalledTemplates();
     this.sendProfilesData();
   }
@@ -84,7 +84,7 @@ export class NexkitPanelMessageHandler {
   private async handleInstallTemplate(message: WebviewMessage & { command: "installTemplate" }): Promise<void> {
     this.trackWebviewAction("installTemplate");
     try {
-      await this._aiTemplateDataService.installTemplate(message.template);
+      await this._services.aiTemplateData.installTemplate(message.template);
       this.sendInstalledTemplates();
     } catch (error) {
       console.error("Failed to install template:", error);
@@ -94,7 +94,7 @@ export class NexkitPanelMessageHandler {
   private async handleUninstallTemplate(message: WebviewMessage & { command: "uninstallTemplate" }): Promise<void> {
     this.trackWebviewAction("uninstallTemplate");
     try {
-      await this._aiTemplateDataService.uninstallTemplate(message.template);
+      await this._services.aiTemplateData.uninstallTemplate(message.template);
       this.sendInstalledTemplates();
     } catch (error) {
       console.error("Failed to uninstall template:", error);
@@ -109,7 +109,7 @@ export class NexkitPanelMessageHandler {
 
   private async handleGetTemplateMetadata(message: WebviewMessage & { command: "getTemplateMetadata" }): Promise<void> {
     try {
-      const metadata = await this._templateMetadataService.getMetadata(message.template);
+      const metadata = await this._services.templateMetadata.getMetadata(message.template);
       this.sendToWebview({
         command: "templateMetadataResponse",
         template: message.template,
@@ -152,10 +152,10 @@ export class NexkitPanelMessageHandler {
 
   private async sendTemplateData(): Promise<void> {
     try {
-      await this._aiTemplateDataService.waitForReady();
+      await this._services.aiTemplateData.waitForReady();
       this.sendToWebview({
         command: "templateDataUpdate",
-        repositories: this._aiTemplateDataService.getRepositoryTemplatesMap(),
+        repositories: this._services.aiTemplateData.getRepositoryTemplatesMap(),
       });
     } catch (error) {
       console.error("Failed to fetch template data:", error);
@@ -167,7 +167,7 @@ export class NexkitPanelMessageHandler {
     try {
       this.sendToWebview({
         command: "installedTemplatesUpdate",
-        installed: this._aiTemplateDataService.getInstalledTemplates(),
+        installed: this._services.aiTemplateData.getInstalledTemplates(),
       });
     } catch (error) {
       console.error("Failed to fetch installed templates:", error);
@@ -176,7 +176,7 @@ export class NexkitPanelMessageHandler {
 
   private sendProfilesData(): void {
     try {
-      const profiles = this._profileService.getProfiles();
+      const profiles = this._services.profileService.getProfiles();
       this.sendToWebview({
         command: "profilesUpdate",
         profiles,
@@ -200,7 +200,7 @@ export class NexkitPanelMessageHandler {
    * Tracks telemetry for user actions in the webview
    */
   private trackWebviewAction(actionName: string): void {
-    this._telemetryService.trackEvent("ui.button.clicked", {
+    this._services.telemetry.trackEvent("ui.button.clicked", {
       buttonName: actionName,
       source: "webview",
     });

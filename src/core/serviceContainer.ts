@@ -12,6 +12,7 @@ import { RecommendedExtensionsConfigDeployer } from "../features/initialization/
 import { RecommendedSettingsConfigDeployer } from "../features/initialization/recommendedSettingsConfigDeployer";
 import { AITemplateFilesDeployer } from "../features/initialization/aiTemplateFilesDeployer";
 import { WorkspaceInitPromptService } from "../features/initialization/workspaceInitPromptService";
+import { WorkspaceInitializationService } from "../features/initialization/workspaceInitializationService";
 import { InstalledTemplatesStateManager } from "../features/ai-template-files/services/installedTemplatesStateManager";
 import { RepositoryManager } from "../features/ai-template-files/services/repositoryManager";
 import { ProfileService } from "../features/profile-management/services/profileService";
@@ -35,6 +36,7 @@ export interface ServiceContainer {
   recommendedSettingsConfigDeployer: RecommendedSettingsConfigDeployer;
   aiTemplateFilesDeployer: AITemplateFilesDeployer;
   workspaceInitPrompt: WorkspaceInitPromptService;
+  workspaceInitialization: WorkspaceInitializationService;
   profileService: ProfileService;
 }
 
@@ -63,6 +65,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const recommendedSettingsConfigDeployer = new RecommendedSettingsConfigDeployer();
   const aiTemplateFilesDeployer = new AITemplateFilesDeployer(aiTemplateData);
   const workspaceInitPrompt = new WorkspaceInitPromptService();
+  const workspaceInitialization = new WorkspaceInitializationService();
   const profileService = new ProfileService(installedTemplatesState, aiTemplateData, backup);
 
   // Register for disposal
@@ -84,6 +87,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     recommendedSettingsConfigDeployer,
     aiTemplateFilesDeployer,
     workspaceInitPrompt,
+    workspaceInitialization,
     profileService,
   };
 }

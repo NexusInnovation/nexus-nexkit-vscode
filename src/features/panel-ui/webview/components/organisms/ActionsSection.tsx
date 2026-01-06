@@ -11,27 +11,14 @@ export function ActionsSection({ isInitialized }: ActionsSectionProps) {
     messenger.sendMessage({ command: "initWorkspace" });
   };
 
-  const updateInstalledTemplates = () => {
-    messenger.sendMessage({ command: "updateInstalledTemplates" });
-  };
+  if (isInitialized) return null;
 
   return (
-    <div class="actions-section">
-      {!isInitialized ? (
-        <div class="action-item">
-          <button id="initProjectBtn" class="action-button" onClick={initializeWorkspace}>
-            <span>Initialize Project</span>
-          </button>
-          <p class="button-description">Set up Nexkit templates and configuration for your workspace</p>
-        </div>
-      ) : (
-        <div class="action-item">
-          <button id="updateTemplatesBtn" class="action-button" onClick={updateInstalledTemplates}>
-            <span>Update Installed Templates</span>
-          </button>
-          <p class="button-description">Update all installed templates to their latest versions from repositories.</p>
-        </div>
-      )}
+    <div class="action-item">
+      <button class="action-button" onClick={initializeWorkspace}>
+        <span>Initialize Project</span>
+      </button>
+      <p class="button-description">Set up Nexkit templates and configuration for your workspace</p>
     </div>
   );
 }
