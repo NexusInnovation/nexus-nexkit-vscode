@@ -9,8 +9,6 @@ import { TypeSection } from "../molecules/TypeSection";
 interface RepositorySectionProps {
   repository: RepositoryTemplatesMap;
   installedTemplates: InstalledTemplatesMap;
-  isSectionExpanded: (repository: string, type: string) => boolean;
-  setSectionExpanded: (repository: string, type: string, expanded: boolean) => void;
   onInstall: (template: AITemplateFile) => void;
   onUninstall: (template: AITemplateFile) => void;
   isTemplateInstalled: (template: AITemplateFile) => boolean;
@@ -24,8 +22,6 @@ interface RepositorySectionProps {
 export function RepositorySection({
   repository,
   installedTemplates,
-  isSectionExpanded,
-  setSectionExpanded,
   onInstall,
   onUninstall,
   isTemplateInstalled,
@@ -45,8 +41,6 @@ export function RepositorySection({
             templates={templates}
             repository={repository.name}
             installedTemplates={installedTemplates}
-            isExpanded={isSectionExpanded(repository.name, type)}
-            onToggle={(expanded) => setSectionExpanded(repository.name, type, expanded)}
             onInstall={onInstall}
             onUninstall={onUninstall}
             isTemplateInstalled={isTemplateInstalled}

@@ -288,43 +288,123 @@ The webview is built with **Preact** for better performance and modularity:
 
 - `NexkitPanelViewProvider`: Webview lifecycle management (extension side)
 - `NexkitPanelMessageHandler`: Message passing between webview and extension (extension side)
-- `webview/main.tsx`: Preact app entry point
+- `webview/main.tsx`: Preact app entry point with AppStateProvider
 - `webview/index.html`: Minimal HTML shell
 - `webview/components/`: Preact components (App, ActionsSection, TemplateSection, etc.)
-- `webview/hooks/`: Custom Preact hooks for state management
+- `webview/contexts/`: Preact Context providers for global state
+- `webview/hooks/`: Custom Preact hooks for state access and operations
 - `webview/services/`: VSCodeMessenger for communication
 - `webview/types/`: TypeScript type definitions
+
+**State Management Architecture**:
+
+The webview uses **centralized state management with Preact Context** to solve message timing issues:
+
+```
+webview/
+├── types/
+│   └── appState.ts           # Global AppState interface
+├── contexts/
+│   └── AppStateContext.tsx   # Provider with centralized message handling
+├── hooks/
+│   ├── useAppState.ts        # Access global state
+│   ├── useWorkspaceState.ts  # Selector for workspace state
+│   ├── useTemplateData.ts    # Selector + actions for templates
+│   └── useProfileData.ts     # Selector + actions for profiles
+```
+
+**Key Concepts**:
+
+- **Single Source of Truth**: All state lives in `AppState` at the root level
+- **Centralized Message Handler**: `AppStateContext` captures ALL messages before any component mounts
+- **No Timing Issues**: State is available regardless of component mount order
+- **Hooks as Selectors**: Custom hooks read from global state and provide action functions
+
+**AppState Structure**:
+
+```typescript
+interface AppState {
+  workspace: {
+    hasWorkspace: boolean;
+    isInitialized: boolean;
+    isReady: boolean;
+  };
+  templates: {
+    repositories: RepositoryTemplatesMap[];
+    installed: InstalledTemplatesMap;
+    isLoading: boolean;
+  };
+  profiles: {
+    list: Profile[];
+    isLoading: boolean;
+  };
+}
+```
 
 **Component Structure**:
 
 ```
 components/
-├── App.tsx                   # Root component
-├── ActionsSection.tsx        # Workspace initialization button
-├── TemplateSection.tsx       # Template management container
-├── SearchBar.tsx             # Search input with debouncing
-├── RepositorySection.tsx     # Repository display
-├── TypeSection.tsx           # Collapsible type section
-└── TemplateItem.tsx          # Individual template checkbox
+├── App.tsx                   # Root component (wrapped by AppStateProvider)
+├── organisms/
+│   ├── ActionsSection.tsx    # Workspace initialization button
+│   ├── TemplateSection.tsx   # Template management container
+│   └── ProfileSection.tsx    # Profile management
+├── molecules/
+│   ├── SearchBar.tsx         # Search input with debouncing
+│   ├── RepositorySection.tsx # Repository display
+│   └── TypeSection.tsx       # Collapsible type section
+└── atoms/
+    └── TemplateItem.tsx      # Individual template checkbox
 ```
 
 **Custom Hooks**:
 
 - `useVSCodeAPI()`: Access to VSCodeMessenger singleton
-- `useWorkspaceState()`: Workspace initialization state management
-- `useTemplateData()`: Template data and operations (install/uninstall)
+- `useAppState()`: Access to global application state (low-level, use selectors instead)
+- `useWorkspaceState()`: Workspace state selector (hasWorkspace, isInitialized, isReady)
+- `useTemplateData()`: Template state + actions (repositories, installed, install/uninstall)
+- `useProfileData()`: Profile state + actions (list, apply/delete)
 - `useDebounce()`: Debounce search input
 - `useExpansionState()`: Persistent section expansion state (stored in VS Code state API)
+
+**State Management Pattern**:
+
+```typescript
+// 1. AppStateProvider wraps the entire app (in main.tsx)
+render(
+  <AppStateProvider>
+    <App />
+  </AppStateProvider>,
+  document.body
+);
+
+// 2. AppStateProvider sets up ONE centralized message listener
+useEffect(() => {
+  const handleMessage = (message: ExtensionMessage) => {
+    switch (message.command) {
+      case "workspaceStateUpdate":
+        setState(prev => ({ ...prev, workspace: { ...message } }));
+        break;
+      // ... handle all message types
+    }
+  };
+
+  messenger.onMessage("workspaceStateUpdate", handleMessage);
+  messenger.sendMessage({ command: "webviewReady" });
+}, []);
+
+// 3. Components use selector hooks to access state
+const { repositories, installTemplate } = useTemplateData();
+```
 
 **Message Protocol**:
 
 ```typescript
-// Extension → Webview (via VSCodeMessenger)
-messenger.onMessage("templateDataUpdate", (message) => {
-  setTemplates(message.repositories);
-});
+// Extension → Webview (captured by AppStateContext)
+// All messages are received and update global state automatically
 
-// Webview → Extension
+// Webview → Extension (from hooks or components)
 messenger.sendMessage({
   command: "installTemplate",
   template: templateData,
@@ -333,22 +413,40 @@ messenger.sendMessage({
 
 **Best Practices**:
 
-- Use functional components with hooks (no class components)
-- Keep components small and focused (single responsibility)
-- Use typed message interfaces (`src/features/panel-ui/types/webviewMessages.ts`)
-- Leverage custom hooks for state logic (don't put business logic in components)
-- Use debouncing for search/filter operations (`useDebounce` hook)
-- Persist UI state in VS Code state API (expansion states, etc.)
-- Use `VSCodeMessenger` class for all extension communication
-- Follow Preact conventions (JSX, hooks, functional patterns)
+- **State Management**:
+  - ALL state should live in `AppState` (never use local useState for extension data)
+  - Use selector hooks (`useTemplateData`, `useWorkspaceState`) instead of `useAppState` directly
+  - Keep action functions (like `installTemplate`) in hooks, not components
+  - Never set up message listeners in individual components or hooks (only in `AppStateContext`)
+- **Component Design**:
+  - Use functional components with hooks (no class components)
+  - Keep components small and focused (single responsibility)
+  - Components should be presentational - get data from hooks, not message listeners
+- **Communication**:
+  - Use typed message interfaces (`src/features/panel-ui/types/webviewMessages.ts`)
+  - Use `VSCodeMessenger` class for all extension communication
+  - Actions send messages; state updates come from `AppStateContext`
+- **UI/UX**:
+  - Use debouncing for search/filter operations (`useDebounce` hook)
+  - Persist UI state in VS Code state API (expansion states, etc.)
+  - Use existing CSS variables for theming (maintain VS Code theme compatibility)
+  - Follow Preact conventions (JSX, hooks, functional patterns)
+
+**Adding New State**:
+
+1. Add the state shape to `AppState` interface in `types/appState.ts`
+2. Initialize the state in `initialAppState`
+3. Add message handler in `AppStateContext.tsx` to update the state
+4. Create a selector hook in `hooks/` (e.g., `useMyData.ts`) that reads from `useAppState()`
+5. Components use the new hook to access the state
 
 **Adding New Features**:
 
 1. Create a new component in `webview/components/` if UI is needed
-2. Create custom hooks in `webview/hooks/` for state management
+2. Use existing hooks to access state; create new hooks if new state is needed
 3. Update message types in `types/webviewMessages.ts` if new messages are needed
-4. Handle new messages in `NexkitPanelMessageHandler` (extension side)
-5. Use existing CSS variables for theming (maintain VS Code theme compatibility)
+4. Handle new messages in `AppStateContext.tsx` to update state
+5. Handle new commands in `NexkitPanelMessageHandler` (extension side)
 
 **Build Configuration**:
 

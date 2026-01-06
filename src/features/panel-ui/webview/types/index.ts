@@ -11,5 +11,5 @@ export interface WorkspaceState {
 }
 
 export interface WebviewPersistentState {
-  expandedSections: Record<string, boolean>;
+  expandedState: Record<string, boolean>;
 }

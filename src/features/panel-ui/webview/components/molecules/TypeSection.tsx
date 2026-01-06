@@ -1,14 +1,13 @@
 import { useRef, useEffect } from "preact/hooks";
 import { TemplateItem } from "../atoms/TemplateItem";
 import { AITemplateFile, InstalledTemplatesMap } from "../../../../ai-template-files/models/aiTemplateFile";
+import { useExpansionState } from "../../hooks/useExpansionState";
 
 interface TypeSectionProps {
   type: string;
   templates: AITemplateFile[];
   repository: string;
   installedTemplates: InstalledTemplatesMap;
-  isExpanded: boolean;
-  onToggle: (expanded: boolean) => void;
   onInstall: (template: AITemplateFile) => void;
   onUninstall: (template: AITemplateFile) => void;
   isTemplateInstalled: (template: AITemplateFile) => boolean;
@@ -31,14 +30,13 @@ export function TypeSection({
   templates,
   repository,
   installedTemplates,
-  isExpanded,
-  onToggle,
   onInstall,
   onUninstall,
   isTemplateInstalled,
   searchQuery,
 }: TypeSectionProps) {
   const detailsRef = useRef<HTMLDetailsElement>(null);
+  const [isExpanded, setIsExpanded] = useExpansionState(`${repository}::${type}`, true);
 
   // Filter templates based on search query
   const isSearching = searchQuery.length > 0;
@@ -68,7 +66,7 @@ export function TypeSection({
 
   const handleToggle = () => {
     if (!isSearching && detailsRef.current) {
-      onToggle(detailsRef.current.open);
+      setIsExpanded(detailsRef.current.open);
     }
   };
 

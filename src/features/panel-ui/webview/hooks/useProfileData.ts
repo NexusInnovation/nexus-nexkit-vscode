@@ -1,25 +1,15 @@
-import { useState, useEffect, useCallback } from "preact/hooks";
+import { useCallback } from "preact/hooks";
 import { useVSCodeAPI } from "./useVSCodeAPI";
+import { useAppState } from "./useAppState";
 import { Profile } from "../../../profile-management/models/profile";
 
 /**
- * Hook to manage profile data and operations
+ * Hook to access profile data and operations
+ * Now reads from global state instead of managing its own state
  */
 export function useProfileData() {
   const messenger = useVSCodeAPI();
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Listen for profile updates from extension
-    const unsubscribe = messenger.onMessage("profilesUpdate", (message) => {
-      if (message.command !== "profilesUpdate") return;
-      setProfiles(message.profiles);
-      setIsLoading(false);
-    });
-
-    return unsubscribe;
-  }, [messenger]);
+  const { profiles } = useAppState();
 
   /**
    * Trigger apply profile command
@@ -42,8 +32,8 @@ export function useProfileData() {
   );
 
   return {
-    profiles,
-    isLoading,
+    profiles: profiles.list,
+    isReady: profiles.isReady,
     applyProfile,
     deleteProfile,
   };
