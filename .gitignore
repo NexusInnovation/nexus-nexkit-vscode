@@ -24,3 +24,12 @@ specs/
 .github/instructions/
 .github/chatmodes/
 AGENTS.md
+
+# BEGIN NexKit
+.specify/
+.github/**/nexkit.*
+.github/chatmodes/
+.github/agents/
+.github/instructions/
+.github/prompts/
+# END NexKit
