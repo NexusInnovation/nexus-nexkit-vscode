@@ -52,7 +52,8 @@ export function FilterMenu({ filterMode, onFilterChange }: FilterMenuProps) {
           <div
             class={`filter-option ${filterMode === "all" ? "selected" : ""}`}
             onClick={() => handleFilterSelect("all")}
-            role="menuitem"
+            role="menuitemradio"
+            aria-checked={filterMode === "all"}
             tabIndex={0}
           >
             <span class="filter-radio" aria-hidden="true">{filterMode === "all" ? "●" : "○"}</span>
@@ -61,7 +62,8 @@ export function FilterMenu({ filterMode, onFilterChange }: FilterMenuProps) {
           <div
             class={`filter-option ${filterMode === "selected" ? "selected" : ""}`}
             onClick={() => handleFilterSelect("selected")}
-            role="menuitem"
+            role="menuitemradio"
+            aria-checked={filterMode === "selected"}
             tabIndex={0}
           >
             <span class="filter-radio" aria-hidden="true">{filterMode === "selected" ? "●" : "○"}</span>
@@ -70,7 +72,8 @@ export function FilterMenu({ filterMode, onFilterChange }: FilterMenuProps) {
           <div
             class={`filter-option ${filterMode === "unselected" ? "selected" : ""}`}
             onClick={() => handleFilterSelect("unselected")}
-            role="menuitem"
+            role="menuitemradio"
+            aria-checked={filterMode === "unselected"}
             tabIndex={0}
           >
             <span class="filter-radio" aria-hidden="true">{filterMode === "unselected" ? "●" : "○"}</span>
