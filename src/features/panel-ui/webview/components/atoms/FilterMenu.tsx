@@ -37,16 +37,17 @@ export function FilterMenu({ filterMode, onFilterChange }: FilterMenuProps) {
 
   return (
     <div class="filter-menu" ref={menuRef}>
-      <button
-        type="button"
-        class="filter-menu-btn"
-        title="Filter templates"
-        onClick={() => setIsOpen(!isOpen)}
-        aria-expanded={isOpen}
-        aria-haspopup="menu"
-      >
-        •••
-      </button>
+    <button
+      type="button"
+      class="filter-menu-btn"
+      title="Filter templates"
+      onClick={() => setIsOpen(!isOpen)}
+      aria-expanded={isOpen}
+      aria-haspopup="menu"
+      aria-label="Filter templates menu"
+    >
+      •••
+    </button>
       {isOpen && (
         <div class="filter-dropdown" role="menu">
           <div
