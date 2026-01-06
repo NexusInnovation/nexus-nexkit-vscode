@@ -4,6 +4,7 @@ import { SettingsManager } from "../../core/settingsManager";
 import { Commands } from "../../shared/constants/commands";
 import { AITemplateDataService } from "../ai-template-files/services/aiTemplateDataService";
 import { TemplateMetadataService } from "../ai-template-files/services/templateMetadataService";
+import { ProfileService } from "../profile-management/services/profileService";
 import { WebviewMessage, ExtensionMessage } from "./types/webviewMessages";
 
 /**
@@ -25,7 +26,8 @@ export class NexkitPanelMessageHandler {
     private readonly getWebview: () => vscode.WebviewView | undefined,
     private readonly _telemetryService: TelemetryService,
     private readonly _aiTemplateDataService: AITemplateDataService,
-    private readonly _templateMetadataService: TemplateMetadataService
+    private readonly _templateMetadataService: TemplateMetadataService,
+    private readonly _profileService: ProfileService
   ) {
     this._messageHandlers = new Map([
       ["webviewReady", this.handleWebviewReady.bind(this)],
@@ -35,6 +37,9 @@ export class NexkitPanelMessageHandler {
       ["uninstallTemplate", this.handleUninstallTemplate.bind(this)],
       ["updateInstalledTemplates", this.handleUpdateInstalledTemplates.bind(this)],
       ["getTemplateMetadata", this.handleGetTemplateMetadata.bind(this)],
+      ["saveProfile", this.handleSaveProfile.bind(this)],
+      ["applyProfile", this.handleApplyProfile.bind(this)],
+      ["deleteProfile", this.handleDeleteProfile.bind(this)],
     ]);
 
     // Auto-refresh template data when it changes (e.g., after config update)
@@ -55,6 +60,7 @@ export class NexkitPanelMessageHandler {
     await this.sendTemplateData();
     await this._aiTemplateDataService.syncInstalledTemplates();
     this.sendInstalledTemplates();
+    this.sendProfilesData();
   }
 
   // ============================================================================
@@ -121,6 +127,25 @@ export class NexkitPanelMessageHandler {
     }
   }
 
+  private async handleSaveProfile(message: WebviewMessage & { command: "saveProfile" }): Promise<void> {
+    this.trackWebviewAction("saveProfile");
+    await vscode.commands.executeCommand(Commands.SAVE_PROFILE);
+    this.sendProfilesData();
+  }
+
+  private async handleApplyProfile(message: WebviewMessage & { command: "applyProfile" }): Promise<void> {
+    this.trackWebviewAction("applyProfile");
+    await vscode.commands.executeCommand(Commands.APPLY_PROFILE);
+    this.sendInstalledTemplates();
+    this.sendProfilesData();
+  }
+
+  private async handleDeleteProfile(message: WebviewMessage & { command: "deleteProfile" }): Promise<void> {
+    this.trackWebviewAction("deleteProfile");
+    await vscode.commands.executeCommand(Commands.DELETE_PROFILE);
+    this.sendProfilesData();
+  }
+
   private sendWorkspaceState(): void {
     const hasWorkspace = (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
     const isInitialized = SettingsManager.isWorkspaceInitialized();
@@ -153,6 +178,23 @@ export class NexkitPanelMessageHandler {
       });
     } catch (error) {
       console.error("Failed to fetch installed templates:", error);
+    }
+  }
+
+  private sendProfilesData(): void {
+    try {
+      const profiles = this._profileService.getProfiles();
+      this.sendToWebview({
+        command: "profilesUpdate",
+        profiles: profiles.map((p) => ({
+          name: p.name,
+          templateCount: p.templates.length,
+          createdAt: p.createdAt,
+          updatedAt: p.updatedAt,
+        })),
+      });
+    } catch (error) {
+      console.error("Failed to fetch profiles:", error);
     }
   }
 

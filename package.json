@@ -71,6 +71,24 @@
         "command": "nexus-nexkit-vscode.updateInstalledTemplates",
         "title": "Nexkit: Update Installed Templates",
         "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.saveProfile",
+        "title": "Nexkit: Save Current Profile",
+        "category": "Nexkit",
+        "icon": "$(save)"
+      },
+      {
+        "command": "nexus-nexkit-vscode.applyProfile",
+        "title": "Nexkit: Apply Profile",
+        "category": "Nexkit",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "nexus-nexkit-vscode.deleteProfile",
+        "title": "Nexkit: Delete Profile",
+        "category": "Nexkit",
+        "icon": "$(trash)"
       }
     ],
     "menus": {
@@ -205,6 +223,36 @@
           "default": "",
           "scope": "application",
           "description": "Azure Application Insights connection string (optional, for custom telemetry endpoint)."
+        },
+        "nexkit.profiles": {
+          "type": "array",
+          "default": [],
+          "scope": "application",
+          "description": "Saved template profiles for quick workspace setup. Each profile is a collection of templates that can be applied to a workspace.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Profile name"
+              },
+              "templates": {
+                "type": "array",
+                "description": "Collection of templates in this profile",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "createdAt": {
+                "type": "number",
+                "description": "Timestamp when profile was created"
+              },
+              "updatedAt": {
+                "type": "number",
+                "description": "Timestamp when profile was last updated"
+              }
+            }
+          }
         }
       }
     }

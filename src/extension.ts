@@ -8,6 +8,11 @@ import { registerCleanupBackupCommand, registerRestoreBackupCommand } from "./fe
 import { registerSettingsCommands } from "./shared/commands/settingsCommand";
 import { registerCheckExtensionUpdateCommand } from "./features/extension-updates/commands";
 import { registerUpdateInstalledTemplatesCommand } from "./features/ai-template-files/commands";
+import {
+  registerApplyProfileCommand,
+  registerDeleteProfileCommand,
+  registerSaveProfileCommand,
+} from "./features/profile-management/commands";
 
 /**
  * Extension activation
@@ -30,9 +35,17 @@ export async function activate(context: vscode.ExtensionContext) {
   registerCheckExtensionUpdateCommand(context, services);
   registerUpdateInstalledTemplatesCommand(context, services);
   registerSettingsCommands(context, services);
+  registerSaveProfileCommand(context, services);
+  registerApplyProfileCommand(context, services);
+  registerDeleteProfileCommand(context, services);
 
   // Register webview panel
-  const nexkitPanelProvider = new NexkitPanelViewProvider(services.telemetry, services.aiTemplateData, services.templateMetadata);
+  const nexkitPanelProvider = new NexkitPanelViewProvider(
+    services.telemetry,
+    services.aiTemplateData,
+    services.templateMetadata,
+    services.profileService
+  );
   nexkitPanelProvider.initialize(context);
 
   // Check for extension updates on activation & cleanup old .vsix files

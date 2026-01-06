@@ -352,3 +352,155 @@ details[open] > .type-header::before {
     line-height: 1.4;
     margin: 0;
 }
+
+/* Profile Section */
+.profile-section {
+    margin-top: 8px;
+    border-top: 1px solid var(--vscode-panel-border);
+    padding-top: 12px;
+}
+
+.profile-section .section-header {
+    cursor: pointer;
+    user-select: none;
+    margin-bottom: 0;
+}
+
+.profile-section .section-header.collapsible:hover {
+    background-color: var(--vscode-list-hoverBackground);
+    border-radius: 4px;
+    padding: 4px 8px;
+    margin: -4px -8px;
+}
+
+.profile-section h2 {
+    font-size: 1.1em;
+    font-weight: 600;
+    margin: 0;
+    color: var(--vscode-foreground);
+    display: flex;
+    align-items: center;
+}
+
+.profile-section .chevron {
+    display: inline-block;
+    margin-right: 8px;
+    transition: transform 0.2s ease;
+    opacity: 0.8;
+}
+
+.profile-section .chevron.expanded {
+    transform: rotate(90deg);
+}
+
+.profile-section .section-content {
+    margin-top: 12px;
+}
+
+.profile-actions {
+    margin-bottom: 12px;
+}
+
+.profile-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.profile-button .codicon {
+    font-size: 16px;
+}
+
+.profiles-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.profile-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background-color: var(--vscode-sideBar-background);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 4px;
+    transition: background-color 0.15s ease;
+}
+
+.profile-item:hover {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+.profile-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.profile-name {
+    font-size: 0.95em;
+    font-weight: 600;
+    color: var(--vscode-foreground);
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-details {
+    font-size: 0.8em;
+    color: var(--vscode-descriptionForeground);
+}
+
+.profile-actions-row {
+    display: flex;
+    gap: 6px;
+    margin-left: 12px;
+}
+
+.profile-action-button {
+    padding: 6px 12px;
+    font-size: 0.85em;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.profile-action-button .codicon {
+    font-size: 14px;
+}
+
+.apply-button {
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+}
+
+.apply-button:hover {
+    background-color: var(--vscode-button-hoverBackground);
+}
+
+.delete-button {
+    background-color: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+}
+
+.delete-button:hover {
+    background-color: var(--vscode-inputValidation-errorBackground);
+    color: var(--vscode-inputValidation-errorForeground);
+}
+
+.profile-bulk-actions {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--vscode-panel-border);
+}
+
+.profile-bulk-actions .profile-action-button {
+    width: 100%;
+    justify-content: center;
+}

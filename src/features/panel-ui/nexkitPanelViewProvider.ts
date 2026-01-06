@@ -3,6 +3,7 @@ import * as fs from "fs";
 import { TelemetryService } from "../../shared/services/telemetryService";
 import { AITemplateDataService } from "../ai-template-files/services/aiTemplateDataService";
 import { TemplateMetadataService } from "../ai-template-files/services/templateMetadataService";
+import { ProfileService } from "../profile-management/services/profileService";
 import { NexkitPanelMessageHandler } from "./nexkitPanelMessageHandler";
 
 /**
@@ -18,7 +19,8 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
   constructor(
     private readonly _telemetryService: TelemetryService,
     private readonly _aiTemplateDataService: AITemplateDataService,
-    private readonly _templateMetadataService: TemplateMetadataService
+    private readonly _templateMetadataService: TemplateMetadataService,
+    private readonly _profileService: ProfileService
   ) {}
 
   public initialize(context: vscode.ExtensionContext) {
@@ -29,7 +31,8 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
       () => this._view,
       this._telemetryService,
       this._aiTemplateDataService,
-      this._templateMetadataService
+      this._templateMetadataService,
+      this._profileService
     );
 
     // Listen for workspace folder changes

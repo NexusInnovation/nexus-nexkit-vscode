@@ -11,7 +11,10 @@ export type WebviewMessage =
   | { command: "installTemplate"; template: AITemplateFile }
   | { command: "uninstallTemplate"; template: AITemplateFile }
   | { command: "updateInstalledTemplates" }
-  | { command: "getTemplateMetadata"; template: AITemplateFile };
+  | { command: "getTemplateMetadata"; template: AITemplateFile }
+  | { command: "saveProfile" }
+  | { command: "applyProfile" }
+  | { command: "deleteProfile" };
 
 /**
  * Messages sent FROM the extension TO the webview
@@ -40,4 +43,13 @@ export type ExtensionMessage =
       template: AITemplateFile;
       metadata: TemplateMetadata | null;
       error?: string;
+    }
+  | {
+      command: "profilesUpdate";
+      profiles: Array<{
+        name: string;
+        templateCount: number;
+        createdAt: number;
+        updatedAt: number;
+      }>;
     };

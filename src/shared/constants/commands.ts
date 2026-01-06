@@ -11,6 +11,11 @@ export const Commands = {
   RESTORE_BACKUP: "nexus-nexkit-vscode.restoreBackup",
   CLEANUP_BACKUP: "nexus-nexkit-vscode.cleanupBackup",
   UPDATE_INSTALLED_TEMPLATES: "nexus-nexkit-vscode.updateInstalledTemplates",
+
+  // Profile management commands
+  SAVE_PROFILE: "nexus-nexkit-vscode.saveProfile",
+  APPLY_PROFILE: "nexus-nexkit-vscode.applyProfile",
+  DELETE_PROFILE: "nexus-nexkit-vscode.deleteProfile",
 } as const;
 
 // Type-safe command names

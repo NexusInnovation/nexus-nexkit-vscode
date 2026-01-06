@@ -14,6 +14,7 @@ import { AITemplateFilesDeployer } from "../features/initialization/aiTemplateFi
 import { WorkspaceInitPromptService } from "../features/initialization/workspaceInitPromptService";
 import { InstalledTemplatesStateManager } from "../features/ai-template-files/services/installedTemplatesStateManager";
 import { RepositoryManager } from "../features/ai-template-files/services/repositoryManager";
+import { ProfileService } from "../features/profile-management/services/profileService";
 
 /**
  * Service container for dependency injection
@@ -34,6 +35,7 @@ export interface ServiceContainer {
   recommendedSettingsConfigDeployer: RecommendedSettingsConfigDeployer;
   aiTemplateFilesDeployer: AITemplateFilesDeployer;
   workspaceInitPrompt: WorkspaceInitPromptService;
+  profileService: ProfileService;
 }
 
 /**
@@ -61,6 +63,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const recommendedSettingsConfigDeployer = new RecommendedSettingsConfigDeployer();
   const aiTemplateFilesDeployer = new AITemplateFilesDeployer(aiTemplateData);
   const workspaceInitPrompt = new WorkspaceInitPromptService();
+  const profileService = new ProfileService(installedTemplatesState, aiTemplateData, backup);
 
   // Register for disposal
   context.subscriptions.push(aiTemplateData);
@@ -81,5 +84,6 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     recommendedSettingsConfigDeployer,
     aiTemplateFilesDeployer,
     workspaceInitPrompt,
+    profileService,
   };
 }
