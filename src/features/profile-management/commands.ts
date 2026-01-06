@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { ServiceContainer } from "../../core/serviceContainer";
 import { Commands } from "../../shared/constants/commands";
 import { registerCommand } from "../../shared/commands/commandRegistry";
+import { Profile } from "./models/profile";
 
 /**
  * Register command to save current templates as a profile
@@ -38,7 +39,6 @@ export function registerSaveProfileCommand(context: vscode.ExtensionContext, ser
         if (services.profileService.profileExists(trimmedName)) {
           const overwrite = await vscode.window.showWarningMessage(
             `Profile "${trimmedName}" already exists. Do you want to overwrite it?`,
-            { modal: true },
             "Overwrite",
             "Cancel"
           );
@@ -73,39 +73,46 @@ export function registerApplyProfileCommand(context: vscode.ExtensionContext, se
   registerCommand(
     context,
     Commands.APPLY_PROFILE,
-    async () => {
+    async (profile: Profile | undefined) => {
       try {
-        const profiles = services.profileService.getProfiles();
+        let profileToApply: Profile;
 
-        if (profiles.length === 0) {
-          vscode.window.showInformationMessage("No profiles saved yet. Save your first profile to get started!");
-          return;
-        }
+        if (profile) {
+          profileToApply = profile;
+        } else {
+          const profiles = services.profileService.getProfiles();
 
-        // Create QuickPick items
-        const items = profiles.map((profile) => ({
-          label: profile.name,
-          description: `${profile.templates.length} template${profile.templates.length !== 1 ? "s" : ""}`,
-          detail: `Last updated: ${new Date(profile.updatedAt).toLocaleString()}`,
-          profile,
-        }));
+          if (profiles.length === 0) {
+            vscode.window.showInformationMessage("No profiles saved yet. Save your first profile to get started!");
+            return;
+          }
 
-        // Show profile picker
-        const selected = await vscode.window.showQuickPick(items, {
-          placeHolder: "Select a profile to apply",
-          matchOnDescription: true,
-          matchOnDetail: true,
-        });
+          // Create QuickPick items
+          const items = profiles.map((profile) => ({
+            label: profile.name,
+            description: `${profile.templates.length} template${profile.templates.length !== 1 ? "s" : ""}`,
+            detail: `Last updated: ${new Date(profile.updatedAt).toLocaleString()}`,
+            profile,
+          }));
 
-        if (!selected) {
-          // User cancelled
-          return;
+          // Show profile picker
+          const selected = await vscode.window.showQuickPick(items, {
+            placeHolder: "Select a profile to apply",
+            matchOnDescription: true,
+            matchOnDetail: true,
+          });
+
+          if (!selected) {
+            // User cancelled
+            return;
+          }
+
+          profileToApply = selected.profile;
         }
 
         // Confirm application
         const confirm = await vscode.window.showWarningMessage(
-          `Apply profile "${selected.profile.name}"?\n\nThis will replace all currently installed templates with ${selected.profile.templates.length} template${selected.profile.templates.length !== 1 ? "s" : ""} from this profile. A backup will be created first.`,
-          { modal: true },
+          `Apply profile "${profileToApply.name}"?\n\nThis will replace all currently installed templates with ${profileToApply.templates.length} template${profileToApply.templates.length !== 1 ? "s" : ""} from this profile. A backup will be created first.`,
           "Apply",
           "Cancel"
         );
@@ -118,14 +125,14 @@ export function registerApplyProfileCommand(context: vscode.ExtensionContext, se
         await vscode.window.withProgress(
           {
             location: vscode.ProgressLocation.Notification,
-            title: `Applying profile "${selected.profile.name}"...`,
+            title: `Applying profile "${profileToApply.name}"...`,
             cancellable: false,
           },
           async () => {
-            const result = await services.profileService.applyProfile(selected.profile.name);
+            const result = await services.profileService.applyProfile(profileToApply.name);
 
             // Show result summary
-            let message = `Profile "${selected.profile.name}" applied successfully!\n\n`;
+            let message = `Profile "${profileToApply.name}" applied successfully!\n\n`;
             message += `✓ ${result.installed} template${result.installed !== 1 ? "s" : ""} installed\n`;
 
             if (result.skipped > 0) {
@@ -158,41 +165,47 @@ export function registerDeleteProfileCommand(context: vscode.ExtensionContext, s
   registerCommand(
     context,
     Commands.DELETE_PROFILE,
-    async () => {
+    async (...profiles: Profile[]) => {
       try {
-        const profiles = services.profileService.getProfiles();
+        let profileNamesToDelete: string[];
 
-        if (profiles.length === 0) {
-          vscode.window.showInformationMessage("No profiles to delete.");
-          return;
-        }
+        if (profiles && profiles.length > 0) {
+          profileNamesToDelete = profiles.map((p) => p.name);
+        } else {
+          const profiles = services.profileService.getProfiles();
 
-        // Create QuickPick items
-        const items = profiles.map((profile) => ({
-          label: profile.name,
-          description: `${profile.templates.length} template${profile.templates.length !== 1 ? "s" : ""}`,
-          detail: `Created: ${new Date(profile.createdAt).toLocaleString()}`,
-          picked: false,
-        }));
+          if (profiles.length === 0) {
+            vscode.window.showInformationMessage("No profiles to delete.");
+            return;
+          }
 
-        // Show multi-select picker
-        const selected = await vscode.window.showQuickPick(items, {
-          placeHolder: "Select profile(s) to delete",
-          canPickMany: true,
-          matchOnDescription: true,
-          matchOnDetail: true,
-        });
+          // Create QuickPick items
+          const items = profiles.map((profile) => ({
+            label: profile.name,
+            description: `${profile.templates.length} template${profile.templates.length !== 1 ? "s" : ""}`,
+            detail: `Created: ${new Date(profile.createdAt).toLocaleString()}`,
+            picked: false,
+          }));
 
-        if (!selected || selected.length === 0) {
-          // User cancelled or selected nothing
-          return;
+          // Show multi-select picker
+          const selected = await vscode.window.showQuickPick(items, {
+            placeHolder: "Select profile(s) to delete",
+            canPickMany: true,
+            matchOnDescription: true,
+            matchOnDetail: true,
+          });
+
+          if (!selected || selected.length === 0) {
+            // User cancelled or selected nothing
+            return;
+          }
+
+          profileNamesToDelete = selected.map((item) => item.label);
         }
 
         // Confirm deletion
-        const profileNames = selected.map((item) => item.label).join(", ");
         const confirm = await vscode.window.showWarningMessage(
-          `Delete ${selected.length} profile${selected.length !== 1 ? "s" : ""}?\n\n${profileNames}\n\nThis action cannot be undone.`,
-          { modal: true },
+          `Delete ${profileNamesToDelete.length} profile${profileNamesToDelete.length !== 1 ? "s" : ""}?\n\n${profileNamesToDelete.join(", ")}\n\nThis action cannot be undone.`,
           "Delete",
           "Cancel"
         );
@@ -202,8 +215,7 @@ export function registerDeleteProfileCommand(context: vscode.ExtensionContext, s
         }
 
         // Delete profiles
-        const namesToDelete = selected.map((item) => item.label);
-        const deletedCount = await services.profileService.deleteProfiles(namesToDelete);
+        const deletedCount = await services.profileService.deleteProfiles(profileNamesToDelete);
 
         vscode.window.showInformationMessage(`${deletedCount} profile${deletedCount !== 1 ? "s" : ""} deleted successfully.`);
       } catch (error) {

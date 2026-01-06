@@ -11,7 +11,7 @@ body {
 }
 
 .container {
-    padding: 16px;
+    padding: 8px;
     max-width: 100%;
 }
 
@@ -87,26 +87,55 @@ body {
     font-style: italic;
 }
 
-/* Template Management Section */
-.template-section {
+/* Unified Collapsible Section Styles */
+.section {
     margin-top: 8px;
     border-top: 1px solid var(--vscode-panel-border);
     padding-top: 12px;
 }
 
-.template-section h2 {
+.section .section-header {
+    cursor: pointer;
+    user-select: none;
+    margin-bottom: 0;
+}
+
+.section .section-header.collapsible:hover {
+    background-color: var(--vscode-list-hoverBackground);
+    border-radius: 4px;
+    padding: 4px 8px;
+    margin: -4px -8px;
+}
+
+.section h2 {
     font-size: 1.1em;
     font-weight: 600;
     margin: 0;
     color: var(--vscode-foreground);
-}
-
-/* Section Header */
-.section-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
+}
+
+.section h2::before {
+    content: "";
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-left: 5px solid var(--vscode-foreground);
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    margin-right: 8px;
+    margin-left: 2px;
+    transition: transform 0.2s ease;
+    opacity: 0.8;
+}
+
+.section h2.expanded::before {
+    transform: rotate(90deg);
+}
+
+.section .section-content {
+    margin-top: 12px;
 }
 
 .collapse-all-btn {
@@ -353,50 +382,7 @@ details[open] > .type-header::before {
     margin: 0;
 }
 
-/* Profile Section */
-.profile-section {
-    margin-top: 8px;
-    border-top: 1px solid var(--vscode-panel-border);
-    padding-top: 12px;
-}
-
-.profile-section .section-header {
-    cursor: pointer;
-    user-select: none;
-    margin-bottom: 0;
-}
-
-.profile-section .section-header.collapsible:hover {
-    background-color: var(--vscode-list-hoverBackground);
-    border-radius: 4px;
-    padding: 4px 8px;
-    margin: -4px -8px;
-}
-
-.profile-section h2 {
-    font-size: 1.1em;
-    font-weight: 600;
-    margin: 0;
-    color: var(--vscode-foreground);
-    display: flex;
-    align-items: center;
-}
-
-.profile-section .chevron {
-    display: inline-block;
-    margin-right: 8px;
-    transition: transform 0.2s ease;
-    opacity: 0.8;
-}
-
-.profile-section .chevron.expanded {
-    transform: rotate(90deg);
-}
-
-.profile-section .section-content {
-    margin-top: 12px;
-}
-
+/* Profile-specific Styles */
 .profile-actions {
     margin-bottom: 12px;
 }

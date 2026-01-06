@@ -4,50 +4,22 @@ import { useExpansionState } from "../../hooks/useExpansionState";
 import { SearchBar } from "../atoms/SearchBar";
 import { RepositorySection } from "./RepositorySection";
 import { useTemplateData } from "../../hooks/useTemplateData";
-import { CollapseAllButton } from "../atoms/CollapseAllButton";
-import { useWorkspaceState } from "../../hooks/useWorkspaceState";
 import { TemplateMetadataProvider } from "../../contexts/TemplateMetadataContext";
+import { CollapsibleSection } from "../molecules/CollapsibleSection";
 
 /**
  * TemplateSection Component
  * Main template management section with search and collapse all functionality
  */
 export function TemplateSection() {
-  const { workspaceState } = useWorkspaceState();
   const { repositories, installedTemplates, installTemplate, uninstallTemplate, isTemplateInstalled } = useTemplateData();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  const { isSectionExpanded, setSectionExpanded, collapseAll } = useExpansionState();
-
-  const handleCollapseAll = () => {
-    collapseAll();
-    // Force a re-render by setting a dummy state
-    // This is a workaround to trigger the collapse effect
-    setSearchQuery((prev) => prev);
-  };
-
-  if (!workspaceState.hasWorkspace) return null;
-
-  if (repositories.length === 0) {
-    return (
-      <div class="template-section">
-        <div class="section-header">
-          <h2>AI Template Files</h2>
-        </div>
-        <p class="empty-message">No template repositories loaded</p>
-      </div>
-    );
-  }
+  const { isSectionExpanded, setSectionExpanded } = useExpansionState();
 
   return (
-    <div class="template-section">
-      <div class="section-header">
-        <h2>AI Template Files</h2>
-        <CollapseAllButton onClick={handleCollapseAll} />
-      </div>
-
+    <CollapsibleSection title="Templates" defaultExpanded>
       <SearchBar value={searchQuery} onChange={setSearchQuery} />
-
       <div id="templateContainer">
         <TemplateMetadataProvider>
           {repositories.map((repo) => (
@@ -65,6 +37,6 @@ export function TemplateSection() {
           ))}
         </TemplateMetadataProvider>
       </div>
-    </div>
+    </CollapsibleSection>
   );
 }

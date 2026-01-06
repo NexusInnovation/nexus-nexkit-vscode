@@ -1,22 +1,13 @@
 import { useState, useEffect, useCallback } from "preact/hooks";
 import { useVSCodeAPI } from "./useVSCodeAPI";
-
-/**
- * Profile data structure for display
- */
-export interface ProfileData {
-  name: string;
-  templateCount: number;
-  createdAt: number;
-  updatedAt: number;
-}
+import { Profile } from "../../../profile-management/models/profile";
 
 /**
  * Hook to manage profile data and operations
  */
 export function useProfileData() {
   const messenger = useVSCodeAPI();
-  const [profiles, setProfiles] = useState<ProfileData[]>([]);
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -33,16 +24,22 @@ export function useProfileData() {
   /**
    * Trigger apply profile command
    */
-  const applyProfile = useCallback(() => {
-    messenger.sendMessage({ command: "applyProfile" });
-  }, [messenger]);
+  const applyProfile = useCallback(
+    (profile: Profile) => {
+      messenger.sendMessage({ command: "applyProfile", profile });
+    },
+    [messenger]
+  );
 
   /**
    * Trigger delete profile command
    */
-  const deleteProfile = useCallback(() => {
-    messenger.sendMessage({ command: "deleteProfile" });
-  }, [messenger]);
+  const deleteProfile = useCallback(
+    (profile: Profile) => {
+      messenger.sendMessage({ command: "deleteProfile", profile });
+    },
+    [messenger]
+  );
 
   return {
     profiles,

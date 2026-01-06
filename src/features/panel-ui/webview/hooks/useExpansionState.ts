@@ -52,9 +52,5 @@ export function useExpansionState() {
     [expandedSections]
   );
 
-  const collapseAll = useCallback(() => {
-    setExpandedSections({});
-  }, []);
-
-  return { isSectionExpanded, setSectionExpanded, collapseAll };
+  return { isSectionExpanded, setSectionExpanded };
 }

@@ -1,5 +1,6 @@
 import { AITemplateFile, RepositoryTemplatesMap } from "../../ai-template-files/models/aiTemplateFile";
 import { TemplateMetadata } from "../../ai-template-files/models/templateMetadata";
+import { Profile } from "../../profile-management/models/profile";
 
 /**
  * Messages sent FROM the webview TO the extension
@@ -12,8 +13,8 @@ export type WebviewMessage =
   | { command: "uninstallTemplate"; template: AITemplateFile }
   | { command: "updateInstalledTemplates" }
   | { command: "getTemplateMetadata"; template: AITemplateFile }
-  | { command: "applyProfile" }
-  | { command: "deleteProfile" };
+  | { command: "applyProfile"; profile: Profile }
+  | { command: "deleteProfile"; profile: Profile };
 
 /**
  * Messages sent FROM the extension TO the webview
@@ -45,10 +46,5 @@ export type ExtensionMessage =
     }
   | {
       command: "profilesUpdate";
-      profiles: Array<{
-        name: string;
-        templateCount: number;
-        createdAt: number;
-        updatedAt: number;
-      }>;
+      profiles: Profile[];
     };

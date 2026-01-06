@@ -128,14 +128,14 @@ export class NexkitPanelMessageHandler {
 
   private async handleApplyProfile(message: WebviewMessage & { command: "applyProfile" }): Promise<void> {
     this.trackWebviewAction("applyProfile");
-    await vscode.commands.executeCommand(Commands.APPLY_PROFILE);
+    await vscode.commands.executeCommand(Commands.APPLY_PROFILE, message.profile);
     this.sendInstalledTemplates();
     this.sendProfilesData();
   }
 
   private async handleDeleteProfile(message: WebviewMessage & { command: "deleteProfile" }): Promise<void> {
     this.trackWebviewAction("deleteProfile");
-    await vscode.commands.executeCommand(Commands.DELETE_PROFILE);
+    await vscode.commands.executeCommand(Commands.DELETE_PROFILE, message.profile);
     this.sendProfilesData();
   }
 
@@ -179,12 +179,7 @@ export class NexkitPanelMessageHandler {
       const profiles = this._profileService.getProfiles();
       this.sendToWebview({
         command: "profilesUpdate",
-        profiles: profiles.map((p) => ({
-          name: p.name,
-          templateCount: p.templates.length,
-          createdAt: p.createdAt,
-          updatedAt: p.updatedAt,
-        })),
+        profiles,
       });
     } catch (error) {
       console.error("Failed to fetch profiles:", error);
