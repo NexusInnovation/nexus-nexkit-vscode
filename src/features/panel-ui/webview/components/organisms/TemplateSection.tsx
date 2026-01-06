@@ -14,13 +14,7 @@ import { TemplateMetadataProvider } from "../../contexts/TemplateMetadataContext
  */
 export function TemplateSection() {
   const { workspaceState } = useWorkspaceState();
-  const {
-      repositories,
-      installedTemplates,
-      installTemplate,
-      uninstallTemplate,
-      isTemplateInstalled,
-    } = useTemplateData();
+  const { repositories, installedTemplates, installTemplate, uninstallTemplate, isTemplateInstalled } = useTemplateData();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const { isSectionExpanded, setSectionExpanded, collapseAll } = useExpansionState();

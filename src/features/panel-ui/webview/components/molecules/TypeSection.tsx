@@ -78,13 +78,7 @@ export function TypeSection({
     : `${displayName} (${installedCount}/${totalCount})`;
 
   return (
-    <details
-      ref={detailsRef}
-      class="type-section"
-      data-repository={repository}
-      data-type={type}
-      onToggle={handleToggle}
-    >
+    <details ref={detailsRef} class="type-section" data-repository={repository} data-type={type} onToggle={handleToggle}>
       <summary class="type-header">{headerText}</summary>
       <div class="template-list">
         {filteredTemplates.map((template) => (

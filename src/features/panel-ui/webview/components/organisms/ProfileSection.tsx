@@ -10,7 +10,7 @@ export function ProfileSection() {
   const { workspaceState } = useWorkspaceState();
   const { profiles, saveProfile, applyProfile, deleteProfile } = useProfileData();
   const [isExpanded, setIsExpanded] = useState(false);
-  
+
   if (!workspaceState.hasWorkspace) return null;
 
   const toggleExpansion = () => {
@@ -55,8 +55,8 @@ export function ProfileSection() {
                   <div class="profile-info">
                     <div class="profile-name">{profile.name}</div>
                     <div class="profile-details">
-                      {profile.templateCount} template{profile.templateCount !== 1 ? "s" : ""} • 
-                      Updated: {formatDate(profile.updatedAt)}
+                      {profile.templateCount} template{profile.templateCount !== 1 ? "s" : ""} • Updated:{" "}
+                      {formatDate(profile.updatedAt)}
                     </div>
                   </div>
                   <div class="profile-actions-row">
@@ -72,11 +72,7 @@ export function ProfileSection() {
                 </div>
               ))}
               <div class="profile-bulk-actions">
-                <button
-                  class="profile-action-button delete-button"
-                  onClick={deleteProfile}
-                  title="Delete one or more profiles"
-                >
+                <button class="profile-action-button delete-button" onClick={deleteProfile} title="Delete one or more profiles">
                   <span class="codicon codicon-trash"></span>
                   Delete Profiles
                 </button>

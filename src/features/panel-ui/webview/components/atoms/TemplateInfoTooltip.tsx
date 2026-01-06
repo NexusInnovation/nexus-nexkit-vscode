@@ -28,11 +28,11 @@ export function TemplateInfoTooltip({ template }: TemplateInfoTooltipProps) {
 
   const handleMouseEnter = (e: MouseEvent) => {
     setTooltipPosition({
-        left: 12,
-        top: e.clientY + 24,
-        width: window.innerWidth - 24,
+      left: 12,
+      top: e.clientY + 24,
+      width: window.innerWidth - 24,
     });
-    
+
     setShowTooltip(true);
 
     // Clear existing timeout
@@ -88,13 +88,13 @@ export function TemplateInfoTooltip({ template }: TemplateInfoTooltipProps) {
   const tooltipContent = metadataState.loading
     ? { name: "", description: "", loading: true }
     : metadataState.error
-    ? { name: "", description: "", error: metadataState.error }
-    : metadataState.metadata
-    ? { name: metadataState.metadata.name, description: metadataState.metadata.description }
-    : null;
+      ? { name: "", description: "", error: metadataState.error }
+      : metadataState.metadata
+        ? { name: metadataState.metadata.name, description: metadataState.metadata.description }
+        : null;
 
-    return (
-      <>
+  return (
+    <>
       <button
         class="template-info-button"
         onMouseEnter={handleMouseEnter}
@@ -103,14 +103,14 @@ export function TemplateInfoTooltip({ template }: TemplateInfoTooltipProps) {
         type="button"
       >
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" fill="none"/>
-          <path d="M7.5 7h1v4h-1V7z" fill="currentColor"/>
-          <circle cx="8" cy="5" r="0.75" fill="currentColor"/>
+          <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" fill="none" />
+          <path d="M7.5 7h1v4h-1V7z" fill="currentColor" />
+          <circle cx="8" cy="5" r="0.75" fill="currentColor" />
         </svg>
       </button>
 
       {showTooltip && tooltipContent && (
-        <div 
+        <div
           class="template-tooltip"
           style={{
             left: `${tooltipPosition.left}px`,
@@ -129,6 +129,7 @@ export function TemplateInfoTooltip({ template }: TemplateInfoTooltipProps) {
             </>
           )}
         </div>
-      )}</>
+      )}
+    </>
   );
 }

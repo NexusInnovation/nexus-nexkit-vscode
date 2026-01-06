@@ -1,4 +1,9 @@
-import { AI_TEMPLATE_FILE_TYPES, AITemplateFile, InstalledTemplatesMap, RepositoryTemplatesMap } from "../../../../ai-template-files/models/aiTemplateFile";
+import {
+  AI_TEMPLATE_FILE_TYPES,
+  AITemplateFile,
+  InstalledTemplatesMap,
+  RepositoryTemplatesMap,
+} from "../../../../ai-template-files/models/aiTemplateFile";
 import { TypeSection } from "../molecules/TypeSection";
 
 interface RepositorySectionProps {
