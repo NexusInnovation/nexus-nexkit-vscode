@@ -31,13 +31,6 @@ export function useProfileData() {
   }, [messenger]);
 
   /**
-   * Trigger save profile command
-   */
-  const saveProfile = useCallback(() => {
-    messenger.sendMessage({ command: "saveProfile" });
-  }, [messenger]);
-
-  /**
    * Trigger apply profile command
    */
   const applyProfile = useCallback(() => {
@@ -54,7 +47,6 @@ export function useProfileData() {
   return {
     profiles,
     isLoading,
-    saveProfile,
     applyProfile,
     deleteProfile,
   };

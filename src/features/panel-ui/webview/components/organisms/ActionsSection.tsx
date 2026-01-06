@@ -1,25 +1,23 @@
-import { useWorkspaceState } from "../../hooks/useWorkspaceState";
+import { useVSCodeAPI } from "../../hooks/useVSCodeAPI";
 
-/**
- * ActionsSection Component with main action buttons for the Nexkit webview panel
- */
-export function ActionsSection() {
-  const { workspaceState, initializeWorkspace, updateInstalledTemplates } = useWorkspaceState();
+interface ActionsSectionProps {
+  isInitialized: boolean;
+}
 
-  // Show message if no workspace is open
-  if (!workspaceState.hasWorkspace) {
-    return (
-      <div class="actions-section">
-        <div class="no-workspace-message">
-          <p>Please open a workspace to use Nexkit features.</p>
-        </div>
-      </div>
-    );
-  }
+export function ActionsSection({ isInitialized }: ActionsSectionProps) {
+  const messenger = useVSCodeAPI();
+
+  const initializeWorkspace = () => {
+    messenger.sendMessage({ command: "initWorkspace" });
+  };
+
+  const updateInstalledTemplates = () => {
+    messenger.sendMessage({ command: "updateInstalledTemplates" });
+  };
 
   return (
     <div class="actions-section">
-      {!workspaceState.isInitialized ? (
+      {!isInitialized ? (
         <div class="action-item">
           <button id="initProjectBtn" class="action-button" onClick={initializeWorkspace}>
             <span>Initialize Project</span>

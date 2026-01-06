@@ -1,17 +1,13 @@
 import { useState } from "preact/hooks";
 import { useProfileData } from "../../hooks/useProfileData";
-import { useWorkspaceState } from "../../hooks/useWorkspaceState";
 
 /**
  * ProfileSection Component
  * Displays saved profiles and provides actions to save, apply, and delete them
  */
 export function ProfileSection() {
-  const { workspaceState } = useWorkspaceState();
-  const { profiles, saveProfile, applyProfile, deleteProfile } = useProfileData();
+  const { profiles, applyProfile, deleteProfile } = useProfileData();
   const [isExpanded, setIsExpanded] = useState(false);
-
-  if (!workspaceState.hasWorkspace) return null;
 
   const toggleExpansion = () => {
     setIsExpanded(!isExpanded);
@@ -33,17 +29,6 @@ export function ProfileSection() {
 
       {isExpanded && (
         <div class="section-content">
-          <div class="profile-actions">
-            <button
-              class="action-button profile-button"
-              onClick={saveProfile}
-              title="Save current installed templates as a profile"
-            >
-              <span class="codicon codicon-save"></span>
-              <span>Save Current Profile</span>
-            </button>
-          </div>
-
           {profiles.length === 0 ? (
             <p class="empty-message">
               No saved profiles yet. Save your current template configuration to quickly apply it to other workspaces.

@@ -37,7 +37,6 @@ export class NexkitPanelMessageHandler {
       ["uninstallTemplate", this.handleUninstallTemplate.bind(this)],
       ["updateInstalledTemplates", this.handleUpdateInstalledTemplates.bind(this)],
       ["getTemplateMetadata", this.handleGetTemplateMetadata.bind(this)],
-      ["saveProfile", this.handleSaveProfile.bind(this)],
       ["applyProfile", this.handleApplyProfile.bind(this)],
       ["deleteProfile", this.handleDeleteProfile.bind(this)],
     ]);
@@ -125,12 +124,6 @@ export class NexkitPanelMessageHandler {
         error: error instanceof Error ? error.message : String(error),
       });
     }
-  }
-
-  private async handleSaveProfile(message: WebviewMessage & { command: "saveProfile" }): Promise<void> {
-    this.trackWebviewAction("saveProfile");
-    await vscode.commands.executeCommand(Commands.SAVE_PROFILE);
-    this.sendProfilesData();
   }
 
   private async handleApplyProfile(message: WebviewMessage & { command: "applyProfile" }): Promise<void> {

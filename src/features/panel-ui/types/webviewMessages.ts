@@ -12,7 +12,6 @@ export type WebviewMessage =
   | { command: "uninstallTemplate"; template: AITemplateFile }
   | { command: "updateInstalledTemplates" }
   | { command: "getTemplateMetadata"; template: AITemplateFile }
-  | { command: "saveProfile" }
   | { command: "applyProfile" }
   | { command: "deleteProfile" };
 

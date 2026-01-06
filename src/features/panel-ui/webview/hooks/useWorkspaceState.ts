@@ -1,8 +1,3 @@
-/**
- * Custom hook for workspace state management
- * Manages workspace initialization status
- */
-
 import { useState, useEffect } from "preact/hooks";
 import { useVSCodeAPI } from "./useVSCodeAPI";
 import { WorkspaceState } from "../types";
@@ -12,6 +7,7 @@ import { WorkspaceState } from "../types";
  */
 export function useWorkspaceState() {
   const messenger = useVSCodeAPI();
+  const [isReady, setIsReady] = useState(false);
   const [workspaceState, setWorkspaceState] = useState<WorkspaceState>({
     hasWorkspace: false,
     isInitialized: false,
@@ -21,6 +17,7 @@ export function useWorkspaceState() {
     // Listen for workspace state updates from extension
     const unsubscribe = messenger.onMessage("workspaceStateUpdate", (message) => {
       if (message.command !== "workspaceStateUpdate") return;
+      setIsReady(true);
       setWorkspaceState({
         hasWorkspace: message.hasWorkspace,
         isInitialized: message.isInitialized,
@@ -30,23 +27,8 @@ export function useWorkspaceState() {
     return unsubscribe;
   }, [messenger]);
 
-  /**
-   * Trigger workspace initialization
-   */
-  const initializeWorkspace = () => {
-    messenger.sendMessage({ command: "initWorkspace" });
-  };
-
-  /**
-   * Trigger update of installed templates
-   */
-  const updateInstalledTemplates = () => {
-    messenger.sendMessage({ command: "updateInstalledTemplates" });
-  };
-
   return {
+    isReady,
     workspaceState,
-    initializeWorkspace,
-    updateInstalledTemplates,
   };
 }
