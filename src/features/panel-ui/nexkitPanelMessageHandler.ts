@@ -33,6 +33,7 @@ export class NexkitPanelMessageHandler {
       ["getTemplateMetadata", this.handleGetTemplateMetadata.bind(this)],
       ["applyProfile", this.handleApplyProfile.bind(this)],
       ["deleteProfile", this.handleDeleteProfile.bind(this)],
+      ["openFeedback", this.handleOpenFeedback.bind(this)],
     ]);
 
     // Auto-refresh template data when it changes (e.g., after config update)
@@ -148,6 +149,11 @@ export class NexkitPanelMessageHandler {
     this.trackWebviewAction("deleteProfile");
     await vscode.commands.executeCommand(Commands.DELETE_PROFILE, message.profile);
     this.sendProfilesData();
+  }
+
+  private async handleOpenFeedback(message: WebviewMessage): Promise<void> {
+    this.trackWebviewAction("openFeedback");
+    await vscode.commands.executeCommand(Commands.OPEN_FEEDBACK);
   }
 
   private sendWorkspaceState(): void {

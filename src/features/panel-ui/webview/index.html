@@ -11,5 +11,9 @@
 <body>
     <!-- Preact app will be rendered here -->
     <script nonce="{{nonce}}" src="{{scriptUri}}"></script>
+    <script nonce="{{nonce}}">
+        window.__NEXKIT_VERSION__ = "{{extensionVersion}}";
+        window.__VSCODE_VERSION__ = "{{vscodeVersion}}";
+    </script>
 </body>
 </html>

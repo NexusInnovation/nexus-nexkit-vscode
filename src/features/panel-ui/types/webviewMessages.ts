@@ -14,7 +14,8 @@ export type WebviewMessage =
   | { command: "updateInstalledTemplates" }
   | { command: "getTemplateMetadata"; template: AITemplateFile }
   | { command: "applyProfile"; profile: Profile }
-  | { command: "deleteProfile"; profile: Profile };
+  | { command: "deleteProfile"; profile: Profile }
+  | { command: "openFeedback" };
 
 /**
  * Messages sent FROM the extension TO the webview

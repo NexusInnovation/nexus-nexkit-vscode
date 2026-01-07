@@ -1,5 +1,6 @@
 import { useAppState } from "../hooks/useAppState";
 import { ActionsSection } from "./organisms/ActionsSection";
+import { FooterSection } from "./organisms/FooterSection";
 import { ProfileSection } from "./organisms/ProfileSection";
 import { TemplateSection } from "./organisms/TemplateSection";
 
@@ -28,6 +29,7 @@ export function App() {
       <ActionsSection isInitialized={workspace.isInitialized} />
       <ProfileSection />
       <TemplateSection />
+      <FooterSection />
     </div>
   );
 }

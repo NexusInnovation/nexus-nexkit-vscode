@@ -8,6 +8,7 @@ export const Commands = {
   CHECK_EXTENSION_UPDATE: "nexus-nexkit-vscode.checkExtensionUpdate",
   INSTALL_USER_MCPS: "nexus-nexkit-vscode.installUserMCPs",
   OPEN_SETTINGS: "nexus-nexkit-vscode.openSettings",
+  OPEN_FEEDBACK: "nexus-nexkit-vscode.openFeedback",
   RESTORE_BACKUP: "nexus-nexkit-vscode.restoreBackup",
   CLEANUP_BACKUP: "nexus-nexkit-vscode.cleanupBackup",
   UPDATE_INSTALLED_TEMPLATES: "nexus-nexkit-vscode.updateInstalledTemplates",

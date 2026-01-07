@@ -5,7 +5,7 @@ import { NexkitPanelViewProvider } from "./features/panel-ui/nexkitPanelViewProv
 import { registerInitializeWorkspaceCommand } from "./features/initialization/commands";
 import { registerInstallUserMCPsCommand } from "./features/mcp-management/commands";
 import { registerCleanupBackupCommand, registerRestoreBackupCommand } from "./features/backup-management/commands";
-import { registerSettingsCommands } from "./shared/commands/settingsCommand";
+import { registerOpenSettingsCommand } from "./shared/commands/settingsCommand";
 import { registerCheckExtensionUpdateCommand } from "./features/extension-updates/commands";
 import { registerUpdateInstalledTemplatesCommand } from "./features/ai-template-files/commands";
 import {
@@ -13,6 +13,7 @@ import {
   registerDeleteProfileCommand,
   registerSaveProfileCommand,
 } from "./features/profile-management/commands";
+import { registerOpenFeedbackCommand } from "./shared/commands/feedbackCommand";
 
 /**
  * Extension activation
@@ -37,7 +38,8 @@ export async function activate(context: vscode.ExtensionContext) {
   registerCleanupBackupCommand(context, services);
   registerCheckExtensionUpdateCommand(context, services);
   registerUpdateInstalledTemplatesCommand(context, services);
-  registerSettingsCommands(context, services);
+  registerOpenSettingsCommand(context, services);
+  registerOpenFeedbackCommand(context, services);
   registerSaveProfileCommand(context, services);
   registerApplyProfileCommand(context, services);
   registerDeleteProfileCommand(context, services);

@@ -617,3 +617,49 @@ details[open] > .type-header::before {
     width: 100%;
     justify-content: center;
 }
+
+/* Footer Section */
+.footer-section {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--vscode-panel-border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.feedback-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 0.85em;
+    background: none;
+    border: 1px solid var(--vscode-button-border);
+    border-radius: 4px;
+    color: var(--vscode-foreground);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    opacity: 0.8;
+}
+
+.feedback-button:hover {
+    opacity: 1;
+    background-color: var(--vscode-button-secondaryHoverBackground);
+    border-color: var(--vscode-button-secondaryForeground);
+}
+
+.feedback-button .codicon {
+    font-size: 14px;
+}
+
+.footer-info {
+    font-size: 0.75em;
+    color: var(--vscode-descriptionForeground);
+    opacity: 0.7;
+}
+
+.footer-version {
+    font-family: var(--vscode-font-family);
+}

@@ -7,6 +7,7 @@ import { ProfileService } from "../profile-management/services/profileService";
 import { WorkspaceInitializationService } from "../initialization/workspaceInitializationService";
 import { NexkitPanelMessageHandler } from "./nexkitPanelMessageHandler";
 import { ServiceContainer } from "../../core/serviceContainer";
+import { getExtensionVersion } from "../../shared/utils/extensionHelper";
 
 /**
  * Provides the Nexkit panel webview and handles its lifecycle
@@ -76,6 +77,8 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
     html = html.replace(/\{\{codiconsUri\}\}/g, codiconsUri.toString());
     html = html.replace(/\{\{scriptUri\}\}/g, scriptUri.toString());
     html = html.replace(/\{\{cspSource\}\}/g, webview.cspSource);
+    html = html.replace(/\{\{extensionVersion\}\}/g, getExtensionVersion() || "unknown");
+    html = html.replace(/\{\{vscodeVersion\}\}/g, vscode.version);
 
     return html;
   }
