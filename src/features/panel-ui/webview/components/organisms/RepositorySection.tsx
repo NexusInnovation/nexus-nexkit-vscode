@@ -5,6 +5,7 @@ import {
   RepositoryTemplatesMap,
 } from "../../../../ai-template-files/models/aiTemplateFile";
 import { TypeSection } from "../molecules/TypeSection";
+import { FilterMode } from "../../types";
 
 interface RepositorySectionProps {
   repository: RepositoryTemplatesMap;
@@ -13,6 +14,7 @@ interface RepositorySectionProps {
   onUninstall: (template: AITemplateFile) => void;
   isTemplateInstalled: (template: AITemplateFile) => boolean;
   searchQuery: string;
+  filterMode: FilterMode;
 }
 
 /**
@@ -26,6 +28,7 @@ export function RepositorySection({
   onUninstall,
   isTemplateInstalled,
   searchQuery,
+  filterMode,
 }: RepositorySectionProps) {
   return (
     <div class="repository-section">
@@ -45,6 +48,7 @@ export function RepositorySection({
             onUninstall={onUninstall}
             isTemplateInstalled={isTemplateInstalled}
             searchQuery={searchQuery}
+            filterMode={filterMode}
           />
         );
       })}

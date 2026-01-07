@@ -138,6 +138,77 @@ body {
     margin-top: 12px;
 }
 
+.section-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Filter Menu */
+.filter-menu {
+    position: relative;
+}
+
+.filter-menu-btn {
+    background: none;
+    border: none;
+    color: var(--vscode-foreground);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    opacity: 0.7;
+    transition: opacity 0.15s ease;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 4px 8px;
+    line-height: 1;
+}
+
+.filter-menu-btn:hover {
+    opacity: 1;
+    background-color: var(--vscode-toolbar-hoverBackground);
+    border-radius: 4px;
+}
+
+.filter-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    background-color: var(--vscode-dropdown-background);
+    border: 1px solid var(--vscode-dropdown-border);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    min-width: 160px;
+    padding: 4px 0;
+}
+
+.filter-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    color: var(--vscode-dropdown-foreground);
+    font-size: 0.9em;
+    user-select: none;
+}
+
+.filter-option:hover {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+.filter-option.selected {
+    background-color: var(--vscode-list-activeSelectionBackground);
+    color: var(--vscode-list-activeSelectionForeground);
+}
+
+.filter-radio {
+    font-size: 14px;
+    line-height: 1;
+}
+
 .collapse-all-btn {
     background: none;
     border: none;

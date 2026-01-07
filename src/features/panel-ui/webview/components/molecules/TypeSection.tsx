@@ -2,6 +2,7 @@ import { useRef, useEffect } from "preact/hooks";
 import { TemplateItem } from "../atoms/TemplateItem";
 import { AITemplateFile, InstalledTemplatesMap } from "../../../../ai-template-files/models/aiTemplateFile";
 import { useExpansionState } from "../../hooks/useExpansionState";
+import { FilterMode } from "../../types";
 
 interface TypeSectionProps {
   type: string;
@@ -12,6 +13,7 @@ interface TypeSectionProps {
   onUninstall: (template: AITemplateFile) => void;
   isTemplateInstalled: (template: AITemplateFile) => boolean;
   searchQuery: string;
+  filterMode: FilterMode;
 }
 
 const TYPE_DISPLAY_NAMES: Record<string, string> = {
@@ -34,18 +36,27 @@ export function TypeSection({
   onUninstall,
   isTemplateInstalled,
   searchQuery,
+  filterMode,
 }: TypeSectionProps) {
   const detailsRef = useRef<HTMLDetailsElement>(null);
   const [isExpanded, setIsExpanded] = useExpansionState(`${repository}::${type}`);
 
   // Filter templates based on search query
   const isSearching = searchQuery.length > 0;
-  const filteredTemplates = isSearching
+  let filteredTemplates = isSearching
     ? templates.filter((t) => t.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : templates;
 
-  // Don't render if searching and no matches
-  if (isSearching && filteredTemplates.length === 0) {
+  // Apply filter mode
+  if (filterMode !== "all") {
+    filteredTemplates = filteredTemplates.filter((t) => {
+      const installed = isTemplateInstalled(t);
+      return filterMode === "selected" ? installed : !installed;
+    });
+  }
+
+  // Don't render if filtering results in no matches
+  if (filteredTemplates.length === 0) {
     return null;
   }
 

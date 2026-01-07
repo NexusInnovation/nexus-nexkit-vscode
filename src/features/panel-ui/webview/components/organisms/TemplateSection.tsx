@@ -6,6 +6,8 @@ import { useTemplateData } from "../../hooks/useTemplateData";
 import { TemplateMetadataProvider } from "../../contexts/TemplateMetadataContext";
 import { CollapsibleSection } from "../molecules/CollapsibleSection";
 import { useVSCodeAPI } from "../../hooks/useVSCodeAPI";
+import { FilterMenu } from "../atoms/FilterMenu";
+import { useFilterMode } from "../../hooks/useFilterMode";
 
 /**
  * TemplateSection Component
@@ -17,6 +19,7 @@ export function TemplateSection() {
     useTemplateData();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const [filterMode, setFilterMode] = useFilterMode();
 
   const installedTemplatesCount = useMemo(() => {
     return Object.values(installedTemplates).reduce((count, list) => count + list.length, 0);
@@ -44,6 +47,7 @@ export function TemplateSection() {
               </div>
             )}
             <SearchBar value={searchQuery} onChange={setSearchQuery} />
+            <FilterMenu filterMode={filterMode} onFilterChange={setFilterMode} />
             <div id="templateContainer">
               <TemplateMetadataProvider>
                 {repositories.map((repo) => (
@@ -55,6 +59,7 @@ export function TemplateSection() {
                     onUninstall={uninstallTemplate}
                     isTemplateInstalled={isTemplateInstalled}
                     searchQuery={debouncedSearchQuery}
+                    filterMode={filterMode}
                   />
                 ))}
               </TemplateMetadataProvider>

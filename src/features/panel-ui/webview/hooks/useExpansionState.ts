@@ -1,6 +1,5 @@
 import { useState, useEffect } from "preact/hooks";
-import { useVSCodeAPI } from "./useVSCodeAPI";
-import { WebviewPersistentState } from "../types";
+import { useWebviewPersistentState } from "./useWebviewPersistentState";
 
 /**
  * Hook to manage expansion state for a specific collapsible section
@@ -11,21 +10,19 @@ import { WebviewPersistentState } from "../types";
  * @returns Tuple of [isExpanded, setIsExpanded]
  */
 export function useExpansionState(key: string, defaultExpanded: boolean = false): [boolean, (expanded: boolean) => void] {
-  const messenger = useVSCodeAPI();
+  const { getWebviewState, setWebviewState } = useWebviewPersistentState();
 
   // Initialize state from VS Code storage or use default
   const [isExpanded, setIsExpanded] = useState<boolean>(() => {
-    const state = messenger.getState<WebviewPersistentState>();
-    return state?.expandedState?.[key] ?? defaultExpanded;
+    return getWebviewState().expandedState?.[key] ?? defaultExpanded;
   });
 
   // Sync state to VS Code storage whenever it changes
   useEffect(() => {
-    const currentState = messenger.getState<WebviewPersistentState>() || { expandedState: {} };
-    currentState.expandedState = currentState.expandedState || {};
+    const currentState = getWebviewState();
     currentState.expandedState[key] = isExpanded;
-    messenger.setState(currentState);
-  }, [isExpanded, key, messenger]);
+    setWebviewState(currentState);
+  }, [isExpanded, key]);
 
   return [isExpanded, setIsExpanded];
 }
