@@ -230,7 +230,7 @@
         },
         "nexkit.telemetry.connectionString": {
           "type": "string",
-          "default": "",
+          "default": "InstrumentationKey=36541b20-0c16-4477-9d5c-d6990c51bafd;IngestionEndpoint=https://canadaeast-0.in.applicationinsights.azure.com/;LiveEndpoint=https://canadaeast.livediagnostics.monitor.azure.com/;ApplicationId=d5494809-608d-4364-a30e-feaeb0769286",
           "scope": "application",
           "description": "Azure Application Insights connection string (optional, for custom telemetry endpoint)."
         },

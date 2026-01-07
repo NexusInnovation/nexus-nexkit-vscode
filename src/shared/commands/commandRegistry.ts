@@ -3,6 +3,7 @@ import { TelemetryService } from "../services/telemetryService";
 
 /**
  * Helper function to register a command with telemetry tracking and error handling
+ * All errors are automatically tracked via telemetry service
  */
 export function registerCommand(
   context: vscode.ExtensionContext,

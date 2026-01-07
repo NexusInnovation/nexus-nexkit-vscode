@@ -45,7 +45,7 @@ export interface ServiceContainer {
  */
 export async function initializeServices(context: vscode.ExtensionContext): Promise<ServiceContainer> {
   // Initialize telemetry service first
-  const telemetry = new TelemetryService(context);
+  const telemetry = new TelemetryService();
   await telemetry.initialize();
   telemetry.trackActivation();
 

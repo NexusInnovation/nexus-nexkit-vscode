@@ -27,6 +27,9 @@ export async function activate(context: vscode.ExtensionContext) {
   // Initialize all services
   const services = await initializeServices(context);
 
+  // Set up global error handler to track all unhandled errors
+  setupGlobalErrorHandling(services);
+
   // Register all commands
   registerInitializeWorkspaceCommand(context, services);
   registerInstallUserMCPsCommand(context, services);
@@ -59,6 +62,10 @@ export async function activate(context: vscode.ExtensionContext) {
   // Initialize AI template data asynchronously (don't block extension activation)
   services.aiTemplateData.initialize().catch((error) => {
     console.error("Failed to initialize AI template data:", error);
+    // Track initialization errors
+    services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+      context: "aiTemplateData.initialize",
+    });
   });
 
   // Sync installed templates state with filesystem on activation
@@ -73,6 +80,24 @@ export async function activate(context: vscode.ExtensionContext) {
       services.workspaceInitPrompt.promptInitWorkspaceOnWorkspaceChange();
     })
   );
+}
+
+/**
+ * Set up global error handling to track all unhandled errors
+ */
+function setupGlobalErrorHandling(services: ReturnType<typeof initializeServices> extends Promise<infer T> ? T : never): void {
+  // Track unhandled promise rejections
+  process.on("unhandledRejection", (reason: any) => {
+    console.error("Unhandled promise rejection:", reason);
+    const error = reason instanceof Error ? reason : new Error(String(reason));
+    services.telemetry.trackError(error, { context: "unhandledRejection" });
+  });
+
+  // Track uncaught exceptions (less common in VS Code extensions)
+  process.on("uncaughtException", (error: Error) => {
+    console.error("Uncaught exception:", error);
+    services.telemetry.trackError(error, { context: "uncaughtException" });
+  });
 }
 
 // This method is called when your extension is deactivated

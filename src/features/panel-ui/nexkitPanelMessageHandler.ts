@@ -88,6 +88,10 @@ export class NexkitPanelMessageHandler {
       this.sendInstalledTemplates();
     } catch (error) {
       console.error("Failed to install template:", error);
+      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+        context: "webview.installTemplate",
+        templateType: message.template.type,
+      });
     }
   }
 
@@ -98,6 +102,10 @@ export class NexkitPanelMessageHandler {
       this.sendInstalledTemplates();
     } catch (error) {
       console.error("Failed to uninstall template:", error);
+      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+        context: "webview.uninstallTemplate",
+        templateType: message.template.type,
+      });
     }
   }
 
@@ -117,6 +125,9 @@ export class NexkitPanelMessageHandler {
       });
     } catch (error) {
       console.error("Failed to get template metadata:", error);
+      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+        context: "webview.getTemplateMetadata",
+      });
       this.sendToWebview({
         command: "templateMetadataResponse",
         template: message.template,
@@ -159,6 +170,9 @@ export class NexkitPanelMessageHandler {
       });
     } catch (error) {
       console.error("Failed to fetch template data:", error);
+      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+        context: "webview.sendTemplateData",
+      });
       vscode.window.showErrorMessage(`Failed to load template data: ${error}`);
     }
   }
@@ -171,6 +185,9 @@ export class NexkitPanelMessageHandler {
       });
     } catch (error) {
       console.error("Failed to fetch installed templates:", error);
+      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+        context: "webview.sendInstalledTemplates",
+      });
     }
   }
 
