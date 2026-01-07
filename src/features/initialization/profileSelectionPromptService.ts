@@ -64,12 +64,18 @@ export class ProfileSelectionPromptService {
     );
 
     const parts: string[] = [];
-    if (templatesByType.agents) parts.push(`${templatesByType.agents} agent${templatesByType.agents !== 1 ? "s" : ""}`);
-    if (templatesByType.prompts) parts.push(`${templatesByType.prompts} prompt${templatesByType.prompts !== 1 ? "s" : ""}`);
-    if (templatesByType.chatmodes)
+    if (templatesByType.agents) {
+      parts.push(`${templatesByType.agents} agent${templatesByType.agents !== 1 ? "s" : ""}`);
+    }
+    if (templatesByType.prompts) {
+      parts.push(`${templatesByType.prompts} prompt${templatesByType.prompts !== 1 ? "s" : ""}`);
+    }
+    if (templatesByType.chatmodes) {
       parts.push(`${templatesByType.chatmodes} chatmode${templatesByType.chatmodes !== 1 ? "s" : ""}`);
-    if (templatesByType.instructions)
+    }
+    if (templatesByType.instructions) {
       parts.push(`${templatesByType.instructions} instruction${templatesByType.instructions !== 1 ? "s" : ""}`);
+    }
 
     return parts.join(", ");
   }
