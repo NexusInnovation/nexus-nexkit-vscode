@@ -1,7 +1,8 @@
-import { useState, useRef, useContext } from "preact/hooks";
+import { useRef, useContext, useEffect } from "preact/hooks";
 import { AITemplateFile } from "../../../../ai-template-files/models/aiTemplateFile";
 import { getTemplateKey, TemplateMetadataContext } from "../../contexts/TemplateMetadataContext";
 import { useVSCodeAPI } from "../../hooks/useVSCodeAPI";
+import { IconTooltip } from "./IconTooltip";
 
 interface TemplateInfoTooltipProps {
   template: AITemplateFile;
@@ -14,9 +15,8 @@ interface TemplateInfoTooltipProps {
 export function TemplateInfoTooltip({ template }: TemplateInfoTooltipProps) {
   const messenger = useVSCodeAPI();
   const context = useContext(TemplateMetadataContext);
-  const [showTooltip, setShowTooltip] = useState(false);
-  const [tooltipPosition, setTooltipPosition] = useState({ left: 0, top: 0, width: 0 });
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isHoveringRef = useRef(false);
 
   if (!context) {
     throw new Error("TemplateInfoTooltip must be used within TemplateMetadataProvider");
@@ -26,14 +26,9 @@ export function TemplateInfoTooltip({ template }: TemplateInfoTooltipProps) {
   const key = getTemplateKey(template);
   const metadataState = cache[key] || { metadata: null, loading: false, error: null };
 
-  const handleMouseEnter = (e: MouseEvent) => {
-    setTooltipPosition({
-      left: 12,
-      top: e.clientY + 24,
-      width: window.innerWidth - 24,
-    });
-
-    setShowTooltip(true);
+  // Fetch metadata when hovering starts
+  const handleHoverStart = () => {
+    isHoveringRef.current = true;
 
     // Clear existing timeout
     if (timeoutRef.current) {
@@ -54,8 +49,8 @@ export function TemplateInfoTooltip({ template }: TemplateInfoTooltipProps) {
 
     // Debounce the actual request by 100ms
     timeoutRef.current = setTimeout(() => {
-      // Check if we need to fetch
-      if (!cache[key]?.metadata && !cache[key]?.error) {
+      // Check if we need to fetch and still hovering
+      if (isHoveringRef.current && !cache[key]?.metadata && !cache[key]?.error) {
         messenger.sendMessage({
           command: "getTemplateMetadata",
           template,
@@ -65,8 +60,8 @@ export function TemplateInfoTooltip({ template }: TemplateInfoTooltipProps) {
     }, 100);
   };
 
-  const handleMouseLeave = () => {
-    setShowTooltip(false);
+  const handleHoverEnd = () => {
+    isHoveringRef.current = false;
 
     // Cancel pending fetch
     if (timeoutRef.current) {
@@ -85,47 +80,29 @@ export function TemplateInfoTooltip({ template }: TemplateInfoTooltipProps) {
     }
   };
 
-  const tooltipContent = metadataState.loading
-    ? { name: "", description: "", loading: true }
-    : metadataState.error
-      ? { name: "", description: "", error: metadataState.error }
-      : metadataState.metadata
-        ? { name: metadataState.metadata.name, description: metadataState.metadata.description }
-        : null;
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  const tooltipContent = metadataState.loading ? (
+    <div class="tooltip-loading">Loading...</div>
+  ) : metadataState.error ? (
+    <div class="tooltip-error">Error: {metadataState.error}</div>
+  ) : metadataState.metadata ? (
+    <>
+      <div class="tooltip-name">{metadataState.metadata.name}</div>
+      {metadataState.metadata.description && <div class="tooltip-description">{metadataState.metadata.description}</div>}
+    </>
+  ) : null;
 
   return (
-    <>
-      <button
-        class="template-info-button"
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        aria-label="Show template information"
-        type="button"
-      >
-        <i class="codicon codicon-info"></i>
-      </button>
-
-      {showTooltip && tooltipContent && (
-        <div
-          class="template-tooltip"
-          style={{
-            left: `${tooltipPosition.left}px`,
-            top: `${tooltipPosition.top}px`,
-            width: `${tooltipPosition.width}px`,
-          }}
-        >
-          {tooltipContent.loading ? (
-            <div class="tooltip-loading">Loading...</div>
-          ) : tooltipContent.error ? (
-            <div class="tooltip-error">Error: {tooltipContent.error}</div>
-          ) : (
-            <>
-              <div class="tooltip-name">{tooltipContent.name}</div>
-              {tooltipContent.description && <div class="tooltip-description">{tooltipContent.description}</div>}
-            </>
-          )}
-        </div>
-      )}
-    </>
+    <div onMouseEnter={handleHoverStart} onMouseLeave={handleHoverEnd}>
+      <IconTooltip>{tooltipContent}</IconTooltip>
+    </div>
   );
 }

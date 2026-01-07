@@ -1,5 +1,6 @@
 import { useProfileData } from "../../hooks/useProfileData";
 import { CollapsibleSection } from "../molecules/CollapsibleSection";
+import { ProfileInfoTooltip } from "../atoms/ProfileInfoTooltip";
 
 /**
  * ProfileSection Component
@@ -22,7 +23,10 @@ export function ProfileSection() {
             {profiles.map((profile) => (
               <div key={profile.name} class="profile-item">
                 <div class="profile-info">
-                  <div class="profile-name">{profile.name}</div>
+                  <div class="profile-name">
+                    {profile.name}
+                    <ProfileInfoTooltip profile={profile} />
+                  </div>
                   <div class="profile-details">
                     {profile.templates.length} template{profile.templates.length !== 1 ? "s" : ""}
                   </div>

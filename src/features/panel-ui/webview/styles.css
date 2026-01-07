@@ -311,7 +311,8 @@ details[open] > .type-header::before {
 }
 
 /* Template Info Button */
-.template-info-button {
+.icon-tooltip {
+    display: inline-flex;
     background: none;
     border: none;
     cursor: pointer;
@@ -320,16 +321,16 @@ details[open] > .type-header::before {
     transition: opacity 0.15s ease;
 }
 
-.template-info-button:hover {
+.icon-tooltip:hover {
     opacity: 1;
     color: var(--vscode-textLink-activeForeground);
 }
 
-.template-info-button:active {
+.icon-tooltip:active {
     transform: scale(0.95);
 }
 
-.template-info-button .codicon {
+.icon-tooltip .codicon {
     display: inline-block;
 }
 
@@ -381,6 +382,42 @@ details[open] > .type-header::before {
     margin: 0;
 }
 
+/* Profile Tooltip Styles */
+.profile-tooltip-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.profile-tooltip-type {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.profile-tooltip-type:not(:last-child) {
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.profile-tooltip-type-header {
+    font-size: 1em;
+    font-weight: 600;
+    color: var(--vscode-editorHoverWidget-foreground);
+}
+
+.profile-tooltip-templates {
+    margin: 0;
+    padding-left: 18px;
+    list-style-type: disc;
+}
+
+.profile-tooltip-templates li {
+    font-size: 0.9em;
+    color: var(--vscode-descriptionForeground);
+    line-height: 1.5;
+}
+
 /* Profile-specific Styles */
 .profile-actions {
     margin-bottom: 12px;
@@ -424,6 +461,8 @@ details[open] > .type-header::before {
 }
 
 .profile-name {
+    display: flex;
+    align-items: center;
     font-size: 0.95em;
     font-weight: 600;
     color: var(--vscode-foreground);
@@ -431,6 +470,9 @@ details[open] > .type-header::before {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .profile-details {
