@@ -60,6 +60,9 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
     const htmlPath = vscode.Uri.joinPath(this._context!.extensionUri, "out", "webview", "index.html");
     const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._context!.extensionUri, "out", "webview", "styles.css"));
     const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._context!.extensionUri, "out", "webview.js"));
+    const codiconsUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._context!.extensionUri, "out", "webview", "static", "codicon.css")
+    );
 
     // Generate a nonce for CSP
     const nonce = this.getNonce();
@@ -70,6 +73,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
     // Replace placeholders
     html = html.replace(/\{\{nonce\}\}/g, nonce);
     html = html.replace(/\{\{styleUri\}\}/g, styleUri.toString());
+    html = html.replace(/\{\{codiconsUri\}\}/g, codiconsUri.toString());
     html = html.replace(/\{\{scriptUri\}\}/g, scriptUri.toString());
     html = html.replace(/\{\{cspSource\}\}/g, webview.cspSource);
 

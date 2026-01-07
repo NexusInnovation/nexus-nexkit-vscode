@@ -82,7 +82,7 @@
         "command": "nexus-nexkit-vscode.applyProfile",
         "title": "Nexkit: Apply Profile",
         "category": "Nexkit",
-        "icon": "$(folder-opened)"
+        "icon": "$(rocket)"
       },
       {
         "command": "nexus-nexkit-vscode.deleteProfile",

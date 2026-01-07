@@ -102,11 +102,7 @@ export function TemplateInfoTooltip({ template }: TemplateInfoTooltipProps) {
         aria-label="Show template information"
         type="button"
       >
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" fill="none" />
-          <path d="M7.5 7h1v4h-1V7z" fill="currentColor" />
-          <circle cx="8" cy="5" r="0.75" fill="currentColor" />
-        </svg>
+        <i class="codicon codicon-info"></i>
       </button>
 
       {showTooltip && tooltipContent && (

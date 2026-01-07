@@ -112,7 +112,7 @@ export function registerApplyProfileCommand(context: vscode.ExtensionContext, se
 
         // Confirm application
         const confirm = await vscode.window.showWarningMessage(
-          `Apply profile "${profileToApply.name}"?\n\nThis will replace all currently installed templates with ${profileToApply.templates.length} template${profileToApply.templates.length !== 1 ? "s" : ""} from this profile. A backup will be created first.`,
+          `Apply profile "${profileToApply.name}"? This will replace all currently installed templates with ${profileToApply.templates.length} template${profileToApply.templates.length !== 1 ? "s" : ""} from this profile. A backup will be created first.`,
           "Apply",
           "Cancel"
         );
@@ -132,18 +132,15 @@ export function registerApplyProfileCommand(context: vscode.ExtensionContext, se
             const result = await services.profileService.applyProfile(profileToApply.name);
 
             // Show result summary
-            let message = `Profile "${profileToApply.name}" applied successfully!\n\n`;
-            message += `✓ ${result.installed} template${result.installed !== 1 ? "s" : ""} installed\n`;
+            let message = `Profile "${profileToApply.name}" applied successfully!`;
+            message += ` ✓ ${result.installed} template${result.installed !== 1 ? "s" : ""} installed.`;
 
             if (result.skipped > 0) {
-              message += `⚠ ${result.skipped} template${result.skipped !== 1 ? "s" : ""} skipped (not found in repositories):\n`;
-              result.skippedTemplates.forEach((name) => {
-                message += `  • ${name}\n`;
-              });
+              message += ` ⚠ ${result.skipped} template${result.skipped !== 1 ? "s" : ""} skipped (not found in repositories or couldn't install them).`;
             }
 
             if (result.backupPath) {
-              message += `\nBackup created at: ${result.backupPath}`;
+              message += ` Backup created at: ${result.backupPath}`;
             }
 
             vscode.window.showInformationMessage(message);
@@ -205,7 +202,7 @@ export function registerDeleteProfileCommand(context: vscode.ExtensionContext, s
 
         // Confirm deletion
         const confirm = await vscode.window.showWarningMessage(
-          `Delete ${profileNamesToDelete.length} profile${profileNamesToDelete.length !== 1 ? "s" : ""}?\n\n${profileNamesToDelete.join(", ")}\n\nThis action cannot be undone.`,
+          `You're about to delete the following profile${profileNamesToDelete.length !== 1 ? "s" : ""}: ${profileNamesToDelete.map((p) => `"${p}"`).join(", ")}. This action cannot be undone.`,
           "Delete",
           "Cancel"
         );

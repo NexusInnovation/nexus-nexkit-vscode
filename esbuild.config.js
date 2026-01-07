@@ -36,10 +36,17 @@ const esbuildProblemMatcherPlugin = {
 function copyStaticFiles() {
 	const webviewSourceDir = path.join(__dirname, 'src', 'features', 'panel-ui', 'webview');
 	const webviewOutputDir = path.join(__dirname, 'out', 'webview');
+	const staticSourceDir = path.join(webviewSourceDir, 'static');
+	const staticOutputDir = path.join(webviewOutputDir, 'static');
 
 	// Create output directory if it doesn't exist
 	if (!fs.existsSync(webviewOutputDir)) {
 		fs.mkdirSync(webviewOutputDir, { recursive: true });
+	}
+
+	// Create static output directory if it doesn't exist
+	if (!fs.existsSync(staticOutputDir)) {
+		fs.mkdirSync(staticOutputDir, { recursive: true });
 	}
 
 	// Copy HTML and CSS files
@@ -52,6 +59,19 @@ function copyStaticFiles() {
 			console.log(`[copy] ${file} -> out/webview/${file}`);
 		}
 	});
+
+	// Copy all files from static folder
+	if (fs.existsSync(staticSourceDir)) {
+		const staticFiles = fs.readdirSync(staticSourceDir);
+		staticFiles.forEach(file => {
+			const source = path.join(staticSourceDir, file);
+			const dest = path.join(staticOutputDir, file);
+			if (fs.statSync(source).isFile()) {
+				fs.copyFileSync(source, dest);
+				console.log(`[copy] static/${file} -> out/webview/static/${file}`);
+			}
+		});
+	}
 }
 
 /**
@@ -76,8 +96,10 @@ const watchStaticFilesPlugin = {
 			if (!watch) return;
 
 			const webviewSourceDir = path.join(__dirname, 'src', 'features', 'panel-ui', 'webview');
+			const staticSourceDir = path.join(webviewSourceDir, 'static');
 			const filesToWatch = ['index.html', 'styles.css'];
 
+			// Watch webview files
 			filesToWatch.forEach(file => {
 				const filePath = path.join(webviewSourceDir, file);
 				if (fs.existsSync(filePath)) {
@@ -89,6 +111,22 @@ const watchStaticFilesPlugin = {
 					});
 				}
 			});
+
+			// Watch static folder files
+			if (fs.existsSync(staticSourceDir)) {
+				const staticFiles = fs.readdirSync(staticSourceDir);
+				staticFiles.forEach(file => {
+					const filePath = path.join(staticSourceDir, file);
+					if (fs.statSync(filePath).isFile()) {
+						fs.watchFile(filePath, { interval: 500 }, (curr, prev) => {
+							if (curr.mtime !== prev.mtime) {
+								console.log(`[watch] static/${file} changed`);
+								copyStaticFiles();
+							}
+						});
+					}
+				});
+			}
 		});
 	},
 };

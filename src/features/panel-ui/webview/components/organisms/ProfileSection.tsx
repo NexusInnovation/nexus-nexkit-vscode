@@ -33,14 +33,14 @@ export function ProfileSection() {
                     onClick={() => applyProfile(profile)}
                     title={`Apply profile "${profile.name}"`}
                   >
-                    Apply
+                    <i class="codicon codicon-rocket"></i>
                   </button>
                   <button
                     class="profile-action-button delete-button"
                     onClick={() => deleteProfile(profile)}
                     title={`Delete profile "${profile.name}"`}
                   >
-                    Delete
+                    <i class="codicon codicon-trash"></i>
                   </button>
                 </div>
               </div>
