@@ -118,8 +118,10 @@ export class ProfileService {
         }
 
         // Install the template
-        await this.aiTemplateDataService.installTemplate(template);
-        installed++;
+        const success = await this.aiTemplateDataService.installTemplate(template, { silent: true });
+
+        if (success) installed++;
+        else skipped++;
       } catch (error) {
         // Installation failed - skip silently
         console.error(`Failed to install template ${templateRecord.name}:`, error);

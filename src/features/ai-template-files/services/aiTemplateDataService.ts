@@ -194,7 +194,7 @@ export class AITemplateDataService implements vscode.Disposable {
   /**
    * Install a template to the workspace
    */
-  public async installTemplate(templateFile: AITemplateFile, options?: InstallOptions): Promise<void> {
+  public async installTemplate(templateFile: AITemplateFile, options?: InstallOptions): Promise<boolean> {
     return this.fileOperations.installTemplate(templateFile, options);
   }
 
