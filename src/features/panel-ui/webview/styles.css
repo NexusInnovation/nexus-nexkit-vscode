@@ -144,9 +144,21 @@ body {
     gap: 8px;
 }
 
+/* Search and Filter Row */
+.search-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.search-filter-row .search-wrapper {
+    flex: 1;
+}
+
 /* Filter Menu */
 .filter-menu {
     position: relative;
+    flex-shrink: 0;
 }
 
 .filter-menu-btn {
@@ -156,12 +168,15 @@ body {
     cursor: pointer;
     display: flex;
     align-items: center;
+    justify-content: center;
     opacity: 0.7;
     transition: opacity 0.15s ease;
     font-size: 20px;
     font-weight: bold;
-    padding: 4px 8px;
+    padding: 8px;
     line-height: 1;
+    min-width: 36px;
+    height: 36px;
 }
 
 .filter-menu-btn:hover {
@@ -199,14 +214,14 @@ body {
     background-color: var(--vscode-list-hoverBackground);
 }
 
-.filter-option.selected {
-    background-color: var(--vscode-list-activeSelectionBackground);
-    color: var(--vscode-list-activeSelectionForeground);
+.filter-option input[type="radio"] {
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--vscode-button-background);
 }
 
-.filter-radio {
-    font-size: 14px;
-    line-height: 1;
+.filter-option span {
+    flex: 1;
 }
 
 .collapse-all-btn {

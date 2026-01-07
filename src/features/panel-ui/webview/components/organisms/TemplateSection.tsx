@@ -46,8 +46,10 @@ export function TemplateSection() {
                 </button>
               </div>
             )}
-            <SearchBar value={searchQuery} onChange={setSearchQuery} />
-            <FilterMenu filterMode={filterMode} onFilterChange={setFilterMode} />
+            <div class="search-filter-row">
+              <SearchBar value={searchQuery} onChange={setSearchQuery} />
+              <FilterMenu filterMode={filterMode} onFilterChange={setFilterMode} />
+            </div>
             <div id="templateContainer">
               <TemplateMetadataProvider>
                 {repositories.map((repo) => (

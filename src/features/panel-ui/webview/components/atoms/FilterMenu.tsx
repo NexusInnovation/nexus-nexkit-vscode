@@ -50,42 +50,36 @@ export function FilterMenu({ filterMode, onFilterChange }: FilterMenuProps) {
       </button>
       {isOpen && (
         <div class="filter-dropdown" role="menu">
-          <div
-            class={`filter-option ${filterMode === "all" ? "selected" : ""}`}
-            onClick={() => handleFilterSelect("all")}
-            role="menuitemradio"
-            aria-checked={filterMode === "all"}
-            tabIndex={0}
-          >
-            <span class="filter-radio" aria-hidden="true">
-              {filterMode === "all" ? "●" : "○"}
-            </span>
-            View all
-          </div>
-          <div
-            class={`filter-option ${filterMode === "selected" ? "selected" : ""}`}
-            onClick={() => handleFilterSelect("selected")}
-            role="menuitemradio"
-            aria-checked={filterMode === "selected"}
-            tabIndex={0}
-          >
-            <span class="filter-radio" aria-hidden="true">
-              {filterMode === "selected" ? "●" : "○"}
-            </span>
-            View selected
-          </div>
-          <div
-            class={`filter-option ${filterMode === "unselected" ? "selected" : ""}`}
-            onClick={() => handleFilterSelect("unselected")}
-            role="menuitemradio"
-            aria-checked={filterMode === "unselected"}
-            tabIndex={0}
-          >
-            <span class="filter-radio" aria-hidden="true">
-              {filterMode === "unselected" ? "●" : "○"}
-            </span>
-            View unselected
-          </div>
+          <label class="filter-option">
+            <input
+              type="radio"
+              name="filter-mode"
+              value="all"
+              checked={filterMode === "all"}
+              onChange={() => handleFilterSelect("all")}
+            />
+            <span>View all</span>
+          </label>
+          <label class="filter-option">
+            <input
+              type="radio"
+              name="filter-mode"
+              value="selected"
+              checked={filterMode === "selected"}
+              onChange={() => handleFilterSelect("selected")}
+            />
+            <span>View selected</span>
+          </label>
+          <label class="filter-option">
+            <input
+              type="radio"
+              name="filter-mode"
+              value="unselected"
+              checked={filterMode === "unselected"}
+              onChange={() => handleFilterSelect("unselected")}
+            />
+            <span>View unselected</span>
+          </label>
         </div>
       )}
     </div>
