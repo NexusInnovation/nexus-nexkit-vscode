@@ -2,10 +2,9 @@ import * as vscode from "vscode";
 import { Profile, ApplyProfileResult } from "../models/profile";
 import { InstalledTemplatesStateManager } from "../../ai-template-files/services/installedTemplatesStateManager";
 import { AITemplateDataService } from "../../ai-template-files/services/aiTemplateDataService";
-import { BackupService } from "../../backup-management/backupService";
+import { GitHubTemplateBackupService } from "../../backup-management/backupService";
 import { SettingsManager } from "../../../core/settingsManager";
 import { AITemplateFile } from "../../ai-template-files/models/aiTemplateFile";
-import * as path from "path";
 
 /**
  * Service for managing template profiles
@@ -17,7 +16,7 @@ export class ProfileService {
   constructor(
     private readonly installedTemplatesStateManager: InstalledTemplatesStateManager,
     private readonly aiTemplateDataService: AITemplateDataService,
-    private readonly backupService: BackupService
+    private readonly backupService: GitHubTemplateBackupService
   ) {}
 
   /**
@@ -89,15 +88,14 @@ export class ProfileService {
       throw new Error(`Profile "${profileName}" contains no templates`);
     }
 
-    // Create backup before making changes
+    // Backup and delete existing template folders before applying profile
     const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
     if (!workspaceRoot) {
       throw new Error("No workspace folder found");
     }
-    const githubPath = path.join(workspaceRoot, ".github");
-    const backupPath = await this.backupService.backupDirectory(githubPath);
+    const backupPath = await this.backupService.backupTemplates(workspaceRoot);
 
-    // Clear all currently installed templates
+    // Clear all currently installed templates from state
     await this.installedTemplatesStateManager.clearState();
 
     // Install templates from profile

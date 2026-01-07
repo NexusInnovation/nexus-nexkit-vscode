@@ -19,9 +19,8 @@ export class WorkspaceInitializationService {
   }
 
   public async initializeWorkspace(workspaceFolder: vscode.WorkspaceFolder, services: ServiceContainer) {
-    // Backup existing .github directory if it exists
-    const githubPath = vscode.Uri.joinPath(workspaceFolder.uri, ".github").fsPath;
-    const backupPath = await services.backup.backupDirectory(githubPath);
+    // Backup and delete existing GitHub template folders if they exist
+    const backupPath = await services.backup.backupTemplates(workspaceFolder.uri.fsPath);
 
     // Deploy configuration files
     await services.gitIgnoreConfigDeployer.deployGitignore(workspaceFolder.uri.fsPath);

@@ -4,7 +4,7 @@ import { MCPConfigService } from "../features/mcp-management/mcpConfigService";
 import { AITemplateDataService } from "../features/ai-template-files/services/aiTemplateDataService";
 import { TemplateMetadataService } from "../features/ai-template-files/services/templateMetadataService";
 import { UpdateStatusBarService } from "../features/extension-updates/updateStatusBarService";
-import { BackupService } from "../features/backup-management/backupService";
+import { GitHubTemplateBackupService } from "../features/backup-management/backupService";
 import { ExtensionUpdateService } from "../features/extension-updates/extensionUpdateService";
 import { GitIgnoreConfigDeployer } from "../features/initialization/gitIgnoreConfigDeployer";
 import { MCPConfigDeployer } from "../features/initialization/mcpConfigDeployer";
@@ -29,7 +29,7 @@ export interface ServiceContainer {
   installedTemplatesState: InstalledTemplatesStateManager;
   updateStatusBar: UpdateStatusBarService;
   extensionUpdate: ExtensionUpdateService;
-  backup: BackupService;
+  backup: GitHubTemplateBackupService;
   gitIgnoreConfigDeployer: GitIgnoreConfigDeployer;
   mcpConfigDeployer: MCPConfigDeployer;
   recommendedExtensionsConfigDeployer: RecommendedExtensionsConfigDeployer;
@@ -57,7 +57,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const repositoryManager = new RepositoryManager();
   repositoryManager.initialize();
   const templateMetadata = new TemplateMetadataService(repositoryManager);
-  const backup = new BackupService();
+  const backup = new GitHubTemplateBackupService();
   const updateStatusBar = new UpdateStatusBarService(context, extensionUpdate);
   const gitIgnoreConfigDeployer = new GitIgnoreConfigDeployer();
   const mcpConfigDeployer = new MCPConfigDeployer();

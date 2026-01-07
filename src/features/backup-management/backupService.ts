@@ -1,38 +1,76 @@
 import * as fs from "fs";
 import * as path from "path";
 import { fileExists, copyDirectory } from "../../shared/utils/fileHelper";
-
-// todo: ne pas override tout le dossier GitHub mais seulement les dossier de templates
+import { AI_TEMPLATE_FILE_TYPES } from "../ai-template-files/models/aiTemplateFile";
 
 /**
- * Service for managing directory backups
+ * Template folder names in .github directory
  */
-export class BackupService {
+const TEMPLATE_FOLDERS = AI_TEMPLATE_FILE_TYPES;
+
+/**
+ * Service for managing GitHub template folder backups
+ * Only backs up and manages template folders (agents, prompts, instructions, chatmodes)
+ * from the .github directory, preserving other .github content like workflows
+ */
+export class GitHubTemplateBackupService {
   /**
-   * Create backup of existing directory and delete original
+   * Backup GitHub template folders and delete them from the workspace
+   * @param workspaceRoot Absolute path to workspace root
+   * @returns Path to backup directory or null if nothing was backed up
    */
-  public async backupDirectory(sourcePath: string): Promise<string | null> {
-    if (!(await fileExists(sourcePath))) {
-      return null; // Nothing to backup
+  public async backupTemplates(workspaceRoot: string): Promise<string | null> {
+    const githubPath = path.join(workspaceRoot, ".github");
+
+    if (!(await fileExists(githubPath))) {
+      return null;
     }
 
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const backupPath = `${sourcePath}.backup-${timestamp}`;
+    const hasTemplates = await this.hasAnyTemplateFolders(githubPath);
+    if (!hasTemplates) {
+      return null;
+    }
 
-    await copyDirectory(sourcePath, backupPath);
-    await fs.promises.rm(sourcePath, { recursive: true, force: true });
+    // Create backup
+    const backupPath = await this.createBackupDirectory(workspaceRoot, githubPath);
+
+    // Delete template folders from original location
+    await this.deleteTemplateFolders(workspaceRoot);
 
     return backupPath;
   }
 
   /**
-   * List available backups
+   * Delete template folders from .github directory
+   * Preserves other .github content like workflows
+   * @param workspaceRoot Absolute path to workspace root
    */
-  public async listBackups(targetRoot: string, directoryName: string): Promise<string[]> {
+  public async deleteTemplateFolders(workspaceRoot: string): Promise<void> {
+    const githubPath = path.join(workspaceRoot, ".github");
+
+    if (!(await fileExists(githubPath))) {
+      return;
+    }
+
+    // Delete only template folders
+    for (const folderName of TEMPLATE_FOLDERS) {
+      const folderPath = path.join(githubPath, folderName);
+      if (await fileExists(folderPath)) {
+        await fs.promises.rm(folderPath, { recursive: true, force: true });
+      }
+    }
+  }
+
+  /**
+   * List available backups
+   * @param workspaceRoot Absolute path to workspace root
+   * @returns Array of backup folder names, sorted by date (newest first)
+   */
+  public async listBackups(workspaceRoot: string): Promise<string[]> {
     try {
-      const entries = await fs.promises.readdir(targetRoot);
+      const entries = await fs.promises.readdir(workspaceRoot);
       return entries
-        .filter((entry) => entry.startsWith(`${directoryName}.backup-`))
+        .filter((entry) => entry.startsWith(".github.backup-"))
         .sort()
         .reverse(); // Most recent first
     } catch {
@@ -41,43 +79,64 @@ export class BackupService {
   }
 
   /**
-   * Restore from a specific backup
+   * Restore template folders from a specific backup
+   * @param workspaceRoot Absolute path to workspace root
+   * @param backupName Name of the backup folder (e.g., ".github.backup-2024-01-01T12-00-00")
    */
-  public async restoreBackup(targetRoot: string, directoryName: string, backupName: string): Promise<void> {
-    const directoryPath = path.join(targetRoot, directoryName);
-    const backupPath = path.join(targetRoot, backupName);
+  public async restoreBackup(workspaceRoot: string, backupName: string): Promise<void> {
+    const backupPath = path.join(workspaceRoot, backupName);
 
     if (!(await fileExists(backupPath))) {
       throw new Error(`Backup ${backupName} not found`);
     }
 
-    // Create temp backup of current state
-    const tempBackup = `${directoryPath}.temp`;
-    if (await fileExists(directoryPath)) {
-      await copyDirectory(directoryPath, tempBackup);
+    const githubPath = path.join(workspaceRoot, ".github");
+
+    // Create .github directory if it doesn't exist
+    await fs.promises.mkdir(githubPath, { recursive: true });
+
+    // Create temp backup of current template folders
+    const tempBackupPath = path.join(workspaceRoot, ".github.temp");
+    if (await this.hasAnyTemplateFolders(githubPath)) {
+      await fs.promises.mkdir(tempBackupPath, { recursive: true });
+      for (const folderName of TEMPLATE_FOLDERS) {
+        const sourcePath = path.join(githubPath, folderName);
+        if (await fileExists(sourcePath)) {
+          const destPath = path.join(tempBackupPath, folderName);
+          await copyDirectory(sourcePath, destPath);
+        }
+      }
     }
 
     try {
-      // Remove current directory
-      if (await fileExists(directoryPath)) {
-        await fs.promises.rm(directoryPath, { recursive: true, force: true });
+      // Delete current template folders
+      await this.deleteTemplateFolders(workspaceRoot);
+
+      // Restore template folders from backup
+      for (const folderName of TEMPLATE_FOLDERS) {
+        const sourcePath = path.join(backupPath, folderName);
+        if (await fileExists(sourcePath)) {
+          const destPath = path.join(githubPath, folderName);
+          await copyDirectory(sourcePath, destPath);
+        }
       }
 
-      // Restore from backup
-      await copyDirectory(backupPath, directoryPath);
-
       // Clean up temp backup
-      if (await fileExists(tempBackup)) {
-        await fs.promises.rm(tempBackup, { recursive: true, force: true });
+      if (await fileExists(tempBackupPath)) {
+        await fs.promises.rm(tempBackupPath, { recursive: true, force: true });
       }
     } catch (error) {
       // Restore temp backup if something went wrong
-      if (await fileExists(tempBackup)) {
-        if (await fileExists(directoryPath)) {
-          await fs.promises.rm(directoryPath, { recursive: true, force: true });
+      if (await fileExists(tempBackupPath)) {
+        await this.deleteTemplateFolders(workspaceRoot);
+        for (const folderName of TEMPLATE_FOLDERS) {
+          const sourcePath = path.join(tempBackupPath, folderName);
+          if (await fileExists(sourcePath)) {
+            const destPath = path.join(githubPath, folderName);
+            await copyDirectory(sourcePath, destPath);
+          }
         }
-        await copyDirectory(tempBackup, directoryPath);
-        await fs.promises.rm(tempBackup, { recursive: true, force: true });
+        await fs.promises.rm(tempBackupPath, { recursive: true, force: true });
       }
       throw error;
     }
@@ -85,15 +144,17 @@ export class BackupService {
 
   /**
    * Clean up old backups based on retention policy
+   * @param workspaceRoot Absolute path to workspace root
+   * @param retentionDays Number of days to keep backups
    */
-  public async cleanupBackups(targetRoot: string, directoryName: string, retentionDays: number): Promise<void> {
+  public async cleanupBackups(workspaceRoot: string, retentionDays: number): Promise<void> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
 
-    const backups = await this.listBackups(targetRoot, directoryName);
+    const backups = await this.listBackups(workspaceRoot);
 
     for (const backup of backups) {
-      const backupPath = path.join(targetRoot, backup);
+      const backupPath = path.join(workspaceRoot, backup);
       try {
         const stats = await fs.promises.stat(backupPath);
         if (stats.mtime < cutoffDate) {
@@ -104,5 +165,42 @@ export class BackupService {
         console.error(`Error cleaning up backup ${backup}:`, error);
       }
     }
+  }
+
+  /**
+   * Check if any template folders exist in .github directory
+   * @param githubPath Absolute path to .github directory
+   * @returns True if at least one template folder exists
+   */
+  private async hasAnyTemplateFolders(githubPath: string): Promise<boolean> {
+    for (const folderName of TEMPLATE_FOLDERS) {
+      const folderPath = path.join(githubPath, folderName);
+      if (await fileExists(folderPath)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Create backup directory with template folders
+   * @param workspaceRoot Absolute path to workspace root
+   * @param githubPath Absolute path to .github directory
+   * @returns Path to backup directory
+   */
+  private async createBackupDirectory(workspaceRoot: string, githubPath: string): Promise<string> {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const backupPath = path.join(workspaceRoot, `.github.backup-${timestamp}`);
+    await fs.promises.mkdir(backupPath, { recursive: true });
+
+    for (const folderName of TEMPLATE_FOLDERS) {
+      const sourcePath = path.join(githubPath, folderName);
+      if (await fileExists(sourcePath)) {
+        const destPath = path.join(backupPath, folderName);
+        await copyDirectory(sourcePath, destPath);
+      }
+    }
+
+    return backupPath;
   }
 }

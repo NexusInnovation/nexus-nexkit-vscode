@@ -16,6 +16,7 @@ export class GitIgnoreConfigDeployer {
     const nexkitSection = `# BEGIN NexKit
 .specify/
 .github/**/nexkit.*
+.github/agents/
 .github/chatmodes/
 .github/instructions/
 .github/prompts/
