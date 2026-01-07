@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { ServiceContainer } from "../../core/serviceContainer";
 import { SettingsManager } from "../../core/settingsManager";
+import { BatchInstallSummary } from "../ai-template-files/services/templateFileOperations";
 
 /**
  * Service for managing workspace initialization events
@@ -18,7 +19,11 @@ export class WorkspaceInitializationService {
     this._onWorkspaceInitializedEmitter.fire();
   }
 
-  public async initializeWorkspace(workspaceFolder: vscode.WorkspaceFolder, services: ServiceContainer) {
+  public async initializeWorkspace(
+    workspaceFolder: vscode.WorkspaceFolder,
+    profileName: string | null,
+    services: ServiceContainer
+  ) {
     // Backup and delete existing GitHub template folders if they exist
     const backupPath = await services.backup.backupTemplates(workspaceFolder.uri.fsPath);
 
@@ -28,8 +33,17 @@ export class WorkspaceInitializationService {
     await services.recommendedSettingsConfigDeployer.deployVscodeSettings(workspaceFolder.uri.fsPath);
     await services.mcpConfigDeployer.deployWorkspaceMCPServers(workspaceFolder.uri.fsPath);
 
-    // Deploy default template files (agents, prompts, chatmodes) from the Nexus Templates
-    const deploymentSummary = await services.aiTemplateFilesDeployer.deployTemplateFiles();
+    let deploymentSummary: BatchInstallSummary | null = null;
+
+    // Apply selected profile or use default behavior
+    if (profileName) {
+      // User selected a profile - apply it
+      const { summary } = await services.profileService.applyProfile(profileName, true);
+      deploymentSummary = summary;
+    } else {
+      // User skipped or no profiles exist - deploy default template files (agents, prompts, chatmodes) from the Nexus Templates
+      deploymentSummary = await services.aiTemplateFilesDeployer.deployTemplateFiles();
+    }
 
     // Update workspace settings
     await SettingsManager.setWorkspaceInitialized(true);

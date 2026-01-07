@@ -2,8 +2,8 @@ import * as vscode from "vscode";
 import { ServiceContainer } from "../../core/serviceContainer";
 import { SettingsManager } from "../../core/settingsManager";
 import { registerCommand } from "../../shared/commands/commandRegistry";
-import { MCPConfigDeployer } from "./mcpConfigDeployer";
 import { Commands } from "../../shared/constants/commands";
+import { ProfileSelectionPromptService } from "./profileSelectionPromptService";
 
 /**
  * Register initialization-related commands
@@ -40,8 +40,12 @@ export function registerInitializeWorkspaceCommand(context: vscode.ExtensionCont
           cancellable: false,
         },
         async () => {
+          // Prompt user to select a profile if any are saved
+          const selectedProfileName = await new ProfileSelectionPromptService(services.profileService).promptProfileSelection();
+
           const { deploymentSummary, backupPath } = await services.workspaceInitialization.initializeWorkspace(
             workspaceFolder,
+            selectedProfileName,
             services
           );
 

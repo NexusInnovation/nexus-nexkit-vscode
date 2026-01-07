@@ -133,10 +133,10 @@ export function registerApplyProfileCommand(context: vscode.ExtensionContext, se
 
             // Show result summary
             let message = `Profile "${profileToApply.name}" applied successfully!`;
-            message += ` ✓ ${result.installed} template${result.installed !== 1 ? "s" : ""} installed.`;
+            message += ` ✓ ${result.summary.installed} template${result.summary.installed !== 1 ? "s" : ""} installed.`;
 
-            if (result.skipped > 0) {
-              message += ` ⚠ ${result.skipped} template${result.skipped !== 1 ? "s" : ""} skipped (not found in repositories or couldn't install them).`;
+            if (result.summary.failed > 0) {
+              message += ` ⚠ ${result.summary.failed} template${result.summary.failed !== 1 ? "s" : ""} skipped (not found in repositories or couldn't install them).`;
             }
 
             if (result.backupPath) {

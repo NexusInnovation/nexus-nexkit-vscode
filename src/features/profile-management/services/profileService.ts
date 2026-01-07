@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { Profile, ApplyProfileResult } from "../models/profile";
+import { ApplyProfileResult, Profile } from "../models/profile";
 import { InstalledTemplatesStateManager } from "../../ai-template-files/services/installedTemplatesStateManager";
 import { AITemplateDataService } from "../../ai-template-files/services/aiTemplateDataService";
 import { GitHubTemplateBackupService } from "../../backup-management/backupService";
@@ -74,9 +74,10 @@ export class ProfileService {
    * 2. Remove all currently installed templates
    * 3. Install all templates from the profile
    * @param profileName Name of the profile to apply
+   * @param skipBackup If true, will not create a backup before applying
    * @returns Result summary with install counts and backup path
    */
-  public async applyProfile(profileName: string): Promise<ApplyProfileResult> {
+  public async applyProfile(profileName: string, skipBackup: boolean = false): Promise<ApplyProfileResult> {
     const profiles = SettingsManager.getProfiles();
     const profile = profiles.find((p) => p.name === profileName);
 
@@ -93,48 +94,39 @@ export class ProfileService {
     if (!workspaceRoot) {
       throw new Error("No workspace folder found");
     }
-    const backupPath = await this.backupService.backupTemplates(workspaceRoot);
+
+    let backupPath: string | null = null;
+
+    if (!skipBackup) {
+      backupPath = await this.backupService.backupTemplates(workspaceRoot);
+    }
 
     // Clear all currently installed templates from state
     await this.installedTemplatesStateManager.clearState();
 
-    // Install templates from profile
-    let installed = 0;
-    let skipped = 0;
-    const skippedTemplates: string[] = [];
+    // Find all templates that exist in repositories
+    const templatesToInstall: AITemplateFile[] = [];
+    let notFoundCount = 0;
 
     for (const templateRecord of profile.templates) {
-      try {
-        // Find the template in the data service
-        const template = this.findTemplateInRepository(templateRecord);
-
-        if (!template) {
-          // Template not found in repositories - skip silently
-          skipped++;
-          skippedTemplates.push(`${templateRecord.name} (${templateRecord.repository})`);
-          continue;
-        }
-
-        // Install the template
-        const success = await this.aiTemplateDataService.installTemplate(template, { silent: true });
-
-        if (success) installed++;
-        else skipped++;
-      } catch (error) {
-        // Installation failed - skip silently
-        console.error(`Failed to install template ${templateRecord.name}:`, error);
-        skipped++;
-        skippedTemplates.push(`${templateRecord.name} (${templateRecord.repository})`);
+      const template = this.findTemplateInRepository(templateRecord);
+      if (template) {
+        templatesToInstall.push(template);
+      } else {
+        // Template not found in repositories - count as failed/skipped
+        notFoundCount++;
+        console.warn(`Template not found: ${templateRecord.name} (${templateRecord.repository})`);
       }
     }
 
+    // Install all found templates using batch method
+    const summary = await this.aiTemplateDataService.installBatch(templatesToInstall, { silent: true, overwrite: true });
+
+    // Add not found templates to failed count
+    summary.failed += notFoundCount;
+
     this._onProfilesChangedEmitter.fire();
-    return {
-      installed,
-      skipped,
-      skippedTemplates,
-      backupPath,
-    };
+    return { summary, backupPath };
   }
 
   /**

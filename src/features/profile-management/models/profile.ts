@@ -1,4 +1,5 @@
 import { InstalledTemplateRecord } from "../../ai-template-files/models/installedTemplateRecord";
+import { BatchInstallSummary } from "../../ai-template-files/services/templateFileOperations";
 
 /**
  * Represents a saved profile - a collection of templates that can be applied to a workspace
@@ -21,14 +22,8 @@ export interface Profile {
  * Result of applying a profile to a workspace
  */
 export interface ApplyProfileResult {
-  /** Number of templates successfully installed */
-  installed: number;
-
-  /** Number of templates that were skipped (not found in repositories) */
-  skipped: number;
-
-  /** Names of templates that were skipped */
-  skippedTemplates: string[];
+  /** Summary of the batch installation process */
+  summary: BatchInstallSummary;
 
   /** Path to the backup created before applying the profile */
   backupPath: string | null;
