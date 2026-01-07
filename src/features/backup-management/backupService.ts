@@ -2,6 +2,8 @@ import * as fs from "fs";
 import * as path from "path";
 import { fileExists, copyDirectory } from "../../shared/utils/fileHelper";
 
+// todo: ne pas override tout le dossier GitHub mais seulement les dossier de templates
+
 /**
  * Service for managing directory backups
  */

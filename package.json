@@ -293,7 +293,7 @@
   "devDependencies": {
     "@commitlint/cli": "^19.4.0",
     "@commitlint/config-conventional": "^19.4.0",
-    "@cyclonedx/cyclonedx-npm": "^1.19.3",
+    "@cyclonedx/cyclonedx-npm": "^4.1.2",
     "@preact/preset-vite": "^2.9.2",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.1",
@@ -311,14 +311,14 @@
     "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.2.1",
-    "conventional-changelog-cli": "^5.0.0",
-    "esbuild": "^0.24.2",
+    "conventional-changelog-cli": "^4.1.0",
+    "esbuild": "^0.27.2",
     "eslint": "^9.36.0",
     "glob": "^11.0.0",
     "mocha": "^10.0.10",
     "nyc": "^15.1.0",
     "preact": "^10.25.4",
-    "semantic-release": "^24.2.0",
+    "semantic-release": "^25.0.2",
     "sinon": "^19.0.2",
     "typescript": "^5.9.3"
   }
