@@ -519,7 +519,7 @@ details[open] > .type-header::before {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 12px;
+    padding: 8px 10px;
     background-color: var(--vscode-sideBar-background);
     border: 1px solid var(--vscode-panel-border);
     border-radius: 4px;
@@ -558,7 +558,7 @@ details[open] > .type-header::before {
 }
 
 .profile-action-button {
-    padding: 6px 12px;
+    padding: 8px;
     font-size: 0.85em;
     border: none;
     border-radius: 4px;
