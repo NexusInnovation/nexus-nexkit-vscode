@@ -17,10 +17,18 @@ interface TypeSectionProps {
 }
 
 const TYPE_DISPLAY_NAMES: Record<string, string> = {
-  agents: "🤖 Agents",
-  prompts: "🎯 Prompts",
-  instructions: "📋 Instructions",
-  chatmodes: "🤖 Chat Modes",
+  agents: "Custom Agents",
+  prompts: "Prompt Templates",
+  instructions: "Coding Instructions",
+  chatmodes: "Chat Modes",
+};
+
+const TYPE_DESCRIPTIONS: Record<string, string> = {
+  agents: "Specialized GitHub Copilot agents that extend functionality with custom behaviors and capabilities for specific tasks",
+  prompts: "Reusable prompt templates for common coding tasks, refactoring patterns, and AI-assisted development workflows",
+  instructions:
+    "Language-specific and project-wide coding guidelines that inform GitHub Copilot about your preferred code style and conventions",
+  chatmodes: "Specialized conversation modes that configure GitHub Copilot Chat for different development contexts and workflows",
 };
 
 /**
@@ -82,13 +90,16 @@ export function TypeSection({
   };
 
   const displayName = TYPE_DISPLAY_NAMES[type];
+  const description = TYPE_DESCRIPTIONS[type];
   const headerText = isSearching
     ? `${displayName} (${filteredTemplates.length} ${filteredTemplates.length === 1 ? "result" : "results"})`
     : `${displayName} (${installedCount}/${totalCount})`;
 
   return (
     <details ref={detailsRef} class="type-section" data-repository={repository} data-type={type} onToggle={handleToggle}>
-      <summary class="type-header">{headerText}</summary>
+      <summary class="type-header" title={description}>
+        {headerText}
+      </summary>
       <div class="template-list">
         {filteredTemplates.map((template) => (
           <TemplateItem

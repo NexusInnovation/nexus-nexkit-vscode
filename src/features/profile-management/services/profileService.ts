@@ -41,7 +41,7 @@ export class ProfileService {
     }
 
     // Get current installed templates
-    this.installedTemplatesStateManager.syncWithFileSystem();
+    await this.installedTemplatesStateManager.syncWithFileSystem();
     const installedTemplates = this.installedTemplatesStateManager.getInstalledTemplates();
 
     if (installedTemplates.length === 0) {

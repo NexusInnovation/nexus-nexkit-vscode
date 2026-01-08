@@ -15,13 +15,6 @@ body {
     max-width: 100%;
 }
 
-/* Actions Section */
-.actions-section {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
 .info-message {
     padding: 16px;
     background-color: var(--vscode-inputValidation-infoBackground);
@@ -34,6 +27,13 @@ body {
     margin: 0;
     color: var(--vscode-foreground);
     font-size: 0.9em;
+}
+
+.actions-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 6px;
 }
 
 .action-item {
@@ -89,9 +89,13 @@ body {
 
 /* Unified Collapsible Section Styles */
 .section {
-    margin-top: 8px;
+    padding: 12px 0;
     border-top: 1px solid var(--vscode-panel-border);
-    padding-top: 12px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.section + .section {
+    border-top: none;
 }
 
 .section .section-header {
@@ -103,8 +107,8 @@ body {
 .section .section-header.collapsible:hover {
     background-color: var(--vscode-list-hoverBackground);
     border-radius: 4px;
-    padding: 4px 8px;
-    margin: -4px -8px;
+    padding: 8px 4px;
+    margin: -8px -4px;
 }
 
 .section h2 {
@@ -135,13 +139,13 @@ body {
 }
 
 .section .section-content {
-    margin-top: 12px;
+    margin-top: 18px;
 }
 
-.section-header-actions {
+.template-section {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    gap: 12px;
 }
 
 /* Search and Filter Row */
@@ -224,21 +228,6 @@ body {
     flex: 1;
 }
 
-.collapse-all-btn {
-    background: none;
-    border: none;
-    color: var(--vscode-foreground);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    opacity: 0.7;
-    transition: opacity 0.15s ease;
-}
-
-.collapse-all-btn:hover {
-    opacity: 1;
-}
-
 /* Search Input */
 .search-wrapper {
     position: relative;
@@ -293,21 +282,21 @@ body {
     margin: 12px 0;
 }
 
-/* Repository Section */
 .repository-section {
-    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .repository-name {
     font-size: 1em;
     font-weight: 600;
-    margin: 0 0 8px 0;
+    margin: 0;
     color: var(--vscode-foreground);
 }
 
 /* Type Section (Collapsible) */
 .type-section {
-    margin-bottom: 8px;
     border: 1px solid var(--vscode-panel-border);
     border-radius: 4px;
     background-color: var(--vscode-sideBar-background);
@@ -537,10 +526,6 @@ details[open] > .type-header::before {
     transition: background-color 0.15s ease;
 }
 
-.profile-item:hover {
-    background-color: var(--vscode-list-hoverBackground);
-}
-
 .profile-info {
     flex: 1;
     min-width: 0;
@@ -621,12 +606,10 @@ details[open] > .type-header::before {
 /* Footer Section */
 .footer-section {
     margin-top: 24px;
-    padding-top: 16px;
-    border-top: 1px solid var(--vscode-panel-border);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .feedback-button {

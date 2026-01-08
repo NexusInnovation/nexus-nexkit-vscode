@@ -32,9 +32,9 @@ export function TemplateSection() {
   return (
     <CollapsibleSection id="templates" title="Templates" defaultExpanded>
       <>
-        {!isReady && <p>Loading templates...</p>}
+        {!isReady && <p class="loading">Loading templates...</p>}
         {isReady && (
-          <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 4rem;">
+          <div class="template-section">
             {installedTemplatesCount > 0 && (
               <div class="action-item">
                 <button
@@ -50,22 +50,20 @@ export function TemplateSection() {
               <SearchBar value={searchQuery} onChange={setSearchQuery} />
               <FilterMenu filterMode={filterMode} onFilterChange={setFilterMode} />
             </div>
-            <div id="templateContainer">
-              <TemplateMetadataProvider>
-                {repositories.map((repo) => (
-                  <RepositorySection
-                    key={repo.name}
-                    repository={repo}
-                    installedTemplates={installedTemplates}
-                    onInstall={installTemplate}
-                    onUninstall={uninstallTemplate}
-                    isTemplateInstalled={isTemplateInstalled}
-                    searchQuery={debouncedSearchQuery}
-                    filterMode={filterMode}
-                  />
-                ))}
-              </TemplateMetadataProvider>
-            </div>
+            <TemplateMetadataProvider>
+              {repositories.map((repo) => (
+                <RepositorySection
+                  key={repo.name}
+                  repository={repo}
+                  installedTemplates={installedTemplates}
+                  onInstall={installTemplate}
+                  onUninstall={uninstallTemplate}
+                  isTemplateInstalled={isTemplateInstalled}
+                  searchQuery={debouncedSearchQuery}
+                  filterMode={filterMode}
+                />
+              ))}
+            </TemplateMetadataProvider>
           </div>
         )}
       </>
