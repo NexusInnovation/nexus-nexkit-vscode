@@ -284,7 +284,7 @@
     "test:integration": "node ./out/test/runTest.js",
     "test:coverage": "nyc --reporter=lcovonly --reporter=text node ./out/test/runTest.js",
     "lint": "eslint src --ext ts",
-    "format": "prettier --write \"**/*.{ts,tsx}\"",
+    "format": "prettier --write \"**/*.{ts,tsx,js}\"",
     "version:bump": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md",
     "publish-private": "npm version patch --tag-version-prefix=v && git push && git push --tags",
     "release": "semantic-release",
