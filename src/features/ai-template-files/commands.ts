@@ -41,48 +41,36 @@ export function registerUpdateInstalledTemplatesCommand(context: vscode.Extensio
         return;
       }
 
-      // Perform the update with progress indicator
-      await vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: "Updating installed templates...",
-          cancellable: false,
-        },
-        async () => {
-          try {
-            const summary = await services.aiTemplateData.updateInstalledTemplates();
+      try {
+        const summary = await services.aiTemplateData.updateInstalledTemplates();
 
-            // Build result message
-            const messages: string[] = [];
+        // Build result message
+        const messages: string[] = [];
 
-            if (summary.installed > 0) {
-              messages.push(`${summary.installed} template${summary.installed === 1 ? "" : "s"} updated`);
-            }
-
-            if (summary.skipped > 0) {
-              messages.push(`${summary.skipped} skipped (no longer available)`);
-            }
-
-            if (summary.failed > 0) {
-              messages.push(`${summary.failed} failed`);
-            }
-
-            // Show appropriate message based on results
-            if (summary.failed > 0) {
-              vscode.window.showWarningMessage(`Template update completed with errors: ${messages.join(", ")}.`);
-            } else if (summary.installed > 0) {
-              vscode.window.showInformationMessage(`Templates updated successfully: ${messages.join(", ")}.`);
-            } else {
-              vscode.window.showInformationMessage("No templates were updated.");
-            }
-          } catch (error) {
-            console.error("Failed to update templates:", error);
-            vscode.window.showErrorMessage(
-              `Failed to update templates: ${error instanceof Error ? error.message : String(error)}`
-            );
-          }
+        if (summary.installed > 0) {
+          messages.push(`${summary.installed} template${summary.installed === 1 ? "" : "s"} updated`);
         }
-      );
+
+        if (summary.skipped > 0) {
+          messages.push(`${summary.skipped} skipped (no longer available)`);
+        }
+
+        if (summary.failed > 0) {
+          messages.push(`${summary.failed} failed`);
+        }
+
+        // Show appropriate message based on results
+        if (summary.failed > 0) {
+          vscode.window.showWarningMessage(`Template update completed with errors: ${messages.join(", ")}.`);
+        } else if (summary.installed > 0) {
+          vscode.window.showInformationMessage(`Templates updated successfully: ${messages.join(", ")}.`);
+        } else {
+          vscode.window.showInformationMessage("No templates were updated.");
+        }
+      } catch (error) {
+        console.error("Failed to update templates:", error);
+        vscode.window.showErrorMessage(`Failed to update templates: ${error instanceof Error ? error.message : String(error)}`);
+      }
     },
     services.telemetry
   );

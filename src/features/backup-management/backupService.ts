@@ -147,7 +147,7 @@ export class GitHubTemplateBackupService {
    * @param workspaceRoot Absolute path to workspace root
    * @param retentionDays Number of days to keep backups
    */
-  public async cleanupBackups(workspaceRoot: string, retentionDays: number): Promise<void> {
+  public async cleanupBackups(workspaceRoot: string, retentionDays: number = 0): Promise<void> {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
 

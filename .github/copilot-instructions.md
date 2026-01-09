@@ -118,24 +118,6 @@ const repos = SettingsManager.getRepositories<RepositoryConfig>();
 await SettingsManager.setWorkspaceInitialized(true);
 ```
 
-#### Progress Indicators
-
-Use VS Code progress API for long operations:
-
-```typescript
-await vscode.window.withProgress(
-  {
-    location: vscode.ProgressLocation.Notification,
-    title: "Doing something...",
-    cancellable: false,
-  },
-  async (progress) => {
-    progress.report({ increment: 50, message: "Halfway there..." });
-    // Do work
-  }
-);
-```
-
 #### Error Handling
 
 Show user-friendly error messages:

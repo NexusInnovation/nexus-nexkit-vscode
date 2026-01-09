@@ -33,36 +33,27 @@ export function registerInitializeWorkspaceCommand(context: vscode.ExtensionCont
         }
       }
 
-      await vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: "Initializing Nexkit workspace...",
-          cancellable: false,
-        },
-        async () => {
-          // Prompt user to select a profile if any are saved
-          const selectedProfileName = await new ProfileSelectionPromptService(services.profileService).promptProfileSelection();
+      // Prompt user to select a profile if any are saved
+      const selectedProfileName = await new ProfileSelectionPromptService(services.profileService).promptProfileSelection();
 
-          const { deploymentSummary, backupPath } = await services.workspaceInitialization.initializeWorkspace(
-            workspaceFolder,
-            selectedProfileName,
-            services
-          );
-
-          // Show success message with deployment summary
-          let resultMessage = "Nexkit project initialized successfully!";
-
-          if (deploymentSummary !== null && deploymentSummary.installed > 0) {
-            resultMessage += ` Installed ${deploymentSummary.installed} templates.`;
-          }
-
-          if (backupPath) {
-            resultMessage += ` Backed up existing templates to: ${backupPath}.`;
-          }
-
-          vscode.window.showInformationMessage(`${resultMessage}`);
-        }
+      const { deploymentSummary, backupPath } = await services.workspaceInitialization.initializeWorkspace(
+        workspaceFolder,
+        selectedProfileName,
+        services
       );
+
+      // Show success message with deployment summary
+      let resultMessage = "Nexkit project initialized successfully!";
+
+      if (deploymentSummary !== null && deploymentSummary.installed > 0) {
+        resultMessage += ` Installed ${deploymentSummary.installed} templates.`;
+      }
+
+      if (backupPath) {
+        resultMessage += ` Backed up existing templates to: ${backupPath}.`;
+      }
+
+      vscode.window.showInformationMessage(`${resultMessage}`);
     },
     services.telemetry
   );
