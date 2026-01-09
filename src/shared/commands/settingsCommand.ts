@@ -6,7 +6,7 @@ import { Commands } from "../constants/commands";
 /**
  * Register settings-related commands
  */
-export function registerSettingsCommands(context: vscode.ExtensionContext, services: ServiceContainer): void {
+export function registerOpenSettingsCommand(context: vscode.ExtensionContext, services: ServiceContainer): void {
   registerCommand(
     context,
     Commands.OPEN_SETTINGS,

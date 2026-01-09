@@ -8,9 +8,15 @@ export const Commands = {
   CHECK_EXTENSION_UPDATE: "nexus-nexkit-vscode.checkExtensionUpdate",
   INSTALL_USER_MCPS: "nexus-nexkit-vscode.installUserMCPs",
   OPEN_SETTINGS: "nexus-nexkit-vscode.openSettings",
+  OPEN_FEEDBACK: "nexus-nexkit-vscode.openFeedback",
   RESTORE_BACKUP: "nexus-nexkit-vscode.restoreBackup",
   CLEANUP_BACKUP: "nexus-nexkit-vscode.cleanupBackup",
   UPDATE_INSTALLED_TEMPLATES: "nexus-nexkit-vscode.updateInstalledTemplates",
+
+  // Profile management commands
+  SAVE_PROFILE: "nexus-nexkit-vscode.saveProfile",
+  APPLY_PROFILE: "nexus-nexkit-vscode.applyProfile",
+  DELETE_PROFILE: "nexus-nexkit-vscode.deleteProfile",
 } as const;
 
 // Type-safe command names

@@ -10,6 +10,9 @@ export interface WorkspaceState {
   isInitialized: boolean;
 }
 
+export type FilterMode = "all" | "selected" | "unselected";
+
 export interface WebviewPersistentState {
-  expandedSections: Record<string, boolean>;
+  expandedState: Record<string, boolean>;
+  filterMode: FilterMode;
 }

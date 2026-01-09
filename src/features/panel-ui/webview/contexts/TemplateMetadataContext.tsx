@@ -43,11 +43,7 @@ export function TemplateMetadataProvider({ children }: { children: any }) {
     return unsubscribe;
   }, [messenger]);
 
-  return (
-    <TemplateMetadataContext.Provider value={{ cache, setCache }}>
-      {children}
-    </TemplateMetadataContext.Provider>
-  );
+  return <TemplateMetadataContext.Provider value={{ cache, setCache }}>{children}</TemplateMetadataContext.Provider>;
 }
 
 export function getTemplateKey(template: AITemplateFile): string {

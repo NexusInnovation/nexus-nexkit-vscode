@@ -44,7 +44,7 @@ export class TemplateFileOperations {
   /**
    * Install a template to the workspace
    */
-  public async installTemplate(templateFile: AITemplateFile, options: InstallOptions = {}): Promise<void> {
+  public async installTemplate(templateFile: AITemplateFile, options: InstallOptions = {}): Promise<boolean> {
     const { silent = false, overwrite = true } = options;
 
     try {
@@ -56,7 +56,7 @@ export class TemplateFileOperations {
         if (!silent) {
           vscode.window.showWarningMessage(`Template "${templateFile.name}" already exists`);
         }
-        return;
+        return false;
       }
 
       // Create directory if it doesn't exist
@@ -74,6 +74,8 @@ export class TemplateFileOperations {
       if (!silent) {
         vscode.window.showInformationMessage(`Installed "${templateFile.name}" from '${templateFile.repository}'`);
       }
+
+      return true;
     } catch (error) {
       console.error(`Failed to install ${templateFile.name}:`, error);
       if (!silent) {

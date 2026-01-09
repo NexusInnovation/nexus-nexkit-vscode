@@ -1,40 +1,15 @@
-import { useState, useEffect, useCallback } from "preact/hooks";
+import { useCallback } from "preact/hooks";
 import { useVSCodeAPI } from "./useVSCodeAPI";
-import { AITemplateFile, InstalledTemplatesMap, RepositoryTemplatesMap } from "../../../ai-template-files/models/aiTemplateFile";
+import { useAppState } from "./useAppState";
+import { AITemplateFile, InstalledTemplatesMap } from "../../../ai-template-files/models/aiTemplateFile";
 
 /**
- * Hook to manage template data and operations
+ * Hook to access template data and operations
+ * Now reads from global state instead of managing its own state
  */
 export function useTemplateData() {
   const messenger = useVSCodeAPI();
-  const [repositories, setRepositories] = useState<RepositoryTemplatesMap[]>([]);
-  const [installedTemplates, setInstalledTemplates] = useState<InstalledTemplatesMap>({
-    agents: [],
-    prompts: [],
-    instructions: [],
-    chatmodes: [],
-  });
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Listen for template data updates
-    const unsubscribeTemplateData = messenger.onMessage("templateDataUpdate", (message) => {
-      if (message.command !== "templateDataUpdate") return;
-      setRepositories(message.repositories);
-      setIsLoading(false);
-    });
-
-    // Listen for installed templates updates
-    const unsubscribeInstalledTemplates = messenger.onMessage("installedTemplatesUpdate", (message) => {
-      if (message.command !== "installedTemplatesUpdate") return;
-      setInstalledTemplates(message.installed);
-    });
-
-    return () => {
-      unsubscribeTemplateData();
-      unsubscribeInstalledTemplates();
-    };
-  }, [messenger]);
+  const { templates } = useAppState();
 
   /**
    * Install a template
@@ -68,17 +43,17 @@ export function useTemplateData() {
    */
   const isTemplateInstalled = useCallback(
     (template: AITemplateFile): boolean => {
-      const installedList = installedTemplates[template.type as keyof InstalledTemplatesMap] || [];
+      const installedList = templates.installed[template.type as keyof InstalledTemplatesMap] || [];
       const qualifiedName = `${template.repository}::${template.name}`;
       return installedList.includes(qualifiedName);
     },
-    [installedTemplates]
+    [templates.installed]
   );
 
   return {
-    repositories,
-    installedTemplates,
-    isLoading,
+    repositories: templates.repositories,
+    installedTemplates: templates.installed,
+    isReady: templates.isReady,
     installTemplate,
     uninstallTemplate,
     isTemplateInstalled,
