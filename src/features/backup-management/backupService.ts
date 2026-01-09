@@ -189,7 +189,7 @@ export class GitHubTemplateBackupService {
    * @returns Path to backup directory
    */
   private async createBackupDirectory(workspaceRoot: string, githubPath: string): Promise<string> {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/T/g, "_").replace(/:/g, "-");
     const backupPath = path.join(workspaceRoot, `.github.backup-${timestamp}`);
     await fs.promises.mkdir(backupPath, { recursive: true });
 
