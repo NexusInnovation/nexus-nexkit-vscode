@@ -1,3 +1,8 @@
+## 1.2.0 (2026-01-09)
+
+* feat: Add profiles, add feedback button, add templates filter, improve style & bug fixes (#55) ([2203f7d](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2203f7d)), closes [#55](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/55)
+* feat: Add profiles, add feedback button, add templates filter, improve style & bug fixes (#56) ([5859b3d](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/5859b3d)), closes [#56](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/56)
+
 ## <small>1.1.2 (2026-01-02)</small>
 
 * fix: test autoupdate ([29dae2b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/29dae2b))
