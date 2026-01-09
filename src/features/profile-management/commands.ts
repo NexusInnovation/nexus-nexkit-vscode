@@ -121,31 +121,21 @@ export function registerApplyProfileCommand(context: vscode.ExtensionContext, se
           return;
         }
 
-        // Apply the profile with progress
-        await vscode.window.withProgress(
-          {
-            location: vscode.ProgressLocation.Notification,
-            title: `Applying profile "${profileToApply.name}"...`,
-            cancellable: false,
-          },
-          async () => {
-            const result = await services.profileService.applyProfile(profileToApply.name);
+        const result = await services.profileService.applyProfile(profileToApply.name);
 
-            // Show result summary
-            let message = `Profile "${profileToApply.name}" applied successfully!`;
-            message += ` ✓ ${result.summary.installed} template${result.summary.installed !== 1 ? "s" : ""} installed.`;
+        // Show result summary
+        let message = `Profile "${profileToApply.name}" applied successfully!`;
+        message += ` ✓ ${result.summary.installed} template${result.summary.installed !== 1 ? "s" : ""} installed.`;
 
-            if (result.summary.failed > 0) {
-              message += ` ⚠ ${result.summary.failed} template${result.summary.failed !== 1 ? "s" : ""} skipped (not found in repositories or couldn't install them).`;
-            }
+        if (result.summary.failed > 0) {
+          message += ` ⚠ ${result.summary.failed} template${result.summary.failed !== 1 ? "s" : ""} skipped (not found in repositories or couldn't install them).`;
+        }
 
-            if (result.backupPath) {
-              message += ` Backup created at: ${result.backupPath}`;
-            }
+        if (result.backupPath) {
+          message += ` Backup created at: ${result.backupPath}`;
+        }
 
-            vscode.window.showInformationMessage(message);
-          }
-        );
+        vscode.window.showInformationMessage(message);
       } catch (error) {
         console.error("Failed to apply profile:", error);
         vscode.window.showErrorMessage(`Failed to apply profile: ${error instanceof Error ? error.message : String(error)}`);

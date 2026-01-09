@@ -78,17 +78,8 @@ export class ExtensionUpdateService {
     }
 
     if (result === "Install") {
-      await vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: "Downloading extension update...",
-          cancellable: false,
-        },
-        async () => {
-          const vsixPath = await this.downloadExtensionVsix(updateInfo);
-          await this.installExtension(vsixPath);
-        }
-      );
+      const vsixPath = await this.downloadExtensionVsix(updateInfo);
+      await this.installExtension(vsixPath);
     }
   }
 

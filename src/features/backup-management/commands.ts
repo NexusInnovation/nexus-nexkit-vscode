@@ -50,16 +50,7 @@ export function registerRestoreBackupCommand(context: vscode.ExtensionContext, s
         return;
       }
 
-      await vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: "Restoring backup...",
-          cancellable: false,
-        },
-        async () => {
-          await services.backup.restoreBackup(workspaceFolder.uri.fsPath, selectedBackup.description);
-        }
-      );
+      await services.backup.restoreBackup(workspaceFolder.uri.fsPath, selectedBackup.description);
 
       vscode.window.showInformationMessage("Template backup restored successfully!");
     },
@@ -94,16 +85,7 @@ export function registerCleanupBackupCommand(context: vscode.ExtensionContext, s
         return;
       }
 
-      await vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: "Removing all backups...",
-          cancellable: false,
-        },
-        async (progress) => {
-          await services.backup.cleanupBackups(workspaceFolder.uri.fsPath, 0);
-        }
-      );
+      await services.backup.cleanupBackups(workspaceFolder.uri.fsPath);
 
       vscode.window.showInformationMessage(`Successfully deleted all ${backups.length} backup${backups.length > 1 ? "s" : ""}!`);
     },
