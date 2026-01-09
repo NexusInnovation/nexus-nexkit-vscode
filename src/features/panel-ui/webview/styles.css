@@ -11,18 +11,11 @@ body {
 }
 
 .container {
-    padding: 16px;
+    padding: 8px;
     max-width: 100%;
 }
 
-/* Actions Section */
-.actions-section {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.no-workspace-message {
+.info-message {
     padding: 16px;
     background-color: var(--vscode-inputValidation-infoBackground);
     border: 1px solid var(--vscode-inputValidation-infoBorder);
@@ -30,10 +23,17 @@ body {
     text-align: center;
 }
 
-.no-workspace-message p {
+.info-message p {
     margin: 0;
     color: var(--vscode-foreground);
     font-size: 0.9em;
+}
+
+.actions-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 6px;
 }
 
 .action-item {
@@ -87,47 +87,150 @@ body {
     font-style: italic;
 }
 
-/* Template Management Section */
-.template-section {
-    margin-top: 8px;
+/* Unified Collapsible Section Styles */
+.section {
+    padding: 12px 0;
     border-top: 1px solid var(--vscode-panel-border);
-    padding-top: 12px;
+    border-bottom: 1px solid var(--vscode-panel-border);
 }
 
-.template-section h2 {
+.section + .section {
+    border-top: none;
+}
+
+.section .section-header {
+    cursor: pointer;
+    user-select: none;
+    margin-bottom: 0;
+}
+
+.section .section-header.collapsible:hover {
+    background-color: var(--vscode-list-hoverBackground);
+    border-radius: 4px;
+    padding: 8px 4px;
+    margin: -8px -4px;
+}
+
+.section h2 {
     font-size: 1.1em;
     font-weight: 600;
     margin: 0;
     color: var(--vscode-foreground);
-}
-
-/* Section Header */
-.section-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
 }
 
-.collapse-all-btn {
+.section h2::before {
+    content: "";
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-left: 5px solid var(--vscode-foreground);
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    margin-right: 8px;
+    margin-left: 2px;
+    transition: transform 0.2s ease;
+    opacity: 0.8;
+}
+
+.section h2.expanded::before {
+    transform: rotate(90deg);
+}
+
+.section .section-content {
+    margin-top: 18px;
+}
+
+.template-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Search and Filter Row */
+.search-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.search-filter-row .search-wrapper {
+    flex: 1;
+}
+
+/* Filter Menu */
+.filter-menu {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.filter-menu-btn {
     background: none;
     border: none;
     color: var(--vscode-foreground);
     cursor: pointer;
     display: flex;
     align-items: center;
+    justify-content: center;
     opacity: 0.7;
     transition: opacity 0.15s ease;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 8px;
+    line-height: 1;
+    min-width: 36px;
+    height: 36px;
 }
 
-.collapse-all-btn:hover {
+.filter-menu-btn:hover {
     opacity: 1;
+    background-color: var(--vscode-toolbar-hoverBackground);
+    border-radius: 4px;
+}
+
+.filter-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    background-color: var(--vscode-dropdown-background);
+    border: 1px solid var(--vscode-dropdown-border);
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    min-width: 160px;
+    padding: 4px 0;
+}
+
+.filter-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    color: var(--vscode-dropdown-foreground);
+    font-size: 0.9em;
+    user-select: none;
+}
+
+.filter-option:hover {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+.filter-option input[type="radio"] {
+    margin: 0;
+    cursor: pointer;
+    accent-color: var(--vscode-button-background);
+}
+
+.filter-option span {
+    flex: 1;
 }
 
 /* Search Input */
 .search-wrapper {
     position: relative;
-    margin-bottom: 16px;
 }
 
 .search-input {
@@ -179,21 +282,21 @@ body {
     margin: 12px 0;
 }
 
-/* Repository Section */
 .repository-section {
-    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .repository-name {
     font-size: 1em;
     font-weight: 600;
-    margin: 0 0 8px 0;
+    margin: 0;
     color: var(--vscode-foreground);
 }
 
 /* Type Section (Collapsible) */
 .type-section {
-    margin-bottom: 8px;
     border: 1px solid var(--vscode-panel-border);
     border-radius: 4px;
     background-color: var(--vscode-sideBar-background);
@@ -283,7 +386,8 @@ details[open] > .type-header::before {
 }
 
 /* Template Info Button */
-.template-info-button {
+.icon-tooltip {
+    display: inline-flex;
     background: none;
     border: none;
     cursor: pointer;
@@ -292,16 +396,16 @@ details[open] > .type-header::before {
     transition: opacity 0.15s ease;
 }
 
-.template-info-button:hover {
+.icon-tooltip:hover {
     opacity: 1;
     color: var(--vscode-textLink-activeForeground);
 }
 
-.template-info-button:active {
+.icon-tooltip:active {
     transform: scale(0.95);
 }
 
-.template-info-button .codicon {
+.icon-tooltip .codicon {
     display: inline-block;
 }
 
@@ -351,4 +455,194 @@ details[open] > .type-header::before {
     color: var(--vscode-descriptionForeground);
     line-height: 1.4;
     margin: 0;
+}
+
+/* Profile Tooltip Styles */
+.profile-tooltip-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.profile-tooltip-type {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.profile-tooltip-type:not(:last-child) {
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.profile-tooltip-type-header {
+    font-size: 1em;
+    font-weight: 600;
+    color: var(--vscode-editorHoverWidget-foreground);
+}
+
+.profile-tooltip-templates {
+    margin: 0;
+    padding-left: 18px;
+    list-style-type: disc;
+}
+
+.profile-tooltip-templates li {
+    font-size: 0.9em;
+    color: var(--vscode-descriptionForeground);
+    line-height: 1.5;
+}
+
+/* Profile-specific Styles */
+.profile-actions {
+    margin-bottom: 12px;
+}
+
+.profile-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.profile-button .codicon {
+    font-size: 12px;
+}
+
+.profiles-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.profile-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    background-color: var(--vscode-sideBar-background);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 4px;
+    transition: background-color 0.15s ease;
+}
+
+.profile-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.profile-name {
+    display: flex;
+    align-items: center;
+    font-size: 0.95em;
+    font-weight: 600;
+    color: var(--vscode-foreground);
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.profile-details {
+    font-size: 0.8em;
+    color: var(--vscode-descriptionForeground);
+}
+
+.profile-actions-row {
+    display: flex;
+    gap: 6px;
+    margin-left: 12px;
+}
+
+.profile-action-button {
+    padding: 8px;
+    font-size: 0.85em;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.profile-action-button .codicon {
+    font-size: 14px;
+}
+
+.apply-button {
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+}
+
+.apply-button:hover {
+    background-color: var(--vscode-button-hoverBackground);
+}
+
+.delete-button {
+    background-color: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+}
+
+.delete-button:hover {
+    background-color: var(--vscode-inputValidation-errorBackground);
+    color: var(--vscode-inputValidation-errorForeground);
+}
+
+.profile-bulk-actions {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--vscode-panel-border);
+}
+
+.profile-bulk-actions .profile-action-button {
+    width: 100%;
+    justify-content: center;
+}
+
+/* Footer Section */
+.footer-section {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.feedback-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 0.85em;
+    background: none;
+    border: 1px solid var(--vscode-button-border);
+    border-radius: 4px;
+    color: var(--vscode-foreground);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    opacity: 0.8;
+}
+
+.feedback-button:hover {
+    opacity: 1;
+    background-color: var(--vscode-button-secondaryHoverBackground);
+    border-color: var(--vscode-button-secondaryForeground);
+}
+
+.feedback-button .codicon {
+    font-size: 14px;
+}
+
+.footer-info {
+    font-size: 0.75em;
+    color: var(--vscode-descriptionForeground);
+    opacity: 0.7;
+}
+
+.footer-version {
+    font-family: var(--vscode-font-family);
 }

@@ -3,7 +3,11 @@ import * as fs from "fs";
 import { TelemetryService } from "../../shared/services/telemetryService";
 import { AITemplateDataService } from "../ai-template-files/services/aiTemplateDataService";
 import { TemplateMetadataService } from "../ai-template-files/services/templateMetadataService";
+import { ProfileService } from "../profile-management/services/profileService";
+import { WorkspaceInitializationService } from "../initialization/workspaceInitializationService";
 import { NexkitPanelMessageHandler } from "./nexkitPanelMessageHandler";
+import { ServiceContainer } from "../../core/serviceContainer";
+import { getExtensionVersion } from "../../shared/utils/extensionHelper";
 
 /**
  * Provides the Nexkit panel webview and handles its lifecycle
@@ -15,22 +19,11 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
   private _context?: vscode.ExtensionContext;
   private _messageHandler?: NexkitPanelMessageHandler;
 
-  constructor(
-    private readonly _telemetryService: TelemetryService,
-    private readonly _aiTemplateDataService: AITemplateDataService,
-    private readonly _templateMetadataService: TemplateMetadataService
-  ) {}
-
-  public initialize(context: vscode.ExtensionContext) {
+  public initialize(context: vscode.ExtensionContext, services: ServiceContainer) {
     this._context = context;
 
     // Initialize message handler
-    this._messageHandler = new NexkitPanelMessageHandler(
-      () => this._view,
-      this._telemetryService,
-      this._aiTemplateDataService,
-      this._templateMetadataService
-    );
+    this._messageHandler = new NexkitPanelMessageHandler(() => this._view, services);
 
     // Listen for workspace folder changes
     context.subscriptions.push(
@@ -68,6 +61,9 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
     const htmlPath = vscode.Uri.joinPath(this._context!.extensionUri, "out", "webview", "index.html");
     const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(this._context!.extensionUri, "out", "webview", "styles.css"));
     const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._context!.extensionUri, "out", "webview.js"));
+    const codiconsUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._context!.extensionUri, "out", "webview", "static", "codicon.css")
+    );
 
     // Generate a nonce for CSP
     const nonce = this.getNonce();
@@ -78,8 +74,11 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
     // Replace placeholders
     html = html.replace(/\{\{nonce\}\}/g, nonce);
     html = html.replace(/\{\{styleUri\}\}/g, styleUri.toString());
+    html = html.replace(/\{\{codiconsUri\}\}/g, codiconsUri.toString());
     html = html.replace(/\{\{scriptUri\}\}/g, scriptUri.toString());
     html = html.replace(/\{\{cspSource\}\}/g, webview.cspSource);
+    html = html.replace(/\{\{extensionVersion\}\}/g, getExtensionVersion() || "unknown");
+    html = html.replace(/\{\{vscodeVersion\}\}/g, vscode.version);
 
     return html;
   }

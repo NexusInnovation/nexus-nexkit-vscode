@@ -1,60 +1,28 @@
-/**
- * Custom hook for managing persistent expansion state
- * Stores section expansion state in VS Code persistent storage
- */
-
-import { useState, useEffect, useCallback } from "preact/hooks";
-import { useVSCodeAPI } from "./useVSCodeAPI";
-import { WebviewPersistentState } from "../types";
+import { useState, useEffect } from "preact/hooks";
+import { useWebviewPersistentState } from "./useWebviewPersistentState";
 
 /**
- * Hook to manage expansion state for collapsible sections
- * State persists across panel reloads
+ * Hook to manage expansion state for a specific collapsible section
+ * State persists across panel reloads using a unique key
+ *
+ * @param key - Unique identifier for the section (e.g., "templates", "profiles", "repo::type")
+ * @param defaultExpanded - Default expansion state if key is not in persistent storage (default: false)
+ * @returns Tuple of [isExpanded, setIsExpanded]
  */
-export function useExpansionState() {
-  const messenger = useVSCodeAPI();
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+export function useExpansionState(key: string, defaultExpanded: boolean = false): [boolean, (expanded: boolean) => void] {
+  const { getWebviewState, setWebviewState } = useWebviewPersistentState();
 
-  // Initialize state from VS Code storage on mount
-  useEffect(() => {
-    const state = messenger.getState<WebviewPersistentState>();
-    setExpandedSections(state?.expandedSections || {});
-  }, [messenger]);
+  // Initialize state from VS Code storage or use default
+  const [isExpanded, setIsExpanded] = useState<boolean>(() => {
+    return getWebviewState().expandedState?.[key] ?? defaultExpanded;
+  });
 
   // Sync state to VS Code storage whenever it changes
   useEffect(() => {
-    const currentState = messenger.getState<WebviewPersistentState>() || { expandedSections: {} };
-    currentState.expandedSections = expandedSections;
-    messenger.setState(currentState);
-  }, [expandedSections, messenger]);
+    const currentState = getWebviewState();
+    currentState.expandedState[key] = isExpanded;
+    setWebviewState(currentState);
+  }, [isExpanded, key]);
 
-  /**
-   * Set expansion state for a specific section
-   */
-  const setSectionExpanded = useCallback(
-    (repository: string, type: string, expanded: boolean) => {
-      setExpandedSections((prev) => {
-        const key = `${repository}::${type}`;
-        return { ...prev, [key]: expanded };
-      });
-    },
-    [messenger]
-  );
-
-  /**
-   * Check if a section is expanded
-   */
-  const isSectionExpanded = useCallback(
-    (repository: string, type: string): boolean => {
-      const key = `${repository}::${type}`;
-      return expandedSections[key] ?? false;
-    },
-    [expandedSections]
-  );
-
-  const collapseAll = useCallback(() => {
-    setExpandedSections({});
-  }, []);
-
-  return { isSectionExpanded, setSectionExpanded, collapseAll };
+  return [isExpanded, setIsExpanded];
 }

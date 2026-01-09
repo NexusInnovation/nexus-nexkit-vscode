@@ -1,25 +1,34 @@
 import { useRef, useEffect } from "preact/hooks";
 import { TemplateItem } from "../atoms/TemplateItem";
 import { AITemplateFile, InstalledTemplatesMap } from "../../../../ai-template-files/models/aiTemplateFile";
+import { useExpansionState } from "../../hooks/useExpansionState";
+import { FilterMode } from "../../types";
 
 interface TypeSectionProps {
   type: string;
   templates: AITemplateFile[];
   repository: string;
   installedTemplates: InstalledTemplatesMap;
-  isExpanded: boolean;
-  onToggle: (expanded: boolean) => void;
   onInstall: (template: AITemplateFile) => void;
   onUninstall: (template: AITemplateFile) => void;
   isTemplateInstalled: (template: AITemplateFile) => boolean;
   searchQuery: string;
+  filterMode: FilterMode;
 }
 
 const TYPE_DISPLAY_NAMES: Record<string, string> = {
-  agents: "🤖 Agents",
-  prompts: "🎯 Prompts",
-  instructions: "📋 Instructions",
-  chatmodes: "🤖 Chat Modes",
+  agents: "Custom Agents",
+  prompts: "Prompt Templates",
+  instructions: "Coding Instructions",
+  chatmodes: "Chat Modes",
+};
+
+const TYPE_DESCRIPTIONS: Record<string, string> = {
+  agents: "Specialized GitHub Copilot agents that extend functionality with custom behaviors and capabilities for specific tasks",
+  prompts: "Reusable prompt templates for common coding tasks, refactoring patterns, and AI-assisted development workflows",
+  instructions:
+    "Language-specific and project-wide coding guidelines that inform GitHub Copilot about your preferred code style and conventions",
+  chatmodes: "Specialized conversation modes that configure GitHub Copilot Chat for different development contexts and workflows",
 };
 
 /**
@@ -31,23 +40,31 @@ export function TypeSection({
   templates,
   repository,
   installedTemplates,
-  isExpanded,
-  onToggle,
   onInstall,
   onUninstall,
   isTemplateInstalled,
   searchQuery,
+  filterMode,
 }: TypeSectionProps) {
   const detailsRef = useRef<HTMLDetailsElement>(null);
+  const [isExpanded, setIsExpanded] = useExpansionState(`${repository}::${type}`);
 
   // Filter templates based on search query
   const isSearching = searchQuery.length > 0;
-  const filteredTemplates = isSearching
+  let filteredTemplates = isSearching
     ? templates.filter((t) => t.name.toLowerCase().includes(searchQuery.toLowerCase()))
     : templates;
 
-  // Don't render if searching and no matches
-  if (isSearching && filteredTemplates.length === 0) {
+  // Apply filter mode
+  if (filterMode !== "all") {
+    filteredTemplates = filteredTemplates.filter((t) => {
+      const installed = isTemplateInstalled(t);
+      return filterMode === "selected" ? installed : !installed;
+    });
+  }
+
+  // Don't render if filtering results in no matches
+  if (filteredTemplates.length === 0) {
     return null;
   }
 
@@ -68,24 +85,21 @@ export function TypeSection({
 
   const handleToggle = () => {
     if (!isSearching && detailsRef.current) {
-      onToggle(detailsRef.current.open);
+      setIsExpanded(detailsRef.current.open);
     }
   };
 
   const displayName = TYPE_DISPLAY_NAMES[type];
+  const description = TYPE_DESCRIPTIONS[type];
   const headerText = isSearching
     ? `${displayName} (${filteredTemplates.length} ${filteredTemplates.length === 1 ? "result" : "results"})`
     : `${displayName} (${installedCount}/${totalCount})`;
 
   return (
-    <details
-      ref={detailsRef}
-      class="type-section"
-      data-repository={repository}
-      data-type={type}
-      onToggle={handleToggle}
-    >
-      <summary class="type-header">{headerText}</summary>
+    <details ref={detailsRef} class="type-section" data-repository={repository} data-type={type} onToggle={handleToggle}>
+      <summary class="type-header" title={description}>
+        {headerText}
+      </summary>
       <div class="template-list">
         {filteredTemplates.map((template) => (
           <TemplateItem

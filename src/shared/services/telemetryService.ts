@@ -21,7 +21,7 @@ export class TelemetryService {
   private cachedPublicIP: string | null = null;
   private username: string;
 
-  constructor(private context: vscode.ExtensionContext) {
+  constructor() {
     this.sessionId = this.generateSessionId();
     this.extensionVersion = getExtensionVersion() || "unknown";
     this.activationTime = Date.now();
@@ -166,13 +166,13 @@ export class TelemetryService {
    * Get Application Insights connection string
    */
   private getConnectionString(): string | undefined {
-    // Priority 1: Environment variable (for development)
+    // Priority 1: Environment variable (for development/testing)
     const envConnectionString = process.env.APPLICATIONINSIGHTS_CONNECTION_STRING;
     if (envConnectionString) {
       return envConnectionString;
     }
 
-    // Priority 2: VS Code configuration (user can override)
+    // Priority 2: VS Code configuration (from settings.json or default value)
     const configConnectionString = SettingsManager.getTelemetryConnectionString();
     if (configConnectionString) {
       return configConnectionString;
