@@ -1,3 +1,7 @@
+## <small>1.2.1 (2026-01-09)</small>
+
+* fix: remove all progress indicator (#57) ([7b18188](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/7b18188)), closes [#57](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/57)
+
 ## 1.2.0 (2026-01-09)
 
 * feat: Add profiles, add feedback button, add templates filter, improve style & bug fixes (#55) ([2203f7d](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2203f7d)), closes [#55](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/55)
