@@ -1,11 +1,17 @@
 import { RepositoryConfig, RepositoryConfigManager } from "../models/repositoryConfig";
 import { RepositoryTemplateProvider } from "../providers/repositoryTemplateProvider";
+import { LocalFolderTemplateProvider } from "../providers/localFolderTemplateProvider";
+
+/**
+ * Union type for all template provider types
+ */
+type TemplateProvider = RepositoryTemplateProvider | LocalFolderTemplateProvider;
 
 /**
  * Manages repository instances and their lifecycle
  */
 export class RepositoryManager {
-  private providers: Map<string, RepositoryTemplateProvider> = new Map();
+  private providers: Map<string, TemplateProvider> = new Map();
 
   /**
    * Initialize repository providers from configuration
@@ -16,7 +22,7 @@ export class RepositoryManager {
 
     for (const config of repositories) {
       try {
-        const provider = new RepositoryTemplateProvider(config);
+        const provider = this.createProvider(config);
         this.providers.set(config.name, provider);
       } catch (error) {
         console.error(`Failed to create provider for ${config.name}:`, error);
@@ -25,16 +31,29 @@ export class RepositoryManager {
   }
 
   /**
+   * Create appropriate provider based on repository type
+   */
+  private createProvider(config: RepositoryConfig): TemplateProvider {
+    const type = config.type || "github";
+
+    if (type === "local") {
+      return new LocalFolderTemplateProvider(config);
+    } else {
+      return new RepositoryTemplateProvider(config);
+    }
+  }
+
+  /**
    * Get a repository provider by name
    */
-  public getProvider(repositoryName: string): RepositoryTemplateProvider | undefined {
+  public getProvider(repositoryName: string): TemplateProvider | undefined {
     return this.providers.get(repositoryName);
   }
 
   /**
    * Get all repository providers
    */
-  public getAllProviders(): RepositoryTemplateProvider[] {
+  public getAllProviders(): TemplateProvider[] {
     return Array.from(this.providers.values());
   }
 

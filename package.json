@@ -2,7 +2,7 @@
   "name": "nexus-nexkit-vscode",
   "displayName": "Nexkit",
   "description": "VS Code extension for Nexkit",
-  "version": "1.2.1",
+  "version": "1.3.1-beta.2",
   "publisher": "NexusInnovation",
   "private": true,
   "license": "MIT",
@@ -142,6 +142,7 @@
           "default": [
             {
               "name": "Awesome Copilot",
+              "type": "github",
               "url": "https://github.com/github/awesome-copilot",
               "enabled": true,
               "paths": {
@@ -152,7 +153,7 @@
             }
           ],
           "scope": "application",
-          "description": "Additional repository sources for agents, prompts, and instructions. Default repositories \"Nexus Templates\" is always included.",
+          "markdownDescription": "Additional repository sources for agents, prompts, and instructions. Supports both **GitHub repositories** and **local folders**. Default repository \"Nexus Templates\" is always included.\n\n**GitHub Example:**\n```json\n{\n  \"name\": \"My GitHub Repo\",\n  \"type\": \"github\",\n  \"url\": \"https://github.com/owner/repo\",\n  \"enabled\": true,\n  \"paths\": { \"agents\": \"agents\" }\n}\n```\n\n**Local Folder Example:**\n```json\n{\n  \"name\": \"My Local Templates\",\n  \"type\": \"local\",\n  \"url\": \"./templates\",\n  \"enabled\": true,\n  \"paths\": { \"prompts\": \"prompts\" }\n}\n```",
           "items": {
             "type": "object",
             "properties": {
@@ -160,14 +161,23 @@
                 "type": "string",
                 "description": "Display name for the repository"
               },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "github",
+                  "local"
+                ],
+                "default": "github",
+                "description": "Repository type: 'github' for GitHub repositories, 'local' for local folders"
+              },
               "url": {
                 "type": "string",
-                "description": "GitHub repository URL (e.g., https://github.com/owner/repo)"
+                "description": "GitHub repository URL (e.g., https://github.com/owner/repo) or local folder path (e.g., ./templates, C:\\templates, ~/templates)"
               },
               "branch": {
                 "type": "string",
                 "default": "main",
-                "description": "Git branch to use"
+                "description": "Git branch to use (GitHub repositories only)"
               },
               "enabled": {
                 "type": "boolean",

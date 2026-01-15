@@ -57,4 +57,30 @@ suite("Unit: RepositoryManager", () => {
     assert.ok(Array.isArray(names));
     assert.ok(names.length > 0);
   });
+
+  test("Should create GitHub provider for github type", () => {
+    manager.initialize();
+    const nexusProvider = manager.getProvider("Nexus Templates");
+
+    assert.ok(nexusProvider, "Should find Nexus Templates provider");
+    assert.strictEqual(nexusProvider.getRepositoryName(), "Nexus Templates");
+  });
+
+  test("Should handle refresh by reinitializing providers", () => {
+    manager.initialize();
+    const countBefore = manager.getRepositoryCount();
+
+    manager.refresh();
+    const countAfter = manager.getRepositoryCount();
+
+    assert.strictEqual(countBefore, countAfter, "Count should remain same after refresh");
+  });
+
+  test("Should clear all providers", () => {
+    manager.initialize();
+    assert.ok(manager.getRepositoryCount() > 0, "Should have providers before clear");
+
+    manager.clear();
+    assert.strictEqual(manager.getRepositoryCount(), 0, "Should have no providers after clear");
+  });
 });
