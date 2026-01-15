@@ -115,6 +115,14 @@ export class LocalFolderTemplateProvider {
   }
 
   /**
+   * Get the resolved base path for this local folder repository.
+   * This is useful for creating file watchers.
+   */
+  public async getResolvedBasePath(): Promise<vscode.Uri | undefined> {
+    return this.resolveBasePath();
+  }
+
+  /**
    * Resolve the base path for the local folder repository.
    * Supports:
    * - Absolute paths: C:\templates, /home/user/templates

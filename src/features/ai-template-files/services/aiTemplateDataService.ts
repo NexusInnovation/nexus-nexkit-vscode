@@ -24,6 +24,8 @@ export class AITemplateDataService implements vscode.Disposable {
   private readonly _onInitialized = new vscode.EventEmitter<void>();
   private readonly _onError = new vscode.EventEmitter<Error>();
   private configChangeListener: vscode.Disposable | undefined;
+  private fileWatchers: Map<string, vscode.FileSystemWatcher> = new Map();
+  private refreshTimers: Map<string, NodeJS.Timeout> = new Map();
 
   /**
    * Event fired when data is initialized and ready
@@ -89,6 +91,9 @@ export class AITemplateDataService implements vscode.Disposable {
         if (result.failureCount > 0) {
           console.warn(`⚠️ Failed to fetch from ${result.failureCount} repositories`);
         }
+
+        // Setup file watchers for local repositories
+        await this.setupFileWatchers();
       } catch (error) {
         this._isInitializing = false;
         const err = error instanceof Error ? error : new Error(String(error));
@@ -320,6 +325,9 @@ export class AITemplateDataService implements vscode.Disposable {
           vscode.window.showInformationMessage(
             `AI Templates refreshed due to configuration change. ${result?.allTemplates.length ?? 0} template(s) loaded.`
           );
+
+          // Recreate file watchers for new configuration
+          await this.setupFileWatchers();
         } catch (error) {
           console.error("Failed to refresh after configuration change:", error);
         }
@@ -335,5 +343,131 @@ export class AITemplateDataService implements vscode.Disposable {
     this._onInitialized.dispose();
     this._onError.dispose();
     this.configChangeListener?.dispose();
+    this.disposeFileWatchers();
+  }
+
+  /**
+   * Setup file watchers for local folder repositories
+   * Watches for .md file changes and automatically refreshes templates
+   */
+  private async setupFileWatchers(): Promise<void> {
+    // Dispose existing watchers first
+    this.disposeFileWatchers();
+
+    const providers = this.repositoryManager.getAllProviders();
+
+    for (const provider of providers) {
+      // Only setup watchers for local folder repositories
+      if (!(provider as any).getResolvedBasePath) {
+        continue;
+      }
+
+      try {
+        const basePath = await (provider as any).getResolvedBasePath();
+        if (!basePath) {
+          console.warn(`Could not resolve base path for ${provider.getRepositoryName()}, skipping file watcher`);
+          continue;
+        }
+
+        // Create watcher pattern for markdown files
+        const pattern = new vscode.RelativePattern(basePath, "**/*.md");
+        const watcher = vscode.workspace.createFileSystemWatcher(pattern);
+
+        const repositoryName = provider.getRepositoryName();
+
+        // Handle file creation
+        watcher.onDidCreate(() => {
+          this.scheduleRepositoryRefresh(repositoryName);
+        });
+
+        // Handle file changes
+        watcher.onDidChange(() => {
+          this.scheduleRepositoryRefresh(repositoryName);
+        });
+
+        // Handle file deletion
+        watcher.onDidDelete(() => {
+          this.scheduleRepositoryRefresh(repositoryName);
+        });
+
+        this.fileWatchers.set(repositoryName, watcher);
+        console.log(`📁 File watcher setup for local repository: ${repositoryName}`);
+      } catch (error) {
+        console.error(`Failed to setup file watcher for ${provider.getRepositoryName()}:`, error);
+      }
+    }
+  }
+
+  /**
+   * Dispose all file watchers and pending refresh timers
+   */
+  private disposeFileWatchers(): void {
+    // Clear all pending refresh timers
+    for (const timer of this.refreshTimers.values()) {
+      clearTimeout(timer);
+    }
+    this.refreshTimers.clear();
+
+    // Dispose all file watchers
+    for (const watcher of this.fileWatchers.values()) {
+      watcher.dispose();
+    }
+    this.fileWatchers.clear();
+  }
+
+  /**
+   * Schedule a debounced refresh for a specific repository
+   * Multiple rapid file changes will only trigger one refresh
+   */
+  private scheduleRepositoryRefresh(repositoryName: string): void {
+    // Clear existing timer for this repository
+    const existingTimer = this.refreshTimers.get(repositoryName);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+    }
+
+    // Schedule new refresh with 500ms debounce
+    const timer = setTimeout(async () => {
+      this.refreshTimers.delete(repositoryName);
+      await this.refreshRepository(repositoryName);
+    }, 500);
+
+    this.refreshTimers.set(repositoryName, timer);
+  }
+
+  /**
+   * Refresh templates from a specific repository
+   * Used by file watchers to update only changed repository
+   */
+  private async refreshRepository(repositoryName: string): Promise<void> {
+    try {
+      console.log(`🔄 Refreshing templates from repository: ${repositoryName}`);
+
+      // Fetch templates from the specific repository
+      const result = await this.fetcherService.fetchFromRepository(repositoryName);
+
+      if (!result.success) {
+        console.error(`Failed to refresh repository ${repositoryName}:`, result.error);
+        return;
+      }
+
+      // Get all current templates
+      const allTemplates = this.dataStore.getAll();
+
+      // Remove old templates from this repository
+      const otherTemplates = allTemplates.filter((t) => t.repository !== repositoryName);
+
+      // Add new templates from this repository
+      const updatedTemplates = [...otherTemplates, ...result.templates];
+
+      // Update data store (this will fire onDataChanged event)
+      this.dataStore.updateCollection(updatedTemplates);
+
+      console.log(`✅ Repository ${repositoryName} refreshed: ${result.templates.length} template(s)`);
+    } catch (error) {
+      console.error(`Error refreshing repository ${repositoryName}:`, error);
+      const err = error instanceof Error ? error : new Error(String(error));
+      this._onError.fire(err);
+    }
   }
 }
