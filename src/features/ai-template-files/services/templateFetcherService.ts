@@ -115,4 +115,17 @@ export class TemplateFetcherService {
 
     return await provider.downloadTemplate(templateFile);
   }
+
+  /**
+   * Download directory contents recursively (for skills)
+   */
+  public async downloadDirectoryContents(templateFile: AITemplateFile): Promise<Map<string, string>> {
+    const provider = this.repositoryManager.getProvider(templateFile.repository);
+
+    if (!provider) {
+      throw new Error(`Repository not found: ${templateFile.repository}`);
+    }
+
+    return await provider.downloadDirectoryContents(templateFile);
+  }
 }

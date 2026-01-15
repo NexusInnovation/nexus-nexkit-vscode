@@ -62,18 +62,36 @@ export class RepositoryTemplateProvider {
 
             const contents = (await response.json()) as GitHubContentItem[];
 
-            for (const item of contents) {
-              if (item.type !== "file" || !item.name.endsWith(".md")) {
-                continue;
+            // Handle skills type differently - fetch folders instead of .md files
+            if (type === "skills") {
+              for (const item of contents) {
+                if (item.type === "dir") {
+                  allTemplates.push({
+                    name: item.name,
+                    type: type as AITemplateFileType,
+                    rawUrl: item.download_url || "",
+                    repository: this.config.name,
+                    repositoryUrl: this.config.url,
+                    isDirectory: true,
+                    sourcePath: item.path,
+                  });
+                }
               }
+            } else {
+              // Regular handling for file-based templates
+              for (const item of contents) {
+                if (item.type !== "file" || !item.name.endsWith(".md")) {
+                  continue;
+                }
 
-              allTemplates.push({
-                name: item.name,
-                type: type as AITemplateFileType,
-                rawUrl: item.download_url,
-                repository: this.config.name,
-                repositoryUrl: this.config.url,
-              });
+                allTemplates.push({
+                  name: item.name,
+                  type: type as AITemplateFileType,
+                  rawUrl: item.download_url,
+                  repository: this.config.name,
+                  repositoryUrl: this.config.url,
+                });
+              }
             }
           } catch (error) {
             console.error(`Error fetching ${type} from ${this.config.name}:`, error);
@@ -111,6 +129,52 @@ export class RepositoryTemplateProvider {
       console.error(`Error downloading file '${templateFile.name}' from ${templateFile.rawUrl}:`, error);
       throw error;
     }
+  }
+
+  /**
+   * Recursively download all files in a directory
+   * Returns a map of relative file paths to their contents
+   */
+  public async downloadDirectoryContents(templateFile: AITemplateFile): Promise<Map<string, string>> {
+    if (!templateFile.isDirectory || !templateFile.sourcePath) {
+      throw new Error(`Template is not a directory: ${templateFile.name}`);
+    }
+
+    const fileContents = new Map<string, string>();
+    const { owner, repo } = this.parseGitHubUrl();
+    const headers = await this.getAuthHeaders();
+    const branch = this.config.branch ?? "main";
+
+    const downloadRecursive = async (path: string, basePath: string): Promise<void> => {
+      const apiUrl = `${RepositoryTemplateProvider.GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
+      const response = await fetch(apiUrl, { headers });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch directory contents: ${response.status} ${response.statusText}`);
+      }
+
+      const contents = (await response.json()) as GitHubContentItem[];
+
+      for (const item of contents) {
+        if (item.type === "file") {
+          // Download file content
+          const fileResponse = await fetch(item.download_url, { headers });
+          if (!fileResponse.ok) {
+            throw new Error(`Failed to download file: ${item.path}`);
+          }
+          const content = await fileResponse.text();
+          // Store with relative path (remove the base skill folder path)
+          const relativePath = item.path.replace(basePath + "/", "");
+          fileContents.set(relativePath, content);
+        } else if (item.type === "dir") {
+          // Recursively download subdirectory
+          await downloadRecursive(item.path, basePath);
+        }
+      }
+    };
+
+    await downloadRecursive(templateFile.sourcePath, templateFile.sourcePath);
+    return fileContents;
   }
 
   /**

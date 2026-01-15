@@ -147,6 +147,7 @@
               "paths": {
                 "agents": "agents",
                 "prompts": "prompts",
+                "skills": "skills",
                 "instructions": "instructions"
               }
             }
@@ -185,6 +186,10 @@
                   "prompts": {
                     "type": "string",
                     "description": "Path to prompts directory"
+                  },
+                  "skills": {
+                    "type": "string",
+                    "description": "Path to skills directory"
                   },
                   "instructions": {
                     "type": "string",

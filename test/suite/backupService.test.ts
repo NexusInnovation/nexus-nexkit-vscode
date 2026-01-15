@@ -46,13 +46,14 @@ suite("Unit: GitHubTemplateBackupService", () => {
     // Create template folders
     fs.mkdirSync(path.join(githubDir, "agents"), { recursive: true });
     fs.mkdirSync(path.join(githubDir, "prompts"), { recursive: true });
+    fs.mkdirSync(path.join(githubDir, "skills"), { recursive: true });
     fs.mkdirSync(path.join(githubDir, "instructions"), { recursive: true });
     fs.mkdirSync(path.join(githubDir, "chatmodes"), { recursive: true });
 
     // Add some content to template folders
     fs.writeFileSync(path.join(githubDir, "agents", "test.agent.md"), "agent content");
     fs.writeFileSync(path.join(githubDir, "prompts", "test.prompt.md"), "prompt content");
-
+    fs.writeFileSync(path.join(githubDir, "skills", "test.skill.md"), "skill content");
     // Create non-template content that should NOT be backed up
     fs.mkdirSync(path.join(githubDir, "workflows"), { recursive: true });
     fs.writeFileSync(path.join(githubDir, "workflows", "ci.yml"), "workflow content");
@@ -76,6 +77,7 @@ suite("Unit: GitHubTemplateBackupService", () => {
     // Verify original template folders were deleted
     assert.ok(!fs.existsSync(path.join(githubDir, "agents")));
     assert.ok(!fs.existsSync(path.join(githubDir, "prompts")));
+    assert.ok(!fs.existsSync(path.join(githubDir, "skills")));
 
     // Verify non-template content still exists
     assert.ok(fs.existsSync(path.join(githubDir, "workflows", "ci.yml")));
@@ -89,6 +91,7 @@ suite("Unit: GitHubTemplateBackupService", () => {
     // Create template folders
     fs.mkdirSync(path.join(githubDir, "agents"), { recursive: true });
     fs.mkdirSync(path.join(githubDir, "prompts"), { recursive: true });
+    fs.mkdirSync(path.join(githubDir, "skills"), { recursive: true });
     fs.writeFileSync(path.join(githubDir, "agents", "test.agent.md"), "content");
 
     // Create non-template content
@@ -101,6 +104,7 @@ suite("Unit: GitHubTemplateBackupService", () => {
     // Verify template folders were deleted
     assert.ok(!fs.existsSync(path.join(githubDir, "agents")));
     assert.ok(!fs.existsSync(path.join(githubDir, "prompts")));
+    assert.ok(!fs.existsSync(path.join(githubDir, "skills")));
 
     // Verify non-template content still exists
     assert.ok(fs.existsSync(path.join(githubDir, "workflows", "ci.yml")));
@@ -170,13 +174,14 @@ suite("Unit: GitHubTemplateBackupService", () => {
     // Only create some template folders
     fs.mkdirSync(path.join(githubDir, "agents"), { recursive: true });
     fs.writeFileSync(path.join(githubDir, "agents", "test.agent.md"), "content");
-    // Don't create prompts, instructions, chatmodes
+    // Don't create prompts, skills, instructions, chatmodes
 
     const backupPath = await service.backupTemplates(tempDir);
 
     assert.ok(backupPath);
     assert.ok(fs.existsSync(path.join(backupPath as string, "agents")));
     assert.ok(!fs.existsSync(path.join(backupPath as string, "prompts")));
+    assert.ok(!fs.existsSync(path.join(backupPath as string, "skills")));
     assert.ok(!fs.existsSync(path.join(backupPath as string, "instructions")));
     assert.ok(!fs.existsSync(path.join(backupPath as string, "chatmodes")));
   });
