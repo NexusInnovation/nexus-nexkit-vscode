@@ -35,6 +35,7 @@ export type ExtensionMessage =
       installed: {
         agents: string[];
         prompts: string[];
+        skills: string[];
         instructions: string[];
         chatmodes: string[];
       };

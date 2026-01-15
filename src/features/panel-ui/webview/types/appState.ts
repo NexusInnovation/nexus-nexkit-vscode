@@ -51,6 +51,7 @@ export const initialAppState: AppState = {
     installed: {
       agents: [],
       prompts: [],
+      skills: [],
       instructions: [],
       chatmodes: [],
     },

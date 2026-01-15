@@ -120,6 +120,7 @@ Default includes the "Awesome Copilot" repository. The "Nexus Templates" reposit
       "paths": {
         "agents": "agents",
         "prompts": "prompts",
+        "skills": "skills",
         "instructions": "instructions",
         "chatmodes": "chatmodes"
       }
@@ -210,7 +211,8 @@ code /path/to/my-project
       "enabled": true,
       "paths": {
         "agents": "copilot-agents",
-        "prompts": "ai-prompts"
+        "prompts": "ai-prompts",
+        "skills": "skills",
       }
     }
   ]

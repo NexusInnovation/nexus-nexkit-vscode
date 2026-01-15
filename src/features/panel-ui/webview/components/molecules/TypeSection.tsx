@@ -19,6 +19,7 @@ interface TypeSectionProps {
 const TYPE_DISPLAY_NAMES: Record<string, string> = {
   agents: "Custom Agents",
   prompts: "Prompt Templates",
+  skills: "Skills",
   instructions: "Coding Instructions",
   chatmodes: "Chat Modes",
 };
@@ -26,6 +27,7 @@ const TYPE_DISPLAY_NAMES: Record<string, string> = {
 const TYPE_DESCRIPTIONS: Record<string, string> = {
   agents: "Specialized GitHub Copilot agents that extend functionality with custom behaviors and capabilities for specific tasks",
   prompts: "Reusable prompt templates for common coding tasks, refactoring patterns, and AI-assisted development workflows",
+  skills: "Pre-built folder structures with code, configurations, and utilities that can be installed directly into your project",
   instructions:
     "Language-specific and project-wide coding guidelines that inform GitHub Copilot about your preferred code style and conventions",
   chatmodes: "Specialized conversation modes that configure GitHub Copilot Chat for different development contexts and workflows",
@@ -64,7 +66,8 @@ export function TypeSection({
   }
 
   // Don't render if filtering results in no matches
-  if (filteredTemplates.length === 0) {
+  // Exception: Always show Skills section even when empty
+  if (filteredTemplates.length === 0 && type !== "skills") {
     return null;
   }
 

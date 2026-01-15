@@ -35,7 +35,8 @@ export function RepositorySection({
       <h3 class="repository-name">{repository.name}</h3>
       {AI_TEMPLATE_FILE_TYPES.map((type) => {
         const templates = repository.types[type];
-        if (templates.length === 0) return null;
+        // Skip section if no templates, except for skills which always shows
+        if (templates.length === 0 && type !== "skills") return null;
 
         return (
           <TypeSection

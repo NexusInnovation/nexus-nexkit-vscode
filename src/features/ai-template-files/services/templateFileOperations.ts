@@ -48,6 +48,12 @@ export class TemplateFileOperations {
     const { silent = false, overwrite = true } = options;
 
     try {
+      // Handle directory-based templates (skills)
+      if (templateFile.isDirectory) {
+        return await this.installDirectoryTemplate(templateFile, options);
+      }
+
+      // Handle file-based templates (regular)
       const dirPath = this.getTemplateTypePath(templateFile.type);
       const filePath = path.join(dirPath, templateFile.name);
 
@@ -86,28 +92,91 @@ export class TemplateFileOperations {
   }
 
   /**
+   * Install a directory-based template (e.g., skills)
+   */
+  private async installDirectoryTemplate(templateFile: AITemplateFile, options: InstallOptions = {}): Promise<boolean> {
+    const { silent = false, overwrite = true } = options;
+
+    try {
+      const dirPath = this.getTemplateTypePath(templateFile.type);
+      const targetPath = path.join(dirPath, templateFile.name);
+
+      // Check if directory already exists
+      if (!overwrite && (await fileExists(targetPath))) {
+        if (!silent) {
+          vscode.window.showWarningMessage(`Skill "${templateFile.name}" already exists`);
+        }
+        return false;
+      }
+
+      // Create parent directory if it doesn't exist
+      await fs.promises.mkdir(dirPath, { recursive: true });
+
+      // Download all files in the directory
+      const fileContents = await this.fetcherService.downloadDirectoryContents(templateFile);
+
+      // Create directory structure and write files
+      for (const [relativePath, content] of fileContents.entries()) {
+        const fullPath = path.join(targetPath, relativePath);
+        const fileDir = path.dirname(fullPath);
+
+        // Create subdirectories as needed
+        await fs.promises.mkdir(fileDir, { recursive: true });
+
+        // Write file
+        await fs.promises.writeFile(fullPath, content, "utf8");
+      }
+
+      // Add to installed state
+      await this.stateManager.addInstalledTemplate(templateFile);
+
+      if (!silent) {
+        vscode.window.showInformationMessage(
+          `Installed skill "${templateFile.name}" (${fileContents.size} files) from '${templateFile.repository}'`
+        );
+      }
+
+      return true;
+    } catch (error) {
+      console.error(`Failed to install directory ${templateFile.name}:`, error);
+      if (!silent) {
+        vscode.window.showErrorMessage(`Failed to install skill ${templateFile.name}: ${error}`);
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Uninstall a template from the workspace
    */
   public async uninstallTemplate(templateFile: AITemplateFile, silent: boolean = false): Promise<void> {
     try {
-      const filePath = path.join(this.getTemplateTypePath(templateFile.type), templateFile.name);
+      const targetPath = path.join(this.getTemplateTypePath(templateFile.type), templateFile.name);
 
-      // Check if file exists
-      if (!(await fileExists(filePath))) {
+      // Check if file/directory exists
+      if (!(await fileExists(targetPath))) {
         if (!silent) {
-          vscode.window.showWarningMessage(`File ${templateFile.name} not found in .github/${templateFile.type}/`);
+          vscode.window.showWarningMessage(
+            `${templateFile.isDirectory ? "Skill" : "File"} ${templateFile.name} not found in .github/${templateFile.type}/`
+          );
         }
         return;
       }
 
-      // Delete file
-      await fs.promises.unlink(filePath);
+      // Delete file or directory
+      if (templateFile.isDirectory) {
+        await fs.promises.rm(targetPath, { recursive: true, force: true });
+      } else {
+        await fs.promises.unlink(targetPath);
+      }
 
       // Remove from installed state
       await this.stateManager.removeInstalledTemplate(templateFile);
 
       if (!silent) {
-        vscode.window.showInformationMessage(`Removed ${templateFile.name} from .github/${templateFile.type}/`);
+        vscode.window.showInformationMessage(
+          `Removed ${templateFile.isDirectory ? "skill" : "template"} ${templateFile.name} from .github/${templateFile.type}/`
+        );
       }
     } catch (error) {
       console.error(`Failed to remove ${templateFile.name}:`, error);
@@ -136,6 +205,7 @@ export class TemplateFileOperations {
       types: {
         agents: 0,
         prompts: 0,
+        skills: 0,
         instructions: 0,
         chatmodes: 0,
       },
