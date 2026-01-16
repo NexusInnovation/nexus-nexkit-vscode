@@ -212,7 +212,7 @@ code /path/to/my-project
       "paths": {
         "agents": "copilot-agents",
         "prompts": "ai-prompts",
-        "skills": "skills",
+        "skills": "skills"
       }
     }
   ]
@@ -391,7 +391,7 @@ For more information about how telemetry data is collected and stored, see [docs
 
 ## Contributing
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
+Contributions are welcome! Please read [CONTRIBUTING.md](docs/CONTRIBUTING.md) for:
 
 - Code style guidelines
 - Commit message conventions (Conventional Commits)
