@@ -1,15 +1,20 @@
-import { AI_TEMPLATE_FILE_TYPES, AITemplateFile, InstalledTemplatesMap, RepositoryTemplatesMap } from "../../../../ai-template-files/models/aiTemplateFile";
+import {
+  AI_TEMPLATE_FILE_TYPES,
+  AITemplateFile,
+  InstalledTemplatesMap,
+  RepositoryTemplatesMap,
+} from "../../../../ai-template-files/models/aiTemplateFile";
 import { TypeSection } from "../molecules/TypeSection";
+import { FilterMode } from "../../types";
 
 interface RepositorySectionProps {
   repository: RepositoryTemplatesMap;
   installedTemplates: InstalledTemplatesMap;
-  isSectionExpanded: (repository: string, type: string) => boolean;
-  setSectionExpanded: (repository: string, type: string, expanded: boolean) => void;
   onInstall: (template: AITemplateFile) => void;
   onUninstall: (template: AITemplateFile) => void;
   isTemplateInstalled: (template: AITemplateFile) => boolean;
   searchQuery: string;
+  filterMode: FilterMode;
 }
 
 /**
@@ -19,19 +24,19 @@ interface RepositorySectionProps {
 export function RepositorySection({
   repository,
   installedTemplates,
-  isSectionExpanded,
-  setSectionExpanded,
   onInstall,
   onUninstall,
   isTemplateInstalled,
   searchQuery,
+  filterMode,
 }: RepositorySectionProps) {
   return (
     <div class="repository-section">
       <h3 class="repository-name">{repository.name}</h3>
       {AI_TEMPLATE_FILE_TYPES.map((type) => {
         const templates = repository.types[type];
-        if (templates.length === 0) return null;
+        // Skip section if no templates, except for skills which always shows
+        if (templates.length === 0 && type !== "skills") return null;
 
         return (
           <TypeSection
@@ -40,12 +45,11 @@ export function RepositorySection({
             templates={templates}
             repository={repository.name}
             installedTemplates={installedTemplates}
-            isExpanded={isSectionExpanded(repository.name, type)}
-            onToggle={(expanded) => setSectionExpanded(repository.name, type, expanded)}
             onInstall={onInstall}
             onUninstall={onUninstall}
             isTemplateInstalled={isTemplateInstalled}
             searchQuery={searchQuery}
+            filterMode={filterMode}
           />
         );
       })}

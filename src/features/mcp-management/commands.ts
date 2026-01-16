@@ -12,56 +12,26 @@ export function registerInstallUserMCPsCommand(context: vscode.ExtensionContext,
     context,
     Commands.INSTALL_USER_MCPS,
     async () => {
-      const hasChanged = await vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: "Installing user MCP servers...",
-          cancellable: false,
-        },
-        async (progress) => {
-          progress.report({
-            increment: 25,
-            message: "Checking existing configuration...",
-          });
+      const { missing } = await services.mcpConfig.checkRequiredUserMCPs();
 
-          const { missing } = await services.mcpConfig.checkRequiredUserMCPs();
-
-          if (missing.length === 0) {
-            vscode.window.showInformationMessage("All required MCP servers are already configured!");
-            return false;
-          }
-
-          progress.report({
-            increment: 50,
-            message: `Installing ${missing.join(", ")}...`,
-          });
-
-          // Install missing servers
-          for (const server of missing) {
-            if (server === MCPConfigService.Context7ServerName) {
-              await services.mcpConfig.addUserMCPServer(MCPConfigService.Context7ServerName, {
-                command: "npx",
-                args: ["-y", "@upstash/context7-mcp"],
-              });
-            } else if (server === MCPConfigService.SequentialThinkingServerName) {
-              await services.mcpConfig.addUserMCPServer(MCPConfigService.SequentialThinkingServerName, {
-                command: "npx",
-                args: ["-y", "@modelcontextprotocol/server-sequential-thinking"],
-              });
-            }
-          }
-
-          progress.report({
-            increment: 25,
-            message: "Installation complete",
-          });
-
-          return true;
-        }
-      );
-
-      if (!hasChanged) {
+      if (missing.length === 0) {
+        vscode.window.showInformationMessage("All required MCP servers are already configured!");
         return;
+      }
+
+      // Install missing servers
+      for (const server of missing) {
+        if (server === MCPConfigService.Context7ServerName) {
+          await services.mcpConfig.addUserMCPServer(MCPConfigService.Context7ServerName, {
+            command: "npx",
+            args: ["-y", "@upstash/context7-mcp"],
+          });
+        } else if (server === MCPConfigService.SequentialThinkingServerName) {
+          await services.mcpConfig.addUserMCPServer(MCPConfigService.SequentialThinkingServerName, {
+            command: "npx",
+            args: ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+          });
+        }
       }
 
       vscode.window

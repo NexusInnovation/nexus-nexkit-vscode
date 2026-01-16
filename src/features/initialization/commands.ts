@@ -2,8 +2,8 @@ import * as vscode from "vscode";
 import { ServiceContainer } from "../../core/serviceContainer";
 import { SettingsManager } from "../../core/settingsManager";
 import { registerCommand } from "../../shared/commands/commandRegistry";
-import { MCPConfigDeployer } from "./mcpConfigDeployer";
 import { Commands } from "../../shared/constants/commands";
+import { ProfileSelectionPromptService } from "./profileSelectionPromptService";
 
 /**
  * Register initialization-related commands
@@ -33,43 +33,27 @@ export function registerInitializeWorkspaceCommand(context: vscode.ExtensionCont
         }
       }
 
-      await vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: "Initializing Nexkit workspace...",
-          cancellable: false,
-        },
-        async () => {
-          // Backup existing .github directory if it exists
-          const githubPath = vscode.Uri.joinPath(workspaceFolder.uri, ".github").fsPath;
-          const backupPath = await services.backup.backupDirectory(githubPath);
+      // Prompt user to select a profile if any are saved
+      const selectedProfileName = await new ProfileSelectionPromptService(services.profileService).promptProfileSelection();
 
-          // Deploy configuration files
-          await services.gitIgnoreConfigDeployer.deployGitignore(workspaceFolder.uri.fsPath);
-          await services.recommendedExtensionsConfigDeployer.deployVscodeExtensions(workspaceFolder.uri.fsPath);
-          await services.recommendedSettingsConfigDeployer.deployVscodeSettings(workspaceFolder.uri.fsPath);
-          await services.mcpConfigDeployer.deployWorkspaceMCPServers(workspaceFolder.uri.fsPath);
-
-          // Deploy default template files (agents, prompts, chatmodes) from the Nexus Templates
-          const deploymentSummary = await services.aiTemplateFilesDeployer.deployTemplateFiles();
-
-          // Update workspace settings
-          await SettingsManager.setWorkspaceInitialized(true);
-
-          // Show success message with deployment summary
-          let resultMessage = "Nexkit project initialized successfully!";
-
-          if (deploymentSummary !== null && deploymentSummary.installed > 0) {
-            resultMessage += ` Installed ${deploymentSummary.installed} templates.`;
-          }
-
-          if (backupPath) {
-            resultMessage += ` Backed up existing templates to: ${backupPath}.`;
-          }
-
-          vscode.window.showInformationMessage(`${resultMessage}`);
-        }
+      const { deploymentSummary, backupPath } = await services.workspaceInitialization.initializeWorkspace(
+        workspaceFolder,
+        selectedProfileName,
+        services
       );
+
+      // Show success message with deployment summary
+      let resultMessage = "Nexkit project initialized successfully!";
+
+      if (deploymentSummary !== null && deploymentSummary.installed > 0) {
+        resultMessage += ` Installed ${deploymentSummary.installed} templates.`;
+      }
+
+      if (backupPath) {
+        resultMessage += ` Backed up existing templates to: ${backupPath}.`;
+      }
+
+      vscode.window.showInformationMessage(`${resultMessage}`);
     },
     services.telemetry
   );

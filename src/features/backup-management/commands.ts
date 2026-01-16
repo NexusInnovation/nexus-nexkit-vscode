@@ -17,7 +17,7 @@ export function registerRestoreBackupCommand(context: vscode.ExtensionContext, s
         return;
       }
 
-      const backups = await services.backup.listBackups(workspaceFolder.uri.fsPath, ".github");
+      const backups = await services.backup.listBackups(workspaceFolder.uri.fsPath);
 
       if (backups.length === 0) {
         vscode.window.showInformationMessage("No backups available");
@@ -29,7 +29,7 @@ export function registerRestoreBackupCommand(context: vscode.ExtensionContext, s
         backups.map((backup) => ({
           label: backup.replace(".github.backup-", ""),
           description: backup,
-          detail: `Restore from ${backup}`,
+          detail: `Restore template folders from ${backup}`,
         })),
         {
           placeHolder: "Select a backup to restore",
@@ -42,8 +42,7 @@ export function registerRestoreBackupCommand(context: vscode.ExtensionContext, s
       }
 
       const confirm = await vscode.window.showWarningMessage(
-        `This will replace your current .github directory with the backup from ${selectedBackup.label}. Continue?`,
-        { modal: true },
+        `This will replace your current template folders (agents, prompts, instructions, chatmodes) with the backup from ${selectedBackup.label}. Continue?`,
         "Restore"
       );
 
@@ -51,25 +50,7 @@ export function registerRestoreBackupCommand(context: vscode.ExtensionContext, s
         return;
       }
 
-      await vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: "Restoring backup...",
-          cancellable: false,
-        },
-        async (progress) => {
-          progress.report({
-            increment: 50,
-            message: "Restoring templates...",
-          });
-          await services.backup.restoreBackup(workspaceFolder.uri.fsPath, ".github", selectedBackup.description);
-
-          progress.report({
-            increment: 50,
-            message: "Backup restored successfully",
-          });
-        }
-      );
+      await services.backup.restoreBackup(workspaceFolder.uri.fsPath, selectedBackup.description);
 
       vscode.window.showInformationMessage("Template backup restored successfully!");
     },
@@ -88,7 +69,7 @@ export function registerCleanupBackupCommand(context: vscode.ExtensionContext, s
         return;
       }
 
-      const backups = await services.backup.listBackups(workspaceFolder.uri.fsPath, ".github");
+      const backups = await services.backup.listBackups(workspaceFolder.uri.fsPath);
 
       if (backups.length === 0) {
         vscode.window.showInformationMessage("No backups available to cleanup");
@@ -97,7 +78,6 @@ export function registerCleanupBackupCommand(context: vscode.ExtensionContext, s
 
       const confirm = await vscode.window.showWarningMessage(
         `This will permanently delete all ${backups.length} template backup${backups.length > 1 ? "s" : ""}. This action cannot be undone. Continue?`,
-        { modal: true },
         "Delete All"
       );
 
@@ -105,25 +85,7 @@ export function registerCleanupBackupCommand(context: vscode.ExtensionContext, s
         return;
       }
 
-      await vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: "Deleting backups...",
-          cancellable: false,
-        },
-        async (progress) => {
-          progress.report({
-            increment: 50,
-            message: "Removing all backups...",
-          });
-          await services.backup.cleanupBackups(workspaceFolder.uri.fsPath, ".github", 0);
-
-          progress.report({
-            increment: 50,
-            message: "Cleanup completed",
-          });
-        }
-      );
+      await services.backup.cleanupBackups(workspaceFolder.uri.fsPath);
 
       vscode.window.showInformationMessage(`Successfully deleted all ${backups.length} backup${backups.length > 1 ? "s" : ""}!`);
     },

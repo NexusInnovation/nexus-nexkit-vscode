@@ -1,5 +1,5 @@
-import { useState } from "preact/hooks";
 import { AITemplateFile } from "../../../../ai-template-files/models/aiTemplateFile";
+import { TemplateInfoTooltip } from "./TemplateInfoTooltip";
 
 interface TemplateItemProps {
   template: AITemplateFile;
@@ -10,14 +10,9 @@ interface TemplateItemProps {
 
 /**
  * TemplateItem Component
- * Individual template checkbox with label
+ * Individual template checkbox with label and info tooltip
  */
-export function TemplateItem({
-  template,
-  isInstalled,
-  onInstall,
-  onUninstall,
-}: TemplateItemProps) {
+export function TemplateItem({ template, isInstalled, onInstall, onUninstall }: TemplateItemProps) {
   const handleChange = async (e: Event) => {
     const checked = (e.target as HTMLInputElement).checked;
 
@@ -37,16 +32,12 @@ export function TemplateItem({
 
   return (
     <div class="template-item">
-      <input
-        type="checkbox"
-        id={templateId}
-        class="template-checkbox"
-        checked={isInstalled}
-        onChange={handleChange}
-      />
+      <input type="checkbox" id={templateId} class="template-checkbox" checked={isInstalled} onChange={handleChange} />
       <label htmlFor={templateId} class="template-label">
         {displayName}
       </label>
+
+      <TemplateInfoTooltip template={template} />
     </div>
   );
 }

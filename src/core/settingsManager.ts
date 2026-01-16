@@ -34,6 +34,9 @@ export class SettingsManager {
   // Extension update state keys (GlobalState)
   private static readonly EXTENSION_LAST_UPDATE_CHECK_STATE_KEY = "nexkit.extension.lastUpdateCheck";
 
+  // Profile management settings
+  private static readonly PROFILES = "profiles";
+
   /**
    * Initialize the SettingsManager with the extension context
    * Must be called during extension activation
@@ -129,5 +132,16 @@ export class SettingsManager {
       throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
     }
     await this.context.globalState.update(this.EXTENSION_LAST_UPDATE_CHECK_STATE_KEY, timestamp);
+  }
+
+  // Profiles
+  static getProfiles<T = any>(): T[] {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<T[]>(this.PROFILES, []);
+  }
+
+  static async setProfiles<T = any>(profiles: T[]): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .update(this.PROFILES, profiles, vscode.ConfigurationTarget.Global);
   }
 }

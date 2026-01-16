@@ -2,8 +2,6 @@ import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
-import { promisify } from "util";
-import { exec } from "child_process";
 import { getExtensionVersion } from "../../shared/utils/extensionHelper";
 import { ExtensionGitHubReleaseService, GitHubReleaseInfo } from "./extensionGitHubReleaseService";
 import { SettingsManager } from "../../core/settingsManager";
@@ -61,13 +59,9 @@ export class ExtensionUpdateService {
    * @param updateInfo Update information
    */
   public async promptUserForUpdate(updateInfo: ExtensionUpdateInfo): Promise<void> {
-    const message = `Nexkit extension ${updateInfo.latestVersion} is available! (current: ${updateInfo.currentVersion})`;
-
     const result = await vscode.window.showInformationMessage(
-      message,
-      { modal: false },
-      "Install & Reload",
-      "Copy Install Command",
+      `Nexkit extension ${updateInfo.latestVersion} is available! (current: ${updateInfo.currentVersion})`,
+      "Install",
       "View Release Notes",
       "Later"
     );
@@ -83,50 +77,10 @@ export class ExtensionUpdateService {
       return;
     }
 
-    // Download .vsix file
-    await vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Notification,
-        title: "Downloading extension update...",
-        cancellable: false,
-      },
-      async (progress) => {
-        progress.report({
-          increment: 30,
-          message: "Downloading .vsix file...",
-        });
-        const vsixPath = await this.downloadExtensionVsix(updateInfo);
-
-        progress.report({
-          increment: 40,
-          message: "Preparing installation...",
-        });
-
-        if (result === "Install & Reload") {
-          progress.report({
-            increment: 30,
-            message: "Installing extension...",
-          });
-          await this.installExtension(vsixPath);
-        } else if (result === "Copy Install Command") {
-          await vscode.env.clipboard.writeText(this.getInstallCommand(vsixPath));
-
-          vscode.window
-            .showInformationMessage(
-              `Install command copied to clipboard! Extension downloaded to: ${vsixPath}`,
-              "Open File Location",
-              "Install Now"
-            )
-            .then(async (selection) => {
-              if (selection === "Open File Location") {
-                await vscode.commands.executeCommand("revealFileInOS", vscode.Uri.file(vsixPath));
-              } else if (selection === "Install Now") {
-                await this.installExtension(vsixPath);
-              }
-            });
-        }
-      }
-    );
+    if (result === "Install") {
+      const vsixPath = await this.downloadExtensionVsix(updateInfo);
+      await this.installExtension(vsixPath);
+    }
   }
 
   /**
@@ -211,25 +165,12 @@ export class ExtensionUpdateService {
   }
 
   /**
-   * Install extension from .vsix file using VS Code CLI
+   * Install extension from .vsix file using VS Code's built-in API
    * @param vsixPath Path to the .vsix file
    */
   private async installExtension(vsixPath: string): Promise<void> {
-    const execAsync = promisify(exec);
-
     try {
-      // Execute the install command and wait for completion
-      const { stdout, stderr } = await execAsync(this.getInstallCommand(vsixPath), {
-        timeout: 60000, // 60 second timeout
-      });
-
-      // Log output for debugging
-      if (stdout) {
-        console.log("Extension installation output:", stdout);
-      }
-      if (stderr) {
-        console.warn("Extension installation warnings:", stderr);
-      }
+      await vscode.commands.executeCommand("workbench.extensions.installExtension", vscode.Uri.file(vsixPath));
 
       // Prompt to reload
       const result = await vscode.window.showInformationMessage(
@@ -243,6 +184,23 @@ export class ExtensionUpdateService {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error("Failed to install extension:", error);
+
+      // Provide helpful error message with manual installation instructions
+      vscode.window
+        .showErrorMessage(
+          `Failed to install extension automatically. You can install it manually using Extensions view: Install from VSIX... and select the file at ${vsixPath}`,
+          "Open Extensions View",
+          "Open File Location"
+        )
+        .then(async (selection) => {
+          if (selection === "Open Extensions View") {
+            await vscode.commands.executeCommand("workbench.extensions.action.installVSIX");
+          } else if (selection === "Open File Location") {
+            await vscode.commands.executeCommand("revealFileInOS", vscode.Uri.file(vsixPath));
+          }
+        });
+
       throw new Error(`Failed to install extension: ${errorMessage}`);
     }
   }

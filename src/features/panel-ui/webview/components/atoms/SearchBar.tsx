@@ -22,11 +22,7 @@ export function SearchBar({ value, onChange }: SearchBarProps) {
         onInput={(e) => onChange((e.target as HTMLInputElement).value)}
       />
       {value && (
-        <button
-          class="search-clear-btn"
-          title="Clear search"
-          onClick={handleClear}
-        >
+        <button class="search-clear-btn" title="Clear search" onClick={handleClear}>
           ✕
         </button>
       )}

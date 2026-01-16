@@ -5,9 +5,15 @@ import { NexkitPanelViewProvider } from "./features/panel-ui/nexkitPanelViewProv
 import { registerInitializeWorkspaceCommand } from "./features/initialization/commands";
 import { registerInstallUserMCPsCommand } from "./features/mcp-management/commands";
 import { registerCleanupBackupCommand, registerRestoreBackupCommand } from "./features/backup-management/commands";
-import { registerSettingsCommands } from "./shared/commands/settingsCommand";
+import { registerOpenSettingsCommand } from "./shared/commands/settingsCommand";
 import { registerCheckExtensionUpdateCommand } from "./features/extension-updates/commands";
 import { registerUpdateInstalledTemplatesCommand } from "./features/ai-template-files/commands";
+import {
+  registerApplyProfileCommand,
+  registerDeleteProfileCommand,
+  registerSaveProfileCommand,
+} from "./features/profile-management/commands";
+import { registerOpenFeedbackCommand } from "./shared/commands/feedbackCommand";
 
 /**
  * Extension activation
@@ -22,6 +28,9 @@ export async function activate(context: vscode.ExtensionContext) {
   // Initialize all services
   const services = await initializeServices(context);
 
+  // Set up global error handler to track all unhandled errors
+  setupGlobalErrorHandling(services);
+
   // Register all commands
   registerInitializeWorkspaceCommand(context, services);
   registerInstallUserMCPsCommand(context, services);
@@ -29,11 +38,15 @@ export async function activate(context: vscode.ExtensionContext) {
   registerCleanupBackupCommand(context, services);
   registerCheckExtensionUpdateCommand(context, services);
   registerUpdateInstalledTemplatesCommand(context, services);
-  registerSettingsCommands(context, services);
+  registerOpenSettingsCommand(context, services);
+  registerOpenFeedbackCommand(context, services);
+  registerSaveProfileCommand(context, services);
+  registerApplyProfileCommand(context, services);
+  registerDeleteProfileCommand(context, services);
 
   // Register webview panel
-  const nexkitPanelProvider = new NexkitPanelViewProvider(services.telemetry, services.aiTemplateData);
-  nexkitPanelProvider.initialize(context);
+  const nexkitPanelProvider = new NexkitPanelViewProvider();
+  nexkitPanelProvider.initialize(context, services);
 
   // Check for extension updates on activation & cleanup old .vsix files
   services.extensionUpdate.checkForExtensionUpdatesOnActivation();
@@ -51,6 +64,10 @@ export async function activate(context: vscode.ExtensionContext) {
   // Initialize AI template data asynchronously (don't block extension activation)
   services.aiTemplateData.initialize().catch((error) => {
     console.error("Failed to initialize AI template data:", error);
+    // Track initialization errors
+    services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+      context: "aiTemplateData.initialize",
+    });
   });
 
   // Sync installed templates state with filesystem on activation
@@ -65,6 +82,24 @@ export async function activate(context: vscode.ExtensionContext) {
       services.workspaceInitPrompt.promptInitWorkspaceOnWorkspaceChange();
     })
   );
+}
+
+/**
+ * Set up global error handling to track all unhandled errors
+ */
+function setupGlobalErrorHandling(services: ReturnType<typeof initializeServices> extends Promise<infer T> ? T : never): void {
+  // Track unhandled promise rejections
+  process.on("unhandledRejection", (reason: any) => {
+    console.error("Unhandled promise rejection:", reason);
+    const error = reason instanceof Error ? reason : new Error(String(reason));
+    services.telemetry.trackError(error, { context: "unhandledRejection" });
+  });
+
+  // Track uncaught exceptions (less common in VS Code extensions)
+  process.on("uncaughtException", (error: Error) => {
+    console.error("Uncaught exception:", error);
+    services.telemetry.trackError(error, { context: "uncaughtException" });
+  });
 }
 
 // This method is called when your extension is deactivated

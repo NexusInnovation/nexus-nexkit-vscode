@@ -11,34 +11,14 @@ export function registerCheckExtensionUpdateCommand(context: vscode.ExtensionCon
     context,
     Commands.CHECK_EXTENSION_UPDATE,
     async () => {
-      await vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: "Checking for extension updates...",
-          cancellable: false,
-        },
-        async (progress) => {
-          progress.report({
-            increment: 30,
-            message: "Checking GitHub releases...",
-          });
+      const updateInfo = await services.extensionUpdate.checkForExtensionUpdate();
 
-          const updateInfo = await services.extensionUpdate.checkForExtensionUpdate();
+      if (!updateInfo) {
+        vscode.window.showInformationMessage("Nexkit extension is up to date!");
+        return;
+      }
 
-          if (!updateInfo) {
-            vscode.window.showInformationMessage("Nexkit extension is up to date!");
-            return;
-          }
-
-          progress.report({
-            increment: 70,
-            message: "Update available...",
-          });
-
-          // Prompt user for update action
-          await services.extensionUpdate.promptUserForUpdate(updateInfo);
-        }
-      );
+      await services.extensionUpdate.promptUserForUpdate(updateInfo);
     },
     services.telemetry
   );

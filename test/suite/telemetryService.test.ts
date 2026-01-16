@@ -37,7 +37,7 @@ suite("Unit: TelemetryService", () => {
       extensionMode: vscode.ExtensionMode.Test,
     } as any;
 
-    telemetryService = new TelemetryService(context);
+    telemetryService = new TelemetryService();
   });
 
   teardown(() => {

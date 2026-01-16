@@ -2,7 +2,7 @@
   "name": "nexus-nexkit-vscode",
   "displayName": "Nexkit",
   "description": "VS Code extension for Nexkit",
-  "version": "0.7.0-beta.2",
+  "version": "1.2.1",
   "publisher": "NexusInnovation",
   "private": true,
   "license": "MIT",
@@ -71,19 +71,47 @@
         "command": "nexus-nexkit-vscode.updateInstalledTemplates",
         "title": "Nexkit: Update Installed Templates",
         "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.saveProfile",
+        "title": "Nexkit: Save Current Profile",
+        "category": "Nexkit",
+        "icon": "$(save)"
+      },
+      {
+        "command": "nexus-nexkit-vscode.applyProfile",
+        "title": "Nexkit: Apply Profile",
+        "category": "Nexkit",
+        "icon": "$(rocket)"
+      },
+      {
+        "command": "nexus-nexkit-vscode.deleteProfile",
+        "title": "Nexkit: Delete Profile",
+        "category": "Nexkit",
+        "icon": "$(trash)"
       }
     ],
     "menus": {
       "view/title": [
         {
+          "command": "nexus-nexkit-vscode.saveProfile",
+          "when": "view == nexkitPanelView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "nexus-nexkit-vscode.applyProfile",
+          "when": "view == nexkitPanelView",
+          "group": "navigation@2"
+        },
+        {
           "command": "nexus-nexkit-vscode.installUserMCPs",
           "when": "view == nexkitPanelView",
-          "group": "navigation"
+          "group": "navigation@3"
         },
         {
           "command": "nexus-nexkit-vscode.openSettings",
           "when": "view == nexkitPanelView",
-          "group": "navigation"
+          "group": "navigation@4"
         }
       ]
     },
@@ -102,7 +130,7 @@
           "id": "nexkitPanelView",
           "icon": "media/Nexus_Symbole_MONOCHROME.svg",
           "type": "webview",
-          "name": "Home"
+          "name": "Welcome!"
         }
       ]
     },
@@ -119,6 +147,7 @@
               "paths": {
                 "agents": "agents",
                 "prompts": "prompts",
+                "skills": "skills",
                 "instructions": "instructions"
               }
             }
@@ -157,6 +186,10 @@
                   "prompts": {
                     "type": "string",
                     "description": "Path to prompts directory"
+                  },
+                  "skills": {
+                    "type": "string",
+                    "description": "Path to skills directory"
                   },
                   "instructions": {
                     "type": "string",
@@ -202,9 +235,39 @@
         },
         "nexkit.telemetry.connectionString": {
           "type": "string",
-          "default": "",
+          "default": "InstrumentationKey=36541b20-0c16-4477-9d5c-d6990c51bafd;IngestionEndpoint=https://canadaeast-0.in.applicationinsights.azure.com/;LiveEndpoint=https://canadaeast.livediagnostics.monitor.azure.com/;ApplicationId=d5494809-608d-4364-a30e-feaeb0769286",
           "scope": "application",
           "description": "Azure Application Insights connection string (optional, for custom telemetry endpoint)."
+        },
+        "nexkit.profiles": {
+          "type": "array",
+          "default": [],
+          "scope": "application",
+          "description": "Saved template profiles for quick workspace setup. Each profile is a collection of templates that can be applied to a workspace.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Profile name"
+              },
+              "templates": {
+                "type": "array",
+                "description": "Collection of templates in this profile",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "createdAt": {
+                "type": "number",
+                "description": "Timestamp when profile was created"
+              },
+              "updatedAt": {
+                "type": "number",
+                "description": "Timestamp when profile was last updated"
+              }
+            }
+          }
         }
       }
     }
@@ -226,7 +289,7 @@
     "test:integration": "node ./out/test/runTest.js",
     "test:coverage": "nyc --reporter=lcovonly --reporter=text node ./out/test/runTest.js",
     "lint": "eslint src --ext ts",
-    "format": "prettier --write \"**/*.ts\"",
+    "format": "prettier --write \"**/*.{ts,tsx,js}\"",
     "version:bump": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md",
     "publish-private": "npm version patch --tag-version-prefix=v && git push && git push --tags",
     "release": "semantic-release",
@@ -235,7 +298,7 @@
   "devDependencies": {
     "@commitlint/cli": "^19.4.0",
     "@commitlint/config-conventional": "^19.4.0",
-    "@cyclonedx/cyclonedx-npm": "^1.19.3",
+    "@cyclonedx/cyclonedx-npm": "^4.1.2",
     "@preact/preset-vite": "^2.9.2",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.1",
@@ -253,14 +316,14 @@
     "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.2.1",
-    "conventional-changelog-cli": "^5.0.0",
-    "esbuild": "^0.24.2",
+    "conventional-changelog-cli": "^4.1.0",
+    "esbuild": "^0.27.2",
     "eslint": "^9.36.0",
     "glob": "^11.0.0",
     "mocha": "^10.0.10",
     "nyc": "^15.1.0",
     "preact": "^10.25.4",
-    "semantic-release": "^24.2.0",
+    "semantic-release": "^25.0.2",
     "sinon": "^19.0.2",
     "typescript": "^5.9.3"
   }
