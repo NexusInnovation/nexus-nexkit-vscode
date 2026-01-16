@@ -1,6 +1,6 @@
-{
-  "extends": ["@commitlint/config-conventional"],
-  "rules": {
+module.exports = {
+  extends: ["@commitlint/config-conventional"],
+  rules: {
     "type-enum": [
       2,
       "always",
@@ -26,8 +26,9 @@
     "body-max-line-length": [2, "always", 100],
     "footer-max-line-length": [2, "always", 100]
   },
-  "ignores": [
-    "^chore\\(release\\):.*",
-    "^BREAKING CHANGE:"
+  // Ignore semantic-release auto-generated commits
+  ignores: [
+    (commit) => /^chore\(release\):/.test(commit),
+    (commit) => /^BREAKING CHANGE:/.test(commit)
   ]
-}
+};
