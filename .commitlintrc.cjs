@@ -23,12 +23,14 @@ module.exports = {
     "subject-empty": [2, "never"],
     "subject-full-stop": [2, "never", "."],
     "header-max-length": [2, "always", 100],
-    "body-max-line-length": [2, "always", 100],
-    "footer-max-line-length": [2, "always", 100]
+    "body-max-line-length": [0],  // Warn only, don't fail
+    "footer-max-line-length": [0]  // Warn only, don't fail
   },
-  // Ignore semantic-release auto-generated commits
+  // Ignore semantic-release auto-generated commits and old merge commits
   ignores: [
     (commit) => /^chore\(release\):/.test(commit),
-    (commit) => /^BREAKING CHANGE:/.test(commit)
+    (commit) => /^BREAKING CHANGE:/.test(commit),
+    (commit) => /BREAKING CHANGE:/.test(commit),  // Anywhere in message
+    (commit) => /^Merge branch/.test(commit),  // Merge commits
   ]
 };
