@@ -1,3 +1,7 @@
+## 1.3.0 (2026-01-16)
+
+* feat: add .github/skills/ to .gitignore ([b15ad74](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/b15ad74))
+
 ## <small>1.2.1 (2026-01-09)</small>
 
 * fix: remove all progress indicator (#57) ([7b18188](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/7b18188)), closes [#57](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/57)
