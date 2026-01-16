@@ -203,7 +203,7 @@ jobs:
           path: nexkit-vscode.vsix
           retention-days: 30
 
-  # Job 6: Release (semantic-release)
+  # Job 6: Release (semantic-release) - Only for push to main/develop
   release:
     name: Release (semantic-release)
     needs: [quality-gate, security]
@@ -266,3 +266,80 @@ jobs:
           name: ${{ steps.rename-vsix.outputs.vsix-name }}
           path: ${{ steps.rename-vsix.outputs.vsix-name }}
           retention-days: 30
+
+  # Job 7: Preview Build for PRs to develop (creates beta-preview packages)
+  pr-preview:
+    name: PR Preview Build
+    needs: [quality-gate, security]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'develop'
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Calculate preview version
+        id: preview-version
+        run: |
+          # Get base version from package.json
+          BASE_VERSION=$(node -p "require('./package.json').version")
+
+          # Get PR number
+          PR_NUMBER=${{ github.event.pull_request.number }}
+
+          # Get short commit SHA
+          SHORT_SHA=$(git rev-parse --short HEAD)
+
+          # Create preview version: base-beta-pr<number>+<sha>
+          PREVIEW_VERSION="${BASE_VERSION}-beta-pr${PR_NUMBER}+${SHORT_SHA}"
+
+          echo "version=$PREVIEW_VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Preview version: $PREVIEW_VERSION"
+
+      - name: Update package.json with preview version
+        run: |
+          npm version ${{ steps.preview-version.outputs.version }} --no-git-tag-version
+
+      - name: Build extension
+        run: npm run package
+
+      - name: Package VSIX
+        run: |
+          npx @vscode/vsce package --out nexkit-vscode-${{ steps.preview-version.outputs.version }}.vsix
+
+      - name: Upload preview VSIX
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexkit-vscode-${{ steps.preview-version.outputs.version }}
+          path: nexkit-vscode-${{ steps.preview-version.outputs.version }}.vsix
+          retention-days: 30
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = '${{ steps.preview-version.outputs.version }}';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🎉 **Preview Build Ready**\n\n` +
+                    `📦 Version: \`${version}\`\n` +
+                    `📥 [Download VSIX](${runUrl})\n\n` +
+                    `This preview build is available in the workflow artifacts for testing.`
+            });

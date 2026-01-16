@@ -21,6 +21,7 @@ specs/
 .vscode/
 .github/agents/
 .github/prompts/
+.github/skills/
 .github/instructions/
 .github/chatmodes/
 AGENTS.md
