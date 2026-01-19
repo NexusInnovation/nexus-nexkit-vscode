@@ -155,7 +155,10 @@ jobs:
     name: Build Extension
     needs: [security]
     runs-on: ubuntu-latest
-    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
+    if: |
+      (github.event_name == 'push' || github.event_name == 'pull_request') && 
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && 
+      (!contains(github.event.head_commit.message, '[skip ci]'))
     outputs:
       vsix-name: ${{ steps.package.outputs.vsix-name }}
       vsix-size: ${{ steps.size.outputs.size }}
@@ -210,8 +213,9 @@ jobs:
     runs-on: ubuntu-latest
     # Run on push to main/develop OR on PRs targeting develop (for beta testing)
     if: |
-      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && !contains(github.event.head_commit.message, '[skip ci]'))
-      || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'develop')
+      (github.event_name == 'push' || github.event_name == 'pull_request') && 
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && 
+      (!contains(github.event.head_commit.message, '[skip ci]'))
     concurrency:
       group: release-${{ github.event_name }}-${{ github.ref }}-${{ github.event.pull_request.number || '' }}
       cancel-in-progress: false
