@@ -1,3 +1,125 @@
+## 2.0.0-beta.3 (2026-01-21)
+
+* Feat : Added Skills Support (#70) ([054d876](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/054d876)), closes [#70](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/70) [#61](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/61) [#45](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/45) [#47](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/47) [#48](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/48) [#55](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/55) [#56](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/56) [#57](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/57) [#47](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/47) [#48](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/48) [#55](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/55) [#56](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/56) [#57](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/57)
+* Merge branch 'main' into develop ([2557a39](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2557a39))
+* feat: Reapply Skills Feature to main (#71) ([693fa50](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/693fa50)), closes [#71](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/71) [#61](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/61) [#45](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/45) [#47](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/47) [#48](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/48) [#55](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/55) [#56](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/56) [#57](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/57) [#47](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/47) [#48](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/48) [#55](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/55) [#56](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/56) [#57](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/57)
+
+
+### BREAKING CHANGE
+
+* [v1.0] Complete refactor
+
+- Cleanup des anciens fichiers inutiles
+- Ajout d'un watch sur le fichier index.html et styles.css en mode debug/développement
+- Cacher la section des templates quand il n'y a pas de workspace
+- Cacher le bouton d'update quand le workspace n'a pas été initialisé
+- Corriger l'affichage des template installé (match sur le nom et le repository)
+* [v1.0] Complete refactor
+
+- Cleanup des anciens fichiers inutiles
+- Ajout d'un watch sur le fichier index.html et styles.css en mode debug/développement
+- Cacher la section des templates quand il n'y a pas de workspace
+- Cacher le bouton d'update quand le workspace n'a pas été initialisé
+- Corriger l'affichage des template installé (match sur le nom et le repository)
+* [v1.0] Complete refactor
+
+- Cleanup des anciens fichiers inutiles
+- Ajout d'un watch sur le fichier index.html et styles.css en mode debug/développement
+- Cacher la section des templates quand il n'y a pas de workspace
+- Cacher le bouton d'update quand le workspace n'a pas été initialisé
+- Corriger l'affichage des template installé (match sur le nom et le repository)
+* [v1.0] Complete refactor
+
+- Cleanup des anciens fichiers inutiles
+- Ajout d'un watch sur le fichier index.html et styles.css en mode debug/développement
+- Cacher la section des templates quand il n'y a pas de workspace
+- Cacher le bouton d'update quand le workspace n'a pas été initialisé
+- Corriger l'affichage des template installé (match sur le nom et le repository)
+* [v1.0] Complete refactor ([7e487ba](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/7e487ba))
+* feat!: [v1.0] Refonte de l'extension et amélioration globale (#45) ([931f03e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/931f03e)), closes [#45](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/45)
+* feat!: [v1.0] Refonte de l'extension et amélioration globale (#47) ([2757937](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2757937)), closes [#47](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/47)
+* feat!: complete v1.0 refactor ([3e740b9](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3e740b9))
+
+### BREAKING CHANGE
+
+* Major refactor of the entire extension with new features and breaking changes.
+- Cleanup of old unused files
+- Template management via GitHub repositories
+- Preact-based frontend
+- Improved features and tests
+* [v1.0] Complete refactor ([7e487ba](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/7e487ba))
+* feat!: [v1.0] Refonte de l'extension et amélioration globale (#45) ([931f03e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/931f03e)), closes [#45](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/45)
+* feat!: [v1.0] Refonte de l'extension et amélioration globale (#47) ([2757937](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2757937)), closes [#47](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/47)
+* feat!: complete v1.0 refactor ([3e740b9](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3e740b9))
+
+### BREAKING CHANGE
+
+* Major refactor of the entire extension with new features and breaking changes.
+- Cleanup of old unused files
+- Template management via GitHub repositories
+- Preact-based frontend
+- Improved features and tests
+* [v1.0] Complete refactor ([7e487ba](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/7e487ba))
+* feat!: [v1.0] Refonte de l'extension et amélioration globale (#45) ([931f03e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/931f03e)), closes [#45](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/45)
+* feat!: [v1.0] Refonte de l'extension et amélioration globale (#47) ([2757937](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2757937)), closes [#47](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/47)
+* feat!: complete v1.0 refactor ([3e740b9](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3e740b9))
+
+### BREAKING CHANGE
+
+* Major refactor of the entire extension with new features and breaking changes.
+- Cleanup of old unused files
+- Template management via GitHub repositories
+- Preact-based frontend
+- Improved features and tests
+* [v1.0] Complete refactor ([7e487ba](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/7e487ba))
+* feat!: [v1.0] Refonte de l'extension et amélioration globale (#45) ([931f03e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/931f03e)), closes [#45](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/45)
+* feat!: [v1.0] Refonte de l'extension et amélioration globale (#47) ([2757937](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2757937)), closes [#47](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/47)
+* feat!: complete v1.0 refactor ([3e740b9](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3e740b9))
+
+### BREAKING CHANGE
+
+* Major refactor of the entire extension with new features and breaking changes.
+- Cleanup of old unused files
+- Template management via GitHub repositories
+- Preact-based frontend
+- Improved features and tests
+* Major refactor of the entire extension with new features and breaking changes.
+- Cleanup of old unused files
+- Template management via GitHub repositories
+- Preact-based frontend
+- Improved features and tests
+
+* chore(release): v1.0.0 [skip ci]
+
+## 1.0.0 (2025-12-30)
+* Major refactor of the entire extension with new features and breaking changes.
+- Cleanup of old unused files
+- Template management via GitHub repositories
+- Preact-based frontend
+- Improved features and tests
+
+* chore(release): v1.0.0 [skip ci]
+
+## 1.0.0 (2025-12-30)
+* Major refactor of the entire extension with new features and breaking changes.
+- Cleanup of old unused files
+- Template management via GitHub repositories
+- Preact-based frontend
+- Improved features and tests
+
+* chore(release): v1.0.0 [skip ci]
+
+## 1.0.0 (2025-12-30)
+* Major refactor of the entire extension with new features and breaking changes.
+- Cleanup of old unused files
+- Template management via GitHub repositories
+- Preact-based frontend
+- Improved features and tests
+
+* chore(release): v1.0.0 [skip ci]
+
+## 1.0.0 (2025-12-30)
+
 ## 2.0.0-beta.2 (2026-01-21)
 
 * fix: Apply suggestions from code review ([9e424c8](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9e424c8))
