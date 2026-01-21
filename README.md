@@ -120,6 +120,7 @@ Default includes the "Awesome Copilot" repository. The "Nexus Templates" reposit
       "paths": {
         "agents": "agents",
         "prompts": "prompts",
+        "skills": "skills",
         "instructions": "instructions",
         "chatmodes": "chatmodes"
       }
@@ -210,7 +211,8 @@ code /path/to/my-project
       "enabled": true,
       "paths": {
         "agents": "copilot-agents",
-        "prompts": "ai-prompts"
+        "prompts": "ai-prompts",
+        "skills": "skills"
       }
     }
   ]
@@ -389,7 +391,7 @@ For more information about how telemetry data is collected and stored, see [docs
 
 ## Contributing
 
-Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for:
+Contributions are welcome! Please read [CONTRIBUTING.md](docs/CONTRIBUTING.md) for:
 
 - Code style guidelines
 - Commit message conventions (Conventional Commits)

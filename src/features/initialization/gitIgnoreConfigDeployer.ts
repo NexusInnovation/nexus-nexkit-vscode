@@ -17,6 +17,7 @@ export class GitIgnoreConfigDeployer {
 .specify/
 .github/**/nexkit.*
 .github/agents/
+.github/skills/
 .github/chatmodes/
 .github/instructions/
 .github/prompts/

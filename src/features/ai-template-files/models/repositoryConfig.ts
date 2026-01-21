@@ -28,6 +28,7 @@ export class RepositoryConfigManager {
       enabled: true,
       paths: {
         prompts: "prompts",
+        skills: "skills",
         instructions: "instructions",
         agents: "agents",
       },

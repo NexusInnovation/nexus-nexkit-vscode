@@ -2,7 +2,7 @@
   "name": "nexus-nexkit-vscode",
   "displayName": "Nexkit",
   "description": "VS Code extension for Nexkit",
-  "version": "1.3.0",
+  "version": "2.0.0-beta.1",
   "publisher": "NexusInnovation",
   "private": true,
   "license": "MIT",
@@ -147,6 +147,7 @@
               "paths": {
                 "agents": "agents",
                 "prompts": "prompts",
+                "skills": "skills",
                 "instructions": "instructions"
               }
             }
@@ -185,6 +186,10 @@
                   "prompts": {
                     "type": "string",
                     "description": "Path to prompts directory"
+                  },
+                  "skills": {
+                    "type": "string",
+                    "description": "Path to skills directory"
                   },
                   "instructions": {
                     "type": "string",
