@@ -1,3 +1,8 @@
+## 2.0.0-beta.2 (2026-01-21)
+
+* fix: Apply suggestions from code review ([9e424c8](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9e424c8))
+* fix: Refactor CI/CD conditions for clarity and consistency (#72) ([e7afd4f](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/e7afd4f)), closes [#72](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/72)
+
 ## 2.0.0-beta.1 (2026-01-21)
 
 * feat: add .github/skills/ to .gitignore ([b15ad74](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/b15ad74))
