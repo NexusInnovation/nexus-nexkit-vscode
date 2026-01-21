@@ -159,7 +159,7 @@ jobs:
       (
         github.event_name == 'push' &&
         (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') &&
-        !contains(github.event.head_commit.message, '[skip ci]')
+        (!contains(github.event.head_commit.message, '[skip ci]'))
       ) || (
         github.event_name == 'pull_request' &&
         (github.base_ref == 'main' || github.base_ref == 'develop')
@@ -214,18 +214,18 @@ jobs:
   # Job 6: Release (semantic-release) - Only for push to main/develop
   release:
     name: Release (semantic-release)
-    needs: [quality-gate, security]
+    needs: [quality-gate, security, build]
     runs-on: ubuntu-latest
     # Run on push to main/develop OR on PRs targeting develop (for beta testing)
     if: |
-`(
-  github.event_name == 'push' &&
-  (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') &&
-  !contains(github.event.head_commit.message, '[skip ci]')
-) || (
-  github.event_name == 'pull_request' &&
-  (github.base_ref == 'main' || github.base_ref == 'develop')
-)`
+      (
+        github.event_name == 'push' &&
+        (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') &&
+        (!contains(github.event.head_commit.message, '[skip ci]'))
+      ) || (
+        github.event_name == 'pull_request' &&
+        (github.base_ref == 'main' || github.base_ref == 'develop')
+      )
     concurrency:
       group: release-${{ github.event_name }}-${{ github.ref }}-${{ github.event.pull_request.number || '' }}
       cancel-in-progress: false
@@ -259,27 +259,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release
-
-      - name: Capture version and rename VSIX
-        id: rename-vsix
-        run: |
-          if [ ! -f nexkit-vscode.vsix ]; then
-            echo "VSIX not found; semantic-release did not produce nexkit-vscode.vsix"
-            exit 1
-          fi
-
-          VERSION=$(node -p "require('./package.json').version")
-          TARGET="nexkit-vscode-${VERSION}.vsix"
-
-          mv nexkit-vscode.vsix "$TARGET"
-          echo "vsix-name=$TARGET" >> $GITHUB_OUTPUT
-
-      - name: Upload versioned VSIX artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.rename-vsix.outputs.vsix-name }}
-          path: ${{ steps.rename-vsix.outputs.vsix-name }}
-          retention-days: 30
 
   # Job 7: Preview Build for PRs to develop (creates beta-preview packages)
   pr-preview:
