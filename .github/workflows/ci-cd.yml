@@ -214,7 +214,7 @@ jobs:
   # Job 6: Release (semantic-release) - Only for push to main/develop
   release:
     name: Release (semantic-release)
-    needs: [quality-gate, security]
+    needs: [quality-gate, security, build]
     runs-on: ubuntu-latest
     # Run on push to main/develop OR on PRs targeting develop (for beta testing)
     if: |
@@ -263,15 +263,15 @@ jobs:
       - name: Capture version and rename VSIX
         id: rename-vsix
         run: |
-          if [ ! -f nexkit-vscode.vsix ]; then
-            echo "VSIX not found; semantic-release did not produce nexkit-vscode.vsix"
+          if [ ! -f ${{ needs.build.outputs.vsix-name }} ]; then
+            echo "VSIX not found; semantic-release did not produce ${{ needs.build.outputs.vsix-name }}"
             exit 1
           fi
 
           VERSION=$(node -p "require('./package.json').version")
           TARGET="nexkit-vscode-${VERSION}.vsix"
 
-          mv nexkit-vscode.vsix "$TARGET"
+          mv ${{ needs.build.outputs.vsix-name }} "$TARGET"
           echo "vsix-name=$TARGET" >> $GITHUB_OUTPUT
 
       - name: Upload versioned VSIX artifact
