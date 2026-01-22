@@ -47,6 +47,7 @@ The extension fetches AI templates from GitHub repositories:
   - **Prompts**: Reusable AI prompts
   - **Instructions**: Language-specific coding guidelines
   - **Chatmodes**: Specialized chat modes (debug, plan, etc.)
+  - **Skills**: Pre-built folder structures with code, configurations, and utilities that can be installed directly into your project
 
 Templates are automatically fetched on extension activation and can be refreshed when repository configurations change.
 
