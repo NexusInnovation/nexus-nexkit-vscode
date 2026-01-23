@@ -114,6 +114,7 @@ export class InstalledTemplatesStateManager {
     const map: Record<AITemplateFileType, string[]> = {
       agents: [],
       prompts: [],
+      skills: [],
       instructions: [],
       chatmodes: [],
     };

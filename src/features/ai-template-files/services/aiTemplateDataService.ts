@@ -232,6 +232,7 @@ export class AITemplateDataService implements vscode.Disposable {
           types: {
             agents: [],
             prompts: [],
+            skills: [],
             instructions: [],
             chatmodes: [],
           },

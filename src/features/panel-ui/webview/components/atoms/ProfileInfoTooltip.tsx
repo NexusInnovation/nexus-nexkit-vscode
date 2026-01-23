@@ -30,6 +30,7 @@ export function ProfileInfoTooltip({ profile }: ProfileInfoTooltipProps) {
   const templatesByType: Record<AITemplateFileType, string[]> = {
     agents: [],
     prompts: [],
+    skills: [],
     instructions: [],
     chatmodes: [],
   };
