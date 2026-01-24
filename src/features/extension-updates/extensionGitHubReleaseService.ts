@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { GitHubAuthHelper } from "../../shared/utils/githubAuthHelper";
 
 export interface GitHubReleaseInfo {
   tagName: string;
@@ -14,25 +15,13 @@ export class ExtensionGitHubReleaseService {
   private static readonly REPO_OWNER = "NexusInnovation";
   private static readonly REPO_NAME = "nexus-nexkit-vscode";
   private static readonly BASE_URL = "https://api.github.com";
-  private static readonly GITHUB_AUTH_PROVIDER_ID = "github";
-  private static readonly REQUIRED_SCOPES = ["repo"];
 
   /**
    * Get GitHub authentication session with required scopes
    * @param createIfNone If true, prompt user to sign in if not authenticated
    */
   private async getGitHubSession(createIfNone: boolean = false): Promise<vscode.AuthenticationSession | undefined> {
-    try {
-      const session = await vscode.authentication.getSession(
-        ExtensionGitHubReleaseService.GITHUB_AUTH_PROVIDER_ID,
-        ExtensionGitHubReleaseService.REQUIRED_SCOPES,
-        { createIfNone, silent: !createIfNone }
-      );
-      return session;
-    } catch (error) {
-      console.error("Failed to get GitHub authentication session:", error);
-      return undefined;
-    }
+    return await GitHubAuthHelper.getGitHubSession(["repo"], createIfNone, !createIfNone);
   }
 
   /**
@@ -40,24 +29,25 @@ export class ExtensionGitHubReleaseService {
    * @param requireAuth If true, will prompt for authentication if not already authenticated
    */
   private async getAuthHeaders(requireAuth: boolean = true): Promise<Record<string, string>> {
-    const session = await this.getGitHubSession(requireAuth);
-    const headers: Record<string, string> = {
-      "User-Agent": "nexus-nexkit-vscode-Extension",
-      Accept: "application/vnd.github.v3+json",
-    };
-
-    if (session) {
-      headers["Authorization"] = `Bearer ${session.accessToken}`;
-    }
-
-    return headers;
+    return await GitHubAuthHelper.getAuthHeaders(
+      ["repo"],
+      "nexus-nexkit-vscode-Extension",
+      requireAuth
+    );
   }
 
   /**
    * Handle authentication errors and prompt user to sign in
    * GitHub returns 404 for private repos when not authenticated (security feature)
+   * Skips UI prompts in test mode
    */
   private async handleAuthError(response: Response): Promise<boolean> {
+    // Skip prompts in test mode
+    if (vscode.env.appName.includes("Test") || process.env.VSCODE_TEST_MODE) {
+      console.log(`⚠️ GitHub authentication required (${response.status}), but running in test mode - skipping prompt`);
+      return false;
+    }
+
     // GitHub returns 404 for private repositories when not authenticated
     // This is a security feature to not reveal the existence of private repos
     if (response.status === 401 || response.status === 403 || response.status === 404) {

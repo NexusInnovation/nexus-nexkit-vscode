@@ -107,13 +107,18 @@ Pre-release versions (beta) are available from the develop branch:
 
 **`nexkit.repositories`** - Configure additional template repositories
 
+The extension supports both **GitHub repositories** and **local folders** as template sources.
+
 Default includes the "Awesome Copilot" repository. The "Nexus Templates" repository is always included and cannot be removed.
+
+#### GitHub Repository Example
 
 ```json
 {
   "nexkit.repositories": [
     {
       "name": "My Custom Templates",
+      "type": "github",
       "url": "https://github.com/myorg/my-templates",
       "branch": "main",
       "enabled": true,
@@ -128,6 +133,35 @@ Default includes the "Awesome Copilot" repository. The "Nexus Templates" reposit
   ]
 }
 ```
+
+#### Local Folder Example
+
+Use local folders for custom internal templates, development, or offline work:
+
+```json
+{
+  "nexkit.repositories": [
+    {
+      "name": "My Local Templates",
+      "type": "local",
+      "url": "./templates",
+      "enabled": true,
+      "paths": {
+        "agents": "agents",
+        "prompts": "prompts"
+      }
+    }
+  ]
+}
+```
+
+**Supported Path Formats for Local Repositories:**
+
+- **Workspace-relative**: `./templates` or `../shared-templates`
+- **Absolute paths**: `C:\CompanyAssets\ai-templates` (Windows) or `/home/user/templates` (Unix)
+- **Home directory**: `~/my-templates`
+
+**Note**: The `branch` field is only applicable to GitHub repositories and will be ignored for local repositories.
 
 ### Extension Update Settings
 
@@ -160,10 +194,12 @@ When you run "Nexkit: Initialize Workspace":
 
 ### Template Repository System
 
-- Templates are fetched from GitHub repositories using the GitHub API
+- Templates are fetched from **GitHub repositories** or **local folders**
 - Repository structure is flexible - configure paths for each template type
 - Templates are cached in memory and refreshed when configuration changes
 - The Nexus Templates repository is always included as a default source
+- **GitHub repositories**: Use the GitHub API for fetching (supports authentication)
+- **Local folders**: Scan local filesystem for markdown files (no authentication needed)
 
 ### Extension Updates
 
@@ -201,12 +237,15 @@ code /path/to/my-project
 
 ### Adding Custom Template Repositories
 
+#### GitHub Repository
+
 ```json
 // In your VS Code settings.json (File > Preferences > Settings)
 {
   "nexkit.repositories": [
     {
       "name": "Company Templates",
+      "type": "github",
       "url": "https://github.com/mycompany/ai-templates",
       "enabled": true,
       "paths": {
@@ -218,6 +257,32 @@ code /path/to/my-project
   ]
 }
 ```
+
+#### Local Folder Repository
+
+```json
+// In your VS Code settings.json (File > Preferences > Settings)
+{
+  "nexkit.repositories": [
+    {
+      "name": "Local Dev Templates",
+      "type": "local",
+      "url": "./my-templates",
+      "enabled": true,
+      "paths": {
+        "agents": "agents",
+        "prompts": "prompts"
+      }
+    }
+  ]
+}
+```
+
+**Use Cases for Local Repositories:**
+- **Development**: Test templates locally before committing to GitHub
+- **Corporate Environments**: Use internal network shares or local paths
+- **Offline Work**: Access templates without internet connection
+- **Private Templates**: Keep sensitive templates out of version control
 
 ### Installing MCP Servers
 
