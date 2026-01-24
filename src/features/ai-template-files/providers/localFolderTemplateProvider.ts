@@ -101,6 +101,46 @@ export class LocalFolderTemplateProvider {
   }
 
   /**
+   * Recursively download all files in a directory
+   * Returns a map of relative file paths to their contents
+   */
+  public async downloadDirectoryContents(templateFile: AITemplateFile): Promise<Map<string, string>> {
+    if (!templateFile.isDirectory) {
+      throw new Error(`Template is not a directory: ${templateFile.name}`);
+    }
+
+    const fileContents = new Map<string, string>();
+    const directoryUri = vscode.Uri.parse(templateFile.rawUrl);
+
+    const downloadRecursive = async (currentUri: vscode.Uri, relativePath: string): Promise<void> => {
+      try {
+        const entries = await vscode.workspace.fs.readDirectory(currentUri);
+
+        for (const [name, fileType] of entries) {
+          const itemUri = vscode.Uri.joinPath(currentUri, name);
+          const itemRelativePath = relativePath ? `${relativePath}/${name}` : name;
+
+          if (fileType === vscode.FileType.File) {
+            // Read file content
+            const fileContent = await vscode.workspace.fs.readFile(itemUri);
+            const content = Buffer.from(fileContent).toString("utf8");
+            fileContents.set(itemRelativePath, content);
+          } else if (fileType === vscode.FileType.Directory) {
+            // Recursively process subdirectory
+            await downloadRecursive(itemUri, itemRelativePath);
+          }
+        }
+      } catch (error) {
+        console.error(`Error reading directory '${currentUri.fsPath}':`, error);
+        throw error;
+      }
+    };
+
+    await downloadRecursive(directoryUri, "");
+    return fileContents;
+  }
+
+  /**
    * Get repository display name
    */
   public getRepositoryName(): string {
