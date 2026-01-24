@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { AITemplateFile, AITemplateFileType } from "../models/aiTemplateFile";
 import { RepositoryConfig } from "../models/repositoryConfig";
+import { GitHubAuthHelper } from "../../../shared/utils/githubAuthHelper";
 
 /**
  * GitHub API content item
@@ -18,8 +19,6 @@ interface GitHubContentItem {
  */
 export class RepositoryTemplateProvider {
   private static readonly GITHUB_API_BASE = "https://api.github.com";
-  private static readonly GITHUB_AUTH_PROVIDER_ID = "github";
-  private static readonly GITHUB_SCOPES = ["repo"];
 
   constructor(private readonly config: RepositoryConfig) {
     if (!config.enabled) {
@@ -204,27 +203,13 @@ export class RepositoryTemplateProvider {
 
   /**
    * Get GitHub authentication headers
+   * Uses GitHubAuthHelper for unified authentication across environments
    */
   private async getAuthHeaders(): Promise<Record<string, string>> {
-    const headers: Record<string, string> = {
-      "User-Agent": "Nexkit-VSCode-Extension",
-      Accept: "application/vnd.github.v3+json",
-    };
-
-    try {
-      const session = await vscode.authentication.getSession(
-        RepositoryTemplateProvider.GITHUB_AUTH_PROVIDER_ID,
-        RepositoryTemplateProvider.GITHUB_SCOPES,
-        { createIfNone: true }
-      );
-      if (session) {
-        headers["Authorization"] = `token ${session.accessToken}`;
-      }
-    } catch (error) {
-      console.warn(`GitHub authentication failed for ${this.config.name}:`, error);
-      throw new Error(`Authentication required for ${this.config.name}`);
-    }
-
-    return headers;
+    return await GitHubAuthHelper.getAuthHeaders(
+      ["repo"], // Required scopes
+      "Nexkit-VSCode-Extension", // User agent
+      false // Don't require auth (graceful degradation)
+    );
   }
 }
