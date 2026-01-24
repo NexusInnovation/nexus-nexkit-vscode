@@ -51,21 +51,40 @@ export class LocalFolderTemplateProvider {
             // Read directory contents
             const entries = await vscode.workspace.fs.readDirectory(fullPath);
 
-            for (const [name, fileType] of entries) {
-              // Only process markdown files
-              if (fileType !== vscode.FileType.File || !name.endsWith(".md")) {
-                continue;
+            // Handle skills type differently - fetch folders instead of .md files
+            if (type === "skills") {
+              for (const [name, fileType] of entries) {
+                if (fileType === vscode.FileType.Directory) {
+                  const dirPath = vscode.Uri.joinPath(fullPath, name);
+                  allTemplates.push({
+                    name,
+                    type: type as AITemplateFileType,
+                    rawUrl: dirPath.toString(),
+                    repository: this.config.name,
+                    repositoryUrl: this.config.url,
+                    isDirectory: true,
+                    sourcePath: `${relativePath}/${name}`,
+                  });
+                }
               }
+            } else {
+              // Regular handling for file-based templates
+              for (const [name, fileType] of entries) {
+                // Only process markdown files
+                if (fileType !== vscode.FileType.File || !name.endsWith(".md")) {
+                  continue;
+                }
 
-              const filePath = vscode.Uri.joinPath(fullPath, name);
+                const filePath = vscode.Uri.joinPath(fullPath, name);
 
-              allTemplates.push({
-                name,
-                type: type as AITemplateFileType,
-                rawUrl: filePath.toString(), // Store URI as string for consistency
-                repository: this.config.name,
-                repositoryUrl: this.config.url,
-              });
+                allTemplates.push({
+                  name,
+                  type: type as AITemplateFileType,
+                  rawUrl: filePath.toString(), // Store URI as string for consistency
+                  repository: this.config.name,
+                  repositoryUrl: this.config.url,
+                });
+              }
             }
           } catch (error) {
             console.error(`Error fetching ${type} from ${this.config.name}:`, error);

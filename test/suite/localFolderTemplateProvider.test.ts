@@ -350,4 +350,176 @@ suite("Unit: LocalFolderTemplateProvider", () => {
     assert.strictEqual(typeCount.prompts, 1, "Should find 1 prompt");
     assert.strictEqual(typeCount.instructions, 1, "Should find 1 instruction");
   });
+
+  test("Should fetch skills as directories instead of markdown files", async () => {
+    const testRepoPath = path.join(tempDir, "test-repo");
+    const skillsDir = path.join(testRepoPath, "skills");
+    fs.mkdirSync(skillsDir, { recursive: true });
+
+    // Create skill directories
+    const skill1Dir = path.join(skillsDir, "my-skill");
+    const skill2Dir = path.join(skillsDir, "another-skill");
+    fs.mkdirSync(skill1Dir, { recursive: true });
+    fs.mkdirSync(skill2Dir, { recursive: true });
+
+    // Create files inside skill directories
+    fs.writeFileSync(path.join(skill1Dir, "SKILL.md"), "# My Skill");
+    fs.writeFileSync(path.join(skill1Dir, "code.ts"), "export function test() {}");
+    fs.writeFileSync(path.join(skill2Dir, "SKILL.md"), "# Another Skill");
+
+    // Create a markdown file that should be ignored (skills should only pick directories)
+    fs.writeFileSync(path.join(skillsDir, "readme.md"), "This should be ignored");
+
+    const config: RepositoryConfig = {
+      name: "Skills Repo",
+      type: "local",
+      url: testRepoPath,
+      enabled: true,
+      paths: {
+        skills: "skills",
+      },
+    };
+
+    const provider = new LocalFolderTemplateProvider(config);
+    const templates = await provider.fetchAllTemplates();
+
+    assert.strictEqual(templates.length, 2, "Should find 2 skill directories");
+
+    const skill1 = templates.find((t) => t.name === "my-skill");
+    const skill2 = templates.find((t) => t.name === "another-skill");
+
+    assert.ok(skill1, "Should find my-skill directory");
+    assert.ok(skill2, "Should find another-skill directory");
+
+    // Verify directory properties
+    assert.strictEqual(skill1!.isDirectory, true, "Should mark as directory");
+    assert.strictEqual(skill1!.type, "skills");
+    assert.strictEqual(skill1!.sourcePath, "skills/my-skill");
+    assert.ok(skill1!.rawUrl.includes("my-skill"), "Should have correct rawUrl");
+  });
+
+  test("Should download directory contents for skills", async () => {
+    const testRepoPath = path.join(tempDir, "test-repo");
+    const skillsDir = path.join(testRepoPath, "skills");
+    const skillDir = path.join(skillsDir, "test-skill");
+    fs.mkdirSync(skillDir, { recursive: true });
+
+    // Create skill directory structure
+    fs.writeFileSync(path.join(skillDir, "SKILL.md"), "# Test Skill");
+    fs.writeFileSync(path.join(skillDir, "code.ts"), "export function test() {}");
+
+    // Create subdirectory
+    const subDir = path.join(skillDir, "lib");
+    fs.mkdirSync(subDir, { recursive: true });
+    fs.writeFileSync(path.join(subDir, "helper.ts"), "export function helper() {}");
+
+    const config: RepositoryConfig = {
+      name: "Skills Repo",
+      type: "local",
+      url: testRepoPath,
+      enabled: true,
+      paths: {
+        skills: "skills",
+      },
+    };
+
+    const provider = new LocalFolderTemplateProvider(config);
+    const templates = await provider.fetchAllTemplates();
+
+    const skill = templates.find((t) => t.name === "test-skill");
+    assert.ok(skill, "Should find test-skill");
+    assert.strictEqual(skill!.isDirectory, true, "Should be marked as directory");
+
+    const contents = await provider.downloadDirectoryContents(skill!);
+
+    assert.strictEqual(contents.size, 3, "Should download 3 files");
+    assert.ok(contents.has("SKILL.md"), "Should have SKILL.md");
+    assert.ok(contents.has("code.ts"), "Should have code.ts");
+    assert.ok(contents.has("lib/helper.ts"), "Should have lib/helper.ts with relative path");
+
+    const skillContent = contents.get("SKILL.md");
+    assert.ok(skillContent?.includes("# Test Skill"), "Should have correct content");
+  });
+
+  test("Should handle mixed file and directory content in skills directory", async () => {
+    const testRepoPath = path.join(tempDir, "test-repo");
+    const skillsDir = path.join(testRepoPath, "skills");
+    fs.mkdirSync(skillsDir, { recursive: true });
+
+    // Create skill directory
+    const skillDir = path.join(skillsDir, "my-skill");
+    fs.mkdirSync(skillDir, { recursive: true });
+    fs.writeFileSync(path.join(skillDir, "SKILL.md"), "# My Skill");
+
+    // Create a file in skills root (should be ignored for skills type)
+    fs.writeFileSync(path.join(skillsDir, "readme.md"), "Readme");
+
+    const config: RepositoryConfig = {
+      name: "Mixed Skills Repo",
+      type: "local",
+      url: testRepoPath,
+      enabled: true,
+      paths: {
+        skills: "skills",
+      },
+    };
+
+    const provider = new LocalFolderTemplateProvider(config);
+    const templates = await provider.fetchAllTemplates();
+
+    // Should only find directories, not the readme.md file
+    assert.strictEqual(templates.length, 1, "Should only find directories for skills type");
+    assert.strictEqual(templates[0].name, "my-skill");
+    assert.strictEqual(templates[0].isDirectory, true);
+  });
+
+  test("Should handle empty skills directory", async () => {
+    const testRepoPath = path.join(tempDir, "test-repo");
+    const skillsDir = path.join(testRepoPath, "skills");
+    fs.mkdirSync(skillsDir, { recursive: true });
+
+    const config: RepositoryConfig = {
+      name: "Empty Skills Repo",
+      type: "local",
+      url: testRepoPath,
+      enabled: true,
+      paths: {
+        skills: "skills",
+      },
+    };
+
+    const provider = new LocalFolderTemplateProvider(config);
+    const templates = await provider.fetchAllTemplates();
+
+    assert.strictEqual(templates.length, 0, "Should return empty array for empty skills directory");
+  });
+
+  test("Should throw error when downloading non-directory template as directory", async () => {
+    const testRepoPath = path.join(tempDir, "test-repo");
+    const agentsDir = path.join(testRepoPath, "agents");
+    fs.mkdirSync(agentsDir, { recursive: true });
+    fs.writeFileSync(path.join(agentsDir, "agent.md"), "# Agent");
+
+    const config: RepositoryConfig = {
+      name: "Test Repo",
+      type: "local",
+      url: testRepoPath,
+      enabled: true,
+      paths: {
+        agents: "agents",
+      },
+    };
+
+    const provider = new LocalFolderTemplateProvider(config);
+    const templates = await provider.fetchAllTemplates();
+
+    const agent = templates[0];
+    assert.strictEqual(agent.isDirectory, undefined, "Agent should not be marked as directory");
+
+    await assert.rejects(
+      async () => await provider.downloadDirectoryContents(agent),
+      /Template is not a directory/,
+      "Should throw error for non-directory template"
+    );
+  });
 });
