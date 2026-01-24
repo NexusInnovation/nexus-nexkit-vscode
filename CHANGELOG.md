@@ -1,3 +1,70 @@
+## 2.0.0-beta.5 (2026-01-24)
+
+* feat: Feat/local template (#76) ([bf9c42d](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/bf9c42d)), closes [#76](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/76)
+
+
+### BREAKING CHANGE
+
+* None - fully backward compatible
+
+* feat: add automatic file watching for local template repositories
+
+Implements dynamic file system watching for local template folders to
+automatically detect and update templates when files are created, modified,
+or deleted.
+
+Features:
+- VS Code FileSystemWatcher integration for .md files
+- 500ms debouncing to prevent excessive refreshes
+- Selective repository refresh (only affected repo)
+- Automatic watcher recreation on configuration changes
+- Proper disposal and cleanup of all watchers
+
+Technical changes:
+- Add getResolvedBasePath() to LocalFolderTemplateProvider
+- Add file watching infrastructure to AITemplateDataService
+- Implement debounced refresh with per-repository timers
+- Add refreshRepository() method for single-repo updates
+- Enhance dispose() to clean up watchers and timers
+
+Tests:
+- Add localTemplateFileWatcher.test.ts with 5 new tests
+- All 85 tests passing
+
+Docs:
+- Add comprehensive LOCAL_TEMPLATE_FILE_WATCHING.md documentation
+
+Closes: [Work item reference if applicable]
+
+* feat: remove outdated implementation and review prompts
+
+* feat: implement GitHub authentication helper and update test runner for seamless integration
+
+* fix: add downloadDirectoryContents method to LocalFolderTemplateProvider
+
+Resolves TypeScript compilation error by implementing the missing
+downloadDirectoryContents method in LocalFolderTemplateProvider to
+match the RepositoryTemplateProvider interface. This enables local
+folder repositories to handle directory-based templates (skills)
+by recursively reading files and returning a map of relative paths
+to file contents.
+
+* feat: add skills directory support to LocalFolderTemplateProvider
+
+- Add special handling for 'skills' type to fetch directories instead of .md files
+- Set isDirectory and sourcePath properties for skill templates
+- Add 6 comprehensive tests for skills directory functionality
+- Achieve feature parity with RepositoryTemplateProvider
+- Maintain backward compatibility for all other template types
+
+The LocalFolderTemplateProvider now handles skills the same way as the GitHub
+RepositoryTemplateProvider, scanning for directories and enabling full directory
+content downloading for skills stored in local folders.
+
+All existing functionality remains unchanged, and the downloadDirectoryContents
+method already supported recursive file downloading, so skills installation
+works seamlessly.
+
 ## 2.0.0-beta.4 (2026-01-24)
 
 * feat: Feat/local template (#75) ([1ac0d94](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/1ac0d94)), closes [#75](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/75)
