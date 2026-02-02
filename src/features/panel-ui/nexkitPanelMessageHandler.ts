@@ -86,6 +86,8 @@ export class NexkitPanelMessageHandler {
     this.trackWebviewAction("installTemplate");
     try {
       await this._services.aiTemplateData.installTemplate(message.template);
+      // Clear last applied profile since templates were manually modified
+      await SettingsManager.setLastAppliedProfile(null);
       this.sendInstalledTemplates();
     } catch (error) {
       console.error("Failed to install template:", error);
@@ -100,6 +102,8 @@ export class NexkitPanelMessageHandler {
     this.trackWebviewAction("uninstallTemplate");
     try {
       await this._services.aiTemplateData.uninstallTemplate(message.template);
+      // Clear last applied profile since templates were manually modified
+      await SettingsManager.setLastAppliedProfile(null);
       this.sendInstalledTemplates();
     } catch (error) {
       console.error("Failed to uninstall template:", error);

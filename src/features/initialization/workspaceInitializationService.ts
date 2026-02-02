@@ -37,8 +37,8 @@ export class WorkspaceInitializationService {
 
     // Apply selected profile or use default behavior
     if (profileName) {
-      // User selected a profile - apply it
-      const { summary } = await services.profileService.applyProfile(profileName, true);
+      // User selected a profile - apply it (explicitly create backup during initialization)
+      const { summary } = await services.profileService.applyProfile(profileName, false);
       deploymentSummary = summary;
     } else {
       // User skipped or no profiles exist - deploy default template files (agents, prompts, chatmodes) from the Nexus Templates
