@@ -59,6 +59,43 @@ Templates are automatically fetched on extension activation and can be refreshed
 - **Template Backups**: Automatically backs up existing templates before overwriting
 - **Configuration Watchers**: Refreshes templates when repository settings change
 
+## Operation Modes
+
+Nexkit offers two operation modes to tailor the UI to different user roles:
+
+### Developers Mode (Default)
+
+Full feature set with all sections visible:
+- **Actions**: Workspace initialization
+- **Profiles**: Save and apply template configurations
+- **Templates**: Browse and install AI templates from repositories
+- **Repositories**: View all configured template sources
+- **Footer**: Feedback and version information
+
+### APM Mode
+
+Streamlined interface showing only essential features:
+- **Footer**: Feedback and version information
+
+This mode is designed for Application Portfolio Management users or scenarios requiring minimal UI.
+
+### Switching Modes
+
+**During Initialization:**
+- When running "Nexkit: Initialize Workspace", you'll be prompted to select a mode
+- Your selection is saved in settings
+
+**Via Command:**
+- Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
+- Run "Nexkit: Switch Operation Mode"
+- Select from available modes
+
+**Via Settings:**
+- Open VS Code Settings (`Ctrl+,` / `Cmd+,`)
+- Search for "nexkit.mode"
+- Select "Developers" or "APM"
+- UI updates automatically
+
 ## Installation
 
 ### From GitHub Releases

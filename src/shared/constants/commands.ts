@@ -17,6 +17,9 @@ export const Commands = {
   SAVE_PROFILE: "nexus-nexkit-vscode.saveProfile",
   APPLY_PROFILE: "nexus-nexkit-vscode.applyProfile",
   DELETE_PROFILE: "nexus-nexkit-vscode.deleteProfile",
+
+  // Mode management commands
+  SWITCH_MODE: "nexus-nexkit-vscode.switchMode",
 } as const;
 
 // Type-safe command names

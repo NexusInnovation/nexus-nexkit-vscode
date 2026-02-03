@@ -1,10 +1,13 @@
 import * as vscode from "vscode";
 import { SettingsManager } from "../../core/settingsManager";
+import { TelemetryService } from "../../shared/services/telemetryService";
 
 /**
  * Service for prompting users to select an operation mode during workspace initialization
  */
 export class ModeSelectionPromptService {
+  constructor(private readonly telemetry?: TelemetryService) {}
+
   /**
    * Prompt user to select an operation mode
    * @returns The selected mode, or "Developers" as default
@@ -36,6 +39,14 @@ export class ModeSelectionPromptService {
     });
 
     // Return selected mode or default to Developers
-    return selected?.label || "Developers";
+    const selectedMode = selected?.label || "Developers";
+
+    // Track mode selection
+    this.telemetry?.trackEvent("mode.selected", {
+      mode: selectedMode,
+      context: "initialization",
+    });
+
+    return selectedMode;
   }
 }

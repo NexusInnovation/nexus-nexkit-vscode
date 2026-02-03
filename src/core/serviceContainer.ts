@@ -67,7 +67,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const recommendedSettingsConfigDeployer = new RecommendedSettingsConfigDeployer();
   const aiTemplateFilesDeployer = new AITemplateFilesDeployer(aiTemplateData);
   const workspaceInitPrompt = new WorkspaceInitPromptService();
-  const modeSelectionPrompt = new ModeSelectionPromptService();
+  const modeSelectionPrompt = new ModeSelectionPromptService(telemetry);
   const workspaceInitialization = new WorkspaceInitializationService();
   const profileService = new ProfileService(installedTemplatesState, aiTemplateData, backup);
 

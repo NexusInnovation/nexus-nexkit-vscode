@@ -62,3 +62,61 @@ export function registerInitializeWorkspaceCommand(context: vscode.ExtensionCont
     services.telemetry
   );
 }
+
+/**
+ * Register mode switching command
+ */
+export function registerSwitchModeCommand(context: vscode.ExtensionContext, services: ServiceContainer): void {
+  registerCommand(
+    context,
+    Commands.SWITCH_MODE,
+    async () => {
+      const currentMode = SettingsManager.getMode();
+
+      // Build quick pick items
+      const modes: vscode.QuickPickItem[] = [
+        {
+          label: "Developers",
+          description: "Full feature set",
+          detail: "Access to Actions, Profiles, Templates, Repositories, and Footer sections",
+          picked: currentMode === "Developers",
+        },
+        {
+          label: "APM",
+          description: "Essential features only",
+          detail: "Access to Footer section only",
+          picked: currentMode === "APM",
+        },
+      ];
+
+      // Show quick pick
+      const selected = await vscode.window.showQuickPick(modes, {
+        placeHolder: `Current mode: ${currentMode}. Select a new mode`,
+        title: "Switch Nexkit Operation Mode",
+      });
+
+      // User cancelled
+      if (!selected) {
+        return;
+      }
+
+      // No change
+      if (selected.label === currentMode) {
+        vscode.window.showInformationMessage(`Already in ${currentMode} mode`);
+        return;
+      }
+
+      // Update mode
+      await SettingsManager.setMode(selected.label);
+
+      // Track mode switch with transition
+      services.telemetry.trackEvent("mode.switched", {
+        fromMode: currentMode,
+        toMode: selected.label,
+      });
+
+      vscode.window.showInformationMessage(`Switched to ${selected.label} mode`);
+    },
+    services.telemetry
+  );
+}
