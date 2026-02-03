@@ -163,11 +163,13 @@ export class NexkitPanelMessageHandler {
   private sendWorkspaceState(): void {
     const hasWorkspace = (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
     const isInitialized = SettingsManager.isWorkspaceInitialized();
+    const mode = SettingsManager.getMode();
 
     this.sendToWebview({
       command: "workspaceStateUpdate",
       hasWorkspace,
       isInitialized,
+      mode,
     });
   }
 

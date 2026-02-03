@@ -1,4 +1,5 @@
 import { useAppState } from "../hooks/useAppState";
+import { useMode } from "../hooks/useMode";
 import { ActionsSection } from "./organisms/ActionsSection";
 import { FooterSection } from "./organisms/FooterSection";
 import { ProfileSection } from "./organisms/ProfileSection";
@@ -9,6 +10,7 @@ import { TemplateSection } from "./organisms/TemplateSection";
  */
 export function App() {
   const { workspace } = useAppState();
+  const { isDevelopersMode } = useMode();
 
   if (!workspace.isReady) {
     return null;
@@ -26,9 +28,13 @@ export function App() {
 
   return (
     <div class="container">
-      <ActionsSection isInitialized={workspace.isInitialized} />
-      <ProfileSection />
-      <TemplateSection />
+      {isDevelopersMode && (
+        <>
+          <ActionsSection isInitialized={workspace.isInitialized} />
+          <ProfileSection />
+          <TemplateSection />
+        </>
+      )}
       <FooterSection />
     </div>
   );

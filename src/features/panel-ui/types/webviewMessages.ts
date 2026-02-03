@@ -25,6 +25,7 @@ export type ExtensionMessage =
       command: "workspaceStateUpdate";
       hasWorkspace: boolean;
       isInitialized: boolean;
+      mode: string;
     }
   | {
       command: "templateDataUpdate";

@@ -34,6 +34,9 @@ export class SettingsManager {
   // Extension update state keys (GlobalState)
   private static readonly EXTENSION_LAST_UPDATE_CHECK_STATE_KEY = "nexkit.extension.lastUpdateCheck";
 
+  // Mode settings
+  private static readonly MODE = "mode";
+
   // Profile management settings
   private static readonly PROFILES = "profiles";
   private static readonly PROFILES_CONFIRM_BEFORE_SWITCH = "profiles.confirmBeforeSwitch";
@@ -166,5 +169,14 @@ export class SettingsManager {
       throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
     }
     await this.context.workspaceState.update(this.LAST_APPLIED_PROFILE_KEY, profileName);
+  }
+
+  // Mode
+  static getMode(): string {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<string>(this.MODE, "Developers");
+  }
+
+  static async setMode(mode: string): Promise<void> {
+    await vscode.workspace.getConfiguration(this.NEXKIT_SECTION).update(this.MODE, mode, vscode.ConfigurationTarget.Global);
   }
 }

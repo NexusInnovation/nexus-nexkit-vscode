@@ -249,6 +249,16 @@
           "scope": "application",
           "description": "Azure Application Insights connection string (optional, for custom telemetry endpoint)."
         },
+        "nexkit.mode": {
+          "type": "string",
+          "enum": [
+            "Developers",
+            "APM"
+          ],
+          "default": "Developers",
+          "scope": "application",
+          "description": "Nexkit operation mode. Developers mode shows all features (Actions, Profiles, Templates, Repositories). APM mode shows only essential features."
+        },
         "nexkit.profiles.confirmBeforeSwitch": {
           "type": "boolean",
           "default": true,

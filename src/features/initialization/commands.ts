@@ -33,6 +33,10 @@ export function registerInitializeWorkspaceCommand(context: vscode.ExtensionCont
         }
       }
 
+      // Prompt user to select mode
+      const selectedMode = await services.modeSelectionPrompt.promptModeSelection();
+      await SettingsManager.setMode(selectedMode);
+
       // Prompt user to select a profile if any are saved
       const selectedProfileName = await new ProfileSelectionPromptService(services.profileService).promptProfileSelection();
 

@@ -13,6 +13,7 @@ import { RecommendedSettingsConfigDeployer } from "../features/initialization/re
 import { AITemplateFilesDeployer } from "../features/initialization/aiTemplateFilesDeployer";
 import { WorkspaceInitPromptService } from "../features/initialization/workspaceInitPromptService";
 import { WorkspaceInitializationService } from "../features/initialization/workspaceInitializationService";
+import { ModeSelectionPromptService } from "../features/initialization/modeSelectionPromptService";
 import { InstalledTemplatesStateManager } from "../features/ai-template-files/services/installedTemplatesStateManager";
 import { RepositoryManager } from "../features/ai-template-files/services/repositoryManager";
 import { ProfileService } from "../features/profile-management/services/profileService";
@@ -36,6 +37,7 @@ export interface ServiceContainer {
   recommendedSettingsConfigDeployer: RecommendedSettingsConfigDeployer;
   aiTemplateFilesDeployer: AITemplateFilesDeployer;
   workspaceInitPrompt: WorkspaceInitPromptService;
+  modeSelectionPrompt: ModeSelectionPromptService;
   workspaceInitialization: WorkspaceInitializationService;
   profileService: ProfileService;
 }
@@ -65,6 +67,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const recommendedSettingsConfigDeployer = new RecommendedSettingsConfigDeployer();
   const aiTemplateFilesDeployer = new AITemplateFilesDeployer(aiTemplateData);
   const workspaceInitPrompt = new WorkspaceInitPromptService();
+  const modeSelectionPrompt = new ModeSelectionPromptService();
   const workspaceInitialization = new WorkspaceInitializationService();
   const profileService = new ProfileService(installedTemplatesState, aiTemplateData, backup);
 
@@ -87,6 +90,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     recommendedSettingsConfigDeployer,
     aiTemplateFilesDeployer,
     workspaceInitPrompt,
+    modeSelectionPrompt,
     workspaceInitialization,
     profileService,
   };

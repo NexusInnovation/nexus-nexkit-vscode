@@ -43,6 +43,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
             workspace: {
               hasWorkspace: message.hasWorkspace,
               isInitialized: message.isInitialized,
+              mode: message.mode,
               isReady: true,
             },
           }));

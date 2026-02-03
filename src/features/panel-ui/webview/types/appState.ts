@@ -17,6 +17,7 @@ export interface AppState {
     hasWorkspace: boolean;
     isInitialized: boolean;
     isReady: boolean; // Whether initial workspace state has been received from extension
+    mode: string; // Operation mode: "Developers" or "APM"
   };
 
   /**
@@ -45,6 +46,7 @@ export const initialAppState: AppState = {
     hasWorkspace: false,
     isInitialized: false,
     isReady: false,
+    mode: "Developers",
   },
   templates: {
     repositories: [],
