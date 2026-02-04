@@ -34,6 +34,11 @@ export class NexkitPanelMessageHandler {
       ["applyProfile", this.handleApplyProfile.bind(this)],
       ["deleteProfile", this.handleDeleteProfile.bind(this)],
       ["openFeedback", this.handleOpenFeedback.bind(this)],
+      // APM DevOps connection handlers
+      ["getDevOpsConnections", this.handleGetDevOpsConnections.bind(this)],
+      ["addDevOpsConnection", this.handleAddDevOpsConnection.bind(this)],
+      ["removeDevOpsConnection", this.handleRemoveDevOpsConnection.bind(this)],
+      ["setActiveDevOpsConnection", this.handleSetActiveDevOpsConnection.bind(this)],
     ]);
 
     // Auto-refresh template data when it changes (e.g., after config update)
@@ -44,6 +49,9 @@ export class NexkitPanelMessageHandler {
 
     // Auto-refresh all data when workspace is initialized
     this._services.workspaceInitialization.onWorkspaceInitialized(() => this.initialize());
+
+    // Auto-refresh DevOps connections when they change
+    this._services.devOpsConfig.onConnectionsChanged(() => this.sendDevOpsConnections());
   }
 
   public async handleMessage(message: WebviewMessage): Promise<void> {
@@ -61,6 +69,7 @@ export class NexkitPanelMessageHandler {
     await this._services.aiTemplateData.syncInstalledTemplates();
     this.sendInstalledTemplates();
     this.sendProfilesData();
+    this.sendDevOpsConnections();
   }
 
   // ============================================================================
@@ -160,6 +169,69 @@ export class NexkitPanelMessageHandler {
     await vscode.commands.executeCommand(Commands.OPEN_FEEDBACK);
   }
 
+  // ============================================================================
+  // APM DEVOPS CONNECTION HANDLERS
+  // ============================================================================
+
+  private async handleGetDevOpsConnections(message: WebviewMessage): Promise<void> {
+    this.sendDevOpsConnections();
+  }
+
+  private async handleAddDevOpsConnection(message: WebviewMessage & { command: "addDevOpsConnection" }): Promise<void> {
+    this.trackWebviewAction("addDevOpsConnection");
+    try {
+      await this._services.devOpsConfig.addConnection(message.url);
+      this.sendDevOpsConnections();
+    } catch (error) {
+      console.error("Failed to add DevOps connection:", error);
+      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+        context: "webview.addDevOpsConnection",
+      });
+      this.sendToWebview({
+        command: "devOpsConnectionError",
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  private async handleRemoveDevOpsConnection(message: WebviewMessage & { command: "removeDevOpsConnection" }): Promise<void> {
+    this.trackWebviewAction("removeDevOpsConnection");
+    try {
+      await this._services.devOpsConfig.removeConnection(message.connectionId);
+      this.sendDevOpsConnections();
+    } catch (error) {
+      console.error("Failed to remove DevOps connection:", error);
+      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+        context: "webview.removeDevOpsConnection",
+      });
+      this.sendToWebview({
+        command: "devOpsConnectionError",
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  private async handleSetActiveDevOpsConnection(message: WebviewMessage & { command: "setActiveDevOpsConnection" }): Promise<void> {
+    this.trackWebviewAction("setActiveDevOpsConnection");
+    try {
+      await this._services.devOpsConfig.setActiveConnection(message.connectionId);
+      this.sendDevOpsConnections();
+    } catch (error) {
+      console.error("Failed to set active DevOps connection:", error);
+      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+        context: "webview.setActiveDevOpsConnection",
+      });
+      this.sendToWebview({
+        command: "devOpsConnectionError",
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  // ============================================================================
+  // DATA SENDERS - Send data to webview
+  // ============================================================================
+
   private sendWorkspaceState(): void {
     const hasWorkspace = (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
     const isInitialized = SettingsManager.isWorkspaceInitialized();
@@ -212,6 +284,22 @@ export class NexkitPanelMessageHandler {
       });
     } catch (error) {
       console.error("Failed to fetch profiles:", error);
+    }
+  }
+
+  private async sendDevOpsConnections(): Promise<void> {
+    try {
+      const connections = await this._services.devOpsConfig.getConnections();
+      this.sendToWebview({
+        command: "devOpsConnectionsUpdate",
+        connections,
+      });
+    } catch (error) {
+      console.error("Failed to fetch DevOps connections:", error);
+      this.sendToWebview({
+        command: "devOpsConnectionError",
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 

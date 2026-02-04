@@ -1,13 +1,14 @@
 interface SearchBarProps {
   value: string;
   onChange: (value: string) => void;
+  placeholder?: string;
 }
 
 /**
  * SearchBar Component
  * Search input with clear button
  */
-export function SearchBar({ value, onChange }: SearchBarProps) {
+export function SearchBar({ value, onChange, placeholder = "Search templates..." }: SearchBarProps) {
   const handleClear = () => {
     onChange("");
   };
@@ -17,7 +18,7 @@ export function SearchBar({ value, onChange }: SearchBarProps) {
       <input
         type="text"
         class="search-input"
-        placeholder="Search templates..."
+        placeholder={placeholder}
         value={value}
         onInput={(e) => onChange((e.target as HTMLInputElement).value)}
       />

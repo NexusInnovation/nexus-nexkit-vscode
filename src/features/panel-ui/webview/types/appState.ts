@@ -5,6 +5,7 @@
 
 import { AITemplateFile, InstalledTemplatesMap, RepositoryTemplatesMap } from "../../../ai-template-files/models/aiTemplateFile";
 import { Profile } from "../../../profile-management/models/profile";
+import { DevOpsConnection } from "../../../apm-devops/models/devOpsConnection";
 
 /**
  * Complete application state
@@ -36,6 +37,15 @@ export interface AppState {
     list: Profile[];
     isReady: boolean;
   };
+
+  /**
+   * APM DevOps connection state
+   */
+  devOpsConnections: {
+    list: DevOpsConnection[];
+    isReady: boolean;
+    error?: string;
+  };
 }
 
 /**
@@ -60,6 +70,10 @@ export const initialAppState: AppState = {
     isReady: false,
   },
   profiles: {
+    list: [],
+    isReady: false,
+  },
+  devOpsConnections: {
     list: [],
     isReady: false,
   },

@@ -1,4 +1,14 @@
 /**
+ * Operation modes for the extension
+ */
+export const OPERATION_MODES = ["Developers", "APM"] as const;
+
+/**
+ * Operation mode type
+ */
+export type OperationMode = (typeof OPERATION_MODES)[number];
+
+/**
  * Represents an ai template file (md files for agents, prompts, instructions, chatmodes) from a github repository
  */
 export interface AITemplateFile {
@@ -32,5 +42,6 @@ export type InstalledTemplatesMap = Record<AITemplateFileType, string[]>;
  */
 export type RepositoryTemplatesMap = {
   name: string;
+  modes?: OperationMode[];
   types: Record<AITemplateFileType, AITemplateFile[]>;
 };

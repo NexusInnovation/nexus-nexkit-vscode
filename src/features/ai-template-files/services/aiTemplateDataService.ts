@@ -227,8 +227,10 @@ export class AITemplateDataService implements vscode.Disposable {
 
     for (const template of allTemplates) {
       if (!result[template.repository]) {
+        const modes = this.repositoryManager.getRepositoryModes(template.repository);
         result[template.repository] = {
           name: template.repository,
+          modes,
           types: {
             agents: [],
             prompts: [],

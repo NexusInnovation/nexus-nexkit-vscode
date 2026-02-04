@@ -79,6 +79,27 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
             },
           }));
           break;
+
+        case "devOpsConnectionsUpdate":
+          setState((prev) => ({
+            ...prev,
+            devOpsConnections: {
+              list: message.connections,
+              isReady: true,
+              error: undefined,
+            },
+          }));
+          break;
+
+        case "devOpsConnectionError":
+          setState((prev) => ({
+            ...prev,
+            devOpsConnections: {
+              ...prev.devOpsConnections,
+              error: message.error,
+            },
+          }));
+          break;
       }
     };
 
@@ -88,6 +109,8 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     const unsubscribeInstalled = messenger.onMessage("installedTemplatesUpdate", handleMessage);
     const unsubscribeProfiles = messenger.onMessage("profilesUpdate", handleMessage);
     const unsubscribeMetadata = messenger.onMessage("templateMetadataResponse", handleMessage);
+    const unsubscribeDevOpsConnections = messenger.onMessage("devOpsConnectionsUpdate", handleMessage);
+    const unsubscribeDevOpsError = messenger.onMessage("devOpsConnectionError", handleMessage);
 
     // Request initial state from extension
     messenger.sendMessage({ command: "webviewReady" });
@@ -99,6 +122,8 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       unsubscribeInstalled();
       unsubscribeProfiles();
       unsubscribeMetadata();
+      unsubscribeDevOpsConnections();
+      unsubscribeDevOpsError();
     };
   }, [messenger]);
 

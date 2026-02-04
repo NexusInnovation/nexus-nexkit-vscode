@@ -44,6 +44,9 @@ export class SettingsManager {
   // Profile management state keys (WorkspaceState)
   private static readonly LAST_APPLIED_PROFILE_KEY = "lastAppliedProfile";
 
+  // APM DevOps state keys (WorkspaceState)
+  private static readonly ACTIVE_DEVOPS_CONNECTION_KEY = "activeDevOpsConnection";
+
   /**
    * Initialize the SettingsManager with the extension context
    * Must be called during extension activation
@@ -178,5 +181,20 @@ export class SettingsManager {
 
   static async setMode(mode: string): Promise<void> {
     await vscode.workspace.getConfiguration(this.NEXKIT_SECTION).update(this.MODE, mode, vscode.ConfigurationTarget.Global);
+  }
+
+  // Active DevOps Connection (using workspace state)
+  static getActiveDevOpsConnection(): string | null {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    return this.context.workspaceState.get<string | null>(this.ACTIVE_DEVOPS_CONNECTION_KEY, null);
+  }
+
+  static async setActiveDevOpsConnection(connectionId: string | null): Promise<void> {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    await this.context.workspaceState.update(this.ACTIVE_DEVOPS_CONNECTION_KEY, connectionId);
   }
 }

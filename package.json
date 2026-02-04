@@ -94,6 +94,16 @@
         "command": "nexus-nexkit-vscode.switchMode",
         "title": "Nexkit: Switch Operation Mode",
         "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.addDevOpsConnection",
+        "title": "Nexkit: Add Azure DevOps Connection",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.removeDevOpsConnection",
+        "title": "Nexkit: Remove Azure DevOps Connection",
+        "category": "Nexkit"
       }
     ],
     "menus": {

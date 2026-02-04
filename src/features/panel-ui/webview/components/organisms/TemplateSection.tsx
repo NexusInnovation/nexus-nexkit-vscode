@@ -12,11 +12,12 @@ import { useFilterMode } from "../../hooks/useFilterMode";
 /**
  * TemplateSection Component
  * Main template management section with search and collapse all functionality
+ * Filtered to show only Developers mode repositories
  */
 export function TemplateSection() {
   const messenger = useVSCodeAPI();
   const { isReady, repositories, installedTemplates, installTemplate, uninstallTemplate, isTemplateInstalled } =
-    useTemplateData();
+    useTemplateData("Developers");
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [filterMode, setFilterMode] = useFilterMode();

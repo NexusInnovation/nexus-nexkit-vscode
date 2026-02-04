@@ -14,6 +14,10 @@ import {
   registerSaveProfileCommand,
 } from "./features/profile-management/commands";
 import { registerOpenFeedbackCommand } from "./shared/commands/feedbackCommand";
+import {
+  registerAddDevOpsConnectionCommand,
+  registerRemoveDevOpsConnectionCommand,
+} from "./features/apm-devops/commands";
 
 /**
  * Extension activation
@@ -44,6 +48,8 @@ export async function activate(context: vscode.ExtensionContext) {
   registerSaveProfileCommand(context, services);
   registerApplyProfileCommand(context, services);
   registerDeleteProfileCommand(context, services);
+  registerAddDevOpsConnectionCommand(context, services);
+  registerRemoveDevOpsConnectionCommand(context, services);
 
   // Register webview panel
   const nexkitPanelProvider = new NexkitPanelViewProvider();

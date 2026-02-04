@@ -646,3 +646,199 @@ details[open] > .type-header::before {
 .footer-version {
     font-family: var(--vscode-font-family);
 }
+
+/* ============================================ */
+/* APM Connection Section Styles */
+/* ============================================ */
+
+.connections-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.connection-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background-color: var(--vscode-sideBar-background);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.connection-item:hover {
+    background-color: var(--vscode-list-hoverBackground);
+}
+
+.connection-item.active {
+    border-color: var(--vscode-focusBorder);
+    background-color: var(--vscode-list-activeSelectionBackground);
+}
+
+.connection-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.connection-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.95em;
+    font-weight: 600;
+    color: var(--vscode-foreground);
+    margin-bottom: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.connection-active-icon {
+    color: var(--vscode-charts-green);
+    font-size: 12px;
+}
+
+.connection-details {
+    font-size: 0.8em;
+    color: var(--vscode-descriptionForeground);
+}
+
+.connection-actions {
+    display: flex;
+    gap: 6px;
+    margin-left: 8px;
+}
+
+.connection-action-button {
+    padding: 6px;
+    font-size: 0.85em;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    display: flex;
+    align-items: center;
+    background-color: transparent;
+}
+
+.connection-action-button .codicon {
+    font-size: 14px;
+}
+
+.connection-action-button.delete-button {
+    color: var(--vscode-foreground);
+    opacity: 0.6;
+}
+
+.connection-action-button.delete-button:hover {
+    opacity: 1;
+    background-color: var(--vscode-inputValidation-errorBackground);
+    color: var(--vscode-inputValidation-errorForeground);
+}
+
+/* Add Connection Form */
+.add-connection-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    background-color: var(--vscode-sideBar-background);
+    border: 1px solid var(--vscode-panel-border);
+    border-radius: 4px;
+}
+
+.connection-url-input {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 0.9em;
+    font-family: var(--vscode-font-family);
+    background-color: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border);
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.connection-url-input:focus {
+    outline: none;
+    border-color: var(--vscode-focusBorder);
+}
+
+.connection-url-input::placeholder {
+    color: var(--vscode-input-placeholderForeground);
+}
+
+.add-connection-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.add-connection-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 8px;
+    font-size: 0.9em;
+    background-color: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.add-connection-button:hover {
+    background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+.add-connection-button .codicon {
+    font-size: 12px;
+}
+
+/* Generic button styles */
+.button {
+    padding: 6px 12px;
+    font-size: 0.85em;
+    font-family: var(--vscode-font-family);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.button.primary {
+    background-color: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+}
+
+.button.primary:hover {
+    background-color: var(--vscode-button-hoverBackground);
+}
+
+.button.secondary {
+    background-color: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+}
+
+.button.secondary:hover {
+    background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+/* Connection Error */
+.connection-error {
+    margin-top: 8px;
+    padding: 8px 10px;
+    font-size: 0.85em;
+    background-color: var(--vscode-inputValidation-errorBackground);
+    color: var(--vscode-inputValidation-errorForeground);
+    border: 1px solid var(--vscode-inputValidation-errorBorder);
+    border-radius: 4px;
+}
+

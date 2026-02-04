@@ -1,6 +1,7 @@
 import { AITemplateFile, RepositoryTemplatesMap } from "../../ai-template-files/models/aiTemplateFile";
 import { TemplateMetadata } from "../../ai-template-files/models/templateMetadata";
 import { Profile } from "../../profile-management/models/profile";
+import { DevOpsConnection } from "../../apm-devops/models/devOpsConnection";
 
 /**
  * Messages sent FROM the webview TO the extension
@@ -15,7 +16,12 @@ export type WebviewMessage =
   | { command: "getTemplateMetadata"; template: AITemplateFile }
   | { command: "applyProfile"; profile: Profile }
   | { command: "deleteProfile"; profile: Profile }
-  | { command: "openFeedback" };
+  | { command: "openFeedback" }
+  // APM DevOps connection messages
+  | { command: "getDevOpsConnections" }
+  | { command: "addDevOpsConnection"; url: string }
+  | { command: "removeDevOpsConnection"; connectionId: string }
+  | { command: "setActiveDevOpsConnection"; connectionId: string };
 
 /**
  * Messages sent FROM the extension TO the webview
@@ -50,4 +56,13 @@ export type ExtensionMessage =
   | {
       command: "profilesUpdate";
       profiles: Profile[];
+    }
+  // APM DevOps connection messages
+  | {
+      command: "devOpsConnectionsUpdate";
+      connections: DevOpsConnection[];
+    }
+  | {
+      command: "devOpsConnectionError";
+      error: string;
     };

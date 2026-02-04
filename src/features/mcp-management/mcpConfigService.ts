@@ -19,6 +19,7 @@ export interface MCPServerConfig {
   command: string;
   args?: string[];
   env?: { [key: string]: string };
+  type?: string;
 }
 
 /**
