@@ -46,6 +46,7 @@ export class SettingsManager {
 
   // APM DevOps state keys (WorkspaceState)
   private static readonly ACTIVE_DEVOPS_CONNECTION_KEY = "activeDevOpsConnection";
+  private static readonly DEVOPS_CONNECTIONS_KEY = "devOpsConnections";
 
   /**
    * Initialize the SettingsManager with the extension context
@@ -196,5 +197,20 @@ export class SettingsManager {
       throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
     }
     await this.context.workspaceState.update(this.ACTIVE_DEVOPS_CONNECTION_KEY, connectionId);
+  }
+
+  // DevOps Connections List (using workspace state)
+  static getDevOpsConnectionsList<T>(): T[] {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    return this.context.workspaceState.get<T[]>(this.DEVOPS_CONNECTIONS_KEY, []);
+  }
+
+  static async setDevOpsConnectionsList<T>(connections: T[]): Promise<void> {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    await this.context.workspaceState.update(this.DEVOPS_CONNECTIONS_KEY, connections);
   }
 }

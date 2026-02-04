@@ -113,20 +113,11 @@ export function parseDevOpsUrl(url: string): DevOpsUrlParseResult {
 }
 
 /**
- * Sanitize a name for use in MCP server name
+ * Sanitize a name for use in connection ID
  * Allows alphanumeric, hyphens, and underscores
  */
 function sanitizeName(name: string): string {
   return name.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase();
-}
-
-/**
- * Generate an MCP server name from organization and project
- */
-export function generateServerName(organization: string, project: string): string {
-  const sanitizedOrg = sanitizeName(organization);
-  const sanitizedProject = sanitizeName(project);
-  return `azure-devops-${sanitizedOrg}-${sanitizedProject}`;
 }
 
 /**

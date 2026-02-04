@@ -5,10 +5,9 @@ import { useDevOpsConnections } from "../../hooks/useDevOpsConnections";
 /**
  * ApmConnectionSection Component
  * Manages Azure DevOps MCP connections in APM mode
- * - Lists existing connections
- * - Allows adding new connections via URL
- * - Allows selecting the active connection
- * - Allows removing connections
+ * - Only one connection can be active at a time
+ * - Active connection uses standard "azure-devops" MCP name
+ * - Clicking an inactive connection makes it active
  */
 export function ApmConnectionSection() {
   const { connections, activeConnection, isReady, error, addConnection, removeConnection, setActiveConnection } =
@@ -58,18 +57,24 @@ export function ApmConnectionSection() {
     }
   };
 
+  const handleConnectionClick = (connection: { id: string; isActive: boolean }) => {
+    if (!connection.isActive) {
+      setActiveConnection(connection.id);
+    }
+  };
+
   const displayError = localError || error;
 
   return (
-    <CollapsibleSection id="connections" title="DevOps Connections" defaultExpanded>
+    <CollapsibleSection id="connections" title="DevOps Projects" defaultExpanded>
       <>
-        {!isReady && <p class="loading">Loading connections...</p>}
+        {!isReady && <p class="loading">Loading projects...</p>}
 
         {isReady && (
           <>
             {/* Connection List */}
             {connections.length === 0 && !isAddingNew && (
-              <p class="empty-message">No DevOps connections configured. Add a connection to enable Azure DevOps MCP integration.</p>
+              <p class="empty-message">No DevOps projects configured. Add a project to enable Azure DevOps MCP integration.</p>
             )}
 
             {connections.length > 0 && (
@@ -77,15 +82,17 @@ export function ApmConnectionSection() {
                 {connections.map((connection) => (
                   <div
                     key={connection.id}
-                    class={`connection-item ${connection.isActive ? "active" : ""}`}
-                    onClick={() => !connection.isActive && setActiveConnection(connection.id)}
+                    class={`connection-item ${connection.isActive ? "active" : "inactive"}`}
+                    onClick={() => handleConnectionClick(connection)}
+                    title={connection.isActive ? "Active project" : "Click to make this the active project"}
                   >
                     <div class="connection-info">
                       <div class="connection-name">
-                        {connection.isActive && <i class="codicon codicon-check connection-active-icon"></i>}
+                        {connection.isActive && <i class="codicon codicon-circle-filled connection-active-icon"></i>}
+                        {!connection.isActive && <i class="codicon codicon-circle-outline connection-inactive-icon"></i>}
                         {connection.organization}/{connection.project}
                       </div>
-                      <div class="connection-details">Azure DevOps</div>
+                      {connection.isActive && <div class="connection-details">Active • MCP: azure-devops</div>}
                     </div>
                     <div class="connection-actions">
                       <button
@@ -94,7 +101,7 @@ export function ApmConnectionSection() {
                           e.stopPropagation();
                           removeConnection(connection.id);
                         }}
-                        title={`Remove connection "${connection.organization}/${connection.project}"`}
+                        title={`Remove project "${connection.organization}/${connection.project}"`}
                       >
                         <i class="codicon codicon-trash"></i>
                       </button>
@@ -127,7 +134,7 @@ export function ApmConnectionSection() {
               </div>
             ) : (
               <button class="button add-connection-button" onClick={handleAddClick}>
-                <i class="codicon codicon-add"></i> Add Connection
+                <i class="codicon codicon-add"></i> Add Project
               </button>
             )}
 

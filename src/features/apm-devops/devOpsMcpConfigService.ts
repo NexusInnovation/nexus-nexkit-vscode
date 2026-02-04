@@ -2,14 +2,31 @@ import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 import { DevOpsConnection, AZURE_DEVOPS_MCP_DOMAINS } from "./models/devOpsConnection";
-import { parseDevOpsUrl, generateServerName, generateConnectionId } from "./devOpsUrlParser";
+import { parseDevOpsUrl, generateConnectionId } from "./devOpsUrlParser";
 import { MCPServerConfig } from "../mcp-management/mcpConfigService";
 import { getWorkspaceRoot } from "../../shared/utils/fileHelper";
 import { SettingsManager } from "../../core/settingsManager";
 
 /**
+ * Standard MCP server name for Azure DevOps
+ * Agents should reference this name to work with any active project
+ */
+const AZURE_DEVOPS_MCP_NAME = "azure-devops";
+
+/**
+ * Stored connection data (without runtime properties like serverName)
+ */
+interface StoredConnection {
+  id: string;
+  organization: string;
+  project: string;
+}
+
+/**
  * Service for managing Azure DevOps MCP configurations
- * Handles adding, removing, and listing DevOps connections in workspace MCP config
+ * - Stores connections list in workspace state
+ * - Only active connection appears in MCP config with standard name "azure-devops"
+ * - Agents always reference "azure-devops" MCP regardless of which project is active
  */
 export class DevOpsMcpConfigService {
   private readonly _onConnectionsChanged = new vscode.EventEmitter<void>();
@@ -17,8 +34,9 @@ export class DevOpsMcpConfigService {
 
   /**
    * Add a DevOps connection from a URL
+   * New connections automatically become active
    * @param url Azure DevOps project URL
-   * @returns The created connection or throws an error
+   * @returns The created connection
    */
   public async addConnection(url: string): Promise<DevOpsConnection> {
     const parseResult = parseDevOpsUrl(url);
@@ -29,38 +47,29 @@ export class DevOpsMcpConfigService {
 
     const { organization, project } = parseResult;
     const id = generateConnectionId(organization, project);
-    const serverName = generateServerName(organization, project);
 
     // Check if connection already exists
-    const existingConnections = await this.getConnections();
+    const existingConnections = this.getStoredConnections();
     if (existingConnections.some((c) => c.id === id)) {
       throw new Error(`Connection for ${organization}/${project} already exists`);
     }
 
-    // Generate the MCP server config
-    const serverConfig = this.generateServerConfig(organization, project);
+    // Add to stored connections
+    const newConnection: StoredConnection = { id, organization, project };
+    await SettingsManager.setDevOpsConnectionsList([...existingConnections, newConnection]);
 
-    // Add to workspace MCP config
-    await this.addToWorkspaceMcpConfig(serverName, serverConfig);
+    // Auto-activate new connection (update MCP config)
+    await this.activateConnection(id, organization, project);
 
-    // Determine if this should be active (first connection is auto-active)
-    const isActive = existingConnections.length === 0;
+    this._onConnectionsChanged.fire();
 
-    const connection: DevOpsConnection = {
+    return {
       id,
       organization,
       project,
-      isActive,
-      serverName,
+      isActive: true,
+      serverName: AZURE_DEVOPS_MCP_NAME,
     };
-
-    // If this is the first/active connection, store it
-    if (isActive) {
-      await SettingsManager.setActiveDevOpsConnection(id);
-    }
-
-    this._onConnectionsChanged.fire();
-    return connection;
   }
 
   /**
@@ -68,22 +77,27 @@ export class DevOpsMcpConfigService {
    * @param connectionId The connection ID to remove
    */
   public async removeConnection(connectionId: string): Promise<void> {
-    const connections = await this.getConnections();
+    const connections = this.getStoredConnections();
     const connection = connections.find((c) => c.id === connectionId);
 
     if (!connection) {
       throw new Error(`Connection ${connectionId} not found`);
     }
 
-    // Remove from workspace MCP config
-    await this.removeFromWorkspaceMcpConfig(connection.serverName);
+    // Remove from stored connections
+    const updatedConnections = connections.filter((c) => c.id !== connectionId);
+    await SettingsManager.setDevOpsConnectionsList(updatedConnections);
 
-    // If this was the active connection, clear or set a new one
+    // If this was the active connection, handle MCP update
     const activeId = SettingsManager.getActiveDevOpsConnection();
     if (activeId === connectionId) {
-      const remainingConnections = connections.filter((c) => c.id !== connectionId);
-      if (remainingConnections.length > 0) {
-        await SettingsManager.setActiveDevOpsConnection(remainingConnections[0].id);
+      // Remove from MCP config
+      await this.removeFromWorkspaceMcpConfig(AZURE_DEVOPS_MCP_NAME);
+
+      // Activate another connection if available
+      if (updatedConnections.length > 0) {
+        const nextConnection = updatedConnections[0];
+        await this.activateConnection(nextConnection.id, nextConnection.organization, nextConnection.project);
       } else {
         await SettingsManager.setActiveDevOpsConnection(null);
       }
@@ -94,17 +108,18 @@ export class DevOpsMcpConfigService {
 
   /**
    * Set a connection as active
+   * Updates the MCP config with the selected project
    * @param connectionId The connection ID to activate
    */
   public async setActiveConnection(connectionId: string): Promise<void> {
-    const connections = await this.getConnections();
+    const connections = this.getStoredConnections();
     const connection = connections.find((c) => c.id === connectionId);
 
     if (!connection) {
       throw new Error(`Connection ${connectionId} not found`);
     }
 
-    await SettingsManager.setActiveDevOpsConnection(connectionId);
+    await this.activateConnection(connection.id, connection.organization, connection.project);
     this._onConnectionsChanged.fire();
   }
 
@@ -112,24 +127,16 @@ export class DevOpsMcpConfigService {
    * Get all configured DevOps connections
    */
   public async getConnections(): Promise<DevOpsConnection[]> {
-    const config = await this.readWorkspaceMcpConfig();
+    const storedConnections = this.getStoredConnections();
     const activeId = SettingsManager.getActiveDevOpsConnection();
-    const connections: DevOpsConnection[] = [];
 
-    for (const [serverName, serverConfig] of Object.entries(config.servers || {})) {
-      // Only parse azure-devops-* servers
-      if (!serverName.startsWith("azure-devops-")) {
-        continue;
-      }
-
-      // Extract org and project from args
-      const connection = this.parseConnectionFromServerConfig(serverName, serverConfig as MCPServerConfig, activeId);
-      if (connection) {
-        connections.push(connection);
-      }
-    }
-
-    return connections;
+    return storedConnections.map((c) => ({
+      id: c.id,
+      organization: c.organization,
+      project: c.project,
+      isActive: c.id === activeId,
+      serverName: c.id === activeId ? AZURE_DEVOPS_MCP_NAME : "",
+    }));
   }
 
   /**
@@ -152,42 +159,29 @@ export class DevOpsMcpConfigService {
   }
 
   /**
+   * Activate a connection - updates MCP config with standard name
+   */
+  private async activateConnection(id: string, organization: string, project: string): Promise<void> {
+    // Update the MCP config with the active project using standard name
+    const serverConfig = this.generateServerConfig(organization, project);
+    await this.addToWorkspaceMcpConfig(AZURE_DEVOPS_MCP_NAME, serverConfig);
+    await SettingsManager.setActiveDevOpsConnection(id);
+  }
+
+  /**
+   * Get stored connections from workspace state
+   */
+  private getStoredConnections(): StoredConnection[] {
+    return SettingsManager.getDevOpsConnectionsList<StoredConnection>();
+  }
+
+  /**
    * Generate MCP server configuration for a DevOps connection
    */
   private generateServerConfig(organization: string, project: string): MCPServerConfig {
     return {
       command: "npx",
       args: ["-y", "@azure-devops/mcp", organization, project, "-d", ...AZURE_DEVOPS_MCP_DOMAINS],
-    };
-  }
-
-  /**
-   * Parse connection details from a server config
-   */
-  private parseConnectionFromServerConfig(
-    serverName: string,
-    serverConfig: MCPServerConfig,
-    activeId: string | null
-  ): DevOpsConnection | null {
-    // Expected args format: ["-y", "@azure-devops/mcp", org, project, "-d", ...domains]
-    if (!serverConfig.args || serverConfig.args.length < 4) {
-      return null;
-    }
-
-    if (serverConfig.args[1] !== "@azure-devops/mcp") {
-      return null;
-    }
-
-    const organization = serverConfig.args[2];
-    const project = serverConfig.args[3];
-    const id = generateConnectionId(organization, project);
-
-    return {
-      id,
-      organization,
-      project,
-      isActive: activeId === id,
-      serverName,
     };
   }
 

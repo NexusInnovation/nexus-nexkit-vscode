@@ -3,7 +3,7 @@
  */
 
 import * as assert from "assert";
-import { parseDevOpsUrl, generateServerName, generateConnectionId } from "../../src/features/apm-devops/devOpsUrlParser";
+import { parseDevOpsUrl, generateConnectionId } from "../../src/features/apm-devops/devOpsUrlParser";
 
 suite("Unit: DevOps URL Parser", () => {
   suite("parseDevOpsUrl", () => {
@@ -139,26 +139,6 @@ suite("Unit: DevOps URL Parser", () => {
         assert.strictEqual(result.isValid, false);
         assert.ok(result.error?.includes("HTTP"));
       });
-    });
-  });
-
-  suite("generateServerName", () => {
-    test("Should generate server name from org and project", () => {
-      const result = generateServerName("librairie-martin", "SLIM");
-
-      assert.strictEqual(result, "azure-devops-librairie-martin-slim");
-    });
-
-    test("Should lowercase the server name", () => {
-      const result = generateServerName("MyOrg", "MyProject");
-
-      assert.strictEqual(result, "azure-devops-myorg-myproject");
-    });
-
-    test("Should remove special characters", () => {
-      const result = generateServerName("my org", "my project!");
-
-      assert.strictEqual(result, "azure-devops-myorg-myproject");
     });
   });
 
