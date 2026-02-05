@@ -10,8 +10,7 @@ import { useDevOpsConnections } from "../../hooks/useDevOpsConnections";
  * - Clicking an inactive connection makes it active
  */
 export function ApmConnectionSection() {
-  const { connections, activeConnection, isReady, error, addConnection, removeConnection, setActiveConnection } =
-    useDevOpsConnections();
+  const { connections, isReady, error, addConnection, removeConnection, setActiveConnection } = useDevOpsConnections();
 
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newUrl, setNewUrl] = useState("");

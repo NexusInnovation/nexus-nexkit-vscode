@@ -77,6 +77,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   // Register for disposal
   context.subscriptions.push(aiTemplateData);
   context.subscriptions.push(telemetry);
+  context.subscriptions.push(devOpsConfig);
 
   return {
     telemetry,

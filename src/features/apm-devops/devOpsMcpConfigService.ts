@@ -8,6 +8,11 @@ import { getWorkspaceRoot } from "../../shared/utils/fileHelper";
 import { SettingsManager } from "../../core/settingsManager";
 
 /**
+ * Delay before reloading window to ensure UI message is visible (ms)
+ */
+const RELOAD_DELAY_MS = 500;
+
+/**
  * Standard MCP server name for Azure DevOps
  * Agents should reference this name to work with any active project
  */
@@ -166,6 +171,20 @@ export class DevOpsMcpConfigService {
     const serverConfig = this.generateServerConfig(organization, project);
     await this.addToWorkspaceMcpConfig(AZURE_DEVOPS_MCP_NAME, serverConfig);
     await SettingsManager.setActiveDevOpsConnection(id);
+
+    // Reload window to apply MCP changes
+    this.reloadWindowForMcpChange(organization, project);
+  }
+
+  /**
+   * Reload window to apply MCP configuration changes
+   */
+  private reloadWindowForMcpChange(organization: string, project: string): void {
+    vscode.window.showInformationMessage(`Active DevOps project changed to ${organization}/${project}. Reloading window...`);
+    // Small delay to ensure the message is visible
+    setTimeout(() => {
+      vscode.commands.executeCommand("workbench.action.reloadWindow");
+    }, RELOAD_DELAY_MS);
   }
 
   /**

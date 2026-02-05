@@ -23,7 +23,7 @@ export interface DevOpsConnection {
   isActive: boolean;
 
   /**
-   * The MCP server name in the config (format: azure-devops-{org}-{project})
+   * The MCP server name in the config ("azure-devops" when active, empty when inactive)
    */
   serverName: string;
 }
