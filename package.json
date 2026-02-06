@@ -41,6 +41,11 @@
         "category": "Nexkit"
       },
       {
+        "command": "nexus-nexkit-vscode.resetWorkspace",
+        "title": "Nexkit: Reset Workspace",
+        "category": "Nexkit"
+      },
+      {
         "command": "nexus-nexkit-vscode.checkExtensionUpdate",
         "title": "Nexkit: Check for Updates",
         "category": "Nexkit"

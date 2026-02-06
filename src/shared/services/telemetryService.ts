@@ -179,7 +179,7 @@ export class TelemetryService {
     }
 
     // Priority 3: Default connection string (production)
-    return "InstrumentationKey=36541b20-0c16-4477-9d5c-d6990c51bafd;IngestionEndpoint=https://canadaeast-0.in.applicationinsights.azure.com/;LiveEndpoint=https://canadaeast.livediagnostics.monitor.azure.com/;ApplicationId=d5494809-608d-4364-a30e-feaeb0769286";
+    return "InstrumentationKey=1d613055-855f-4238-9727-dc14c7fab92d;IngestionEndpoint=https://canadacentral-1.in.applicationinsights.azure.com/;LiveEndpoint=https://canadacentral.livediagnostics.monitor.azure.com/;ApplicationId=dbe35447-e979-43d1-99fd-166d18ca41ad";
   }
 
   /**

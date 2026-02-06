@@ -178,7 +178,7 @@ export class SettingsManager {
 
   // Mode
   static getMode(): OperationMode {
-    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<OperationMode>(this.MODE, OperationMode.Developers);
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<OperationMode>(this.MODE, OperationMode.None);
   }
 
   static async setMode(mode: OperationMode): Promise<void> {
