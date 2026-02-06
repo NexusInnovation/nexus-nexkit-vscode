@@ -842,3 +842,148 @@ details[open] > .type-header::before {
     border-radius: 4px;
 }
 
+/* ============================================================================
+   MODE SELECTION SECTION
+   ============================================================================ */
+
+.mode-selection-container {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+}
+
+.mode-selection-header {
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.mode-selection-header h2 {
+    font-size: 1.5em;
+    font-weight: 600;
+    color: var(--vscode-foreground);
+    margin: 0 0 8px 0;
+}
+
+.mode-selection-header p {
+    font-size: 0.95em;
+    color: var(--vscode-descriptionForeground);
+    margin: 0;
+}
+
+.mode-selection-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    max-width: 500px;
+}
+
+.mode-card {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    padding: 20px;
+    background-color: var(--vscode-editor-background);
+    border: 2px solid var(--vscode-panel-border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    font-family: var(--vscode-font-family);
+}
+
+.mode-card:hover {
+    background-color: var(--vscode-list-hoverBackground);
+    border-color: var(--vscode-focusBorder);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.mode-card:active {
+    transform: translateY(0);
+}
+
+.mode-card-icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--vscode-button-background);
+    border-radius: 8px;
+}
+
+.mode-card-icon .codicon {
+    font-size: 24px;
+    color: var(--vscode-button-foreground);
+}
+
+.mode-card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mode-card-content h3 {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--vscode-foreground);
+    margin: 0;
+}
+
+.mode-card-content p {
+    font-size: 0.9em;
+    color: var(--vscode-descriptionForeground);
+    margin: 0;
+}
+
+.mode-card-features {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mode-card-features li {
+    font-size: 0.85em;
+    color: var(--vscode-foreground);
+    padding-left: 16px;
+    position: relative;
+}
+
+.mode-card-features li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: var(--vscode-button-background);
+    font-weight: bold;
+}
+
+.mode-selection-footer {
+    text-align: center;
+    margin-top: 8px;
+}
+
+.mode-selection-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.85em;
+    color: var(--vscode-descriptionForeground);
+    margin: 0;
+}
+
+.mode-selection-note .codicon {
+    font-size: 14px;
+}
+
+

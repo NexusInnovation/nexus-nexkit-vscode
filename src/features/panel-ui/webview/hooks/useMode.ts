@@ -16,6 +16,11 @@ export interface UseModeResult {
   mode: OperationMode;
 
   /**
+   * Whether current mode is None (not selected yet)
+   */
+  isNoneMode: boolean;
+
+  /**
    * Whether current mode is Developers
    */
   isDevelopersMode: boolean;
@@ -35,6 +40,7 @@ export function useMode(): UseModeResult {
 
   return {
     mode,
+    isNoneMode: mode === OperationMode.None,
     isDevelopersMode: mode === OperationMode.Developers,
     isAPMMode: mode === OperationMode.APM,
   };

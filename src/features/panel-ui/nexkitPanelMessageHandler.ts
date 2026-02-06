@@ -34,6 +34,7 @@ export class NexkitPanelMessageHandler {
       ["applyProfile", this.handleApplyProfile.bind(this)],
       ["deleteProfile", this.handleDeleteProfile.bind(this)],
       ["openFeedback", this.handleOpenFeedback.bind(this)],
+      ["setMode", this.handleSetMode.bind(this)],
       // APM DevOps connection handlers
       ["getDevOpsConnections", this.handleGetDevOpsConnections.bind(this)],
       ["addDevOpsConnection", this.handleAddDevOpsConnection.bind(this)],
@@ -169,6 +170,23 @@ export class NexkitPanelMessageHandler {
   private async handleOpenFeedback(message: WebviewMessage): Promise<void> {
     this.trackWebviewAction("openFeedback");
     await vscode.commands.executeCommand(Commands.OPEN_FEEDBACK);
+  }
+
+  private async handleSetMode(message: WebviewMessage & { command: "setMode" }): Promise<void> {
+    this.trackWebviewAction("setMode");
+    try {
+      await SettingsManager.setMode(message.mode);
+      this.sendWorkspaceState();
+      this._services.telemetry.trackEvent("mode.selected", {
+        mode: message.mode,
+        context: "webview",
+      });
+    } catch (error) {
+      console.error("Failed to set mode:", error);
+      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+        context: "webview.setMode",
+      });
+    }
   }
 
   // ============================================================================

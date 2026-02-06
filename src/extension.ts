@@ -15,10 +15,7 @@ import {
   registerSaveProfileCommand,
 } from "./features/profile-management/commands";
 import { registerOpenFeedbackCommand } from "./shared/commands/feedbackCommand";
-import {
-  registerAddDevOpsConnectionCommand,
-  registerRemoveDevOpsConnectionCommand,
-} from "./features/apm-devops/commands";
+import { registerAddDevOpsConnectionCommand, registerRemoveDevOpsConnectionCommand } from "./features/apm-devops/commands";
 
 /**
  * Extension activation

@@ -7,13 +7,14 @@ import { ProfileSection } from "./organisms/ProfileSection";
 import { TemplateSection } from "./organisms/TemplateSection";
 import { ApmConnectionSection } from "./organisms/ApmConnectionSection";
 import { ApmTemplateSection } from "./organisms/ApmTemplateSection";
+import { ModeSelectionSection } from "./organisms/ModeSelectionSection";
 
 /**
  * Root component for the Nexkit webview panel
  */
 export function App() {
   const { workspace } = useAppState();
-  const { isDevelopersMode, isAPMMode } = useMode();
+  const { isNoneMode, isDevelopersMode, isAPMMode } = useMode();
 
   if (!workspace.isReady) {
     return null;
@@ -27,6 +28,11 @@ export function App() {
         </div>
       </div>
     );
+  }
+
+  // Show mode selection when mode is None
+  if (isNoneMode) {
+    return <ModeSelectionSection />;
   }
 
   return (

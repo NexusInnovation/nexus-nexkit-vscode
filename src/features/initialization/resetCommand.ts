@@ -6,6 +6,7 @@ import { SettingsManager } from "../../core/settingsManager";
 import { registerCommand } from "../../shared/commands/commandRegistry";
 import { Commands } from "../../shared/constants/commands";
 import { fileExists } from "../../shared/utils/fileHelper";
+import { OperationMode } from "../ai-template-files/models/aiTemplateFile";
 
 /**
  * Reset options that can be selected by the user
@@ -26,8 +27,8 @@ const RESET_OPTIONS: ResetOption[] = [
   {
     id: "workspaceInit",
     label: "Workspace Initialization Status",
-    description: "Reset initialization flag and prompt dismissals",
-    detail: "Workspace will appear as uninitialized",
+    description: "Reset initialization flag, mode, and prompt dismissals",
+    detail: "Workspace will appear as uninitialized and you'll need to select a mode",
     picked: true,
   },
   {
@@ -80,10 +81,7 @@ const RESET_OPTIONS: ResetOption[] = [
 /**
  * Register reset workspace command
  */
-export function registerResetWorkspaceCommand(
-  context: vscode.ExtensionContext,
-  services: ServiceContainer
-): void {
+export function registerResetWorkspaceCommand(context: vscode.ExtensionContext, services: ServiceContainer): void {
   registerCommand(
     context,
     Commands.RESET_WORKSPACE,
@@ -129,12 +127,7 @@ export function registerResetWorkspaceCommand(
           "Cancel"
         );
       } else {
-        backupOption = await vscode.window.showWarningMessage(
-          confirmMessage,
-          { modal: true },
-          "Reset",
-          "Cancel"
-        );
+        backupOption = await vscode.window.showWarningMessage(confirmMessage, { modal: true }, "Reset", "Cancel");
       }
 
       if (!backupOption || backupOption === "Cancel") {
@@ -171,9 +164,7 @@ export function registerResetWorkspaceCommand(
         });
       } catch (error) {
         console.error("Failed to reset workspace:", error);
-        vscode.window.showErrorMessage(
-          `Reset failed: ${error instanceof Error ? error.message : String(error)}`
-        );
+        vscode.window.showErrorMessage(`Reset failed: ${error instanceof Error ? error.message : String(error)}`);
         services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
           context: "resetWorkspace",
         });
@@ -198,6 +189,7 @@ async function performReset(
     await SettingsManager.setWorkspaceInitialized(false);
     await SettingsManager.setWorkspaceInitPromptDismissed(false);
     await SettingsManager.setLastAppliedProfile(null);
+    await SettingsManager.setMode(OperationMode.None); // Reset mode to None (user must select)
     results.push("Workspace initialization status");
   }
 

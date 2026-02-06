@@ -61,7 +61,7 @@ export const initialAppState: AppState = {
     hasWorkspace: false,
     isInitialized: false,
     isReady: false,
-    mode: OperationMode.Developers,
+    mode: OperationMode.None,
   },
   templates: {
     repositories: [],

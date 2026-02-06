@@ -17,6 +17,7 @@ export type WebviewMessage =
   | { command: "applyProfile"; profile: Profile }
   | { command: "deleteProfile"; profile: Profile }
   | { command: "openFeedback" }
+  | { command: "setMode"; mode: OperationMode }
   // APM DevOps connection messages
   | { command: "getDevOpsConnections" }
   | { command: "addDevOpsConnection"; url: string }
