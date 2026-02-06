@@ -1,3 +1,13 @@
+## 3.0.0-beta.3 (2026-02-06)
+
+* feat: Feature/reset config (#82) ([1ec96a8](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/1ec96a8)), closes [#82](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/82)
+
+
+### BREAKING CHANGE
+
+* Default mode changes from Developers to None.
+Existing users will need to select a mode on next panel open.
+
 ## 3.0.0-beta.2 (2026-02-06)
 
 * feat: Feature/apm mode (#79) ([3b12eb6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3b12eb6)), closes [#79](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/79)
