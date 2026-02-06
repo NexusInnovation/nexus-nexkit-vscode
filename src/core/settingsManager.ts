@@ -36,6 +36,10 @@ export class SettingsManager {
 
   // Profile management settings
   private static readonly PROFILES = "profiles";
+  private static readonly PROFILES_CONFIRM_BEFORE_SWITCH = "profiles.confirmBeforeSwitch";
+
+  // Profile management state keys (WorkspaceState)
+  private static readonly LAST_APPLIED_PROFILE_KEY = "lastAppliedProfile";
 
   /**
    * Initialize the SettingsManager with the extension context
@@ -143,5 +147,24 @@ export class SettingsManager {
     await vscode.workspace
       .getConfiguration(this.NEXKIT_SECTION)
       .update(this.PROFILES, profiles, vscode.ConfigurationTarget.Global);
+  }
+
+  static isProfileConfirmBeforeSwitchEnabled(): boolean {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<boolean>(this.PROFILES_CONFIRM_BEFORE_SWITCH, true);
+  }
+
+  // Last Applied Profile (using workspace state)
+  static getLastAppliedProfile(): string | null {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    return this.context.workspaceState.get<string | null>(this.LAST_APPLIED_PROFILE_KEY, null);
+  }
+
+  static async setLastAppliedProfile(profileName: string | null): Promise<void> {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    await this.context.workspaceState.update(this.LAST_APPLIED_PROFILE_KEY, profileName);
   }
 }

@@ -3,6 +3,7 @@ import { ServiceContainer } from "../../core/serviceContainer";
 import { Commands } from "../../shared/constants/commands";
 import { registerCommand } from "../../shared/commands/commandRegistry";
 import { Profile } from "./models/profile";
+import { SettingsManager } from "../../core/settingsManager";
 
 /**
  * Register command to save current templates as a profile
@@ -110,15 +111,104 @@ export function registerApplyProfileCommand(context: vscode.ExtensionContext, se
           profileToApply = selected.profile;
         }
 
-        // Confirm application
-        const confirm = await vscode.window.showWarningMessage(
-          `Apply profile "${profileToApply.name}"? This will replace all currently installed templates with ${profileToApply.templates.length} template${profileToApply.templates.length !== 1 ? "s" : ""} from this profile. A backup will be created first.`,
-          "Apply",
-          "Cancel"
-        );
+        // Check if we should prompt to save current templates before switching
+        if (SettingsManager.isProfileConfirmBeforeSwitchEnabled()) {
+          const hasChanges = await services.profileService.hasTemplateChanges(profileToApply.name);
 
-        if (confirm !== "Apply") {
-          return;
+          if (hasChanges) {
+            const lastProfile = SettingsManager.getLastAppliedProfile();
+
+            if (lastProfile && services.profileService.profileExists(lastProfile)) {
+              // User has a previously applied profile - offer to update it or save as new
+              const choice = await vscode.window.showWarningMessage(
+                `You have unsaved changes. What would you like to do?`,
+                { modal: true },
+                `Update "${lastProfile}"`,
+                "Save as New",
+                "Switch Without Saving"
+              );
+
+              if (!choice) {
+                // User cancelled
+                return;
+              }
+
+              if (choice === `Update "${lastProfile}"`) {
+                // Update the existing profile
+                await services.profileService.saveProfile(lastProfile, false);
+                vscode.window.showInformationMessage(`Profile "${lastProfile}" updated successfully.`);
+              } else if (choice === "Save as New") {
+                // Prompt for new profile name
+                const newProfileName = await vscode.window.showInputBox({
+                  prompt: "Enter a name for this profile",
+                  placeHolder: "e.g., Python Project, Full Stack, Data Science",
+                  validateInput: (value) => {
+                    if (!value || value.trim().length === 0) {
+                      return "Profile name cannot be empty";
+                    }
+                    if (value.trim().length > 50) {
+                      return "Profile name is too long (max 50 characters)";
+                    }
+                    if (services.profileService.profileExists(value.trim())) {
+                      return "A profile with this name already exists";
+                    }
+                    return undefined;
+                  },
+                });
+
+                if (!newProfileName) {
+                  // User cancelled
+                  return;
+                }
+
+                await services.profileService.saveProfile(newProfileName.trim(), false);
+                vscode.window.showInformationMessage(`Profile "${newProfileName.trim()}" saved successfully.`);
+              }
+              // "Switch Without Saving" - continue to apply profile
+            } else {
+              // No last profile - offer only save as new or switch without saving
+              const choice = await vscode.window.showInformationMessage(
+                `Save current templates before switching to "${profileToApply.name}"?`,
+                "Save as New",
+                "Switch Without Saving"
+              );
+
+              if (!choice) {
+                // User cancelled
+                return;
+              }
+
+              if (choice === "Save as New") {
+                // Prompt for new profile name
+                const newProfileName = await vscode.window.showInputBox({
+                  prompt: "Enter a name for this profile",
+                  placeHolder: "e.g., Python Project, Full Stack, Data Science",
+                  validateInput: (value) => {
+                    if (!value || value.trim().length === 0) {
+                      return "Profile name cannot be empty";
+                    }
+                    if (value.trim().length > 50) {
+                      return "Profile name is too long (max 50 characters)";
+                    }
+                    if (services.profileService.profileExists(value.trim())) {
+                      return "A profile with this name already exists";
+                    }
+                    return undefined;
+                  },
+                });
+
+                if (!newProfileName) {
+                  // User cancelled
+                  return;
+                }
+
+                await services.profileService.saveProfile(newProfileName.trim(), false);
+                vscode.window.showInformationMessage(`Profile "${newProfileName.trim()}" saved successfully.`);
+              }
+              // "Switch Without Saving" - continue to apply profile
+            }
+          }
+          // If no changes detected, silently continue to apply profile
         }
 
         const result = await services.profileService.applyProfile(profileToApply.name);

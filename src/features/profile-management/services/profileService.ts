@@ -5,6 +5,7 @@ import { AITemplateDataService } from "../../ai-template-files/services/aiTempla
 import { GitHubTemplateBackupService } from "../../backup-management/backupService";
 import { SettingsManager } from "../../../core/settingsManager";
 import { AITemplateFile } from "../../ai-template-files/models/aiTemplateFile";
+import { InstalledTemplateRecord } from "../../ai-template-files/models/installedTemplateRecord";
 
 /**
  * Service for managing template profiles
@@ -71,14 +72,14 @@ export class ProfileService {
   /**
    * Apply a saved profile to the current workspace
    * This will:
-   * 1. Create a backup of the current .github folder
-   * 2. Remove all currently installed templates
-   * 3. Install all templates from the profile
+   * 1. Remove all currently installed templates
+   * 2. Install all templates from the profile
+   * Note: Backups are skipped by default. Only workspace initialization creates backups.
    * @param profileName Name of the profile to apply
-   * @param skipBackup If true, will not create a backup before applying
+   * @param skipBackup If false, will create a backup before applying (only used during workspace initialization)
    * @returns Result summary with install counts and backup path
    */
-  public async applyProfile(profileName: string, skipBackup: boolean = false): Promise<ApplyProfileResult> {
+  public async applyProfile(profileName: string, skipBackup: boolean = true): Promise<ApplyProfileResult> {
     const profiles = SettingsManager.getProfiles();
     const profile = profiles.find((p) => p.name === profileName);
 
@@ -125,6 +126,9 @@ export class ProfileService {
 
     // Add not found templates to failed count
     summary.failed += notFoundCount;
+
+    // Store as last applied profile
+    await SettingsManager.setLastAppliedProfile(profileName);
 
     this._onProfilesChangedEmitter.fire();
     return { summary, backupPath };
@@ -175,6 +179,56 @@ export class ProfileService {
   public getProfile(name: string): Profile | undefined {
     const profiles = SettingsManager.getProfiles();
     return profiles.find((p) => p.name === name);
+  }
+
+  /**
+   * Check if current installed templates differ from a profile's templates
+   * @param profileName Name of profile to compare against
+   * @returns True if there are differences, false if identical
+   */
+  public async hasTemplateChanges(profileName: string): Promise<boolean> {
+    const profile = this.getProfile(profileName);
+    if (!profile) {
+      return false;
+    }
+
+    // Ensure we have the latest installed templates from filesystem
+    await this.installedTemplatesStateManager.syncWithFileSystem();
+    const currentTemplates = this.installedTemplatesStateManager.getInstalledTemplates();
+
+    return !this.areTemplateListsEqual(currentTemplates, profile.templates);
+  }
+
+  /**
+   * Compare two template lists for equality
+   * @param list1 First template list
+   * @param list2 Second template list
+   * @returns True if both lists contain exactly the same templates (order-independent)
+   */
+  private areTemplateListsEqual(list1: InstalledTemplateRecord[], list2: InstalledTemplateRecord[]): boolean {
+    if (list1.length !== list2.length) {
+      return false;
+    }
+
+    // Create sets of unique template identifiers for comparison
+    // Format: "repository::type::name"
+    const createIdentifier = (t: InstalledTemplateRecord) => `${t.repository}::${t.type}::${t.name}`;
+
+    const set1 = new Set(list1.map(createIdentifier));
+    const set2 = new Set(list2.map(createIdentifier));
+
+    // Check if both sets have the same size and all elements match
+    if (set1.size !== set2.size) {
+      return false;
+    }
+
+    for (const item of set1) {
+      if (!set2.has(item)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   /**

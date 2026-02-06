@@ -249,6 +249,12 @@
           "scope": "application",
           "description": "Azure Application Insights connection string (optional, for custom telemetry endpoint)."
         },
+        "nexkit.profiles.confirmBeforeSwitch": {
+          "type": "boolean",
+          "default": true,
+          "scope": "application",
+          "description": "Ask to save current templates before switching profiles if changes are detected. When enabled, you'll be prompted to update your last applied profile or save as new before switching."
+        },
         "nexkit.profiles": {
           "type": "array",
           "default": [],
