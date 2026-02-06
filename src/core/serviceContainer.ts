@@ -16,6 +16,7 @@ import { WorkspaceInitializationService } from "../features/initialization/works
 import { InstalledTemplatesStateManager } from "../features/ai-template-files/services/installedTemplatesStateManager";
 import { RepositoryManager } from "../features/ai-template-files/services/repositoryManager";
 import { ProfileService } from "../features/profile-management/services/profileService";
+import { ModeSelectionService } from "../features/initialization/modeSelectionService";
 
 /**
  * Service container for dependency injection
@@ -38,6 +39,7 @@ export interface ServiceContainer {
   workspaceInitPrompt: WorkspaceInitPromptService;
   workspaceInitialization: WorkspaceInitializationService;
   profileService: ProfileService;
+  modeSelection: ModeSelectionService;
 }
 
 /**
@@ -67,6 +69,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const workspaceInitPrompt = new WorkspaceInitPromptService();
   const workspaceInitialization = new WorkspaceInitializationService();
   const profileService = new ProfileService(installedTemplatesState, aiTemplateData, backup);
+  const modeSelection = new ModeSelectionService();
 
   // Register for disposal
   context.subscriptions.push(aiTemplateData);
@@ -89,5 +92,6 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     workspaceInitPrompt,
     workspaceInitialization,
     profileService,
+    modeSelection,
   };
 }

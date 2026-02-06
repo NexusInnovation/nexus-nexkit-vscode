@@ -41,6 +41,12 @@ export class SettingsManager {
   // Profile management state keys (WorkspaceState)
   private static readonly LAST_APPLIED_PROFILE_KEY = "lastAppliedProfile";
 
+  // User mode settings
+  private static readonly USER_MODE = "userMode";
+
+  // First time user state key (GlobalState)
+  private static readonly FIRST_TIME_USER_KEY = "nexkit.firstTimeUser";
+
   /**
    * Initialize the SettingsManager with the extension context
    * Must be called during extension activation
@@ -166,5 +172,31 @@ export class SettingsManager {
       throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
     }
     await this.context.workspaceState.update(this.LAST_APPLIED_PROFILE_KEY, profileName);
+  }
+
+  // User Mode
+  static getUserMode(): string {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<string>(this.USER_MODE, "notset");
+  }
+
+  static async setUserMode(mode: "APM" | "Developer" | "notset"): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .update(this.USER_MODE, mode, vscode.ConfigurationTarget.Global);
+  }
+
+  // First Time User (using global state)
+  static isFirstTimeUser(): boolean {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    return this.context.globalState.get<boolean>(this.FIRST_TIME_USER_KEY, true);
+  }
+
+  static async setFirstTimeUser(value: boolean): Promise<void> {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    await this.context.globalState.update(this.FIRST_TIME_USER_KEY, value);
   }
 }
