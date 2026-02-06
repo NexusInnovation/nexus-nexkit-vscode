@@ -1,3 +1,52 @@
+## 3.0.0-beta.2 (2026-02-06)
+
+* feat: Feature/apm mode (#79) ([3b12eb6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3b12eb6)), closes [#79](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/79)
+* feat(profiles): skip backups during profile switching ([a276ef9](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a276ef9))
+
+
+### BREAKING CHANGE
+
+* None - defaults to "Developers" mode maintaining current behavior
+
+* feat: add mode switching command, telemetry, and documentation
+
+Enhance the operation mode system with:
+
+- Mode switching command (Nexkit: Switch Operation Mode)
+  - Quick pick menu showing all available modes
+  - Highlights current mode
+  - Shows confirmation on switch
+  - Accessible via Command Palette
+
+- Telemetry tracking for mode usage
+  - Track mode selection during initialization (mode.selected)
+  - Track mode switches with from→to transition (mode.switched)
+  - Respects user telemetry preferences
+
+- Comprehensive documentation in README.md
+  - New "Operation Modes" section
+  - Explains Developers vs APM modes
+  - Three methods to switch modes documented
+  - Clear default behavior explanation
+
+All changes follow existing architectural patterns and maintain
+backward compatibility.
+
+* Added devops connection and APM agents repository
+
+* Reworked to only have the active project in the mcp config.
+
+* Fix some smells
+
+* Ajout des update de templates APM
+Refactor pour avoir un enum de modes plutôt que d'utiliser des strings.
+* Profile switching no longer creates automatic backups.
+Users should manually backup if needed before profile operations.
+
+- Changed ProfileService.applyProfile() default to skipBackup: true
+- Updated WorkspaceInitializationService to explicitly create backups
+- All tests passing (98 passing, 0 failing)
+
 ## 3.0.0-beta.1 (2026-01-24)
 
 * Added Agent Skill Support (#63) ([dd7de15](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/dd7de15)), closes [#63](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/63) [#45](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/45) [#47](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/47) [#48](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/48) [#55](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/55) [#56](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/56) [#57](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/57) [#47](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/47) [#48](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/48) [#55](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/55) [#56](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/56) [#57](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/57)
