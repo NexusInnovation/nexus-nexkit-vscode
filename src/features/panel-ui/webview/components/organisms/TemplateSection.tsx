@@ -8,25 +8,39 @@ import { CollapsibleSection } from "../molecules/CollapsibleSection";
 import { useVSCodeAPI } from "../../hooks/useVSCodeAPI";
 import { FilterMenu } from "../atoms/FilterMenu";
 import { useFilterMode } from "../../hooks/useFilterMode";
+import { OperationMode } from "../../../../ai-template-files/models/aiTemplateFile";
 
 /**
  * TemplateSection Component
  * Main template management section with search and collapse all functionality
+ * Filtered to show only Developers mode repositories
  */
 export function TemplateSection() {
   const messenger = useVSCodeAPI();
-  const { isReady, repositories, installedTemplates, installTemplate, uninstallTemplate, isTemplateInstalled } =
-    useTemplateData();
+  const { isReady, repositories, installedTemplates, installTemplate, uninstallTemplate, isTemplateInstalled } = useTemplateData(
+    OperationMode.Developers
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [filterMode, setFilterMode] = useFilterMode();
 
+  // Get Developers mode repository names for filtering installed count
+  const developersRepoNames = useMemo(() => new Set(repositories.map((r) => r.name)), [repositories]);
+
+  // Count installed templates from Developers mode repositories only
   const installedTemplatesCount = useMemo(() => {
-    return Object.values(installedTemplates).reduce((count, list) => count + list.length, 0);
-  }, [installedTemplates]);
+    let count = 0;
+    for (const [type, entries] of Object.entries(installedTemplates)) {
+      count += entries.filter((entry) => {
+        const [repoName] = entry.split("::");
+        return developersRepoNames.has(repoName);
+      }).length;
+    }
+    return count;
+  }, [installedTemplates, developersRepoNames]);
 
   const updateInstalledTemplates = () => {
-    messenger.sendMessage({ command: "updateInstalledTemplates" });
+    messenger.sendMessage({ command: "updateInstalledTemplates", mode: OperationMode.Developers });
   };
 
   return (

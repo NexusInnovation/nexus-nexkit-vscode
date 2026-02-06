@@ -17,6 +17,13 @@ export const Commands = {
   SAVE_PROFILE: "nexus-nexkit-vscode.saveProfile",
   APPLY_PROFILE: "nexus-nexkit-vscode.applyProfile",
   DELETE_PROFILE: "nexus-nexkit-vscode.deleteProfile",
+
+  // Mode management commands
+  SWITCH_MODE: "nexus-nexkit-vscode.switchMode",
+
+  // APM DevOps commands
+  ADD_DEVOPS_CONNECTION: "nexus-nexkit-vscode.addDevOpsConnection",
+  REMOVE_DEVOPS_CONNECTION: "nexus-nexkit-vscode.removeDevOpsConnection",
 } as const;
 
 // Type-safe command names

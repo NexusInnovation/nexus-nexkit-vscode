@@ -1,15 +1,38 @@
-import { useCallback } from "preact/hooks";
+import { useCallback, useMemo } from "preact/hooks";
 import { useVSCodeAPI } from "./useVSCodeAPI";
 import { useAppState } from "./useAppState";
-import { AITemplateFile, InstalledTemplatesMap } from "../../../ai-template-files/models/aiTemplateFile";
+import { AITemplateFile, InstalledTemplatesMap, OperationMode } from "../../../ai-template-files/models/aiTemplateFile";
 
 /**
  * Hook to access template data and operations
  * Now reads from global state instead of managing its own state
+ * @param mode Optional mode to filter repositories by
  */
-export function useTemplateData() {
+export function useTemplateData(mode?: OperationMode) {
   const messenger = useVSCodeAPI();
   const { templates } = useAppState();
+
+  /**
+   * Filter repositories by mode if provided
+   * - APM mode: Only shows repositories that explicitly include APM in modes
+   * - Developers mode: Shows repositories with Developers mode OR no modes specified
+   * - No mode filter: Shows all repositories
+   */
+  const repositories = useMemo(() => {
+    if (!mode) {
+      return templates.repositories;
+    }
+
+    return templates.repositories.filter((repo) => {
+      // If no modes specified on repository
+      if (!repo.modes || repo.modes.length === 0) {
+        // APM mode requires explicit opt-in - repos without modes are NOT shown in APM
+        // Developers mode shows repos without modes (backward compatibility)
+        return mode === OperationMode.Developers;
+      }
+      return repo.modes.includes(mode);
+    });
+  }, [templates.repositories, mode]);
 
   /**
    * Install a template
@@ -51,7 +74,7 @@ export function useTemplateData() {
   );
 
   return {
-    repositories: templates.repositories,
+    repositories,
     installedTemplates: templates.installed,
     isReady: templates.isReady,
     installTemplate,

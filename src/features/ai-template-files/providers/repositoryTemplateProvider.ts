@@ -53,8 +53,19 @@ export class RepositoryTemplateProvider {
 
             if (!response.ok) {
               if (response.status === 404) {
-                console.warn(`Path not found in ${this.config.name}: ${path}`);
+                // 404 can mean: path doesn't exist OR no access to private repo
+                console.warn(
+                  `[RepositoryTemplateProvider] Path not found or no access in ${this.config.name}: ${path} (status: 404). ` +
+                    `If this is a private repository, ensure you are signed in to GitHub with VS Code and have access to this repository.`
+                );
                 return;
+              }
+              if (response.status === 401 || response.status === 403) {
+                console.error(
+                  `[RepositoryTemplateProvider] Authentication failed for ${this.config.name}: ${response.status} ${response.statusText}. ` +
+                    `Please sign in to GitHub via VS Code to access private repositories.`
+                );
+                throw new Error(`Authentication failed: ${response.status} ${response.statusText}`);
               }
               throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
             }

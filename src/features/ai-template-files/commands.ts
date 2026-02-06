@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { ServiceContainer } from "../../core/serviceContainer";
 import { registerCommand } from "../../shared/commands/commandRegistry";
 import { Commands } from "../../shared/constants/commands";
+import { OperationMode } from "./models/aiTemplateFile";
 
 /**
  * Register AI template-related commands
@@ -10,7 +11,7 @@ export function registerUpdateInstalledTemplatesCommand(context: vscode.Extensio
   registerCommand(
     context,
     Commands.UPDATE_INSTALLED_TEMPLATES,
-    async () => {
+    async (mode?: OperationMode) => {
       // Check if workspace is open
       const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
       if (!workspaceFolder) {
@@ -20,7 +21,7 @@ export function registerUpdateInstalledTemplatesCommand(context: vscode.Extensio
 
       // Sync installed templates to get accurate count
       await services.aiTemplateData.syncInstalledTemplates();
-      const installedRecords = services.aiTemplateData.getInstalledTemplates();
+      const installedRecords = services.aiTemplateData.getInstalledTemplates(mode);
 
       // Count total installed templates
       const totalInstalled = Object.values(installedRecords).reduce((sum, arr) => sum + arr.length, 0);
@@ -42,7 +43,7 @@ export function registerUpdateInstalledTemplatesCommand(context: vscode.Extensio
       }
 
       try {
-        const summary = await services.aiTemplateData.updateInstalledTemplates();
+        const summary = await services.aiTemplateData.updateInstalledTemplates(mode);
 
         // Build result message
         const messages: string[] = [];

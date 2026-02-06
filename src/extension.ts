@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { SettingsManager } from "./core/settingsManager";
 import { initializeServices } from "./core/serviceContainer";
 import { NexkitPanelViewProvider } from "./features/panel-ui/nexkitPanelViewProvider";
-import { registerInitializeWorkspaceCommand } from "./features/initialization/commands";
+import { registerInitializeWorkspaceCommand, registerSwitchModeCommand } from "./features/initialization/commands";
 import { registerInstallUserMCPsCommand } from "./features/mcp-management/commands";
 import { registerCleanupBackupCommand, registerRestoreBackupCommand } from "./features/backup-management/commands";
 import { registerOpenSettingsCommand } from "./shared/commands/settingsCommand";
@@ -14,6 +14,10 @@ import {
   registerSaveProfileCommand,
 } from "./features/profile-management/commands";
 import { registerOpenFeedbackCommand } from "./shared/commands/feedbackCommand";
+import {
+  registerAddDevOpsConnectionCommand,
+  registerRemoveDevOpsConnectionCommand,
+} from "./features/apm-devops/commands";
 
 /**
  * Extension activation
@@ -33,6 +37,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Register all commands
   registerInitializeWorkspaceCommand(context, services);
+  registerSwitchModeCommand(context, services);
   registerInstallUserMCPsCommand(context, services);
   registerRestoreBackupCommand(context, services);
   registerCleanupBackupCommand(context, services);
@@ -43,6 +48,8 @@ export async function activate(context: vscode.ExtensionContext) {
   registerSaveProfileCommand(context, services);
   registerApplyProfileCommand(context, services);
   registerDeleteProfileCommand(context, services);
+  registerAddDevOpsConnectionCommand(context, services);
+  registerRemoveDevOpsConnectionCommand(context, services);
 
   // Register webview panel
   const nexkitPanelProvider = new NexkitPanelViewProvider();

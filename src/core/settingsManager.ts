@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { OperationMode } from "../features/ai-template-files/models/aiTemplateFile";
 
 /**
  * Centralized manager for all Nexkit extension settings and workspace state
@@ -34,12 +35,19 @@ export class SettingsManager {
   // Extension update state keys (GlobalState)
   private static readonly EXTENSION_LAST_UPDATE_CHECK_STATE_KEY = "nexkit.extension.lastUpdateCheck";
 
+  // Mode settings
+  private static readonly MODE = "mode";
+
   // Profile management settings
   private static readonly PROFILES = "profiles";
   private static readonly PROFILES_CONFIRM_BEFORE_SWITCH = "profiles.confirmBeforeSwitch";
 
   // Profile management state keys (WorkspaceState)
   private static readonly LAST_APPLIED_PROFILE_KEY = "lastAppliedProfile";
+
+  // APM DevOps state keys (WorkspaceState)
+  private static readonly ACTIVE_DEVOPS_CONNECTION_KEY = "activeDevOpsConnection";
+  private static readonly DEVOPS_CONNECTIONS_KEY = "devOpsConnections";
 
   /**
    * Initialize the SettingsManager with the extension context
@@ -166,5 +174,44 @@ export class SettingsManager {
       throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
     }
     await this.context.workspaceState.update(this.LAST_APPLIED_PROFILE_KEY, profileName);
+  }
+
+  // Mode
+  static getMode(): OperationMode {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<OperationMode>(this.MODE, OperationMode.Developers);
+  }
+
+  static async setMode(mode: OperationMode): Promise<void> {
+    await vscode.workspace.getConfiguration(this.NEXKIT_SECTION).update(this.MODE, mode, vscode.ConfigurationTarget.Global);
+  }
+
+  // Active DevOps Connection (using workspace state)
+  static getActiveDevOpsConnection(): string | null {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    return this.context.workspaceState.get<string | null>(this.ACTIVE_DEVOPS_CONNECTION_KEY, null);
+  }
+
+  static async setActiveDevOpsConnection(connectionId: string | null): Promise<void> {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    await this.context.workspaceState.update(this.ACTIVE_DEVOPS_CONNECTION_KEY, connectionId);
+  }
+
+  // DevOps Connections List (using workspace state)
+  static getDevOpsConnectionsList<T>(): T[] {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    return this.context.workspaceState.get<T[]>(this.DEVOPS_CONNECTIONS_KEY, []);
+  }
+
+  static async setDevOpsConnectionsList<T>(connections: T[]): Promise<void> {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    await this.context.workspaceState.update(this.DEVOPS_CONNECTIONS_KEY, connections);
   }
 }

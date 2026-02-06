@@ -32,6 +32,15 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
       })
     );
 
+    // Listen for configuration changes (mode switching)
+    context.subscriptions.push(
+      vscode.workspace.onDidChangeConfiguration((e) => {
+        if (e.affectsConfiguration("nexkit.mode")) {
+          this._messageHandler?.initialize();
+        }
+      })
+    );
+
     // Register the webview view provider
     context.subscriptions.push(vscode.window.registerWebviewViewProvider(NexkitPanelViewProvider.viewId, this));
   }

@@ -13,9 +13,11 @@ import { RecommendedSettingsConfigDeployer } from "../features/initialization/re
 import { AITemplateFilesDeployer } from "../features/initialization/aiTemplateFilesDeployer";
 import { WorkspaceInitPromptService } from "../features/initialization/workspaceInitPromptService";
 import { WorkspaceInitializationService } from "../features/initialization/workspaceInitializationService";
+import { ModeSelectionPromptService } from "../features/initialization/modeSelectionPromptService";
 import { InstalledTemplatesStateManager } from "../features/ai-template-files/services/installedTemplatesStateManager";
 import { RepositoryManager } from "../features/ai-template-files/services/repositoryManager";
 import { ProfileService } from "../features/profile-management/services/profileService";
+import { DevOpsMcpConfigService } from "../features/apm-devops/devOpsMcpConfigService";
 
 /**
  * Service container for dependency injection
@@ -36,8 +38,10 @@ export interface ServiceContainer {
   recommendedSettingsConfigDeployer: RecommendedSettingsConfigDeployer;
   aiTemplateFilesDeployer: AITemplateFilesDeployer;
   workspaceInitPrompt: WorkspaceInitPromptService;
+  modeSelectionPrompt: ModeSelectionPromptService;
   workspaceInitialization: WorkspaceInitializationService;
   profileService: ProfileService;
+  devOpsConfig: DevOpsMcpConfigService;
 }
 
 /**
@@ -65,12 +69,15 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const recommendedSettingsConfigDeployer = new RecommendedSettingsConfigDeployer();
   const aiTemplateFilesDeployer = new AITemplateFilesDeployer(aiTemplateData);
   const workspaceInitPrompt = new WorkspaceInitPromptService();
+  const modeSelectionPrompt = new ModeSelectionPromptService(telemetry);
   const workspaceInitialization = new WorkspaceInitializationService();
   const profileService = new ProfileService(installedTemplatesState, aiTemplateData, backup);
+  const devOpsConfig = new DevOpsMcpConfigService();
 
   // Register for disposal
   context.subscriptions.push(aiTemplateData);
   context.subscriptions.push(telemetry);
+  context.subscriptions.push(devOpsConfig);
 
   return {
     telemetry,
@@ -87,7 +94,9 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     recommendedSettingsConfigDeployer,
     aiTemplateFilesDeployer,
     workspaceInitPrompt,
+    modeSelectionPrompt,
     workspaceInitialization,
     profileService,
+    devOpsConfig,
   };
 }
