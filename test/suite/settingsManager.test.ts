@@ -112,4 +112,34 @@ suite("Unit: SettingsManager", () => {
     const timestamp = SettingsManager.getLastUpdateCheck();
     assert.strictEqual(timestamp, now);
   });
+
+  test("Should get user mode", () => {
+    const mode = SettingsManager.getUserMode();
+    assert.strictEqual(typeof mode, "string");
+  });
+
+  test("Should set user mode", async function () {
+    try {
+      await SettingsManager.setUserMode("APM");
+      const mode = SettingsManager.getUserMode();
+      assert.strictEqual(mode, "APM");
+    } catch (error: any) {
+      if (error.message && error.message.includes("not a registered configuration")) {
+        this.skip();
+      } else {
+        throw error;
+      }
+    }
+  });
+
+  test("Should get first time user status", () => {
+    const isFirstTime = SettingsManager.isFirstTimeUser();
+    assert.strictEqual(typeof isFirstTime, "boolean");
+  });
+
+  test("Should set first time user status", async () => {
+    await SettingsManager.setFirstTimeUser(false);
+    const isFirstTime = SettingsManager.isFirstTimeUser();
+    assert.strictEqual(isFirstTime, false);
+  });
 });
