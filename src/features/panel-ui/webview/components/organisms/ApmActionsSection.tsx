@@ -12,11 +12,7 @@ export function ApmActionsSection({ isInitialized }: ApmActionsSectionProps) {
   };
 
   if (isInitialized) {
-    return (
-      <p style="font-size: 0.8em; color: var(--vscode-descriptionForeground); margin: 0 8px 8px 8px;">
-        Your project is set up with Nexkit. Browse and install templates below.
-      </p>
-    );
+    return null;
   }
 
   return (

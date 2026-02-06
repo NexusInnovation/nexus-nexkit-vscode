@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { OperationMode } from "../features/ai-template-files/models/aiTemplateFile";
 
 /**
  * Centralized manager for all Nexkit extension settings and workspace state
@@ -176,11 +177,11 @@ export class SettingsManager {
   }
 
   // Mode
-  static getMode(): string {
-    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<string>(this.MODE, "Developers");
+  static getMode(): OperationMode {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<OperationMode>(this.MODE, OperationMode.Developers);
   }
 
-  static async setMode(mode: string): Promise<void> {
+  static async setMode(mode: OperationMode): Promise<void> {
     await vscode.workspace.getConfiguration(this.NEXKIT_SECTION).update(this.MODE, mode, vscode.ConfigurationTarget.Global);
   }
 

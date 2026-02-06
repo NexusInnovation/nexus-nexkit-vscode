@@ -3,7 +3,12 @@
  * Centralized state management to prevent timing issues with component mounting
  */
 
-import { AITemplateFile, InstalledTemplatesMap, RepositoryTemplatesMap } from "../../../ai-template-files/models/aiTemplateFile";
+import {
+  AITemplateFile,
+  InstalledTemplatesMap,
+  OperationMode,
+  RepositoryTemplatesMap,
+} from "../../../ai-template-files/models/aiTemplateFile";
 import { Profile } from "../../../profile-management/models/profile";
 import { DevOpsConnection } from "../../../apm-devops/models/devOpsConnection";
 
@@ -18,7 +23,7 @@ export interface AppState {
     hasWorkspace: boolean;
     isInitialized: boolean;
     isReady: boolean; // Whether initial workspace state has been received from extension
-    mode: string; // Operation mode: "Developers" or "APM"
+    mode: OperationMode; // Operation mode
   };
 
   /**
@@ -56,7 +61,7 @@ export const initialAppState: AppState = {
     hasWorkspace: false,
     isInitialized: false,
     isReady: false,
-    mode: "Developers",
+    mode: OperationMode.Developers,
   },
   templates: {
     repositories: [],

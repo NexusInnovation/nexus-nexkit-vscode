@@ -4,6 +4,7 @@ import { SettingsManager } from "../../core/settingsManager";
 import { registerCommand } from "../../shared/commands/commandRegistry";
 import { Commands } from "../../shared/constants/commands";
 import { ProfileSelectionPromptService } from "./profileSelectionPromptService";
+import { OperationMode } from "../ai-template-files/models/aiTemplateFile";
 
 /**
  * Register initialization-related commands
@@ -76,16 +77,16 @@ export function registerSwitchModeCommand(context: vscode.ExtensionContext, serv
       // Build quick pick items
       const modes: vscode.QuickPickItem[] = [
         {
-          label: "Developers",
+          label: OperationMode.Developers,
           description: "Full feature set",
           detail: "Access to Actions, Profiles, Templates, Repositories, and Footer sections",
-          picked: currentMode === "Developers",
+          picked: currentMode === OperationMode.Developers,
         },
         {
-          label: "APM",
+          label: OperationMode.APM,
           description: "Essential features only",
           detail: "Access to Footer section only",
-          picked: currentMode === "APM",
+          picked: currentMode === OperationMode.APM,
         },
       ];
 
@@ -107,7 +108,7 @@ export function registerSwitchModeCommand(context: vscode.ExtensionContext, serv
       }
 
       // Update mode
-      await SettingsManager.setMode(selected.label);
+      await SettingsManager.setMode(selected.label as OperationMode);
 
       // Track mode switch with transition
       services.telemetry.trackEvent("mode.switched", {

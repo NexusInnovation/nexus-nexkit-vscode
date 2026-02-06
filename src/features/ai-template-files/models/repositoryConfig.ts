@@ -36,7 +36,7 @@ export class RepositoryConfigManager {
       type: "github",
       url: "https://github.com/NexusInnovation/nexus-nexkit-templates",
       enabled: true,
-      modes: ["Developers"],
+      modes: [OperationMode.Developers],
       paths: {
         prompts: "prompts",
         skills: "skills",
@@ -56,7 +56,7 @@ export class RepositoryConfigManager {
       type: "github",
       url: "https://github.com/NexusInnovation/nexus-agents-template",
       enabled: true,
-      modes: ["APM"],
+      modes: [OperationMode.APM],
       paths: {
         agents: ".github/agents",
       },

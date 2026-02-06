@@ -123,9 +123,11 @@ export class NexkitPanelMessageHandler {
     }
   }
 
-  private async handleUpdateInstalledTemplates(message: WebviewMessage & { command: "updateInstalledTemplates" }): Promise<void> {
+  private async handleUpdateInstalledTemplates(
+    message: WebviewMessage & { command: "updateInstalledTemplates"; mode?: string }
+  ): Promise<void> {
     this.trackWebviewAction("updateInstalledTemplates");
-    await vscode.commands.executeCommand(Commands.UPDATE_INSTALLED_TEMPLATES);
+    await vscode.commands.executeCommand(Commands.UPDATE_INSTALLED_TEMPLATES, message.mode);
     this.sendInstalledTemplates();
   }
 
@@ -211,7 +213,9 @@ export class NexkitPanelMessageHandler {
     }
   }
 
-  private async handleSetActiveDevOpsConnection(message: WebviewMessage & { command: "setActiveDevOpsConnection" }): Promise<void> {
+  private async handleSetActiveDevOpsConnection(
+    message: WebviewMessage & { command: "setActiveDevOpsConnection" }
+  ): Promise<void> {
     this.trackWebviewAction("setActiveDevOpsConnection");
     try {
       await this._services.devOpsConfig.setActiveConnection(message.connectionId);

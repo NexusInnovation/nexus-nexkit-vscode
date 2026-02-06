@@ -6,7 +6,7 @@ import { AITemplateFile, InstalledTemplatesMap, OperationMode } from "../../../a
 /**
  * Hook to access template data and operations
  * Now reads from global state instead of managing its own state
- * @param mode Optional mode to filter repositories by (e.g., "Developers" or "APM")
+ * @param mode Optional mode to filter repositories by
  */
 export function useTemplateData(mode?: OperationMode) {
   const messenger = useVSCodeAPI();
@@ -14,8 +14,8 @@ export function useTemplateData(mode?: OperationMode) {
 
   /**
    * Filter repositories by mode if provided
-   * - APM mode: Only shows repositories that explicitly include "APM" in modes
-   * - Developers mode: Shows repositories with "Developers" mode OR no modes specified
+   * - APM mode: Only shows repositories that explicitly include APM in modes
+   * - Developers mode: Shows repositories with Developers mode OR no modes specified
    * - No mode filter: Shows all repositories
    */
   const repositories = useMemo(() => {
@@ -28,7 +28,7 @@ export function useTemplateData(mode?: OperationMode) {
       if (!repo.modes || repo.modes.length === 0) {
         // APM mode requires explicit opt-in - repos without modes are NOT shown in APM
         // Developers mode shows repos without modes (backward compatibility)
-        return mode === "Developers";
+        return mode === OperationMode.Developers;
       }
       return repo.modes.includes(mode);
     });

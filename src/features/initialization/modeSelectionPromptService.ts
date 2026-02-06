@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { SettingsManager } from "../../core/settingsManager";
 import { TelemetryService } from "../../shared/services/telemetryService";
+import { OperationMode } from "../ai-template-files/models/aiTemplateFile";
 
 /**
  * Service for prompting users to select an operation mode during workspace initialization
@@ -10,24 +11,24 @@ export class ModeSelectionPromptService {
 
   /**
    * Prompt user to select an operation mode
-   * @returns The selected mode, or "Developers" as default
+   * @returns The selected mode, or Developers as default
    */
-  public async promptModeSelection(): Promise<string> {
+  public async promptModeSelection(): Promise<OperationMode> {
     const currentMode = SettingsManager.getMode();
 
     // Build quick pick items
     const modes: vscode.QuickPickItem[] = [
       {
-        label: "Developers",
+        label: OperationMode.Developers,
         description: "Full feature set",
         detail: "Access to Actions, Profiles, Templates, Repositories, and Footer sections",
-        picked: currentMode === "Developers",
+        picked: currentMode === OperationMode.Developers,
       },
       {
-        label: "APM",
+        label: OperationMode.APM,
         description: "Essential features only",
         detail: "Access to Footer section only",
-        picked: currentMode === "APM",
+        picked: currentMode === OperationMode.APM,
       },
     ];
 
@@ -39,7 +40,7 @@ export class ModeSelectionPromptService {
     });
 
     // Return selected mode or default to Developers
-    const selectedMode = selected?.label || "Developers";
+    const selectedMode = (selected?.label as OperationMode) || OperationMode.Developers;
 
     // Track mode selection
     this.telemetry?.trackEvent("mode.selected", {

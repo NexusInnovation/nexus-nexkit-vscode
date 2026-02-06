@@ -1,5 +1,11 @@
 import * as vscode from "vscode";
-import { AITemplateFile, AITemplateFileType, InstalledTemplatesMap, RepositoryTemplatesMap } from "../models/aiTemplateFile";
+import {
+  AITemplateFile,
+  AITemplateFileType,
+  InstalledTemplatesMap,
+  OperationMode,
+  RepositoryTemplatesMap,
+} from "../models/aiTemplateFile";
 import { RepositoryManager } from "./repositoryManager";
 import { FetchAllResult, TemplateFetcherService } from "./templateFetcherService";
 import { TemplateDataStore } from "./templateDataStore";
@@ -211,10 +217,42 @@ export class AITemplateDataService implements vscode.Disposable {
   }
 
   /**
-   * Get all installed templates
+   * Get all installed templates, optionally filtered by operation mode
+   * @param mode Optional mode to filter by (only returns templates from repositories with this mode)
    */
-  public getInstalledTemplates(): InstalledTemplatesMap {
-    return this.fileOperations.getInstalledTemplates();
+  public getInstalledTemplates(mode?: OperationMode): InstalledTemplatesMap {
+    const allInstalled = this.fileOperations.getInstalledTemplates();
+
+    if (!mode) {
+      return allInstalled;
+    }
+
+    // Filter by mode - only include templates from repositories that support the requested mode
+    const filtered: InstalledTemplatesMap = {
+      agents: [],
+      prompts: [],
+      skills: [],
+      instructions: [],
+      chatmodes: [],
+    };
+
+    for (const [type, entries] of Object.entries(allInstalled) as [keyof InstalledTemplatesMap, string[]][]) {
+      filtered[type] = entries.filter((entry) => {
+        const [repoName] = entry.split("::");
+        const repoModes = this.repositoryManager.getRepositoryModes(repoName);
+
+        // Check mode visibility rules:
+        // - APM mode: requires explicit opt-in (only if repo has APM in modes)
+        // - Developers mode: shows repos with Developers mode OR no modes specified
+        if (mode === OperationMode.APM) {
+          return repoModes?.includes(OperationMode.APM) ?? false;
+        } else {
+          return !repoModes || repoModes.length === 0 || repoModes.includes(OperationMode.Developers);
+        }
+      });
+    }
+
+    return filtered;
   }
 
   /**
@@ -276,13 +314,30 @@ export class AITemplateDataService implements vscode.Disposable {
   /**
    * Update all installed templates to their latest versions
    * First syncs with filesystem, then refetches and reinstalls all installed templates
+   * @param mode Optional operation mode to filter templates by
    */
-  public async updateInstalledTemplates(): Promise<BatchInstallSummary & { skipped: number }> {
+  public async updateInstalledTemplates(mode?: OperationMode): Promise<BatchInstallSummary & { skipped: number }> {
     // First sync with filesystem to ensure state is current
     await this.syncInstalledTemplates();
 
     // Get all currently installed templates from state
-    const installedRecords = this.stateManager.getInstalledTemplates();
+    let installedRecords = this.stateManager.getInstalledTemplates();
+
+    // Filter by mode if specified
+    if (mode) {
+      installedRecords = installedRecords.filter((record) => {
+        const repoModes = this.repositoryManager.getRepositoryModes(record.repository);
+
+        // Check mode visibility rules:
+        // - APM mode: requires explicit opt-in (only if repo has APM in modes)
+        // - Developers mode: shows repos with Developers mode OR no modes specified
+        if (mode === OperationMode.APM) {
+          return repoModes?.includes(OperationMode.APM) ?? false;
+        } else {
+          return !repoModes || repoModes.length === 0 || repoModes.includes(OperationMode.Developers);
+        }
+      });
+    }
 
     // Get all available templates from data store
     const allTemplates = this.dataStore.getAll();

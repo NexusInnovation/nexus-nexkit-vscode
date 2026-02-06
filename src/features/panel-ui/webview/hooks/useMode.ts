@@ -4,6 +4,7 @@
  */
 
 import { useAppState } from "./useAppState";
+import { OperationMode } from "../../../ai-template-files/models/aiTemplateFile";
 
 /**
  * Mode hook result
@@ -12,7 +13,7 @@ export interface UseModeResult {
   /**
    * Current operation mode
    */
-  mode: string;
+  mode: OperationMode;
 
   /**
    * Whether current mode is Developers
@@ -34,7 +35,7 @@ export function useMode(): UseModeResult {
 
   return {
     mode,
-    isDevelopersMode: mode === "Developers",
-    isAPMMode: mode === "APM",
+    isDevelopersMode: mode === OperationMode.Developers,
+    isAPMMode: mode === OperationMode.APM,
   };
 }
