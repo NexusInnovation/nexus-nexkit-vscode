@@ -89,6 +89,11 @@
         "title": "Nexkit: Delete Profile",
         "category": "Nexkit",
         "icon": "$(trash)"
+      },
+      {
+        "command": "nexus-nexkit-vscode.resetNexkit",
+        "title": "Nexkit: Reset to Initial State",
+        "category": "Nexkit"
       }
     ],
     "menus": {
@@ -284,6 +289,17 @@
               }
             }
           }
+        },
+        "nexkit.userMode": {
+          "type": "string",
+          "enum": [
+            "APM",
+            "Developer",
+            "notset"
+          ],
+          "default": "notset",
+          "scope": "application",
+          "markdownDescription": "User mode for Nexkit. **APM Mode** provides optimized templates and settings for Application Performance Management workflows. **Developer Mode** provides comprehensive development tools and templates."
         }
       }
     }

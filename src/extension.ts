@@ -8,6 +8,7 @@ import { registerCleanupBackupCommand, registerRestoreBackupCommand } from "./fe
 import { registerOpenSettingsCommand } from "./shared/commands/settingsCommand";
 import { registerCheckExtensionUpdateCommand } from "./features/extension-updates/commands";
 import { registerUpdateInstalledTemplatesCommand } from "./features/ai-template-files/commands";
+import { registerResetNexkitCommand } from "./features/reset/commands";
 import {
   registerApplyProfileCommand,
   registerDeleteProfileCommand,
@@ -43,10 +44,19 @@ export async function activate(context: vscode.ExtensionContext) {
   registerSaveProfileCommand(context, services);
   registerApplyProfileCommand(context, services);
   registerDeleteProfileCommand(context, services);
+  registerResetNexkitCommand(context, services);
 
   // Register webview panel
   const nexkitPanelProvider = new NexkitPanelViewProvider();
   nexkitPanelProvider.initialize(context, services);
+
+  // Prompt for mode selection on first-time activation (before other initialization)
+  services.modeSelection.ensureModeSelected().catch((error) => {
+    console.error("Failed to prompt for mode selection:", error);
+    services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+      context: "modeSelection.ensureModeSelected",
+    });
+  });
 
   // Check for extension updates on activation & cleanup old .vsix files
   services.extensionUpdate.checkForExtensionUpdatesOnActivation();
