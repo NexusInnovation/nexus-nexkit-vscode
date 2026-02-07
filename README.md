@@ -27,8 +27,6 @@ Access all commands via Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
 
 - **Nexkit: Cleanup Template Backups** - Remove old template backup directories
 
-- **Nexkit: Reset to Initial State** - Reset Nexkit to its initial installation state, clearing all workspace and global state. Useful for testing and troubleshooting.
-
 ### Sidebar Panel
 
 A dedicated Nexkit sidebar in the Activity Bar provides:

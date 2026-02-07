@@ -9,7 +9,6 @@ import { registerCleanupBackupCommand, registerRestoreBackupCommand } from "./fe
 import { registerOpenSettingsCommand } from "./shared/commands/settingsCommand";
 import { registerCheckExtensionUpdateCommand } from "./features/extension-updates/commands";
 import { registerUpdateInstalledTemplatesCommand } from "./features/ai-template-files/commands";
-import { registerResetNexkitCommand } from "./features/reset/commands";
 import {
   registerApplyProfileCommand,
   registerDeleteProfileCommand,
@@ -50,7 +49,6 @@ export async function activate(context: vscode.ExtensionContext) {
   registerDeleteProfileCommand(context, services);
   registerAddDevOpsConnectionCommand(context, services);
   registerRemoveDevOpsConnectionCommand(context, services);
-  registerResetNexkitCommand(context, services);
 
   // Register webview panel
   const nexkitPanelProvider = new NexkitPanelViewProvider();
