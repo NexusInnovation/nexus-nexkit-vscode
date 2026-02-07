@@ -3,8 +3,14 @@
  * Centralized state management to prevent timing issues with component mounting
  */
 
-import { AITemplateFile, InstalledTemplatesMap, RepositoryTemplatesMap } from "../../../ai-template-files/models/aiTemplateFile";
+import {
+  AITemplateFile,
+  InstalledTemplatesMap,
+  OperationMode,
+  RepositoryTemplatesMap,
+} from "../../../ai-template-files/models/aiTemplateFile";
 import { Profile } from "../../../profile-management/models/profile";
+import { DevOpsConnection } from "../../../apm-devops/models/devOpsConnection";
 
 /**
  * Complete application state
@@ -17,6 +23,7 @@ export interface AppState {
     hasWorkspace: boolean;
     isInitialized: boolean;
     isReady: boolean; // Whether initial workspace state has been received from extension
+    mode: OperationMode; // Operation mode
   };
 
   /**
@@ -35,6 +42,15 @@ export interface AppState {
     list: Profile[];
     isReady: boolean;
   };
+
+  /**
+   * APM DevOps connection state
+   */
+  devOpsConnections: {
+    list: DevOpsConnection[];
+    isReady: boolean;
+    error?: string;
+  };
 }
 
 /**
@@ -45,6 +61,7 @@ export const initialAppState: AppState = {
     hasWorkspace: false,
     isInitialized: false,
     isReady: false,
+    mode: OperationMode.None,
   },
   templates: {
     repositories: [],
@@ -58,6 +75,10 @@ export const initialAppState: AppState = {
     isReady: false,
   },
   profiles: {
+    list: [],
+    isReady: false,
+  },
+  devOpsConnections: {
     list: [],
     isReady: false,
   },

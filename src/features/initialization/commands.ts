@@ -4,6 +4,7 @@ import { SettingsManager } from "../../core/settingsManager";
 import { registerCommand } from "../../shared/commands/commandRegistry";
 import { Commands } from "../../shared/constants/commands";
 import { ProfileSelectionPromptService } from "./profileSelectionPromptService";
+import { OperationMode } from "../ai-template-files/models/aiTemplateFile";
 
 /**
  * Register initialization-related commands
@@ -33,6 +34,10 @@ export function registerInitializeWorkspaceCommand(context: vscode.ExtensionCont
         }
       }
 
+      // Prompt user to select mode
+      const selectedMode = await services.modeSelectionPrompt.promptModeSelection();
+      await SettingsManager.setMode(selectedMode);
+
       // Prompt user to select a profile if any are saved
       const selectedProfileName = await new ProfileSelectionPromptService(services.profileService).promptProfileSelection();
 
@@ -54,6 +59,64 @@ export function registerInitializeWorkspaceCommand(context: vscode.ExtensionCont
       }
 
       vscode.window.showInformationMessage(`${resultMessage}`);
+    },
+    services.telemetry
+  );
+}
+
+/**
+ * Register mode switching command
+ */
+export function registerSwitchModeCommand(context: vscode.ExtensionContext, services: ServiceContainer): void {
+  registerCommand(
+    context,
+    Commands.SWITCH_MODE,
+    async () => {
+      const currentMode = SettingsManager.getMode();
+
+      // Build quick pick items
+      const modes: vscode.QuickPickItem[] = [
+        {
+          label: OperationMode.Developers,
+          description: "Full feature set",
+          detail: "Access to Actions, Profiles, Templates, Repositories, and Footer sections",
+          picked: currentMode === OperationMode.Developers,
+        },
+        {
+          label: OperationMode.APM,
+          description: "Essential features only",
+          detail: "Access to Footer section only",
+          picked: currentMode === OperationMode.APM,
+        },
+      ];
+
+      // Show quick pick
+      const selected = await vscode.window.showQuickPick(modes, {
+        placeHolder: `Current mode: ${currentMode}. Select a new mode`,
+        title: "Switch Nexkit Operation Mode",
+      });
+
+      // User cancelled
+      if (!selected) {
+        return;
+      }
+
+      // No change
+      if (selected.label === currentMode) {
+        vscode.window.showInformationMessage(`Already in ${currentMode} mode`);
+        return;
+      }
+
+      // Update mode
+      await SettingsManager.setMode(selected.label as OperationMode);
+
+      // Track mode switch with transition
+      services.telemetry.trackEvent("mode.switched", {
+        fromMode: currentMode,
+        toMode: selected.label,
+      });
+
+      vscode.window.showInformationMessage(`Switched to ${selected.label} mode`);
     },
     services.telemetry
   );

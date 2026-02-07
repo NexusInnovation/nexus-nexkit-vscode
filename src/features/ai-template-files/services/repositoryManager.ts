@@ -1,6 +1,7 @@
 import { RepositoryConfig, RepositoryConfigManager } from "../models/repositoryConfig";
 import { RepositoryTemplateProvider } from "../providers/repositoryTemplateProvider";
 import { LocalFolderTemplateProvider } from "../providers/localFolderTemplateProvider";
+import { OperationMode } from "../models/aiTemplateFile";
 
 /**
  * Union type for all template provider types
@@ -12,18 +13,21 @@ type TemplateProvider = RepositoryTemplateProvider | LocalFolderTemplateProvider
  */
 export class RepositoryManager {
   private providers: Map<string, TemplateProvider> = new Map();
+  private configs: Map<string, RepositoryConfig> = new Map();
 
   /**
    * Initialize repository providers from configuration
    */
   public initialize(): void {
     this.providers.clear();
+    this.configs.clear();
     const repositories = RepositoryConfigManager.getEnabledRepositories();
 
     for (const config of repositories) {
       try {
         const provider = this.createProvider(config);
         this.providers.set(config.name, provider);
+        this.configs.set(config.name, config);
       } catch (error) {
         console.error(`Failed to create provider for ${config.name}:`, error);
       }
@@ -79,6 +83,20 @@ export class RepositoryManager {
   }
 
   /**
+   * Get repository config by name
+   */
+  public getRepositoryConfig(repositoryName: string): RepositoryConfig | undefined {
+    return this.configs.get(repositoryName);
+  }
+
+  /**
+   * Get modes for a repository
+   */
+  public getRepositoryModes(repositoryName: string): OperationMode[] | undefined {
+    return this.configs.get(repositoryName)?.modes;
+  }
+
+  /**
    * Refresh repositories (reload from configuration)
    */
   public refresh(): void {
@@ -90,5 +108,6 @@ export class RepositoryManager {
    */
   public clear(): void {
     this.providers.clear();
+    this.configs.clear();
   }
 }
