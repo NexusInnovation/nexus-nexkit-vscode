@@ -27,6 +27,8 @@ Access all commands via Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
 
 - **Nexkit: Cleanup Template Backups** - Remove old template backup directories
 
+- **Nexkit: Reset to Initial State** - Reset Nexkit to its initial installation state, clearing all workspace and global state. Useful for testing and troubleshooting.
+
 ### Sidebar Panel
 
 A dedicated Nexkit sidebar in the Activity Bar provides:
@@ -210,12 +212,29 @@ Use local folders for custom internal templates, development, or offline work:
 
 - **`nexkit.mcpSetup.dismissed`** - Whether the MCP setup notification was dismissed (default: `false`)
 
+### User Mode
+
+- **`nexkit.userMode`** - User mode for Nexkit (default: `notset`)
+  - **APM Mode**: Optimized templates and settings for Application Performance Management workflows
+  - **Developer Mode**: Comprehensive development tools and templates
+  - On first activation, users are prompted to choose their preferred mode
+
 ### Telemetry
 
 - **`nexkit.telemetry.enabled`** - Enable anonymous usage telemetry (default: `true`, respects VS Code's global telemetry setting)
 - **`nexkit.telemetry.connectionString`** - Azure Application Insights connection string (optional, for custom telemetry endpoint)
 
 ## How It Works
+
+### First-Time Setup
+
+When you activate Nexkit for the first time:
+
+1. **Mode Selection Prompt**: You'll be asked to choose between:
+   - **APM Mode**: Optimized for Application Performance Management workflows
+   - **Developer Mode**: Full suite of development tools and templates
+2. Your selection is saved to `nexkit.userMode` and can be changed anytime in settings
+3. This prompt only appears once - on first activation
 
 ### Workspace Initialization
 
