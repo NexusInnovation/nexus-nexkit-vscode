@@ -2,6 +2,8 @@
 
 This guide provides step-by-step instructions for deploying Visual Studio Code with the Nexkit extension through Microsoft Intune as a Win32 app.
 
+> **💡 Quick Install for End Users**: If you're an end user (not deploying via Intune), see [QUICK-INSTALL.md](./QUICK-INSTALL.md) for a simpler one-step installation method.
+
 ## Overview
 
 The deployment package includes:
@@ -22,14 +24,58 @@ The deployment package includes:
 
 3. **PowerShell 5.1 or later**
 
+4. **Nexkit Extension File**
+   - ⚠️ **Important**: Since Nexkit is a private repository, you must obtain the `.vsix` file before deployment
+   - Download from GitHub Releases (requires GitHub authentication)
+   - OR build from source if you have repository access
+
 ### Files Required
 - `install-vscode-with-nexkit.ps1` - Main installation script
 - `detect-installation.ps1` - Detection script
 - `uninstall-vscode-with-nexkit.ps1` - Uninstallation script
+- **`nexus-nexkit-vscode-X.Y.Z.vsix`** - The extension file (must be obtained separately)
+
+### Getting the .vsix File
+
+**Option 1: Download from GitHub Releases**
+1. Navigate to https://github.com/NexusInnovation/nexus-nexkit-vscode/releases
+2. Log in with your GitHub account (requires access to private repository)
+3. Download the latest `.vsix` file
+
+**Option 2: Build from Source**
+```powershell
+# Clone the repository (requires access)
+git clone https://github.com/NexusInnovation/nexus-nexkit-vscode.git
+cd nexus-nexkit-vscode
+
+# Install dependencies and build
+npm install
+npm run package
+
+# The .vsix file is created in the project root
+# Copy it to your deployment folder
+```
 
 ## Step 1: Prepare the Package
 
-### 1.1 Create Package Directory Structure
+### Important: Private Repository Considerations
+
+⚠️ **Nexkit is a private repository**, so the installation script cannot automatically download the extension from GitHub without authentication. You have **two recommended approaches**:
+
+**Approach 1: Include .vsix in Intune Package (Recommended - Simplest)**
+- Bundle the `.vsix` file directly in your deployment package
+- No external dependencies or hosting required
+- Increases package size but most reliable
+
+**Approach 2: Host on Azure Blob Storage**
+- Upload `.vsix` to Azure Blob Storage
+- Generate SAS token with read permissions
+- Use `-VsixUrl` parameter in install command
+- Smaller Intune package but requires external hosting
+
+We'll demonstrate **Approach 1** below as it's the most straightforward for Intune.
+
+### 1.1 Create Package Directory Structure with .vsix File
 
 ```powershell
 # Create a deployment folder
@@ -40,6 +86,20 @@ New-Item -ItemType Directory -Path $deploymentFolder -Force
 Copy-Item ".\install-vscode-with-nexkit.ps1" -Destination $deploymentFolder
 Copy-Item ".\detect-installation.ps1" -Destination $deploymentFolder
 Copy-Item ".\uninstall-vscode-with-nexkit.ps1" -Destination $deploymentFolder
+
+# *** IMPORTANT: Copy the .vsix file ***
+# Replace with your actual .vsix file path and name
+$vsixFile = "..\nexus-nexkit-vscode-3.0.0-beta.4.vsix"  # Adjust version as needed
+Copy-Item $vsixFile -Destination "$deploymentFolder\nexkit.vsix"
+
+# Verify all files are present
+Get-ChildItem $deploymentFolder | Format-Table Name, Length
+
+# Should show:
+# - install-vscode-with-nexkit.ps1
+# - detect-installation.ps1
+# - uninstall-vscode-with-nexkit.ps1
+# - nexkit.vsix
 ```
 
 ### 1.2 Create the .intunewin Package
@@ -88,9 +148,14 @@ $outputFolder = "C:\IntunePackages\Output"
 
 ### 2.3 Program Configuration
 
-**Install command:**
+**Install command** (with bundled .vsix file):
 ```powershell
-powershell.exe -ExecutionPolicy Bypass -File .\install-vscode-with-nexkit.ps1 -InstallScope Machine
+powershell.exe -ExecutionPolicy Bypass -File .\install-vscode-with-nexkit.ps1 -InstallScope Machine -VsixPath .\nexkit.vsix
+```
+
+**Alternative: If using Azure Blob Storage with SAS token:**
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File .\install-vscode-with-nexkit.ps1 -InstallScope Machine -VsixUrl "https://yourstorage.blob.core.windows.net/nexkit/nexkit.vsix?sp=r&st=2026-12-31..."
 ```
 
 **Uninstall command:**
@@ -100,7 +165,7 @@ powershell.exe -ExecutionPolicy Bypass -File .\uninstall-vscode-with-nexkit.ps1
 
 **Install behavior:**
 - Select: `System` (for machine-wide installation)
-- Or: `User` (if deploying per-user)
+- Or: `User` (if deploying per-user, change `-InstallScope` to `User`)
 
 **Device restart behavior:**
 - Select: `Determine behavior based on return codes`
@@ -240,8 +305,11 @@ Get-Content "C:\ProgramData\Microsoft\IntuneManagementExtension\Logs\IntuneManag
 Test the installation manually before deploying:
 
 ```powershell
-# Test installation
-.\install-vscode-with-nexkit.ps1 -InstallScope User -Verbose
+# Ensure you have the .vsix file
+Test-Path "C:\IntunePackages\Nexkit\nexkit.vsix"  # Should return True
+
+# Test installation with bundled file
+.\install-vscode-with-nexkit.ps1 -InstallScope User -VsixPath "C:\IntunePackages\Nexkit\nexkit.vsix" -Verbose
 
 # Test detection
 .\detect-installation.ps1
@@ -251,6 +319,55 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "Detection failed" -ForegroundColor Red
 }
 
+
+### Alternative Deployment: Azure Blob Storage Hosting
+
+If you prefer not to bundle the `.vsix` file in the Intune package:
+
+**Step 1: Upload to Azure Blob Storage**
+```powershell
+# Install Azure PowerShell modules if not already installed
+# Install-Module -Name Az.Storage
+
+# Upload the .vsix file
+$storageAccount = "yourstorageaccount"
+$containerName = "nexkit"
+$resourceGroup = "your-resource-group"
+
+# Upload file
+$context = (Get-AzStorageAccount -ResourceGroupName $resourceGroup -Name $storageAccount).Context
+Set-AzStorageBlobContent -File ".\nexkit.vsix" -Container $containerName -Blob "nexkit.vsix" -Context $context
+
+# Generate SAS token (valid for 1 year)
+$sasToken = New-AzStorageBlobSASToken `
+    -Context $context `
+    -Container $containerName `
+    -Blob "nexkit.vsix" `
+    -Permission r `
+    -StartTime (Get-Date) `
+    -ExpiryTime (Get-Date).AddYears(1)
+
+# Build full URL
+$blobUrl = "https://$storageAccount.blob.core.windows.net/$containerName/nexkit.vsix$sasToken"
+Write-Host "Use this URL in your install command:"
+Write-Host $blobUrl
+```
+
+**Step 2: Update Install Command**
+Use the `-VsixUrl` parameter instead of `-VsixPath`:
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File .\install-vscode-with-nexkit.ps1 -InstallScope Machine -VsixUrl "YOUR_BLOB_URL_WITH_SAS_TOKEN"
+```
+
+**Benefits:**
+- Smaller Intune package
+- Easy to update extension without repackaging
+- Centralized version management
+
+**Drawbacks:**
+- Requires internet access to Azure
+- SAS tokens expire (need renewal)
+- Additional infrastructure to manage
 # Test uninstallation
 .\uninstall-vscode-with-nexkit.ps1 -Verbose
 ```
@@ -359,3 +476,13 @@ IntuneWinAppUtil.exe -c "C:\IntunePackages\Nexkit" -s "install-vscode-with-nexki
 ```powershell
 code --list-extensions | Select-String "nexkit"
 ```
+
+---
+
+## Related Documentation
+
+- **[QUICK-INSTALL.md](./QUICK-INSTALL.md)** - Quick installer with OAuth (for end users)
+- **[GITHUB-OAUTH-APP-SETUP.md](./GITHUB-OAUTH-APP-SETUP.md)** - Configure GitHub OAuth app
+- **[README.md](./README.md)** - Main documentation and usage examples
+- **[TESTING.md](./TESTING.md)** - Testing procedures before deployment
+
