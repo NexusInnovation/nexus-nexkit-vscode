@@ -25,6 +25,9 @@ export const Commands = {
   // APM DevOps commands
   ADD_DEVOPS_CONNECTION: "nexus-nexkit-vscode.addDevOpsConnection",
   REMOVE_DEVOPS_CONNECTION: "nexus-nexkit-vscode.removeDevOpsConnection",
+
+  // Logging commands
+  SHOW_LOGS: "nexus-nexkit-vscode.showLogs",
 } as const;
 
 // Type-safe command names

@@ -109,6 +109,12 @@
         "command": "nexus-nexkit-vscode.removeDevOpsConnection",
         "title": "Nexkit: Remove Azure DevOps Connection",
         "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.showLogs",
+        "title": "Nexkit: Show Logs",
+        "category": "Nexkit",
+        "icon": "$(output)"
       }
     ],
     "menus": {

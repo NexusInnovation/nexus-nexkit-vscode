@@ -23,7 +23,7 @@ specs/
 
 # End Nexkit exclusions
 
-.vscode/
+
 .github/agents/
 .github/prompts/
 .github/skills/

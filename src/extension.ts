@@ -15,6 +15,7 @@ import {
   registerSaveProfileCommand,
 } from "./features/profile-management/commands";
 import { registerOpenFeedbackCommand } from "./shared/commands/feedbackCommand";
+import { registerShowLogsCommand } from "./shared/commands/loggingCommand";
 import { registerAddDevOpsConnectionCommand, registerRemoveDevOpsConnectionCommand } from "./features/apm-devops/commands";
 
 /**
@@ -22,13 +23,13 @@ import { registerAddDevOpsConnectionCommand, registerRemoveDevOpsConnectionComma
  * This method is called when the extension is first activated
  */
 export async function activate(context: vscode.ExtensionContext) {
-  console.log("Nexkit extension activated!");
-
   // Initialize core settings manager
   SettingsManager.initialize(context);
 
   // Initialize all services
   const services = await initializeServices(context);
+
+  services.logging.info("Nexkit extension activated successfully");
 
   // Set up global error handler to track all unhandled errors
   setupGlobalErrorHandling(services);
@@ -43,6 +44,7 @@ export async function activate(context: vscode.ExtensionContext) {
   registerCheckExtensionUpdateCommand(context, services);
   registerUpdateInstalledTemplatesCommand(context, services);
   registerOpenSettingsCommand(context, services);
+  registerShowLogsCommand(context, services);
   registerOpenFeedbackCommand(context, services);
   registerSaveProfileCommand(context, services);
   registerApplyProfileCommand(context, services);
@@ -56,7 +58,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Prompt for mode selection on first-time activation (before other initialization)
   services.modeSelection.ensureModeSelected().catch((error) => {
-    console.error("Failed to prompt for mode selection:", error);
+    services.logging.error("Failed to prompt for mode selection", error);
     services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
       context: "modeSelection.ensureModeSelected",
     });
@@ -77,7 +79,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Initialize AI template data asynchronously (don't block extension activation)
   services.aiTemplateData.initialize().catch((error) => {
-    console.error("Failed to initialize AI template data:", error);
+    services.logging.error("Failed to initialize AI template data", error);
     // Track initialization errors
     services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
       context: "aiTemplateData.initialize",
@@ -104,14 +106,14 @@ export async function activate(context: vscode.ExtensionContext) {
 function setupGlobalErrorHandling(services: ReturnType<typeof initializeServices> extends Promise<infer T> ? T : never): void {
   // Track unhandled promise rejections
   process.on("unhandledRejection", (reason: any) => {
-    console.error("Unhandled promise rejection:", reason);
+    services.logging.error("Unhandled promise rejection", reason);
     const error = reason instanceof Error ? reason : new Error(String(reason));
     services.telemetry.trackError(error, { context: "unhandledRejection" });
   });
 
   // Track uncaught exceptions (less common in VS Code extensions)
   process.on("uncaughtException", (error: Error) => {
-    console.error("Uncaught exception:", error);
+    services.logging.error("Uncaught exception", error);
     services.telemetry.trackError(error, { context: "uncaughtException" });
   });
 }
