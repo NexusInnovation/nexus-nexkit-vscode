@@ -15,37 +15,52 @@ export function registerInitializeWorkspaceCommand(context: vscode.ExtensionCont
     context,
     Commands.INIT_WORKSPACE,
     async () => {
+      services.logging.info("Starting workspace initialization...");
+
       const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
       if (!workspaceFolder) {
+        services.logging.warn("Workspace initialization failed: No workspace folder open");
         vscode.window.showErrorMessage("No workspace folder open. Please open a workspace first.");
         return;
       }
 
+      services.logging.info(`Initializing workspace: ${workspaceFolder.uri.fsPath}`);
+
       // Check if already initialized
       const isInitialized = SettingsManager.isWorkspaceInitialized();
       if (isInitialized) {
+        services.logging.info("Workspace already initialized, prompting for confirmation...");
         const result = await vscode.window.showWarningMessage(
           "Workspace already initialized with Nexkit. This will run the initialization wizard again and reconfigure your Nexkit settings. Continue?",
           "Yes",
           "No"
         );
         if (result !== "Yes") {
+          services.logging.info("Workspace re-initialization cancelled by user");
           return;
         }
       }
 
       // Prompt user to select mode
+      services.logging.info("Prompting user to select operation mode...");
       const selectedMode = await services.modeSelectionPrompt.promptModeSelection();
       await SettingsManager.setMode(selectedMode);
+      services.logging.info(`Selected mode: ${selectedMode}`);
 
       // Prompt user to select a profile if any are saved
       const selectedProfileName = await new ProfileSelectionPromptService(services.profileService).promptProfileSelection();
 
+      services.logging.info("Running workspace initialization...");
       const { deploymentSummary, backupPath } = await services.workspaceInitialization.initializeWorkspace(
         workspaceFolder,
         selectedProfileName,
         services
       );
+
+      services.logging.info("Workspace initialization completed successfully", {
+        installedTemplates: deploymentSummary?.installed ?? 0,
+        backupPath,
+      });
 
       // Show success message with deployment summary
       let resultMessage = "Nexkit project initialized successfully!";

@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { LoggingService } from "../shared/services/loggingService";
 import { TelemetryService } from "../shared/services/telemetryService";
 import { MCPConfigService } from "../features/mcp-management/mcpConfigService";
 import { AITemplateDataService } from "../features/ai-template-files/services/aiTemplateDataService";
@@ -25,6 +26,7 @@ import { DevOpsMcpConfigService } from "../features/apm-devops/devOpsMcpConfigSe
  * Holds all service instances used throughout the extension
  */
 export interface ServiceContainer {
+  logging: LoggingService;
   telemetry: TelemetryService;
   mcpConfig: MCPConfigService;
   aiTemplateData: AITemplateDataService;
@@ -50,7 +52,11 @@ export interface ServiceContainer {
  * Initialize all services
  */
 export async function initializeServices(context: vscode.ExtensionContext): Promise<ServiceContainer> {
-  // Initialize telemetry service first
+  // Initialize logging service first
+  const logging = LoggingService.getInstance();
+  logging.info("Initializing Nexkit extension services...");
+
+  // Initialize telemetry service
   const telemetry = new TelemetryService();
   await telemetry.initialize();
   telemetry.trackActivation();
@@ -78,11 +84,15 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const devOpsConfig = new DevOpsMcpConfigService();
 
   // Register for disposal
+  context.subscriptions.push(logging);
   context.subscriptions.push(aiTemplateData);
   context.subscriptions.push(telemetry);
   context.subscriptions.push(devOpsConfig);
 
+  logging.info("All services initialized successfully");
+
   return {
+    logging,
     telemetry,
     mcpConfig,
     aiTemplateData,

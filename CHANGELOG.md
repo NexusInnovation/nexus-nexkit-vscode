@@ -1,3 +1,20 @@
+## 3.1.0-beta.2 (2026-02-09)
+
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([9a38d8a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9a38d8a))
+* feat(logging): implement centralized logging service with commands and tests ([60ea4ac](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/60ea4ac))
+
+## 3.1.0-beta.1 (2026-02-09)
+
+* Enhance installation documentation and add Quick Install guide ([dbe04ee](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/dbe04ee))
+* Enhance installation documentation and add Quick Install guide ([eb0603c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/eb0603c))
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([5556233](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/5556233))
+* chore(release): v3.0.0-beta.5 [skip ci] ([a5528a3](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a5528a3))
+* chore(release): v3.0.0-beta.5 [skip ci] ([a8ebff6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a8ebff6))
+* feat: add Azure Function badge service for version and release badges ([1cc170b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/1cc170b))
+* feat: add Azure Function badge service for version and release badges ([1417b67](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/1417b67))
+* feat(scripts): add automated VS Code + Nexkit installation for Intune deployment ([0e91fde](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/0e91fde))
+* feat(scripts): add automated VS Code + Nexkit installation for Intune deployment ([72709d5](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/72709d5))
+
 ## 3.0.0 (2026-02-07)
 
 * feat: Add AI template file and repository configuration models ([0a40a91](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/0a40a91))
@@ -690,6 +707,11 @@ Users should manually backup if needed before profile operations.
 - Changed ProfileService.applyProfile() default to skipBackup: true
 - Updated WorkspaceInitializationService to explicitly create backups
 - All tests passing (98 passing, 0 failing)
+
+## 3.0.0-beta.5 (2026-02-09)
+
+* feat: add Azure Function badge service for version and release badges ([1417b67](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/1417b67))
+* feat(scripts): add automated VS Code + Nexkit installation for Intune deployment ([72709d5](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/72709d5))
 
 ## 3.0.0-beta.4 (2026-02-07)
 

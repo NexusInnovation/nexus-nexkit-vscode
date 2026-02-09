@@ -1,0 +1,12 @@
+*.js.map
+*.ts
+.git*
+.vscode
+local.settings.json
+test
+tsconfig.json
+node_modules
+src
+*.bicep
+*.md
+.env
