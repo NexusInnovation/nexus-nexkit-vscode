@@ -1,3 +1,8 @@
+## 3.0.0-beta.5 (2026-02-09)
+
+* feat: add Azure Function badge service for version and release badges ([1417b67](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/1417b67))
+* feat(scripts): add automated VS Code + Nexkit installation for Intune deployment ([72709d5](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/72709d5))
+
 ## 3.0.0-beta.4 (2026-02-07)
 
 * test: handle configuration registration errors in mode selection tests ([5c0a1c3](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/5c0a1c3))
