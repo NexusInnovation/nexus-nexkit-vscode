@@ -1,3 +1,8 @@
+## 3.1.0-beta.2 (2026-02-09)
+
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([9a38d8a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9a38d8a))
+* feat(logging): implement centralized logging service with commands and tests ([60ea4ac](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/60ea4ac))
+
 ## 3.1.0-beta.1 (2026-02-09)
 
 * Enhance installation documentation and add Quick Install guide ([dbe04ee](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/dbe04ee))
