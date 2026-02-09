@@ -1,7 +1,8 @@
 # Nexkit VS Code Extension
 
+![Version](https://func-nexkit-badge-prod.azurewebsites.net/api/version)
+![Release](https://func-nexkit-badge-prod.azurewebsites.net/api/release)
 [![CI/CD Pipeline](https://github.com/NexusInnovation/nexus-nexkit-vscode/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/NexusInnovation/nexus-nexkit-vscode/actions/workflows/ci-cd.yml)
-[![Latest Release](https://img.shields.io/github/v/release/NexusInnovation/nexus-nexkit-vscode)](https://github.com/NexusInnovation/nexus-nexkit-vscode/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A comprehensive VS Code extension that streamlines GitHub Copilot development workflows by providing AI templates (agents, prompts, instructions, chatmodes), workspace initialization, and MCP server management.

@@ -1,0 +1,27 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "value": "canadacentral"
+        },
+        "keyVaultName": {
+            "value": "kv-nexkit"
+        },
+        "githubPatSecretName": {
+            "value": "github-pat-nexkit"
+        },
+        "githubOwner": {
+            "value": "NexusInnovation"
+        },
+        "githubRepo": {
+            "value": "nexus-nexkit-vscode"
+        },
+        "cacheTtlSeconds": {
+            "value": 300
+        },
+        "environment": {
+            "value": "prod"
+        }
+    }
+}
