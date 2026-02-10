@@ -1,8 +1,7 @@
 # Nexkit VS Code Extension
 
-![Version](https://func-nexkit-badge-prod.azurewebsites.net/api/version)
-![Release](https://func-nexkit-badge-prod.azurewebsites.net/api/release)
 [![CI/CD Pipeline](https://github.com/NexusInnovation/nexus-nexkit-vscode/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/NexusInnovation/nexus-nexkit-vscode/actions/workflows/ci-cd.yml)
+[![Latest Release](https://img.shields.io/github/v/release/NexusInnovation/nexus-nexkit-vscode)](https://github.com/NexusInnovation/nexus-nexkit-vscode/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A comprehensive VS Code extension that streamlines GitHub Copilot development workflows by providing AI templates (agents, prompts, instructions, chatmodes), workspace initialization, and MCP server management.
@@ -67,6 +66,7 @@ Nexkit offers two operation modes to tailor the UI to different user roles:
 ### Developers Mode (Default)
 
 Full feature set with all sections visible:
+
 - **Actions**: Workspace initialization
 - **Profiles**: Save and apply template configurations
 - **Templates**: Browse and install AI templates from repositories
@@ -76,6 +76,7 @@ Full feature set with all sections visible:
 ### APM Mode
 
 Streamlined interface showing only essential features:
+
 - **Footer**: Feedback and version information
 
 This mode is designed for Application Portfolio Management users or scenarios requiring minimal UI.
@@ -83,15 +84,18 @@ This mode is designed for Application Portfolio Management users or scenarios re
 ### Switching Modes
 
 **During Initialization:**
+
 - When running "Nexkit: Initialize Workspace", you'll be prompted to select a mode
 - Your selection is saved in settings
 
 **Via Command:**
+
 - Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
 - Run "Nexkit: Switch Operation Mode"
 - Select from available modes
 
 **Via Settings:**
+
 - Open VS Code Settings (`Ctrl+,` / `Cmd+,`)
 - Search for "nexkit.mode"
 - Select "Developers" or "APM"
@@ -335,6 +339,7 @@ code /path/to/my-project
 ```
 
 **Use Cases for Local Repositories:**
+
 - **Development**: Test templates locally before committing to GitHub
 - **Corporate Environments**: Use internal network shares or local paths
 - **Offline Work**: Access templates without internet connection
