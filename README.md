@@ -4,157 +4,210 @@
 [![Latest Release](https://img.shields.io/github/v/release/NexusInnovation/nexus-nexkit-vscode)](https://github.com/NexusInnovation/nexus-nexkit-vscode/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A comprehensive VS Code extension that streamlines GitHub Copilot development workflows by providing AI templates (agents, prompts, instructions, chatmodes), workspace initialization, and MCP server management.
+Une extension VS Code complète qui optimise vos workflows de développement avec GitHub Copilot en fournissant des templates IA (agents, prompts, instructions, chatmodes), l'initialisation de workspace et la gestion des serveurs MCP.
 
-## Features
+## 🚀 Installation Rapide
 
-### Core Commands
+### Installation Automatique (Recommandée)
 
-Access all commands via Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
+**Pour Windows :**
 
-- **Nexkit: Initialize Workspace** - Set up your workspace with:
-  - AI template files (agents, prompts, chatmodes) from configured repositories
-  - Recommended VS Code settings and extensions
-  - Workspace-level MCP server configuration
-  - .gitignore configuration for Nexkit files
-- **Nexkit: Check for Updates** - Check for and install extension updates automatically
+1. **Ouvrir PowerShell en mode Administrateur**
+   - Clic droit sur le menu Démarrer
+   - Sélectionner "Windows PowerShell (Admin)" ou "Terminal (Admin)"
 
-- **Nexkit: Install User MCP Servers** - Install required MCP servers (Context7 and Sequential Thinking) to user-level VS Code configuration
+2. **Exécuter la commande d'installation**
 
-- **Nexkit: Open Settings** - Quick access to extension settings
-
-- **Nexkit: Restore Template Backup** - Restore previous AI template files from automatic backups
-
-- **Nexkit: Cleanup Template Backups** - Remove old template backup directories
-
-### Sidebar Panel
-
-A dedicated Nexkit sidebar in the Activity Bar provides:
-
-- Browse AI templates from all configured repositories
-- Install individual templates or batches
-- Quick access to settings and MCP installation
-- Real-time template repository synchronization
-
-### AI Template Repository System
-
-The extension fetches AI templates from GitHub repositories:
-
-- **Default Repository**: [Nexus Templates](https://github.com/NexusInnovation/nexus-nexkit-templates) (always enabled)
-- **Custom Repositories**: Add your own template repositories via settings
-- **Template Types**:
-  - **Agents**: GitHub Copilot custom agents
-  - **Prompts**: Reusable AI prompts
-  - **Instructions**: Language-specific coding guidelines
-  - **Chatmodes**: Specialized chat modes (debug, plan, etc.)
-  - **Skills**: Pre-built folder structures with code, configurations, and utilities that can be installed directly into your project
-
-Templates are automatically fetched on extension activation and can be refreshed when repository configurations change.
-
-### Automatic Features
-
-- **Extension Update Checking**: Automatically checks for new releases every 24 hours (configurable)
-- **MCP Server Prompts**: Notifies when required MCP servers are not installed
-- **Workspace Initialization Prompts**: Suggests initialization for new workspaces
-- **Template Backups**: Automatically backs up existing templates before overwriting
-- **Configuration Watchers**: Refreshes templates when repository settings change
-
-## Operation Modes
-
-Nexkit offers two operation modes to tailor the UI to different user roles:
-
-### Developers Mode (Default)
-
-Full feature set with all sections visible:
-
-- **Actions**: Workspace initialization
-- **Profiles**: Save and apply template configurations
-- **Templates**: Browse and install AI templates from repositories
-- **Repositories**: View all configured template sources
-- **Footer**: Feedback and version information
-
-### APM Mode
-
-Streamlined interface showing only essential features:
-
-- **Footer**: Feedback and version information
-
-This mode is designed for Application Portfolio Management users or scenarios requiring minimal UI.
-
-### Switching Modes
-
-**During Initialization:**
-
-- When running "Nexkit: Initialize Workspace", you'll be prompted to select a mode
-- Your selection is saved in settings
-
-**Via Command:**
-
-- Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
-- Run "Nexkit: Switch Operation Mode"
-- Select from available modes
-
-**Via Settings:**
-
-- Open VS Code Settings (`Ctrl+,` / `Cmd+,`)
-- Search for "nexkit.mode"
-- Select "Developers" or "APM"
-- UI updates automatically
-
-## Installation
-
-### From GitHub Releases
-
-1. **Download the latest VSIX package**
-   - Visit the [latest release](https://github.com/NexusInnovation/nexus-nexkit-vscode/releases/latest)
-   - Download the `.vsix` file
-   - Or use direct link: [Download Latest VSIX](https://github.com/NexusInnovation/nexus-nexkit-vscode/releases/latest/download/nexkit-vscode.vsix)
-
-2. **Install in VS Code**
-
-   ```bash
-   # Using VS Code CLI
-   code --install-extension nexkit-vscode.vsix
-
-   # Or via VS Code UI
-   # 1. Open VS Code
-   # 2. Press Ctrl+Shift+P (Cmd+Shift+P on macOS)
-   # 3. Type "Extensions: Install from VSIX..."
-   # 4. Select the downloaded .vsix file
+   ```powershell
+   irm https://raw.githubusercontent.com/Nexusinnovation/nexus-nexkit-vscode/develop/scripts/install-vscode-with-nexkit.ps1 | iex
    ```
 
-3. **Verify Installation**
-   - Open Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
-   - Type "Nexkit" to see available commands
-   - Run "Nexkit: Initialize Workspace" to set up your first project
+3. **C'est tout !** Le script installera automatiquement :
+   - VS Code (si non installé)
+   - L'extension Nexkit
+   - Les serveurs MCP requis (Context7 et Sequential Thinking)
+   - Les configurations recommandées
 
-### Pre-release Versions
+> **Note** : Cette installation nécessite des droits administrateur pour installer VS Code si celui-ci n'est pas déjà présent sur votre système.
 
-Pre-release versions (beta) are available from the develop branch:
+## 🎯 Modes d'Utilisation
 
-- Look for releases tagged with `-beta.N`
-- Marked as "Pre-release" on GitHub
-- Follow the same installation steps above
+Nexkit propose **deux modes** adaptés à différents profils d'utilisateurs :
 
-## Requirements
+### Mode Développeur (par défaut)
 
-- **VS Code**: Version 1.105.0 or higher
-- **MCP Servers** (optional, but recommended):
-  - **Context7**: Provides up-to-date library documentation
-  - **Sequential Thinking**: Enhanced reasoning for complex tasks
-  - Both can be installed via the "Nexkit: Install User MCP Servers" command
+**Pour qui ?** Développeurs et équipes techniques
 
-## Extension Settings
+**Fonctionnalités complètes :**
+- ✅ **Actions** : Initialisation de workspace
+- ✅ **Profiles** : Sauvegarde et application de configurations de templates
+- ✅ **Templates** : Navigation et installation de templates IA depuis les dépôts
+- ✅ **Repositories** : Vue de toutes les sources de templates configurées
+- ✅ **Footer** : Feedback et informations de version
 
-### Repository Configuration
+**Cas d'usage :**
+- Développement de nouvelles fonctionnalités
+- Personnalisation des agents GitHub Copilot
+- Gestion de multiples dépôts de templates
+- Configuration avancée de l'environnement de développement
 
-**`nexkit.repositories`** - Configure additional template repositories
+### Mode APM (Application Portfolio Management)
 
-The extension supports both **GitHub repositories** and **local folders** as template sources.
+**Pour qui ?** Gestionnaires d'applications et analystes métier
 
-Default includes the "Awesome Copilot" repository. The "Nexus Templates" repository is always included and cannot be removed.
+**Interface simplifiée :**
+- ✅ **Footer** : Feedback et informations de version
+- 🎯 Interface épurée pour un usage ciblé
 
-#### GitHub Repository Example
+**Cas d'usage :**
+- Gestion de portefeuille d'applications
+- Consultation et reporting
+- Workflows métier spécialisés
+
+### Changer de Mode
+
+**Lors de l'initialisation :**
+- Nexkit vous demandera de choisir votre mode au premier démarrage
+
+**Via la palette de commandes :**
+- `Ctrl+Shift+P` (ou `Cmd+Shift+P` sur macOS)
+- Tapez "Nexkit: Switch Operation Mode"
+- Sélectionnez votre mode préféré
+
+**Via les paramètres :**
+- `Ctrl+,` (ou `Cmd+,` sur macOS)
+- Recherchez "nexkit.mode"
+- Choisissez "Developers" ou "APM"
+
+## ✨ Fonctionnalités Principales
+
+### Commandes Essentielles
+
+Accédez aux commandes via la palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) :
+
+- **Nexkit: Initialize Workspace** - Configure votre workspace avec :
+  - Templates IA (agents, prompts, chatmodes) depuis les dépôts configurés
+  - Paramètres et extensions VS Code recommandés
+  - Configuration des serveurs MCP au niveau workspace
+  - Configuration .gitignore pour les fichiers Nexkit
+
+- **Nexkit: Install User MCP Servers** - Installe les serveurs MCP requis (Context7 et Sequential Thinking)
+
+- **Nexkit: Check for Updates** - Vérifie et installe les mises à jour de l'extension
+
+- **Nexkit: Open Settings** - Accès rapide aux paramètres
+
+- **Nexkit: Restore Template Backup** - Restaure les templates depuis les sauvegardes automatiques
+
+### Panneau Latéral
+
+Un panneau dédié dans la barre d'activité offre :
+
+- Navigation des templates IA depuis tous les dépôts configurés
+- Installation de templates individuels ou par lots
+- Accès rapide aux paramètres et à l'installation MCP
+- Synchronisation en temps réel des dépôts de templates
+
+### Système de Dépôts de Templates IA
+
+L'extension récupère des templates IA depuis des dépôts GitHub :
+
+- **Dépôt par Défaut** : [Nexus Templates](https://github.com/NexusInnovation/nexus-nexkit-templates) (toujours activé)
+- **Dépôts Personnalisés** : Ajoutez vos propres dépôts via les paramètres
+- **Types de Templates** :
+  - **Agents** : Agents GitHub Copilot personnalisés
+  - **Prompts** : Prompts IA réutilisables
+  - **Instructions** : Directives de codage spécifiques par langage
+  - **Chatmodes** : Modes de chat spécialisés (debug, plan, etc.)
+  - **Skills** : Structures de dossiers pré-construites avec code, configurations et utilitaires installables directement dans votre projet
+
+Les templates sont automatiquement récupérés lors de l'activation de l'extension et peuvent être actualisés lorsque les configurations de dépôt changent.
+
+### Fonctionnalités Automatiques
+
+- **Vérification des Mises à Jour** : Vérifie automatiquement les nouvelles versions toutes les 24 heures (configurable)
+- **Notifications MCP** : Alerte lorsque les serveurs MCP requis ne sont pas installés
+- **Invites d'Initialisation** : Suggère l'initialisation pour les nouveaux workspaces
+- **Sauvegardes Automatiques** : Sauvegarde les templates existants avant écrasement
+- **Surveillance des Configurations** : Actualise les templates lors de modifications des paramètres de dépôt
+
+## 🚦 Démarrage Rapide
+
+### Après Installation
+
+1. **Ouvrir VS Code**
+   - L'extension Nexkit se charge automatiquement
+
+2. **Choisir votre Mode** (au premier lancement)
+   - Mode **Développeur** : Fonctionnalités complètes
+   - Mode **APM** : Interface simplifiée
+
+3. **Initialiser votre Workspace**
+   - Ouvrir la palette de commandes (`Ctrl+Shift+P`)
+   - Taper "Nexkit: Initialize Workspace"
+   - Confirmer l'initialisation
+
+4. **Commencer à Coder !**
+   - Les templates IA sont maintenant disponibles
+   - GitHub Copilot utilise automatiquement les agents configurés
+   - Les serveurs MCP enrichissent l'expérience de développement
+
+## 📦 Installation Manuelle (Alternative)
+
+### Depuis GitHub Releases
+
+1. **Télécharger le package VSIX**
+   - Visitez la [dernière version](https://github.com/NexusInnovation/nexus-nexkit-vscode/releases/latest)
+   - Téléchargez le fichier `.vsix`
+   - Ou utilisez le lien direct : [Download Latest VSIX](https://github.com/NexusInnovation/nexus-nexkit-vscode/releases/latest/download/nexkit-vscode.vsix)
+
+2. **Installer dans VS Code**
+
+   ```bash
+   # Via VS Code CLI
+   code --install-extension nexkit-vscode.vsix
+
+   # Ou via l'interface VS Code
+   # 1. Ouvrir VS Code
+   # 2. Appuyer sur Ctrl+Shift+P (Cmd+Shift+P sur macOS)
+   # 3. Taper "Extensions: Install from VSIX..."
+   # 4. Sélectionner le fichier .vsix téléchargé
+   ```
+
+3. **Vérifier l'Installation**
+   - Ouvrir la palette de commandes (`Ctrl+Shift+P` / `Cmd+Shift+P`)
+   - Taper "Nexkit" pour voir les commandes disponibles
+   - Exécuter "Nexkit: Initialize Workspace" pour configurer votre premier projet
+
+### Versions Pré-release
+
+Les versions pré-release (beta) sont disponibles depuis la branche develop :
+
+- Recherchez les versions étiquetées `-beta.N`
+- Marquées comme "Pre-release" sur GitHub
+- Suivez les mêmes étapes d'installation ci-dessus
+
+## 📋 Prérequis
+
+- **VS Code** : Version 1.105.0 ou supérieure
+- **PowerShell** : Pour l'installation automatique (inclus avec Windows)
+- **Droits Administrateur** : Requis pour l'installation automatique
+- **Serveurs MCP** (optionnel, mais recommandé) :
+  - **Context7** : Fournit de la documentation à jour sur les bibliothèques
+  - **Sequential Thinking** : Raisonnement amélioré pour les tâches complexes
+  - Les deux peuvent être installés via la commande "Nexkit: Install User MCP Servers" ou automatiquement avec le script d'installation
+
+## ⚙️ Configuration
+
+### Configuration des Dépôts
+
+**`nexkit.repositories`** - Configurer des dépôts de templates supplémentaires
+
+L'extension supporte à la fois les **dépôts GitHub** et les **dossiers locaux** comme sources de templates.
+
+Par défaut, inclut le dépôt "Awesome Copilot". Le dépôt "Nexus Templates" est toujours inclus et ne peut être supprimé.
+
+#### Exemple de Dépôt GitHub
 
 ```json
 {
@@ -177,9 +230,9 @@ Default includes the "Awesome Copilot" repository. The "Nexus Templates" reposit
 }
 ```
 
-#### Local Folder Example
+#### Exemple de Dossier Local
 
-Use local folders for custom internal templates, development, or offline work:
+Utilisez des dossiers locaux pour des templates internes personnalisés, le développement ou le travail hors ligne :
 
 ```json
 {
@@ -198,106 +251,91 @@ Use local folders for custom internal templates, development, or offline work:
 }
 ```
 
-**Supported Path Formats for Local Repositories:**
+**Formats de Chemins Supportés pour les Dépôts Locaux :**
 
-- **Workspace-relative**: `./templates` or `../shared-templates`
-- **Absolute paths**: `C:\CompanyAssets\ai-templates` (Windows) or `/home/user/templates` (Unix)
-- **Home directory**: `~/my-templates`
+- **Relatif au workspace** : `./templates` ou `../shared-templates`
+- **Chemins absolus** : `C:\CompanyAssets\ai-templates` (Windows) ou `/home/user/templates` (Unix)
+- **Répertoire personnel** : `~/my-templates`
 
-**Note**: The `branch` field is only applicable to GitHub repositories and will be ignored for local repositories.
+**Note** : Le champ `branch` s'applique uniquement aux dépôts GitHub et sera ignoré pour les dépôts locaux.
 
-### Extension Update Settings
+### Paramètres de Mise à Jour
 
-- **`nexkit.extension.autoCheckUpdates`** - Automatically check for updates on activation (default: `true`)
-- **`nexkit.extension.updateCheckInterval`** - Hours between update checks (default: `24`)
+- **`nexkit.extension.autoCheckUpdates`** - Vérifier automatiquement les mises à jour au démarrage (par défaut : `true`)
+- **`nexkit.extension.updateCheckInterval`** - Heures entre vérifications de mise à jour (par défaut : `24`)
 
-### MCP Configuration
+### Configuration MCP
 
-- **`nexkit.mcpSetup.dismissed`** - Whether the MCP setup notification was dismissed (default: `false`)
+- **`nexkit.mcpSetup.dismissed`** - Si la notification de configuration MCP a été ignorée (par défaut : `false`)
 
-### User Mode
+### Mode Utilisateur
 
-- **`nexkit.userMode`** - User mode for Nexkit (default: `notset`)
-  - **APM Mode**: Optimized templates and settings for Application Performance Management workflows
-  - **Developer Mode**: Comprehensive development tools and templates
-  - On first activation, users are prompted to choose their preferred mode
+- **`nexkit.userMode`** - Mode utilisateur pour Nexkit (par défaut : `notset`)
+  - **Mode APM** : Templates et paramètres optimisés pour les workflows de gestion de portefeuille d'applications
+  - **Mode Développeur** : Outils et templates de développement complets
+  - Lors de la première activation, les utilisateurs sont invités à choisir leur mode préféré
 
-### Telemetry
+### Télémétrie
 
-- **`nexkit.telemetry.enabled`** - Enable anonymous usage telemetry (default: `true`, respects VS Code's global telemetry setting)
-- **`nexkit.telemetry.connectionString`** - Azure Application Insights connection string (optional, for custom telemetry endpoint)
+- **`nexkit.telemetry.enabled`** - Activer la télémétrie anonyme d'utilisation (par défaut : `true`, respecte le paramètre global de télémétrie de VS Code)
+- **`nexkit.telemetry.connectionString`** - Chaîne de connexion Azure Application Insights (optionnel, pour un endpoint de télémétrie personnalisé)
 
-## How It Works
+## 🔧 Fonctionnement
 
-### First-Time Setup
+### Configuration Initiale
 
-When you activate Nexkit for the first time:
+Lors de la première activation de Nexkit :
 
-1. **Mode Selection Prompt**: You'll be asked to choose between:
-   - **APM Mode**: Optimized for Application Performance Management workflows
-   - **Developer Mode**: Full suite of development tools and templates
-2. Your selection is saved to `nexkit.userMode` and can be changed anytime in settings
-3. This prompt only appears once - on first activation
+1. **Choix du Mode** : Vous devrez choisir entre :
+   - **Mode APM** : Optimisé pour les workflows de gestion d'applications
+   - **Mode Développeur** : Suite complète d'outils et templates de développement
+2. Votre sélection est enregistrée dans `nexkit.userMode` et peut être modifiée à tout moment dans les paramètres
+3. Cette invite n'apparaît qu'une seule fois - lors de la première activation
 
-### Workspace Initialization
+### Initialisation du Workspace
 
-When you run "Nexkit: Initialize Workspace":
+Lorsque vous exécutez "Nexkit: Initialize Workspace" :
 
-1. **Backup Creation**: Existing `.github` directory is backed up automatically
-2. **Configuration Deployment**:
-   - `.gitignore` entries for Nexkit-generated files
-   - `.vscode/settings.json` with recommended settings
-   - `.vscode/extensions.json` with recommended extensions
-   - `.vscode/mcp.json` for workspace-level MCP configuration
-3. **Template Installation**: Agents, prompts, and chatmodes from the Nexus Templates repository are installed to `.github/`
-4. **Workspace Marking**: Sets `nexkit.workspace.initialized` to prevent duplicate prompts
+1. **Création de Sauvegarde** : Le répertoire `.github` existant est automatiquement sauvegardé
+2. **Déploiement de Configuration** :
+   - Entrées `.gitignore` pour les fichiers générés par Nexkit
+   - `.vscode/settings.json` avec paramètres recommandés
+   - `.vscode/extensions.json` avec extensions recommandées
+   - `.vscode/mcp.json` pour la configuration MCP au niveau workspace
+3. **Installation de Templates** : Agents, prompts et chatmodes du dépôt Nexus Templates sont installés dans `.github/`
+4. **Marquage du Workspace** : Définit `nexkit.workspace.initialized` pour éviter les invites dupliquées
 
-### Template Repository System
+### Structure des Templates
 
-- Templates are fetched from **GitHub repositories** or **local folders**
-- Repository structure is flexible - configure paths for each template type
-- Templates are cached in memory and refreshed when configuration changes
-- The Nexus Templates repository is always included as a default source
-- **GitHub repositories**: Use the GitHub API for fetching (supports authentication)
-- **Local folders**: Scan local filesystem for markdown files (no authentication needed)
-
-### Extension Updates
-
-- Extension automatically checks GitHub releases for newer versions
-- Compares semantic versions (e.g., 0.6.0 vs 0.5.5)
-- Downloads `.vsix` file and prompts for installation
-- Old `.vsix` files are automatically cleaned up on activation
-
-## Template Structure
-
-Templates deployed to your workspace follow this structure:
+Les templates déployés dans votre workspace suivent cette structure :
 
 ```
 .github/
-├── agents/              # GitHub Copilot custom agents
-├── prompts/             # Reusable AI prompts
-├── chatmodes/           # Specialized chat modes
-└── instructions/        # Coding guidelines (not auto-installed)
+├── agents/              # Agents GitHub Copilot personnalisés
+├── prompts/             # Prompts IA réutilisables
+├── skills/              # Définition des skills tel que défini par Anthropic (1)
+└── instructions/        # Directives de codage (non installées automatiquement)
 ```
+> (1) [Anthropic](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)
 
-Each template file contains specialized instructions for GitHub Copilot to enhance your development workflow.
+Chaque fichier template contient des instructions spécialisées pour GitHub Copilot afin d'améliorer votre workflow de développement.
 
-## Usage Examples
+## 💡 Exemples d'Utilisation
 
-### Setting Up a New Project
+### Configuration d'un Nouveau Projet
 
 ```bash
-# 1. Open your project folder in VS Code
-code /path/to/my-project
+# 1. Ouvrir votre dossier de projet dans VS Code
+code /chemin/vers/mon-projet
 
-# 2. Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
-# 3. Run: "Nexkit: Initialize Workspace"
-# 4. Your workspace is now configured with AI templates and settings!
+# 2. Ouvrir la palette de commandes (Ctrl+Shift+P / Cmd+Shift+P)
+# 3. Exécuter : "Nexkit: Initialize Workspace"
+# 4. Votre workspace est maintenant configuré avec les templates IA et les paramètres !
 ```
 
-### Adding Custom Template Repositories
+### Ajout de Dépôts de Templates Personnalisés
 
-#### GitHub Repository
+#### Dépôt GitHub
 
 ```json
 // In your VS Code settings.json (File > Preferences > Settings)
@@ -318,7 +356,7 @@ code /path/to/my-project
 }
 ```
 
-#### Local Folder Repository
+#### Dépôt de Dossier Local
 
 ```json
 // In your VS Code settings.json (File > Preferences > Settings)
@@ -338,174 +376,77 @@ code /path/to/my-project
 }
 ```
 
-**Use Cases for Local Repositories:**
+**Cas d'Usage pour les Dépôts Locaux :**
 
-- **Development**: Test templates locally before committing to GitHub
-- **Corporate Environments**: Use internal network shares or local paths
-- **Offline Work**: Access templates without internet connection
-- **Private Templates**: Keep sensitive templates out of version control
+- **Développement** : Tester les templates localement avant de les commiter sur GitHub
+- **Environnements d'Entreprise** : Utiliser des partages réseau internes ou chemins locaux
+- **Travail Hors Ligne** : Accéder aux templates sans connexion internet
+- **Templates Privés** : Garder les templates sensibles hors du contrôle de version
 
-### Installing MCP Servers
+### Installation des Serveurs MCP
 
 ```bash
-# Open Command Palette (Ctrl+Shift+P / Cmd+Shift+P)
-# Run: "Nexkit: Install User MCP Servers"
-# Follow the prompts to configure Context7 and Sequential Thinking
+# Ouvrir la palette de commandes (Ctrl+Shift+P / Cmd+Shift+P)
+# Exécuter : "Nexkit: Install User MCP Servers"
+# Suivre les invites pour configurer Context7 et Sequential Thinking
 ```
 
-## Known Issues
+## ⚠️ Problèmes Connus
 
-See [GitHub Issues](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues) for known issues and bug reports.
+Consultez les [GitHub Issues](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues) pour les problèmes connus et les rapports de bugs.
 
-Common issues:
+Problèmes courants :
 
-- **GitHub API Rate Limiting**: Template fetching may be throttled with unauthenticated requests
-- **VSIX Download**: Some corporate networks may block direct GitHub asset downloads
+- **Limitation de l'API GitHub** : La récupération de templates peut être limitée avec des requêtes non authentifiées
+- **Téléchargement VSIX** : Certains réseaux d'entreprise peuvent bloquer les téléchargements directs d'assets GitHub
 
-## Release Notes
+## 📝 Notes de Version
 
-See [CHANGELOG.md](CHANGELOG.md) for detailed release notes and version history.
+Consultez [CHANGELOG.md](CHANGELOG.md) pour l'historique détaillé des versions et notes de version.
 
-### Current Version: 0.6.0
+### Version Actuelle : 0.6.0
 
-Latest features include:
+Les dernières fonctionnalités incluent :
 
-- Multi-repository AI template management
-- Webview sidebar panel for browsing templates
-- Automated extension update system
-- Comprehensive workspace initialization
-- User and workspace-level MCP configuration
+- Gestion multi-dépôt de templates IA
+- Panneau latéral webview pour parcourir les templates
+- Système automatisé de mise à jour de l'extension
+- Initialisation complète de workspace
+- Configuration MCP au niveau utilisateur et workspace
 
 ---
 
-## Development
+## 📚 Vie Privée et Télémétrie
 
-### Getting Started
+Cette extension collecte des données de télémétrie anonymes pour aider à améliorer Nexkit. Les données incluent :
 
-1. **Clone the repository**
+- Activation de l'extension et durée de session
+- Commandes exécutées (sans données utilisateur ni contenu de fichiers)
+- Occurrences d'erreurs (sans informations personnelles)
+- Métriques de performance (temps d'exécution des commandes)
+- Version de l'extension et de VS Code
+- Type de système d'exploitation
 
-   ```bash
-   git clone https://github.com/NexusInnovation/nexus-nexkit-vscode.git
-   cd nexus-nexkit-vscode
-   ```
+### Ce qui N'EST PAS collecté
 
-2. **Install dependencies**
+- Aucune information personnellement identifiable (PII)
+- Aucun nom, chemin ou contenu de fichier
+- Aucun nom de workspace ou de projet
+- Aucune valeur de paramètre ou configuration utilisateur
+- Aucune adresse IP (masquée par défaut)
 
-   ```bash
-   npm ci
-   ```
+### Désactivation
 
-3. **Build the extension**
+La télémétrie respecte vos préférences de confidentialité :
 
-   ```bash
-   npm run compile
-   # or for production build
-   npm run package
-   ```
+1. **Paramètre Global VS Code** : Si vous avez désactivé la télémétrie dans VS Code (`telemetry.telemetryLevel` sur `off`), la télémétrie Nexkit est automatiquement désactivée.
 
-4. **Run tests**
+2. **Paramètre Spécifique Nexkit** : Vous pouvez désactiver la télémétrie Nexkit séparément :
+   - Ouvrir Paramètres (Ctrl+, ou Cmd+,)
+   - Rechercher "Nexkit Telemetry"
+   - Décocher "Nexkit: Telemetry Enabled"
 
-   ```bash
-   npm test
-   ```
-
-5. **Launch Extension Development Host**
-   - Press `F5` in VS Code to open a new window with the extension loaded
-   - Test your changes in the Extension Development Host
-
-### Project Structure
-
-```
-nexus-nexkit-vscode/
-├── src/
-│   ├── extension.ts                      # Extension entry point
-│   ├── core/
-│   │   ├── serviceContainer.ts           # Dependency injection
-│   │   └── settingsManager.ts            # VS Code settings management
-│   ├── features/
-│   │   ├── ai-template-files/            # Template repository management
-│   │   ├── backup-management/            # Backup/restore services
-│   │   ├── extension-updates/            # Extension update checking
-│   │   ├── initialization/               # Workspace initialization
-│   │   ├── mcp-management/               # MCP server configuration
-│   │   └── panel-ui/                     # Webview sidebar panel
-│   └── shared/
-│       ├── commands/                     # Command registration
-│       ├── services/                     # Shared services (telemetry)
-│       └── utils/                        # Utility functions
-├── docs/                                 # Additional documentation
-├── media/                                # Icons and assets
-└── infrastructure/                       # Azure telemetry config
-```
-
-### Available Scripts
-
-- **`npm run compile`** - Compile TypeScript with esbuild
-- **`npm run watch`** - Watch mode for development
-- **`npm run package`** - Build optimized production bundle
-- **`npm run lint`** - Run ESLint
-- **`npm run check:types`** - TypeScript type checking
-- **`npm test`** - Run all tests
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed development guidelines, coding standards, and contribution workflow.
-
-## Architecture
-
-### Service-Oriented Design
-
-The extension uses dependency injection via `ServiceContainer` to manage service instances:
-
-- **TelemetryService**: Anonymous usage analytics
-- **AITemplateDataService**: Template fetching and caching
-- **MCPConfigService**: MCP server configuration
-- **ExtensionUpdateService**: Extension update checking and installation
-- **BackupService**: Directory backup/restore operations
-
-### Key Design Patterns
-
-- **SOLID Principles**: Single responsibility, dependency injection
-- **Event-Driven**: Uses VS Code event emitters for data changes
-- **Async/Await**: All I/O operations are asynchronous
-- **Error Handling**: Graceful degradation with user-friendly messages
-
-### Template Data Flow
-
-1. **Initialization**: `AITemplateDataService.initialize()` fetches from all configured repositories
-2. **Caching**: Templates stored in memory via `TemplateDataStore`
-3. **Installation**: `TemplateFileOperations` handles file creation with backup
-4. **UI**: `NexkitPanelViewProvider` displays templates in webview
-
-## Privacy and Telemetry
-
-This extension collects anonymous usage telemetry to help improve Nexkit. The telemetry data includes:
-
-- Extension activation and session duration
-- Commands executed (not including any user data or file contents)
-- Error occurrences (without personal information)
-- Performance metrics (command execution times)
-- Extension version and VS Code version
-- Operating system type
-
-### What is NOT collected
-
-- No personally identifiable information (PII)
-- No file names, paths, or contents
-- No workspace or project names
-- No user settings or configuration values
-- No IP addresses (masked by default)
-
-### Opting Out
-
-Telemetry respects your privacy preferences:
-
-1. **VS Code Global Telemetry Setting**: If you've disabled telemetry in VS Code (`telemetry.telemetryLevel` set to `off`), Nexkit telemetry is automatically disabled.
-
-2. **Nexkit-Specific Setting**: You can disable Nexkit telemetry separately:
-   - Open Settings (Ctrl+, or Cmd+,)
-   - Search for "Nexkit Telemetry"
-   - Uncheck "Nexkit: Telemetry Enabled"
-
-   Or add to your `settings.json`:
+   Ou ajouter dans votre `settings.json` :
 
    ```json
    {
@@ -513,27 +454,27 @@ Telemetry respects your privacy preferences:
    }
    ```
 
-For more information about how telemetry data is collected and stored, see [docs/TELEMETRY_SETUP.md](docs/TELEMETRY_SETUP.md).
+Pour plus d'informations sur la collecte et le stockage des données, consultez [docs/TELEMETRY_SETUP.md](docs/TELEMETRY_SETUP.md).
 
-## Contributing
+## 👥 Contribution
 
-Contributions are welcome! Please read [CONTRIBUTING.md](docs/CONTRIBUTING.md) for:
+Les contributions sont les bienvenues ! Consultez [CONTRIBUTING.md](docs/CONTRIBUTING.md) pour :
 
-- Code style guidelines
-- Commit message conventions (Conventional Commits)
-- Pull request process
-- Testing requirements
+- Directives de style de code
+- Conventions de messages de commit (Conventional Commits)
+- Processus de pull request
+- Exigences de test
 
-## License
+## 📜 Licence
 
-MIT License - See [LICENSE](LICENSE) file for details.
+Licence MIT - Consultez le fichier [LICENSE](LICENSE) pour plus de détails.
 
-## Support
+## 👬 Support
 
-- **Issues**: [GitHub Issues](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/NexusInnovation/nexus-nexkit-vscode/discussions)
+- **Problèmes** : [GitHub Issues](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues)
+- **Discussions** : [GitHub Discussions](https://github.com/NexusInnovation/nexus-nexkit-vscode/discussions)
 
 ---
 
-**Maintained by**: Nexus Innovation  
-**Repository**: [github.com/NexusInnovation/nexus-nexkit-vscode](https://github.com/NexusInnovation/nexus-nexkit-vscode)
+**Maintenu par** : Nexus Innovation  
+**Dépôt** : [github.com/NexusInnovation/nexus-nexkit-vscode](https://github.com/NexusInnovation/nexus-nexkit-vscode)
