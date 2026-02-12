@@ -64,7 +64,7 @@ export class GitHubAuthHelper {
    */
   public static async getGitHubSession(
     scopes: string[],
-    createIfNone: boolean = false,
+    createIfNone: boolean = true,
     silent: boolean = true
   ): Promise<vscode.AuthenticationSession | undefined> {
     try {
@@ -105,7 +105,7 @@ export class GitHubAuthHelper {
 
     // Priority 2: Try VS Code authentication (silent, no prompts)
     try {
-      const session = await this.getGitHubSession(scopes, false, true);
+      const session = await this.getGitHubSession(scopes, true, false);
       if (session) {
         headers["Authorization"] = `token ${session.accessToken}`;
         return headers;
@@ -142,7 +142,7 @@ export class GitHubAuthHelper {
 
     // Check VS Code session
     try {
-      const session = await this.getGitHubSession(["repo"], false, true);
+      const session = await this.getGitHubSession(["repo"], true, false);
       return session !== undefined;
     } catch {
       return false;
@@ -159,7 +159,7 @@ export class GitHubAuthHelper {
     }
 
     try {
-      const session = await this.getGitHubSession(["repo"], false, true);
+      const session = await this.getGitHubSession(["repo"], true, false);
       if (session) {
         return { source: "vscode-session", available: true };
       }
