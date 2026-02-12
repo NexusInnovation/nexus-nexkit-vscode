@@ -1,3 +1,9 @@
+## 3.2.0-beta.2 (2026-02-12)
+
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([a164327](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a164327))
+* fix(auth): update GitHub session handling to prompt for authentication when necessary ([ec47bdb](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ec47bdb))
+* fix(auth): update GitHub session handling to prompt for authentication when necessary ([bdbbcd0](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/bdbbcd0))
+
 ## 3.2.0-beta.1 (2026-02-12)
 
 * fix: Merge pull request #90 from NexusInnovation/fix/apm-templates ([bcf3c9b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/bcf3c9b)), closes [#90](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/90)
