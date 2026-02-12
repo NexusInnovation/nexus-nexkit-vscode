@@ -2,6 +2,7 @@ import { RepositoryConfig, RepositoryConfigManager } from "../models/repositoryC
 import { RepositoryTemplateProvider } from "../providers/repositoryTemplateProvider";
 import { LocalFolderTemplateProvider } from "../providers/localFolderTemplateProvider";
 import { OperationMode } from "../models/aiTemplateFile";
+import { LoggingService } from "../../../shared/services/loggingService";
 
 /**
  * Union type for all template provider types
@@ -14,6 +15,7 @@ type TemplateProvider = RepositoryTemplateProvider | LocalFolderTemplateProvider
 export class RepositoryManager {
   private providers: Map<string, TemplateProvider> = new Map();
   private configs: Map<string, RepositoryConfig> = new Map();
+  private readonly _logging = LoggingService.getInstance();
 
   /**
    * Initialize repository providers from configuration
@@ -23,13 +25,26 @@ export class RepositoryManager {
     this.configs.clear();
     const repositories = RepositoryConfigManager.getEnabledRepositories();
 
+    this._logging.info("[Templates] RepositoryManager initialized", {
+      enabledRepositoryCount: repositories.length,
+      repositories: repositories.map((r) => ({
+        name: r.name,
+        type: r.type ?? "github",
+        url: r.url,
+        branch: r.branch,
+        enabled: r.enabled,
+        modes: r.modes,
+        paths: r.paths,
+      })),
+    });
+
     for (const config of repositories) {
       try {
         const provider = this.createProvider(config);
         this.providers.set(config.name, provider);
         this.configs.set(config.name, config);
       } catch (error) {
-        console.error(`Failed to create provider for ${config.name}:`, error);
+        this._logging.error(`[Templates] Failed to create provider for '${config.name}'`, error);
       }
     }
   }

@@ -6,6 +6,7 @@ import {
   OperationMode,
   RepositoryTemplatesMap,
 } from "../models/aiTemplateFile";
+import { LoggingService } from "../../../shared/services/loggingService";
 import { RepositoryManager } from "./repositoryManager";
 import { FetchAllResult, TemplateFetcherService } from "./templateFetcherService";
 import { TemplateDataStore } from "./templateDataStore";
@@ -22,6 +23,7 @@ export class AITemplateDataService implements vscode.Disposable {
   private readonly dataStore: TemplateDataStore;
   private readonly fileOperations: TemplateFileOperations;
   private readonly stateManager: InstalledTemplatesStateManager;
+  private readonly _logging = LoggingService.getInstance();
 
   private _isReady = false;
   private _isInitializing = false;
@@ -80,8 +82,37 @@ export class AITemplateDataService implements vscode.Disposable {
         // Initialize repositories
         this.repositoryManager.initialize();
 
+        this._logging.info("[Templates] Initializing AI template data...");
+
         // Fetch all templates
         const result = await this.fetcherService.fetchFromAllRepositories();
+
+        const countsByType: Record<AITemplateFileType, number> = {
+          agents: 0,
+          prompts: 0,
+          skills: 0,
+          instructions: 0,
+          chatmodes: 0,
+        };
+        for (const template of result.allTemplates) {
+          countsByType[template.type]++;
+        }
+
+        const repoDiagnostics = result.results.map((r) => ({
+          repositoryName: r.repositoryName,
+          success: r.success,
+          templateCount: r.templates.length,
+          error: r.error ? r.error.message : undefined,
+          modes: this.repositoryManager.getRepositoryModes(r.repositoryName),
+        }));
+
+        this._logging.info("[Templates] Initialization fetch results", {
+          templateCount: result.allTemplates.length,
+          successCount: result.successCount,
+          failureCount: result.failureCount,
+          countsByType,
+          repositories: repoDiagnostics,
+        });
 
         // Update data store
         this.dataStore.updateCollection(result.allTemplates);
@@ -90,12 +121,19 @@ export class AITemplateDataService implements vscode.Disposable {
         this._isInitializing = false;
         this._onInitialized.fire();
 
-        console.log(
-          `✅ AI Templates initialized: ${result.allTemplates.length} templates from ${result.successCount} repositories`
-        );
+        this._logging.info("[Templates] AI template data ready", {
+          templateCount: result.allTemplates.length,
+          successCount: result.successCount,
+          failureCount: result.failureCount,
+        });
 
-        if (result.failureCount > 0) {
-          console.warn(`⚠️ Failed to fetch from ${result.failureCount} repositories`);
+        if (result.allTemplates.length === 0) {
+          this._logging.warn(
+            "[Templates] No templates were loaded. This can lead to empty template lists in the UI.",
+            {
+              hint: "Check previous logs for per-repository failures (auth, rate limit, 404 path, network).",
+            }
+          );
         }
 
         // Setup file watchers for local repositories
@@ -104,7 +142,7 @@ export class AITemplateDataService implements vscode.Disposable {
         this._isInitializing = false;
         const err = error instanceof Error ? error : new Error(String(error));
         this._onError.fire(err);
-        console.error("Failed to initialize AI Templates:", error);
+        this._logging.error("[Templates] Failed to initialize AI template data", error);
         throw error;
       }
     })();
@@ -143,19 +181,41 @@ export class AITemplateDataService implements vscode.Disposable {
       // Reinitialize repositories (picks up config changes)
       this.repositoryManager.refresh();
 
+      this._logging.info("[Templates] Refreshing AI template data...");
+
       // Fetch all templates
       const result = await this.fetcherService.fetchFromAllRepositories();
+
+      const countsByType: Record<AITemplateFileType, number> = {
+        agents: 0,
+        prompts: 0,
+        skills: 0,
+        instructions: 0,
+        chatmodes: 0,
+      };
+      for (const template of result.allTemplates) {
+        countsByType[template.type]++;
+      }
+
+      this._logging.info("[Templates] Refresh fetch results", {
+        templateCount: result.allTemplates.length,
+        successCount: result.successCount,
+        failureCount: result.failureCount,
+        countsByType,
+      });
 
       // Update data store
       this.dataStore.updateCollection(result.allTemplates);
 
-      console.log(`🔄 AI Templates refreshed: ${result.allTemplates.length} templates`);
+      this._logging.info("[Templates] AI template data refreshed", {
+        templateCount: result.allTemplates.length,
+      });
 
       return result;
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
       this._onError.fire(err);
-      console.error("Failed to refresh AI Templates:", error);
+      this._logging.error("[Templates] Failed to refresh AI template data", error);
       throw error;
     }
   }
@@ -300,7 +360,7 @@ export class AITemplateDataService implements vscode.Disposable {
     try {
       await this.stateManager.syncWithFileSystem();
     } catch (error) {
-      console.error("Failed to sync installed templates:", error);
+      this._logging.error("[Templates] Failed to sync installed templates", error);
     }
   }
 

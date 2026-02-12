@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import { AITemplateFile, AITemplateFileType } from "../models/aiTemplateFile";
 import { RepositoryConfig } from "../models/repositoryConfig";
+import { LoggingService } from "../../../shared/services/loggingService";
 
 /**
  * Provider for fetching templates from a local folder.
@@ -9,6 +10,7 @@ import { RepositoryConfig } from "../models/repositoryConfig";
  */
 export class LocalFolderTemplateProvider {
   private resolvedBasePath: vscode.Uri | undefined;
+  private readonly _logging = LoggingService.getInstance();
 
   constructor(private readonly config: RepositoryConfig) {
     if (!config.enabled) {
@@ -25,6 +27,13 @@ export class LocalFolderTemplateProvider {
       if (!basePath) {
         throw new Error(`Could not resolve base path for ${this.config.name}: ${this.config.url}`);
       }
+
+      this._logging.info(`[Templates] Fetching from local repository '${this.config.name}'`, {
+        repository: this.config.name,
+        basePath: basePath.fsPath,
+        modes: this.config.modes,
+        paths: this.config.paths,
+      });
 
       const allTemplates: AITemplateFile[] = [];
 
@@ -44,7 +53,12 @@ export class LocalFolderTemplateProvider {
             try {
               await vscode.workspace.fs.stat(fullPath);
             } catch (error) {
-              console.warn(`Path not found in ${this.config.name}: ${fullPath.fsPath}`);
+              this._logging.warn(`[Templates] Local path not found`, {
+                repository: this.config.name,
+                type,
+                relativePath,
+                fullPath: fullPath.fsPath,
+              });
               return;
             }
 
@@ -53,6 +67,7 @@ export class LocalFolderTemplateProvider {
 
             // Handle skills type differently - fetch folders instead of .md files
             if (type === "skills") {
+              let count = 0;
               for (const [name, fileType] of entries) {
                 if (fileType === vscode.FileType.Directory) {
                   const dirPath = vscode.Uri.joinPath(fullPath, name);
@@ -65,10 +80,18 @@ export class LocalFolderTemplateProvider {
                     isDirectory: true,
                     sourcePath: `${relativePath}/${name}`,
                   });
+                  count++;
                 }
               }
+
+              this._logging.info(`[Templates] Fetched ${count} skill folder(s) from '${this.config.name}'`, {
+                repository: this.config.name,
+                type,
+                relativePath,
+              });
             } else {
               // Regular handling for file-based templates
+              let count = 0;
               for (const [name, fileType] of entries) {
                 // Only process markdown files
                 if (fileType !== vscode.FileType.File || !name.endsWith(".md")) {
@@ -84,10 +107,18 @@ export class LocalFolderTemplateProvider {
                   repository: this.config.name,
                   repositoryUrl: this.config.url,
                 });
+
+                count++;
               }
+
+              this._logging.info(`[Templates] Fetched ${count} ${type} template(s) from '${this.config.name}'`, {
+                repository: this.config.name,
+                type,
+                relativePath,
+              });
             }
           } catch (error) {
-            console.error(`Error fetching ${type} from ${this.config.name}:`, error);
+            this._logging.error(`[Templates] Error fetching '${type}' from local repo '${this.config.name}'`, error);
             throw error;
           }
         })();
@@ -98,9 +129,14 @@ export class LocalFolderTemplateProvider {
       // Wait for all fetches to complete
       await Promise.all(fetchPromises);
 
+      this._logging.info(`[Templates] Completed local fetch for '${this.config.name}'`, {
+        repository: this.config.name,
+        templateCount: allTemplates.length,
+      });
+
       return allTemplates;
     } catch (error) {
-      console.error(`Error fetching templates from ${this.config.name}:`, error);
+      this._logging.error(`[Templates] Failed to fetch templates from local repo '${this.config.name}'`, error);
       throw error;
     }
   }

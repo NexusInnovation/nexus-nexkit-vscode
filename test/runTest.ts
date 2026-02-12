@@ -36,6 +36,8 @@ async function main() {
     await runTests({
       extensionDevelopmentPath,
       extensionTestsPath,
+      // Increase download idle timeout to avoid flaky failures on slower networks.
+      timeout: 60000,
       launchArgs: [
         `--user-data-dir=${userDataDir}`,
         `--extensions-dir=${extensionsDir}`,
