@@ -34,6 +34,9 @@ export class RepositoryTemplateProvider {
   public async fetchAllTemplates(): Promise<AITemplateFile[]> {
     try {
       const { owner, repo } = this.parseGitHubUrl();
+      
+      // Get auth info before making requests
+      const authInfo = await GitHubAuthHelper.getAuthInfo();
       const headers = await this.getAuthHeaders();
 
       const branch = this.config.branch ?? "main";
@@ -43,6 +46,8 @@ export class RepositoryTemplateProvider {
         branch,
         modes: this.config.modes,
         paths: this.config.paths,
+        authSource: authInfo.source,
+        isAuthenticated: authInfo.available,
       });
 
       const allTemplates: AITemplateFile[] = [];
@@ -102,15 +107,43 @@ export class RepositoryTemplateProvider {
             if (!response.ok) {
               if (response.status === 404) {
                 // 404 can mean: path doesn't exist OR no access to private repo
-                this._logging.warn(`[Templates] GitHub path not found or no access (404)`, {
-                  repository: this.config.name,
-                  path,
-                  branch,
-                  apiUrl,
-                  rateLimit: rateLimitInfo,
-                  hint:
-                    "If this is a private repo, ensure you are signed in to GitHub in VS Code and have access. If public, verify the branch/path.",
-                });
+                const authInfo = await GitHubAuthHelper.getAuthInfo();
+                const isLikelyPrivate = !authInfo.available;
+                
+                if (isLikelyPrivate) {
+                  this._logging.error(`[Templates] Cannot access repository - authentication required`, {
+                    repository: this.config.name,
+                    owner,
+                    repo,
+                    path,
+                    branch,
+                    apiUrl,
+                    authStatus: {
+                      source: authInfo.source,
+                      available: authInfo.available,
+                    },
+                    rateLimit: rateLimitInfo,
+                    action: "Sign in to GitHub in VS Code to access private repositories",
+                  });
+                  
+                  // Show error message with guidance
+                  vscode.window.showErrorMessage(
+                    `Cannot access private repository '${this.config.name}'. Sign in to GitHub: click the profile icon (bottom-left) and select "Sign in with GitHub".`
+                  );
+                } else {
+                  this._logging.warn(`[Templates] GitHub path not found (404)`, {
+                    repository: this.config.name,
+                    path,
+                    branch,
+                    apiUrl,
+                    rateLimit: rateLimitInfo,
+                    authStatus: {
+                      source: authInfo.source,
+                      available: authInfo.available,
+                    },
+                    hint: "Verify the branch and path are correct. The repository exists but this path may not.",
+                  });
+                }
                 return;
               }
               if (response.status === 401 || response.status === 403) {
@@ -435,27 +468,11 @@ export class RepositoryTemplateProvider {
    * Uses GitHubAuthHelper for unified authentication across environments
    */
   private async getAuthHeaders(): Promise<Record<string, string>> {
-    this._logging.debug(`[Templates] Getting GitHub authentication headers`, {
-      repository: this.config.name,
-    });
-
     const headers = await GitHubAuthHelper.getAuthHeaders(
       ["repo"], // Required scopes
       "Nexkit-VSCode-Extension", // User agent
       false // Don't require auth (graceful degradation)
     );
-
-    // Check if we have auth token (indicates authenticated request)
-    const hasAuthToken = headers.Authorization !== undefined;
-
-    this._logging.debug(`[Templates] GitHub authentication headers obtained`, {
-      repository: this.config.name,
-      isAuthenticated: hasAuthToken,
-      userAgent: headers["User-Agent"],
-      hint: hasAuthToken
-        ? "Authenticated requests have rate limit of 5000/hour"
-        : "Unauthenticated requests have rate limit of 60/hour. Sign in to GitHub in VS Code for higher limits.",
-    });
 
     return headers;
   }
