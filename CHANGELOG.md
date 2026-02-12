@@ -1,3 +1,10 @@
+## 3.1.0-beta.4 (2026-02-11)
+
+* fix(docs): update README for improved installation instructions and feature descriptions ([bbd880a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/bbd880a))
+
+## 3.1.0-beta.3 (2026-02-10)
+
+* fix(docs): update README to remove deprecated version badges and improve formatting ([090020c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/090020c))
 ## 3.1.0 (2026-02-10)
 
 * fix: Develop (#86) ([0d5e866](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/0d5e866)), closes [#86](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/86)

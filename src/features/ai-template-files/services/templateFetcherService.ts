@@ -1,5 +1,6 @@
 import { AITemplateFile } from "../models/aiTemplateFile";
 import { RepositoryManager } from "./repositoryManager";
+import { LoggingService } from "../../../shared/services/loggingService";
 
 /**
  * Result of fetching templates from a single repository
@@ -26,6 +27,8 @@ export interface FetchAllResult {
  * Handles parallel fetching, error aggregation, and progress tracking
  */
 export class TemplateFetcherService {
+  private readonly _logging = LoggingService.getInstance();
+
   constructor(private readonly repositoryManager: RepositoryManager) {}
 
   /**
@@ -35,6 +38,7 @@ export class TemplateFetcherService {
     const provider = this.repositoryManager.getProvider(repositoryName);
 
     if (!provider) {
+      this._logging.error(`[Templates] Repository provider not found`, { repositoryName });
       return {
         repositoryName,
         templates: [],
@@ -45,12 +49,22 @@ export class TemplateFetcherService {
 
     try {
       const templates = await provider.fetchAllTemplates();
+
+      this._logging.info(`[Templates] Repository fetched`, {
+        repositoryName,
+        templateCount: templates.length,
+      });
+
       return {
         repositoryName,
         templates,
         success: true,
       };
     } catch (error) {
+      this._logging.error(`[Templates] Repository fetch failed`, {
+        repositoryName,
+        error: error instanceof Error ? error.message : String(error),
+      });
       return {
         repositoryName,
         templates: [],
@@ -67,6 +81,7 @@ export class TemplateFetcherService {
     const providers = this.repositoryManager.getAllProviders();
 
     if (providers.length === 0) {
+      this._logging.warn(`[Templates] No enabled repositories configured`);
       return {
         allTemplates: [],
         results: [],
@@ -74,6 +89,8 @@ export class TemplateFetcherService {
         failureCount: 0,
       };
     }
+
+    this._logging.info(`[Templates] Fetching templates from ${providers.length} repository(ies)`);
 
     // Fetch from all repositories in parallel
     const fetchPromises = providers.map((provider) => this.fetchFromRepository(provider.getRepositoryName()));
@@ -91,9 +108,16 @@ export class TemplateFetcherService {
         successCount++;
       } else {
         failureCount++;
-        console.error(`Failed to fetch from ${result.repositoryName}:`, result.error);
+        this._logging.error(`[Templates] Failed to fetch from repository '${result.repositoryName}'`, result.error);
       }
     }
+
+    this._logging.info(`[Templates] Fetch completed`, {
+      repositoryCount: providers.length,
+      successCount,
+      failureCount,
+      templateCount: allTemplates.length,
+    });
 
     return {
       allTemplates,

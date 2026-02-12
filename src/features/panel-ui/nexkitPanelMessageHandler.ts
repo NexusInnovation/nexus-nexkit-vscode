@@ -3,6 +3,7 @@ import { SettingsManager } from "../../core/settingsManager";
 import { Commands } from "../../shared/constants/commands";
 import { WebviewMessage, ExtensionMessage } from "./types/webviewMessages";
 import { ServiceContainer } from "../../core/serviceContainer";
+import { getApmAgentDiagnostics } from "./utils/templateDiagnostics";
 
 /**
  * Handles message processing and business logic for the Nexkit panel webview
@@ -18,6 +19,7 @@ import { ServiceContainer } from "../../core/serviceContainer";
  */
 export class NexkitPanelMessageHandler {
   private readonly _messageHandlers: Map<string, (message: WebviewMessage) => Promise<void>>;
+  private _lastApmEmptySignature: string | undefined;
 
   constructor(
     private readonly getWebview: () => vscode.WebviewView | undefined,
@@ -270,9 +272,30 @@ export class NexkitPanelMessageHandler {
   private async sendTemplateData(): Promise<void> {
     try {
       await this._services.aiTemplateData.waitForReady();
+
+      const repositories = this._services.aiTemplateData.getRepositoryTemplatesMap();
+
+      // Diagnostics for the reported issue: in APM mode the "Agent Templates" section exists but is empty.
+      // We only warn when APM-visible repos exist but contain zero agent templates.
+      const apmDiagnostics = getApmAgentDiagnostics(repositories);
+      if (apmDiagnostics.apmRepositoryCount > 0 && apmDiagnostics.apmAgentCount === 0) {
+        const signature = JSON.stringify(
+          apmDiagnostics.apmRepositories.map((r) => ({ name: r.name, agentCount: r.agentCount, modes: r.modes }))
+        );
+
+        if (signature !== this._lastApmEmptySignature) {
+          this._lastApmEmptySignature = signature;
+          this._services.logging.warn("[APM] Agent Templates is empty (0 agents loaded from APM repositories)", {
+            modeSetting: SettingsManager.getMode(),
+            ...apmDiagnostics,
+            hint: "Check earlier [Templates] logs for GitHub auth/rate-limit, 404 path, or branch/path mismatches for the APM template repository.",
+          });
+        }
+      }
+
       this.sendToWebview({
         command: "templateDataUpdate",
-        repositories: this._services.aiTemplateData.getRepositoryTemplatesMap(),
+        repositories,
       });
     } catch (error) {
       console.error("Failed to fetch template data:", error);
