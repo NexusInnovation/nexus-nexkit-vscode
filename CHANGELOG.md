@@ -5,6 +5,25 @@
 ## 3.1.0-beta.3 (2026-02-10)
 
 * fix(docs): update README to remove deprecated version badges and improve formatting ([090020c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/090020c))
+## 3.1.0 (2026-02-10)
+
+* fix: Develop (#86) ([0d5e866](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/0d5e866)), closes [#86](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/86)
+* fix: Develop (#88) ([4df0e78](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4df0e78)), closes [#88](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/88)
+* fix: Merge pull request #89 from NexusInnovation/develop ([75726a1](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/75726a1)), closes [#89](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/89)
+* Develop (#87) ([026d854](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/026d854)), closes [#87](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/87)
+* Enhance installation documentation and add Quick Install guide ([dbe04ee](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/dbe04ee))
+* Enhance installation documentation and add Quick Install guide ([eb0603c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/eb0603c))
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([9a38d8a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9a38d8a))
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([5556233](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/5556233))
+* chore(release): v3.0.0-beta.5 [skip ci] ([a5528a3](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a5528a3))
+* chore(release): v3.0.0-beta.5 [skip ci] ([a8ebff6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a8ebff6))
+* chore(release): v3.1.0-beta.1 [skip ci] ([f645d66](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/f645d66))
+* chore(release): v3.1.0-beta.2 [skip ci] ([2997bc0](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2997bc0))
+* feat: add Azure Function badge service for version and release badges ([1cc170b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/1cc170b))
+* feat: add Azure Function badge service for version and release badges ([1417b67](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/1417b67))
+* feat(logging): implement centralized logging service with commands and tests ([60ea4ac](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/60ea4ac))
+* feat(scripts): add automated VS Code + Nexkit installation for Intune deployment ([0e91fde](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/0e91fde))
+* feat(scripts): add automated VS Code + Nexkit installation for Intune deployment ([72709d5](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/72709d5))
 
 ## 3.1.0-beta.2 (2026-02-09)
 
