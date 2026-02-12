@@ -5,6 +5,7 @@
 * fix(auth): update GitHub session handling to prompt for authentication when necessary ([bdbbcd0](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/bdbbcd0))
 
 ## 3.2.0-beta.1 (2026-02-12)
+## 3.2.0 (2026-02-12)
 
 * fix: Merge pull request #90 from NexusInnovation/fix/apm-templates ([bcf3c9b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/bcf3c9b)), closes [#90](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/90)
 * fix(docs): update README for improved installation instructions and feature descriptions ([bbd880a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/bbd880a))
