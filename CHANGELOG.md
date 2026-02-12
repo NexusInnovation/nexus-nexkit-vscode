@@ -1,3 +1,14 @@
+## 3.2.0-beta.1 (2026-02-12)
+
+* fix: Merge pull request #90 from NexusInnovation/fix/apm-templates ([bcf3c9b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/bcf3c9b)), closes [#90](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/90)
+* fix(docs): update README for improved installation instructions and feature descriptions ([bbd880a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/bbd880a))
+* fix(docs): update README to remove deprecated version badges and improve formatting ([090020c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/090020c))
+* Merge branch 'main' into fix/apm-templates ([0124879](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/0124879))
+* feat(auth): enhance GitHub authentication handling for private repositories ([275b11f](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/275b11f))
+* feat(logging): integrate LoggingService for enhanced logging across template providers and services ([a678d66](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a678d66))
+* chore(release): v3.1.0-beta.3 [skip ci] ([770ae79](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/770ae79))
+* chore(release): v3.1.0-beta.4 [skip ci] ([29132df](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/29132df))
+
 ## 3.1.0-beta.4 (2026-02-11)
 
 * fix(docs): update README for improved installation instructions and feature descriptions ([bbd880a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/bbd880a))
