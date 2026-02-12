@@ -20,7 +20,7 @@ export class ExtensionGitHubReleaseService {
    * Get GitHub authentication session with required scopes
    * @param createIfNone If true, prompt user to sign in if not authenticated
    */
-  private async getGitHubSession(createIfNone: boolean = false): Promise<vscode.AuthenticationSession | undefined> {
+  private async getGitHubSession(createIfNone: boolean = true): Promise<vscode.AuthenticationSession | undefined> {
     return await GitHubAuthHelper.getGitHubSession(["repo"], createIfNone, !createIfNone);
   }
 
