@@ -34,7 +34,7 @@ export class RepositoryTemplateProvider {
   public async fetchAllTemplates(): Promise<AITemplateFile[]> {
     try {
       const { owner, repo } = this.parseGitHubUrl();
-      
+
       // Get auth info before making requests
       const authInfo = await GitHubAuthHelper.getAuthInfo();
       const headers = await this.getAuthHeaders();
@@ -109,7 +109,7 @@ export class RepositoryTemplateProvider {
                 // 404 can mean: path doesn't exist OR no access to private repo
                 const authInfo = await GitHubAuthHelper.getAuthInfo();
                 const isLikelyPrivate = !authInfo.available;
-                
+
                 if (isLikelyPrivate) {
                   this._logging.error(`[Templates] Cannot access repository - authentication required`, {
                     repository: this.config.name,
@@ -125,7 +125,7 @@ export class RepositoryTemplateProvider {
                     rateLimit: rateLimitInfo,
                     action: "Sign in to GitHub in VS Code to access private repositories",
                   });
-                  
+
                   // Show error message with guidance
                   vscode.window.showErrorMessage(
                     `Cannot access private repository '${this.config.name}'. Sign in to GitHub: click the profile icon (bottom-left) and select "Sign in with GitHub".`
@@ -322,6 +322,66 @@ export class RepositoryTemplateProvider {
       this._logging.error(`[Templates] Error downloading template file '${templateFile.name}'`, error);
       throw error;
     }
+  }
+
+  /**
+   * Download the SKILL.md metadata file from a skill directory on GitHub.
+   * Returns the file content, or null if the SKILL.md does not exist.
+   */
+  public async downloadSkillMetadataFile(templateFile: AITemplateFile): Promise<string | null> {
+    if (!templateFile.isDirectory || !templateFile.sourcePath) {
+      throw new Error(`Template is not a skill directory: ${templateFile.name}`);
+    }
+
+    const { owner, repo } = this.parseGitHubUrl();
+    const headers = await this.getAuthHeaders();
+    const branch = this.config.branch ?? "main";
+    const skillMdPath = `${templateFile.sourcePath}/SKILL.md`;
+    const apiUrl = `${RepositoryTemplateProvider.GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${skillMdPath}?ref=${branch}`;
+
+    this._logging.debug(`[Templates] Fetching SKILL.md metadata from GitHub`, {
+      repository: templateFile.repository,
+      skillName: templateFile.name,
+      skillMdPath,
+    });
+
+    const response = await fetch(apiUrl, { headers });
+
+    if (response.status === 404) {
+      this._logging.debug(`[Templates] SKILL.md not found for skill`, {
+        repository: templateFile.repository,
+        skillName: templateFile.name,
+        skillMdPath,
+      });
+      return null;
+    }
+
+    if (!response.ok) {
+      this._logging.error(`[Templates] Failed to fetch SKILL.md`, {
+        repository: templateFile.repository,
+        skillName: templateFile.name,
+        status: response.status,
+        statusText: response.statusText,
+      });
+      throw new Error(`Failed to fetch SKILL.md: ${response.status} ${response.statusText}`);
+    }
+
+    // The GitHub contents API returns a JSON object with base64-encoded content
+    const item = (await response.json()) as { download_url?: string; content?: string; encoding?: string };
+
+    if (item.content && item.encoding === "base64") {
+      return Buffer.from(item.content.replace(/\n/g, ""), "base64").toString("utf8");
+    }
+
+    if (item.download_url) {
+      const rawResponse = await fetch(item.download_url, { headers });
+      if (!rawResponse.ok) {
+        throw new Error(`Failed to download SKILL.md: ${rawResponse.status} ${rawResponse.statusText}`);
+      }
+      return rawResponse.text();
+    }
+
+    return null;
   }
 
   /**

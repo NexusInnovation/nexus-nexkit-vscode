@@ -34,7 +34,7 @@ const RESET_OPTIONS: ResetOption[] = [
   {
     id: "templateFiles",
     label: "All Template Files",
-    description: "Remove .github template folders (agents, prompts, instructions, chatmodes)",
+    description: "Remove .nexkit template folders (agents, prompts, instructions, chatmodes)",
     detail: "Warning: This will delete all installed template files",
     requiresBackup: true,
     picked: true,
@@ -306,7 +306,10 @@ async function removeNexkitFromVSCodeSettings(workspaceRoot: string): Promise<vo
       (key) =>
         key.startsWith("github.copilot.chat.mode") ||
         key.startsWith("github.copilot.chat.codeGeneration.instructions") ||
-        key === "github.copilot.chat.useProjectTemplates"
+        key === "github.copilot.chat.useProjectTemplates" ||
+        key === "chat.promptFilesLocations" ||
+        key === "chat.instructionsFilesLocations" ||
+        key === "github.copilot.chat.agentDescriptionFilesLocations"
     );
 
     if (nexkitKeys.length > 0) {
