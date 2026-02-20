@@ -1,3 +1,11 @@
+## 3.3.0 (2026-02-20)
+
+* fix(bug): Merge pull request #92 from NexusInnovation/fix/skill-description-tooltip ([4d9375e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4d9375e)), closes [#92](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/92)
+* Apply suggestions from code review ([bca9eb4](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/bca9eb4))
+* Merge branch 'main' into fix/skill-description-tooltip ([2dfdc58](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2dfdc58))
+* feat(template): add downloadSkillMetadataFile method for local and GitHub templates ([d371a99](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/d371a99))
+* chore(release): v3.2.1-beta.1 [skip ci] ([d85fabc](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/d85fabc))
+
 ## <small>3.2.1-beta.1 (2026-02-12)</small>
 
 * Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([a164327](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a164327))
