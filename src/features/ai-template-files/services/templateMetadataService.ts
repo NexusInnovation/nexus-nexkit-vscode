@@ -16,6 +16,9 @@ export class TemplateMetadataService {
   /**
    * Get metadata for a template (cached or fetched)
    * Returns null if fetch/parse fails
+   *
+   * For skills, metadata is read from the SKILL.md file inside the skill folder.
+   * For other template types, metadata is read from the template file's YAML frontmatter.
    */
   public async getMetadata(template: AITemplateFile): Promise<TemplateMetadata | null> {
     const cacheKey = this.getCacheKey(template);
@@ -32,7 +35,24 @@ export class TemplateMetadataService {
         throw new Error(`Repository provider not found: ${template.repository}`);
       }
 
-      const content = await provider.downloadTemplate(template);
+      let content: string | null;
+
+      if (template.type === "skills") {
+        // Skills are directories — read the SKILL.md file inside the skill folder
+        content = await provider.downloadSkillMetadataFile(template);
+        if (content === null) {
+          // No SKILL.md found — return minimal metadata from the folder name
+          const fallback: TemplateMetadata = {
+            name: template.name,
+            description: "",
+          };
+          this._cache.set(cacheKey, fallback);
+          return fallback;
+        }
+      } else {
+        content = await provider.downloadTemplate(template);
+      }
+
       const metadata = this.parseMetadata(content, template.name);
 
       // Cache the result

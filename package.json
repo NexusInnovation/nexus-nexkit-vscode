@@ -2,7 +2,7 @@
   "name": "nexus-nexkit-vscode",
   "displayName": "Nexkit",
   "description": "VS Code extension for Nexkit",
-  "version": "3.2.1",
+  "version": "0.0.0-development",
   "publisher": "NexusInnovation",
   "private": true,
   "license": "MIT",

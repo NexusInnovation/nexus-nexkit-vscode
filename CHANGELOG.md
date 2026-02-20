@@ -1,12 +1,11 @@
-## <small>3.2.1 (2026-02-12)</small>
+## <small>3.2.1-beta.1 (2026-02-12)</small>
 
-* fix(auth): update GitHub session handling to prompt for authentication when necessary ([ec47bdb](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ec47bdb))
-* fix(auth): update GitHub session handling to prompt for authentication when necessary ([bdbbcd0](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/bdbbcd0))
-* fix(minor): Merge pull request #91 from NexusInnovation/develop ([9974b91](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9974b91)), closes [#91](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/91)
 * Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([a164327](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a164327))
 * Merge branch 'main' into develop ([cee612a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/cee612a))
 * chore(release): v3.2.0-beta.1 [skip ci] ([4f9876f](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4f9876f))
 * chore(release): v3.2.0-beta.2 [skip ci] ([9be6b91](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9be6b91))
+* fix(auth): update GitHub session handling to prompt for authentication when necessary ([ec47bdb](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ec47bdb))
+* fix(auth): update GitHub session handling to prompt for authentication when necessary ([bdbbcd0](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/bdbbcd0))
 
 ## 3.2.0-beta.2 (2026-02-12)
 

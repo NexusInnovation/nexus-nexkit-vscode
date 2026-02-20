@@ -156,6 +156,46 @@ export class LocalFolderTemplateProvider {
   }
 
   /**
+   * Download the SKILL.md metadata file from a local skill directory.
+   * Returns the file content, or null if the SKILL.md does not exist.
+   */
+  public async downloadSkillMetadataFile(templateFile: AITemplateFile): Promise<string | null> {
+    if (!templateFile.isDirectory) {
+      throw new Error(`Template is not a skill directory: ${templateFile.name}`);
+    }
+
+    const directoryUri = vscode.Uri.parse(templateFile.rawUrl);
+    const skillMdUri = vscode.Uri.joinPath(directoryUri, "SKILL.md");
+
+    this._logging.debug(`[Templates] Reading SKILL.md metadata from local filesystem`, {
+      repository: templateFile.repository,
+      skillName: templateFile.name,
+      skillMdPath: skillMdUri.fsPath,
+    });
+
+    try {
+      const fileContent = await vscode.workspace.fs.readFile(skillMdUri);
+      return Buffer.from(fileContent).toString("utf8");
+    } catch (error) {
+      if (error instanceof vscode.FileSystemError && error.code === "FileNotFound") {
+        // File doesn't exist is a normal case - return null
+        this._logging.debug(`[Templates] SKILL.md not found for local skill`, {
+          repository: templateFile.repository,
+          skillName: templateFile.name,
+          skillMdPath: skillMdUri.fsPath,
+        });
+        return null;
+      }
+
+      console.error(
+        `Error reading SKILL.md metadata for local skill '${templateFile.name}' from '${skillMdUri.fsPath}':`,
+        error
+      );
+      throw error;
+    }
+  }
+
+  /**
    * Recursively download all files in a directory
    * Returns a map of relative file paths to their contents
    */
