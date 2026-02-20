@@ -33,7 +33,7 @@ export function registerRestoreBackupCommand(context: vscode.ExtensionContext, s
       // Show backup selection
       const selectedBackup = await vscode.window.showQuickPick(
         backups.map((backup) => ({
-          label: backup.replace(".github.backup-", ""),
+          label: backup.replace(".nexkit.backup-", ""),
           description: backup,
           detail: `Restore template folders from ${backup}`,
         })),
