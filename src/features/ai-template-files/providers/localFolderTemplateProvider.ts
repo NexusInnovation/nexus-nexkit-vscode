@@ -177,13 +177,21 @@ export class LocalFolderTemplateProvider {
       const fileContent = await vscode.workspace.fs.readFile(skillMdUri);
       return Buffer.from(fileContent).toString("utf8");
     } catch (error) {
-      // File doesn't exist is a normal case - return null
-      this._logging.debug(`[Templates] SKILL.md not found for local skill`, {
-        repository: templateFile.repository,
-        skillName: templateFile.name,
-        skillMdPath: skillMdUri.fsPath,
-      });
-      return null;
+      if (error instanceof vscode.FileSystemError && error.code === "FileNotFound") {
+        // File doesn't exist is a normal case - return null
+        this._logging.debug(`[Templates] SKILL.md not found for local skill`, {
+          repository: templateFile.repository,
+          skillName: templateFile.name,
+          skillMdPath: skillMdUri.fsPath,
+        });
+        return null;
+      }
+
+      console.error(
+        `Error reading SKILL.md metadata for local skill '${templateFile.name}' from '${skillMdUri.fsPath}':`,
+        error
+      );
+      throw error;
     }
   }
 
