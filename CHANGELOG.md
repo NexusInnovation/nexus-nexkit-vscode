@@ -1,3 +1,10 @@
+## 3.4.0-beta.1 (2026-02-26)
+
+* fix: Merge pull request #93 from NexusInnovation/feature/move-nexkit-files-to-.nexkit ([9b12d84](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9b12d84)), closes [#93](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/93)
+* feat: move Nexkit template files from .github to .nexkit directory ([416c842](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/416c842))
+* feat(initialization): add Nexkit file migration service ([71fed35](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/71fed35))
+* Include BMAD Method ([fb52746](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/fb52746))
+
 ## 3.3.0 (2026-02-20)
 
 * fix(bug): Merge pull request #92 from NexusInnovation/fix/skill-description-tooltip ([4d9375e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4d9375e)), closes [#92](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/92)
