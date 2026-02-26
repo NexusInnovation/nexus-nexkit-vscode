@@ -1,3 +1,10 @@
+## 3.4.0 (2026-02-26)
+
+* Initial plan ([886cc10](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/886cc10))
+* Merge pull request #95 from NexusInnovation/copilot/add-nexkit-ai-commit-feature ([c9b18f1](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c9b18f1)), closes [#95](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/95)
+* feat: add AI commit message generation (Nexkit button in SCM input box) ([db84b68](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/db84b68))
+* feat: enhance AI commit message generation with customizable prompts and settings ([19b61da](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/19b61da))
+
 ## 3.3.0 (2026-02-20)
 
 * fix(bug): Merge pull request #92 from NexusInnovation/fix/skill-description-tooltip ([4d9375e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4d9375e)), closes [#92](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/92)
