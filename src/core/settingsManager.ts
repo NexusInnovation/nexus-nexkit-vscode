@@ -217,6 +217,22 @@ export class SettingsManager {
     await vscode.workspace.getConfiguration(this.NEXKIT_SECTION).update(this.MODE, mode, vscode.ConfigurationTarget.Global);
   }
 
+  // Commit Message
+  static isCommitMessageEnabled(): boolean {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<boolean>("commitMessage.enabled", true);
+  }
+
+  static getCommitMessageModel(): string {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<string>("commitMessage.model", "");
+  }
+
+  static getCommitMessageSystemPrompt(): string {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<string>(
+      "commitMessage.systemPrompt",
+      ""
+    );
+  }
+
   // Active DevOps Connection (using workspace state)
   static getActiveDevOpsConnection(): string | null {
     if (!this.context) {

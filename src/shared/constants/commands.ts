@@ -28,6 +28,9 @@ export const Commands = {
 
   // Logging commands
   SHOW_LOGS: "nexus-nexkit-vscode.showLogs",
+
+  // Commit message generation
+  GENERATE_COMMIT_MESSAGE: "nexus-nexkit-vscode.generateCommitMessage",
 } as const;
 
 // Type-safe command names
