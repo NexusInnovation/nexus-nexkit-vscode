@@ -37,22 +37,23 @@ Use the SmartBear MCP server to enable AI agent interaction with PactFlow/Pact B
 
 ### Config file locations
 
-| Tool        | Global Config File                    | Format                 |
-| ----------- | ------------------------------------- | ---------------------- |
-| Claude Code | `~/.claude.json`                      | JSON (`mcpServers`)    |
-| Codex       | `~/.codex/config.toml`                | TOML (`[mcp_servers]`) |
-| Gemini CLI  | `~/.gemini/settings.json`             | JSON (`mcpServers`)    |
-| Cursor      | `~/.cursor/mcp.json`                  | JSON (`mcpServers`)    |
-| Windsurf    | `~/.codeium/windsurf/mcp_config.json` | JSON (`mcpServers`)    |
+| Tool              | Global Config File                    | Format                 |
+| ----------------- | ------------------------------------- | ---------------------- |
+| Claude Code       | `~/.claude.json`                      | JSON (`mcpServers`)    |
+| Codex             | `~/.codex/config.toml`                | TOML (`[mcp_servers]`) |
+| Gemini CLI        | `~/.gemini/settings.json`             | JSON (`mcpServers`)    |
+| Cursor            | `~/.cursor/mcp.json`                  | JSON (`mcpServers`)    |
+| Windsurf          | `~/.codeium/windsurf/mcp_config.json` | JSON (`mcpServers`)    |
+| VS Code (Copilot) | `.vscode/mcp.json`                    | JSON (`servers`)       |
+
+> **Claude Code tip**: Prefer the `claude mcp add` CLI over manual JSON editing. Use `-s user` for global (all projects) or omit for per-project (default).
 
 ### CLI shortcuts (Claude Code and Codex)
 
 ```bash
-# Claude Code
-claude mcp add smartbear --scope user \
-  -e PACT_BROKER_BASE_URL=https://{tenant}.pactflow.io \
-  -e PACT_BROKER_TOKEN=<your-token> \
-  -- npx -y @smartbear/mcp@latest
+# Claude Code — use add-json for servers with env vars (-s user = global)
+claude mcp add-json -s user smartbear \
+  '{"type":"stdio","command":"npx","args":["-y","@smartbear/mcp@latest"],"env":{"PACT_BROKER_BASE_URL":"https://{tenant}.pactflow.io","PACT_BROKER_TOKEN":"<your-token>"}}'
 
 # Codex
 codex mcp add smartbear -- npx -y @smartbear/mcp@latest
@@ -66,6 +67,7 @@ Add a `"smartbear"` entry to the `mcpServers` object in the config file for your
 {
   "mcpServers": {
     "smartbear": {
+      "type": "stdio",
       "command": "npx",
       "args": ["-y", "@smartbear/mcp@latest"],
       "env": {
@@ -95,7 +97,7 @@ Note the key is `mcp_servers` (underscored), not `mcpServers`.
 
 ### VS Code (GitHub Copilot)
 
-Add to `.vscode/mcp.json`:
+Add to `.vscode/mcp.json` (note: uses `servers` key, not `mcpServers`):
 
 ```json
 {
