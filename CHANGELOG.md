@@ -1,3 +1,8 @@
+## 3.5.0-beta.2 (2026-02-26)
+
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([50a851a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/50a851a))
+* feat: Include Full BMAD Method ([cf1cab3](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/cf1cab3))
+
 ## 3.5.0-beta.1 (2026-02-26)
 
 * Include BMAD Method ([fb52746](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/fb52746))
