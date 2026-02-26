@@ -120,7 +120,10 @@
         "command": "nexus-nexkit-vscode.generateCommitMessage",
         "title": "Nexkit: Generate Commit Message",
         "category": "Nexkit",
-        "icon": "$(git-commit)"
+        "icon": {
+          "light": "media/Nexus_Symbole_MONOCHROME.svg",
+          "dark": "media/Nexus_Symbole_MONOCHROME_light.svg"
+        }
       }
     ],
     "menus": {
@@ -149,7 +152,14 @@
       "scm/inputBox": [
         {
           "command": "nexus-nexkit-vscode.generateCommitMessage",
-          "when": "scmProvider == git && config.nexkit.commitMessage.enabled",
+          "when": "scmProvider == git",
+          "group": "navigation"
+        }
+      ],
+      "scm/title": [
+        {
+          "command": "nexus-nexkit-vscode.generateCommitMessage",
+          "when": "scmProvider == git",
           "group": "navigation"
         }
       ]
@@ -284,7 +294,7 @@
         },
         "nexkit.telemetry.connectionString": {
           "type": "string",
-          "default": "InstrumentationKey=36541b20-0c16-4477-9d5c-d6990c51bafd;IngestionEndpoint=https://canadaeast-0.in.applicationinsights.azure.com/;LiveEndpoint=https://canadaeast.livediagnostics.monitor.azure.com/;ApplicationId=d5494809-608d-4364-a30e-feaeb0769286",
+          "default": "InstrumentationKey=1d613055-855f-4238-9727-dc14c7fab92d;IngestionEndpoint=https://canadacentral-1.in.applicationinsights.azure.com/;LiveEndpoint=https://canadacentral.livediagnostics.monitor.azure.com/;ApplicationId=dbe35447-e979-43d1-99fd-166d18ca41ad",
           "scope": "application",
           "description": "Azure Application Insights connection string (optional, for custom telemetry endpoint)."
         },
@@ -350,6 +360,43 @@
           "default": true,
           "scope": "application",
           "description": "Show Nexkit AI commit message button in the Source Control commit input box."
+        },
+        "nexkit.commitMessage.model": {
+          "type": "string",
+          "default": "",
+          "enum": [
+            "",
+            "gpt-4.1-nano",
+            "gpt-4.1-mini",
+            "gpt-4o-mini",
+            "gpt-4.1",
+            "gpt-4o",
+            "o4-mini",
+            "o3-mini",
+            "claude-sonnet-4",
+            "claude-3.5-sonnet"
+          ],
+          "enumItemLabels": [
+            "Auto (use best available)",
+            "GPT-4.1 Nano — fastest, recommended",
+            "GPT-4.1 Mini — fast, good quality",
+            "GPT-4o Mini — fast, good quality",
+            "GPT-4.1 — high quality",
+            "GPT-4o — high quality",
+            "o4-mini — reasoning, fast",
+            "o3-mini — reasoning, fast",
+            "Claude Sonnet 4 — high quality",
+            "Claude 3.5 Sonnet — high quality"
+          ],
+          "scope": "application",
+          "markdownDescription": "AI model used to generate commit messages. **Smaller models** like `gpt-4.1-nano` or `gpt-4.1-mini` are recommended for faster results — commit messages are a simple task that doesn't require a large model. Select **Auto** to let Nexkit pick the best available model."
+        },
+        "nexkit.commitMessage.systemPrompt": {
+          "type": "string",
+          "default": "You are an expert software developer. Generate a concise commit message following the Conventional Commits specification (https://www.conventionalcommits.org/) based on the provided git diff of staged changes.\n\nFormat of the commit message:\n```\n<type>(<optional scope>): <description>\n\n- <main change 1>\n- <main change 2>\n...\n- <main change n>\n```\nTypes: feat, fix, docs, style, refactor, test, chore, build, ci, perf, revert\nmain change: one liner defining the change\n\nRules:\n- Keep the subject line under 72 characters\n- Use imperative mood (\"add feature\" not \"added feature\")\n- Do not end with a period\n- Be specific and meaningful about what changed\n- list at most 5 <main changes>\n- Add an estimate amount of work to review this commit\n\nGit diff:\n{{diff}}\n\nRespond with ONLY the commit message, no explanation, no markdown formatting.",
+          "scope": "application",
+          "editPresentation": "multilineText",
+          "markdownDescription": "System prompt template used to generate commit messages. Use `{{diff}}` as a placeholder for the staged git diff. Customise this to enforce your team's commit message conventions."
         }
       }
     }

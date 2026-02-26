@@ -1,4 +1,6 @@
 import * as vscode from "vscode";
+import { SettingsManager } from "../../core/settingsManager";
+import { LoggingService } from "../../shared/services/loggingService";
 
 /**
  * Minimal type definitions for the VS Code Git Extension API
@@ -19,14 +21,53 @@ interface GitExtensionAPI {
  * Service that generates AI-powered commit messages for staged changes
  * using VS Code's Language Model API (e.g. GitHub Copilot).
  */
+/** Placeholder token replaced with the actual git diff in the prompt template. */
+const DIFF_PLACEHOLDER = "{{diff}}";
+
+/** Default system prompt used when the user has not customised the setting. */
+export const DEFAULT_SYSTEM_PROMPT = `You are an expert software developer. Generate a concise commit message following the Conventional Commits specification (https://www.conventionalcommits.org/) based on the provided git diff of staged changes.
+
+Format of the commit message:
+\`\`\`
+<type>(<optional scope>): <description>
+
+- <main change 1>
+- <main change 2>
+...
+- <main change n>
+\`\`\`
+Types: feat, fix, docs, style, refactor, test, chore, build, ci, perf, revert
+main change: one liner defining the change
+
+Rules:
+- Keep the subject line under 72 characters
+- Use imperative mood ("add feature" not "added feature")
+- Do not end with a period
+- Be specific and meaningful about what changed
+- list at most 5 <main changes>
+- Add an estimate amount of work to review this commit
+
+Git diff:
+{{diff}}
+
+Respond with ONLY the commit message, no explanation, no markdown formatting.`;
+
 export class CommitMessageService {
+  private readonly _logging = LoggingService.getInstance();
+
   /** Maximum number of characters of a git diff sent to the AI model. */
   static readonly MAX_DIFF_LENGTH = 8000;
+
   /**
    * Generate a commit message for the currently staged git changes and
    * populate the SCM input box with the result.
    */
   async generateCommitMessage(): Promise<void> {
+    if (!SettingsManager.isCommitMessageEnabled()) {
+      this._logging.info("Commit message generation is disabled via settings");
+      return;
+    }
+
     const repo = await this._getActiveRepository();
     if (!repo) {
       return;
@@ -66,6 +107,7 @@ export class CommitMessageService {
             return;
           }
           const msg = error instanceof Error ? error.message : String(error);
+          this._logging.error(`Failed to generate commit message: ${msg}`);
           vscode.window.showErrorMessage(`Nexkit: Failed to generate commit message: ${msg}`);
           return;
         }
@@ -86,6 +128,7 @@ export class CommitMessageService {
       | undefined;
 
     if (!gitExtension) {
+      this._logging.warn("Git extension not found");
       vscode.window.showErrorMessage("Nexkit: Git extension not found. Please ensure the built-in Git extension is enabled.");
       return undefined;
     }
@@ -94,6 +137,7 @@ export class CommitMessageService {
     const repos = git.repositories;
 
     if (!repos || repos.length === 0) {
+      this._logging.warn("No Git repository found in the current workspace");
       vscode.window.showErrorMessage("Nexkit: No Git repository found in the current workspace.");
       return undefined;
     }
@@ -114,10 +158,17 @@ export class CommitMessageService {
 
   private async _selectLanguageModel(): Promise<vscode.LanguageModelChat | undefined> {
     try {
-      // Prefer GPT-4o quality model; fall back to any available Copilot model.
-      for (const selector of [{ vendor: "copilot", family: "gpt-4o" }, { vendor: "copilot" }, {}] as vscode.LanguageModelChatSelector[]) {
+      const configuredModel = SettingsManager.getCommitMessageModel();
+
+      // Build selector chain: configured model first, then fallbacks.
+      const selectors: vscode.LanguageModelChatSelector[] = configuredModel
+        ? [{ vendor: "copilot", family: configuredModel }, { family: configuredModel }, { vendor: "copilot" }, {}]
+        : [{ vendor: "copilot", family: "gpt-4o" }, { vendor: "copilot" }, {}];
+
+      for (const selector of selectors) {
         const models = await vscode.lm.selectChatModels(selector);
         if (models.length > 0) {
+          this._logging.info(`Using AI model: ${models[0].name} (${models[0].family})`);
           return models[0];
         }
       }
@@ -132,32 +183,26 @@ export class CommitMessageService {
       return undefined;
     } catch (error) {
       const msg = error instanceof Error ? error.message : String(error);
+      this._logging.error(`Failed to access AI model: ${msg}`);
       vscode.window.showErrorMessage(`Nexkit: Failed to access AI model: ${msg}`);
       return undefined;
     }
   }
 
-  buildPrompt(diff: string): string {
+  buildPrompt(diff: string, promptTemplate?: string): string {
     // Truncate large diffs to stay within model token limits.
     const truncatedDiff =
       diff.length > CommitMessageService.MAX_DIFF_LENGTH
         ? `${diff.substring(0, CommitMessageService.MAX_DIFF_LENGTH)}\n... (diff truncated)`
         : diff;
 
-    return `You are an expert software developer. Generate a concise commit message following the Conventional Commits specification (https://www.conventionalcommits.org/) based on the provided git diff of staged changes.
+    const template = promptTemplate || SettingsManager.getCommitMessageSystemPrompt() || DEFAULT_SYSTEM_PROMPT;
 
-Format: <type>(<optional scope>): <description>
-Types: feat, fix, docs, style, refactor, test, chore, build, ci, perf, revert
+    // Replace the {{diff}} placeholder; if the user removed it, append the diff.
+    if (template.includes(DIFF_PLACEHOLDER)) {
+      return template.replace(DIFF_PLACEHOLDER, truncatedDiff);
+    }
 
-Rules:
-- Keep the subject line under 72 characters
-- Use imperative mood ("add feature" not "added feature")
-- Do not end with a period
-- Be specific and meaningful about what changed
-
-Git diff:
-${truncatedDiff}
-
-Respond with ONLY the commit message on a single line, no explanation, no markdown formatting.`;
+    return `${template}\n\nGit diff:\n${truncatedDiff}`;
   }
 }
