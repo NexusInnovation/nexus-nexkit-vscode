@@ -38,7 +38,7 @@ export class TemplateFileOperations {
    */
   private getTemplateTypePath(templateFileType: AITemplateFileType): string {
     const workspaceRoot = getWorkspaceRoot();
-    return path.join(workspaceRoot, ".github", templateFileType);
+    return path.join(workspaceRoot, ".nexkit", templateFileType);
   }
 
   /**

@@ -9,6 +9,16 @@ const SETTINGS_TEMPLATE = {
   "editor.formatOnSave": true,
   "typescript.preferences.importModuleSpecifier": "relative",
   "typescript.suggest.autoImports": true,
+  "chat.promptFilesLocations": {
+    ".nexkit/prompts": true
+  },
+  "chat.instructionsFilesLocations": {
+    ".nexkit/instructions": true,
+    ".nexkit/skills": true
+  },
+  "chat.agentFilesLocations": {
+    ".nexkit/agents": true
+  },
 };
 
 /**

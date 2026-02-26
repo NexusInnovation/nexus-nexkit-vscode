@@ -4,23 +4,23 @@ import { fileExists, copyDirectory } from "../../shared/utils/fileHelper";
 import { AI_TEMPLATE_FILE_TYPES } from "../ai-template-files/models/aiTemplateFile";
 
 /**
- * Template folder names in .github directory
+ * Template folder names in .nexkit directory
  */
 const TEMPLATE_FOLDERS = AI_TEMPLATE_FILE_TYPES;
 
 /**
- * Service for managing GitHub template folder backups
+ * Service for managing Nexkit template folder backups
  * Only backs up and manages template folders (agents, prompts, instructions, chatmodes)
- * from the .github directory, preserving other .github content like workflows
+ * from the .nexkit directory
  */
 export class GitHubTemplateBackupService {
   /**
-   * Backup GitHub template folders and delete them from the workspace
+   * Backup Nexkit template folders and delete them from the workspace
    * @param workspaceRoot Absolute path to workspace root
    * @returns Path to backup directory or null if nothing was backed up
    */
   public async backupTemplates(workspaceRoot: string): Promise<string | null> {
-    const githubPath = path.join(workspaceRoot, ".github");
+    const githubPath = path.join(workspaceRoot, ".nexkit");
 
     if (!(await fileExists(githubPath))) {
       return null;
@@ -41,12 +41,11 @@ export class GitHubTemplateBackupService {
   }
 
   /**
-   * Delete template folders from .github directory
-   * Preserves other .github content like workflows
+   * Delete template folders from .nexkit directory
    * @param workspaceRoot Absolute path to workspace root
    */
   public async deleteTemplateFolders(workspaceRoot: string): Promise<void> {
-    const githubPath = path.join(workspaceRoot, ".github");
+    const githubPath = path.join(workspaceRoot, ".nexkit");
 
     if (!(await fileExists(githubPath))) {
       return;
@@ -70,7 +69,7 @@ export class GitHubTemplateBackupService {
     try {
       const entries = await fs.promises.readdir(workspaceRoot);
       return entries
-        .filter((entry) => entry.startsWith(".github.backup-"))
+        .filter((entry) => entry.startsWith(".nexkit.backup-"))
         .sort()
         .reverse(); // Most recent first
     } catch {
@@ -90,9 +89,9 @@ export class GitHubTemplateBackupService {
       throw new Error(`Backup ${backupName} not found`);
     }
 
-    const githubPath = path.join(workspaceRoot, ".github");
+    const githubPath = path.join(workspaceRoot, ".nexkit");
 
-    // Create .github directory if it doesn't exist
+    // Create .nexkit directory if it doesn't exist
     await fs.promises.mkdir(githubPath, { recursive: true });
 
     // Create temp backup of current template folders
@@ -168,8 +167,8 @@ export class GitHubTemplateBackupService {
   }
 
   /**
-   * Check if any template folders exist in .github directory
-   * @param githubPath Absolute path to .github directory
+   * Check if any template folders exist in .nexkit directory
+   * @param githubPath Absolute path to .nexkit directory
    * @returns True if at least one template folder exists
    */
   private async hasAnyTemplateFolders(githubPath: string): Promise<boolean> {
@@ -185,12 +184,12 @@ export class GitHubTemplateBackupService {
   /**
    * Create backup directory with template folders
    * @param workspaceRoot Absolute path to workspace root
-   * @param githubPath Absolute path to .github directory
+   * @param githubPath Absolute path to .nexkit directory
    * @returns Path to backup directory
    */
   private async createBackupDirectory(workspaceRoot: string, githubPath: string): Promise<string> {
     const timestamp = new Date().toISOString().slice(0, 19).replace(/T/g, "_").replace(/:/g, "-");
-    const backupPath = path.join(workspaceRoot, `.github.backup-${timestamp}`);
+    const backupPath = path.join(workspaceRoot, `.nexkit.backup-${timestamp}`);
     await fs.promises.mkdir(backupPath, { recursive: true });
 
     for (const folderName of TEMPLATE_FOLDERS) {
