@@ -20,6 +20,7 @@ import { RepositoryManager } from "../features/ai-template-files/services/reposi
 import { ProfileService } from "../features/profile-management/services/profileService";
 import { ModeSelectionService } from "../features/initialization/modeSelectionService";
 import { DevOpsMcpConfigService } from "../features/apm-devops/devOpsMcpConfigService";
+import { CommitMessageService } from "../features/commit-management/commitMessageService";
 
 /**
  * Service container for dependency injection
@@ -46,6 +47,7 @@ export interface ServiceContainer {
   profileService: ProfileService;
   modeSelection: ModeSelectionService;
   devOpsConfig: DevOpsMcpConfigService;
+  commitMessage: CommitMessageService;
 }
 
 /**
@@ -82,6 +84,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const profileService = new ProfileService(installedTemplatesState, aiTemplateData, backup);
   const modeSelection = new ModeSelectionService();
   const devOpsConfig = new DevOpsMcpConfigService();
+  const commitMessage = new CommitMessageService();
 
   // Register for disposal
   context.subscriptions.push(logging);
@@ -112,5 +115,6 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     profileService,
     modeSelection,
     devOpsConfig,
+    commitMessage,
   };
 }

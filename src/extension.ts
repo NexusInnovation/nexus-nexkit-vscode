@@ -17,6 +17,7 @@ import {
 import { registerOpenFeedbackCommand } from "./shared/commands/feedbackCommand";
 import { registerShowLogsCommand } from "./shared/commands/loggingCommand";
 import { registerAddDevOpsConnectionCommand, registerRemoveDevOpsConnectionCommand } from "./features/apm-devops/commands";
+import { registerGenerateCommitMessageCommand } from "./features/commit-management/commands";
 
 /**
  * Extension activation
@@ -51,6 +52,7 @@ export async function activate(context: vscode.ExtensionContext) {
   registerDeleteProfileCommand(context, services);
   registerAddDevOpsConnectionCommand(context, services);
   registerRemoveDevOpsConnectionCommand(context, services);
+  registerGenerateCommitMessageCommand(context, services);
 
   // Register webview panel
   const nexkitPanelProvider = new NexkitPanelViewProvider();
