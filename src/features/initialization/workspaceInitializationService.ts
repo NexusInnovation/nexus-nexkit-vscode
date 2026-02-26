@@ -3,6 +3,8 @@ import { ServiceContainer } from "../../core/serviceContainer";
 import { SettingsManager } from "../../core/settingsManager";
 import { BatchInstallSummary } from "../ai-template-files/services/templateFileOperations";
 
+import { MigrationSummary } from "./nexkitFileMigrationService";
+
 /**
  * Service for managing workspace initialization events
  * Provides event emitter for workspace initialization completion
@@ -24,7 +26,10 @@ export class WorkspaceInitializationService {
     profileName: string | null,
     services: ServiceContainer
   ) {
-    // Backup and delete existing GitHub template folders if they exist
+    // Migrate any nexkit.* files from .github/<type>/ to .nexkit/<type>/
+    const migrationSummary = await services.nexkitFileMigration.migrateNexkitFiles(workspaceFolder.uri.fsPath);
+
+    // Backup and delete existing .nexkit template folders if they exist
     const backupPath = await services.backup.backupTemplates(workspaceFolder.uri.fsPath);
 
     // Deploy configuration files
@@ -51,6 +56,6 @@ export class WorkspaceInitializationService {
     // Notify listeners that workspace was initialized
     services.workspaceInitialization.notifyWorkspaceInitialized();
 
-    return { deploymentSummary, backupPath };
+    return { deploymentSummary, backupPath, migrationSummary };
   }
 }

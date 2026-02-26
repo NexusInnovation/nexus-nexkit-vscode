@@ -39,6 +39,7 @@ Nexkit propose **deux modes** adaptés à différents profils d'utilisateurs :
 **Pour qui ?** Développeurs et équipes techniques
 
 **Fonctionnalités complètes :**
+
 - ✅ **Actions** : Initialisation de workspace
 - ✅ **Profiles** : Sauvegarde et application de configurations de templates
 - ✅ **Templates** : Navigation et installation de templates IA depuis les dépôts
@@ -46,6 +47,7 @@ Nexkit propose **deux modes** adaptés à différents profils d'utilisateurs :
 - ✅ **Footer** : Feedback et informations de version
 
 **Cas d'usage :**
+
 - Développement de nouvelles fonctionnalités
 - Personnalisation des agents GitHub Copilot
 - Gestion de multiples dépôts de templates
@@ -56,10 +58,12 @@ Nexkit propose **deux modes** adaptés à différents profils d'utilisateurs :
 **Pour qui ?** Gestionnaires d'applications et analystes métier
 
 **Interface simplifiée :**
+
 - ✅ **Footer** : Feedback et informations de version
 - 🎯 Interface épurée pour un usage ciblé
 
 **Cas d'usage :**
+
 - Gestion de portefeuille d'applications
 - Consultation et reporting
 - Workflows métier spécialisés
@@ -67,14 +71,17 @@ Nexkit propose **deux modes** adaptés à différents profils d'utilisateurs :
 ### Changer de Mode
 
 **Lors de l'initialisation :**
+
 - Nexkit vous demandera de choisir votre mode au premier démarrage
 
 **Via la palette de commandes :**
+
 - `Ctrl+Shift+P` (ou `Cmd+Shift+P` sur macOS)
 - Tapez "Nexkit: Switch Operation Mode"
 - Sélectionnez votre mode préféré
 
 **Via les paramètres :**
+
 - `Ctrl+,` (ou `Cmd+,` sur macOS)
 - Recherchez "nexkit.mode"
 - Choisissez "Developers" ou "APM"
@@ -317,15 +324,16 @@ Les templates déployés dans votre workspace suivent cette structure :
 ├── skills/              # Définition des skills tel que défini par Anthropic (1)
 └── instructions/        # Directives de codage (non installées automatiquement)
 ```
+
 > (1) [Anthropic](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)
 
 Le dossier `.nexkit/` est automatiquement configuré comme source pour GitHub Copilot via les paramètres VS Code déployés :
 
 ```json
 {
-  "chat.promptFilesLocations":                          { ".nexkit/prompts": true },
-  "chat.instructionsFilesLocations":                    { ".nexkit/instructions": true, ".nexkit/skills": true },
-  "github.copilot.chat.agentDescriptionFilesLocations": { ".nexkit/agents": true }
+  "chat.promptFilesLocations":       { ".nexkit/prompts": true },
+  "chat.instructionsFilesLocations": { ".nexkit/instructions": true, ".nexkit/skills": true },
+  "chat.agentFilesLocations":        { ".nexkit/agents": true }
 }
 ```
 

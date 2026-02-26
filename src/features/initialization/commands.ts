@@ -51,7 +51,7 @@ export function registerInitializeWorkspaceCommand(context: vscode.ExtensionCont
       const selectedProfileName = await new ProfileSelectionPromptService(services.profileService).promptProfileSelection();
 
       services.logging.info("Running workspace initialization...");
-      const { deploymentSummary, backupPath } = await services.workspaceInitialization.initializeWorkspace(
+      const { deploymentSummary, backupPath, migrationSummary } = await services.workspaceInitialization.initializeWorkspace(
         workspaceFolder,
         selectedProfileName,
         services
@@ -59,11 +59,16 @@ export function registerInitializeWorkspaceCommand(context: vscode.ExtensionCont
 
       services.logging.info("Workspace initialization completed successfully", {
         installedTemplates: deploymentSummary?.installed ?? 0,
+        migratedFiles: migrationSummary?.migratedCount ?? 0,
         backupPath,
       });
 
       // Show success message with deployment summary
       let resultMessage = "Nexkit project initialized successfully!";
+
+      if (migrationSummary) {
+        resultMessage += ` Migrated ${migrationSummary.migratedCount} file(s) from .github to .nexkit.`;
+      }
 
       if (deploymentSummary !== null && deploymentSummary.installed > 0) {
         resultMessage += ` Installed ${deploymentSummary.installed} templates.`;
