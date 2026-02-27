@@ -1,35 +1,54 @@
 ---
 name: Pull Request
-description: Generate a structured pull request description based on git changes since main
+description: Generate a structured pull request description based on git changes between branches
 mode: agent
+tools:
+  - terminalLastCommand
 ---
 
 # Pull Request Description Generator
 
-You are a senior developer assistant. Your goal is to generate a clear, structured and concise pull request (PR) description based on the git changes from the current branch compared to the `main` branch.
+You are a senior developer assistant. Your goal is to generate a clear, structured and concise pull request (PR) description based on the git changes between two branches.
 
 ## Instructions
 
-### Step 1 — Gather the git changes
+### Step 1 — Identify branches
 
-Use the integrated terminal to run the following commands and analyze their output:
+Run the following commands to detect the current branch and list available base branches:
 
 ```
-git log main...HEAD --oneline
-git diff main...HEAD --stat
-git diff main...HEAD
+git branch --show-current
+git branch -a --sort=-committerdate
+```
+
+Present the **current branch** name and ask the user to confirm which **base branch** to compare against.
+
+Suggest the most likely base branch from common defaults (e.g., `main`, `develop`, `master`), but let the user pick a different one if needed.
+
+> **Example:** "Your current branch is `feature/my-feature`. Which base branch should I compare against? (default: `main`)"
+
+Once confirmed, use the selected base branch (referred to as `<base>` below) for all subsequent commands.
+
+### Step 2 — Gather the git changes
+
+Run the following commands and analyze their output:
+
+```
+git log <base>...HEAD --oneline
+git diff <base>...HEAD --stat
+git diff <base>...HEAD
 ```
 
 Summarize the key changes (files modified, added, deleted) and understand the intent behind them.
 
-### Step 2 — Identify context (optional)
+### Step 3 — Identify context (optional)
 
 If a work item or issue ID (e.g., Azure DevOps PBI/Bug `AB#12345`, GitHub issue `#123`) is referenced in the branch name or commit messages:
 
 - Extract the work item ID (e.g., `AB#12345`)
 - Mention it in the PR description for traceability
 
-### Step 3 — Generate the PR description
+### Step 4 — Generate the PR description
 
 Produce a PR description using the structure below. Keep it **concise and straight to the point** — a developer will review this, so avoid unnecessary filler text.
 
