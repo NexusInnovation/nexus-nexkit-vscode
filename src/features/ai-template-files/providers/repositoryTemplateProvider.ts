@@ -499,6 +499,36 @@ export class RepositoryTemplateProvider {
   }
 
   /**
+   * Fetch the latest commit SHA for the configured branch.
+   */
+  public async fetchLatestCommitSha(): Promise<string | null> {
+    try {
+      const { owner, repo } = this.parseGitHubUrl();
+      const headers = await this.getAuthHeaders();
+      const branch = this.config.branch ?? "main";
+      const apiUrl = `${RepositoryTemplateProvider.GITHUB_API_BASE}/repos/${owner}/${repo}/branches/${branch}`;
+
+      const response = await fetch(apiUrl, { headers });
+
+      if (!response.ok) {
+        this._logging.warn(`[Auto-Refresh] Failed to fetch branch info for '${this.config.name}'`, {
+          status: response.status,
+          statusText: response.statusText,
+        });
+        return null;
+      }
+
+      const data = (await response.json()) as { commit: { sha: string } };
+      return data?.commit?.sha ?? null;
+    } catch (error) {
+      this._logging.warn(`[Auto-Refresh] Error fetching commit SHA for '${this.config.name}'`, {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return null;
+    }
+  }
+
+  /**
    * Get repository display name
    */
   public getRepositoryName(): string {

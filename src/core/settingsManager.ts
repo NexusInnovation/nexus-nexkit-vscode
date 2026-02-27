@@ -23,6 +23,9 @@ export class SettingsManager {
   // Repository settings
   private static readonly REPOSITORIES = "repositories";
 
+  // Repository commit SHA state key (WorkspaceState)
+  private static readonly REPOSITORY_COMMIT_SHAS_KEY = "nexkit.repositories.commitShas";
+
   // Telemetry settings
   private static readonly TELEMETRY_ENABLED = "telemetry.enabled";
   private static readonly TELEMETRY_CONNECTION_STRING = "telemetry.connectionString";
@@ -109,6 +112,23 @@ export class SettingsManager {
   // Repositories
   static getRepositories<T = any>(): T[] {
     return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<T[]>(this.REPOSITORIES, []);
+  }
+
+  static getRepositoryCommitSha(repoName: string): string | undefined {
+    if (!this.context) {
+      return undefined;
+    }
+    const shas = this.context.workspaceState.get<Record<string, string>>(this.REPOSITORY_COMMIT_SHAS_KEY, {});
+    return shas[repoName];
+  }
+
+  static async setRepositoryCommitSha(repoName: string, sha: string): Promise<void> {
+    if (!this.context) {
+      return;
+    }
+    const shas = this.context.workspaceState.get<Record<string, string>>(this.REPOSITORY_COMMIT_SHAS_KEY, {});
+    shas[repoName] = sha;
+    await this.context.workspaceState.update(this.REPOSITORY_COMMIT_SHAS_KEY, shas);
   }
 
   static async setRepositories<T = any>(

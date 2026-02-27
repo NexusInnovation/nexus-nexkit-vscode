@@ -12,6 +12,8 @@ import { FetchAllResult, TemplateFetcherService } from "./templateFetcherService
 import { TemplateDataStore } from "./templateDataStore";
 import { TemplateFileOperations, InstallOptions, BatchInstallSummary } from "./templateFileOperations";
 import { InstalledTemplatesStateManager } from "./installedTemplatesStateManager";
+import { RepositoryTemplateProvider } from "../providers/repositoryTemplateProvider";
+import { SettingsManager } from "../../../core/settingsManager";
 
 /**
  * Main facade service for AI template data management
@@ -34,6 +36,7 @@ export class AITemplateDataService implements vscode.Disposable {
   private configChangeListener: vscode.Disposable | undefined;
   private fileWatchers: Map<string, vscode.FileSystemWatcher> = new Map();
   private refreshTimers: Map<string, NodeJS.Timeout> = new Map();
+  private autoRefreshTimer: NodeJS.Timeout | undefined;
 
   /**
    * Event fired when data is initialized and ready
@@ -128,12 +131,9 @@ export class AITemplateDataService implements vscode.Disposable {
         });
 
         if (result.allTemplates.length === 0) {
-          this._logging.warn(
-            "[Templates] No templates were loaded. This can lead to empty template lists in the UI.",
-            {
-              hint: "Check previous logs for per-repository failures (auth, rate limit, 404 path, network).",
-            }
-          );
+          this._logging.warn("[Templates] No templates were loaded. This can lead to empty template lists in the UI.", {
+            hint: "Check previous logs for per-repository failures (auth, rate limit, 404 path, network).",
+          });
         }
 
         // Setup file watchers for local repositories
@@ -431,6 +431,94 @@ export class AITemplateDataService implements vscode.Disposable {
   }
 
   /**
+   * Setup periodic auto-refresh for GitHub repositories.
+   * On each tick, fetches the latest commit SHA for every GitHub repo and
+   * triggers a lightweight refresh only when new commits are detected.
+   */
+  public setupRemoteAutoRefresh(): void {
+    const INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+
+    this._logging.info("[Auto-Refresh] Starting remote auto-refresh", { intervalMinutes: 30 });
+
+    this.autoRefreshTimer = setInterval(async () => {
+      await this.checkAndRefreshFromRemote();
+    }, INTERVAL_MS);
+  }
+
+  /**
+   * Check remote GitHub repositories for new commits.
+   * For each repo:
+   *  - First run: stores the current SHA as baseline (no refresh triggered)
+   *  - Subsequent runs: refreshes only if the remote SHA has changed
+   */
+  private async checkAndRefreshFromRemote(): Promise<void> {
+    const providers = this.repositoryManager.getAllProviders();
+    const githubProviders = providers.filter((p): p is RepositoryTemplateProvider => p instanceof RepositoryTemplateProvider);
+
+    if (githubProviders.length === 0) {
+      return;
+    }
+
+    this._logging.info("[Auto-Refresh] Checking remote repositories for new commits", {
+      repositoryCount: githubProviders.length,
+    });
+
+    const updatedRepos: string[] = [];
+
+    for (const provider of githubProviders) {
+      const repoName = provider.getRepositoryName();
+      try {
+        const latestSha = await provider.fetchLatestCommitSha();
+
+        if (!latestSha) {
+          this._logging.warn("[Auto-Refresh] Could not fetch commit SHA, skipping", { repository: repoName });
+          continue;
+        }
+
+        const storedSha = SettingsManager.getRepositoryCommitSha(repoName);
+
+        if (!storedSha) {
+          // First check – establish baseline, do not refresh
+          await SettingsManager.setRepositoryCommitSha(repoName, latestSha);
+          this._logging.info("[Auto-Refresh] Stored baseline commit SHA", {
+            repository: repoName,
+            sha: latestSha.substring(0, 8),
+          });
+          continue;
+        }
+
+        if (storedSha !== latestSha) {
+          this._logging.info("[Auto-Refresh] New commits detected, refreshing templates", {
+            repository: repoName,
+            previousSha: storedSha.substring(0, 8),
+            latestSha: latestSha.substring(0, 8),
+          });
+
+          await this.refreshRepository(repoName);
+          await SettingsManager.setRepositoryCommitSha(repoName, latestSha);
+          updatedRepos.push(repoName);
+        } else {
+          this._logging.debug("[Auto-Refresh] No changes detected", {
+            repository: repoName,
+            sha: latestSha.substring(0, 8),
+          });
+        }
+      } catch (error) {
+        this._logging.error("[Auto-Refresh] Unexpected error while checking repository", {
+          repository: repoName,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    if (updatedRepos.length > 0) {
+      const label =
+        updatedRepos.length === 1 ? `"${updatedRepos[0]}"` : `${updatedRepos.length} repositories (${updatedRepos.join(", ")})`;
+      vscode.window.showInformationMessage(`Nexkit: Templates auto-refreshed from ${label}.`);
+    }
+  }
+
+  /**
    * Setup configuration change watcher
    */
   public setupConfigurationWatcher(): void {
@@ -462,6 +550,10 @@ export class AITemplateDataService implements vscode.Disposable {
     this._onError.dispose();
     this.configChangeListener?.dispose();
     this.disposeFileWatchers();
+    if (this.autoRefreshTimer) {
+      clearInterval(this.autoRefreshTimer);
+      this.autoRefreshTimer = undefined;
+    }
   }
 
   /**
@@ -554,10 +646,10 @@ export class AITemplateDataService implements vscode.Disposable {
   }
 
   /**
-   * Refresh templates from a specific repository
-   * Used by file watchers to update only changed repository
+   * Refresh templates from a specific repository.
+   * Used by file watchers and auto-refresh to update only the changed repository.
    */
-  private async refreshRepository(repositoryName: string): Promise<void> {
+  public async refreshRepository(repositoryName: string): Promise<void> {
     try {
       console.log(`🔄 Refreshing templates from repository: ${repositoryName}`);
 
