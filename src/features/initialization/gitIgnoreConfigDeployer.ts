@@ -14,13 +14,7 @@ export class GitIgnoreConfigDeployer {
 
     // Define NexKit section with clear delimiters
     const nexkitSection = `# BEGIN NexKit
-.specify/
-.github/**/nexkit.*
-.github/agents/
-.github/skills/
-.github/chatmodes/
-.github/instructions/
-.github/prompts/
+.nexkit/
 # END NexKit`;
 
     let content = "";

@@ -87,7 +87,7 @@ export class InstalledTemplatesStateManager {
 
     // Check each installed template if file still exists
     for (const template of state.templates) {
-      const filePath = path.join(workspaceRoot, ".github", template.type, template.name);
+      const filePath = path.join(workspaceRoot, ".nexkit", template.type, template.name);
 
       if (await fileExists(filePath)) {
         templatesToKeep.push(template);

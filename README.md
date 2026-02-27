@@ -39,6 +39,7 @@ Nexkit propose **deux modes** adaptés à différents profils d'utilisateurs :
 **Pour qui ?** Développeurs et équipes techniques
 
 **Fonctionnalités complètes :**
+
 - ✅ **Actions** : Initialisation de workspace
 - ✅ **Profiles** : Sauvegarde et application de configurations de templates
 - ✅ **Templates** : Navigation et installation de templates IA depuis les dépôts
@@ -46,6 +47,7 @@ Nexkit propose **deux modes** adaptés à différents profils d'utilisateurs :
 - ✅ **Footer** : Feedback et informations de version
 
 **Cas d'usage :**
+
 - Développement de nouvelles fonctionnalités
 - Personnalisation des agents GitHub Copilot
 - Gestion de multiples dépôts de templates
@@ -56,10 +58,12 @@ Nexkit propose **deux modes** adaptés à différents profils d'utilisateurs :
 **Pour qui ?** Gestionnaires d'applications et analystes métier
 
 **Interface simplifiée :**
+
 - ✅ **Footer** : Feedback et informations de version
 - 🎯 Interface épurée pour un usage ciblé
 
 **Cas d'usage :**
+
 - Gestion de portefeuille d'applications
 - Consultation et reporting
 - Workflows métier spécialisés
@@ -67,14 +71,17 @@ Nexkit propose **deux modes** adaptés à différents profils d'utilisateurs :
 ### Changer de Mode
 
 **Lors de l'initialisation :**
+
 - Nexkit vous demandera de choisir votre mode au premier démarrage
 
 **Via la palette de commandes :**
+
 - `Ctrl+Shift+P` (ou `Cmd+Shift+P` sur macOS)
 - Tapez "Nexkit: Switch Operation Mode"
 - Sélectionnez votre mode préféré
 
 **Via les paramètres :**
+
 - `Ctrl+,` (ou `Cmd+,` sur macOS)
 - Recherchez "nexkit.mode"
 - Choisissez "Developers" ou "APM"
@@ -86,10 +93,11 @@ Nexkit propose **deux modes** adaptés à différents profils d'utilisateurs :
 Accédez aux commandes via la palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) :
 
 - **Nexkit: Initialize Workspace** - Configure votre workspace avec :
-  - Templates IA (agents, prompts, chatmodes) depuis les dépôts configurés
-  - Paramètres et extensions VS Code recommandés
+  - Templates IA (agents, prompts, chatmodes) installés dans `.nexkit/`
+  - Paramètres VS Code pour découverte automatique des agents, prompts et skills
+  - Extensions VS Code recommandées
   - Configuration des serveurs MCP au niveau workspace
-  - Configuration .gitignore pour les fichiers Nexkit
+  - Entrée `.gitignore` pour ignorer le dossier `.nexkit/`
 
 - **Nexkit: Install User MCP Servers** - Installe les serveurs MCP requis (Context7 et Sequential Thinking)
 
@@ -128,7 +136,7 @@ Les templates sont automatiquement récupérés lors de l'activation de l'extens
 - **Vérification des Mises à Jour** : Vérifie automatiquement les nouvelles versions toutes les 24 heures (configurable)
 - **Notifications MCP** : Alerte lorsque les serveurs MCP requis ne sont pas installés
 - **Invites d'Initialisation** : Suggère l'initialisation pour les nouveaux workspaces
-- **Sauvegardes Automatiques** : Sauvegarde les templates existants avant écrasement
+- **Sauvegardes Automatiques** : Sauvegarde les templates existants (`.nexkit/`) avant écrasement avec le préfixe `.nexkit.backup-`
 - **Surveillance des Configurations** : Actualise les templates lors de modifications des paramètres de dépôt
 
 ## 🚦 Démarrage Rapide
@@ -296,13 +304,13 @@ Lors de la première activation de Nexkit :
 
 Lorsque vous exécutez "Nexkit: Initialize Workspace" :
 
-1. **Création de Sauvegarde** : Le répertoire `.github` existant est automatiquement sauvegardé
+1. **Création de Sauvegarde** : Le répertoire `.nexkit` existant est automatiquement sauvegardé
 2. **Déploiement de Configuration** :
-   - Entrées `.gitignore` pour les fichiers générés par Nexkit
-   - `.vscode/settings.json` avec paramètres recommandés
+   - Entrée `.gitignore` pour ignorer le dossier `.nexkit/`
+   - `.vscode/settings.json` avec paramètres recommandés (incluant les sources agents, prompts et skills)
    - `.vscode/extensions.json` avec extensions recommandées
    - `.vscode/mcp.json` pour la configuration MCP au niveau workspace
-3. **Installation de Templates** : Agents, prompts et chatmodes du dépôt Nexus Templates sont installés dans `.github/`
+3. **Installation de Templates** : Agents, prompts et chatmodes du dépôt Nexus Templates sont installés dans `.nexkit/`
 4. **Marquage du Workspace** : Définit `nexkit.workspace.initialized` pour éviter les invites dupliquées
 
 ### Structure des Templates
@@ -310,13 +318,26 @@ Lorsque vous exécutez "Nexkit: Initialize Workspace" :
 Les templates déployés dans votre workspace suivent cette structure :
 
 ```
-.github/
+.nexkit/
 ├── agents/              # Agents GitHub Copilot personnalisés
 ├── prompts/             # Prompts IA réutilisables
 ├── skills/              # Définition des skills tel que défini par Anthropic (1)
 └── instructions/        # Directives de codage (non installées automatiquement)
 ```
+
 > (1) [Anthropic](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)
+
+Le dossier `.nexkit/` est automatiquement configuré comme source pour GitHub Copilot via les paramètres VS Code déployés :
+
+```json
+{
+  "chat.promptFilesLocations":       { ".nexkit/prompts": true },
+  "chat.instructionsFilesLocations": { ".nexkit/instructions": true, ".nexkit/skills": true },
+  "chat.agentFilesLocations":        { ".nexkit/agents": true }
+}
+```
+
+Ces paramètres permettent à GitHub Copilot de découvrir automatiquement vos agents, prompts et instructions sans configuration manuelle supplémentaire.
 
 Chaque fichier template contient des instructions spécialisées pour GitHub Copilot afin d'améliorer votre workflow de développement.
 
