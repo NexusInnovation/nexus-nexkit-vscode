@@ -15,7 +15,7 @@ You are a senior developer assistant. Your goal is to generate a clear, structur
 Use the integrated terminal to run the following commands and analyze their output:
 
 ```
-git log main..HEAD --oneline
+git log main...HEAD --oneline
 git diff main...HEAD --stat
 git diff main...HEAD
 ```
@@ -24,7 +24,7 @@ Summarize the key changes (files modified, added, deleted) and understand the in
 
 ### Step 2 — Identify context (optional)
 
-If a work item ID (PBI, User Story, Bug) is referenced in the branch name or commit messages:
+If a work item or issue ID (e.g., Azure DevOps PBI/Bug `AB#12345`, GitHub issue `#123`) is referenced in the branch name or commit messages:
 
 - Extract the work item ID (e.g., `AB#12345`)
 - Mention it in the PR description for traceability
