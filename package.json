@@ -442,18 +442,25 @@
     "@types/vscode": "^1.105.0",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0",
-    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.2.1",
     "conventional-changelog-cli": "^4.1.0",
     "esbuild": "^0.27.2",
     "eslint": "^9.36.0",
     "glob": "^11.0.0",
-    "mocha": "^10.0.10",
+    "mocha": "^11.7.5",
     "nyc": "^15.1.0",
     "preact": "^10.25.4",
     "semantic-release": "^25.0.2",
-    "sinon": "^19.0.2",
+    "sinon": "^21.0.1",
     "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "serialize-javascript": "^7.0.3",
+    "diff": "^8.0.3",
+    "minimatch": "^10.2.4",
+    "@isaacs/brace-expansion": "^5.0.1",
+    "tar": "^7.5.9"
   }
 }
