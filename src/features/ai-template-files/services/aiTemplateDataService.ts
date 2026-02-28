@@ -93,6 +93,7 @@ export class AITemplateDataService implements vscode.Disposable {
           skills: 0,
           instructions: 0,
           chatmodes: 0,
+          hooks: 0,
         };
         for (const template of result.allTemplates) {
           countsByType[template.type]++;
@@ -192,6 +193,7 @@ export class AITemplateDataService implements vscode.Disposable {
         skills: 0,
         instructions: 0,
         chatmodes: 0,
+        hooks: 0,
       };
       for (const template of result.allTemplates) {
         countsByType[template.type]++;
@@ -294,6 +296,7 @@ export class AITemplateDataService implements vscode.Disposable {
       skills: [],
       instructions: [],
       chatmodes: [],
+      hooks: [],
     };
 
     for (const [type, entries] of Object.entries(allInstalled) as [keyof InstalledTemplatesMap, string[]][]) {
@@ -335,6 +338,7 @@ export class AITemplateDataService implements vscode.Disposable {
             skills: [],
             instructions: [],
             chatmodes: [],
+            hooks: [],
           },
         };
       }

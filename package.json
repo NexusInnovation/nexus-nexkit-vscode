@@ -257,6 +257,10 @@
                   "chatmodes": {
                     "type": "string",
                     "description": "Path to chatmodes directory"
+                  },
+                  "hooks": {
+                    "type": "string",
+                    "description": "Path to hooks directory"
                   }
                 }
               }

@@ -71,6 +71,7 @@ export const initialAppState: AppState = {
       skills: [],
       instructions: [],
       chatmodes: [],
+      hooks: [],
     },
     isReady: false,
   },
