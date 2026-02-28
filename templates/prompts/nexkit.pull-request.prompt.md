@@ -4,6 +4,10 @@ description: Generate a structured pull request description based on git changes
 mode: agent
 tools:
   - terminalLastCommand
+skills:
+  - nexkit-git-branch-info
+  - nexkit-git-diff-analysis
+  - nexkit-git-work-item-extraction
 ---
 
 # Pull Request Description Generator
@@ -14,39 +18,17 @@ You are a senior developer assistant. Your goal is to generate a clear, structur
 
 ### Step 1 — Identify branches
 
-Run the following commands to detect the current branch and list available base branches:
+Use the **nexkit-git-branch-info** skill to detect the current branch and list available base branches. Ask the user to confirm which base branch to compare against.
 
-```
-git branch --show-current
-git branch -a --sort=-committerdate
-```
-
-Present the **current branch** name and ask the user to confirm which **base branch** to compare against.
-
-Suggest the most likely base branch from common defaults (e.g., `main`, `develop`, `master`), but let the user pick a different one if needed.
-
-> **Example:** "Your current branch is `feature/my-feature`. Which base branch should I compare against? (default: `main`)"
-
-Once confirmed, use the selected base branch (referred to as `<base>` below) for all subsequent commands.
+Once confirmed, use the selected base branch (referred to as `<base>` below) for all subsequent steps.
 
 ### Step 2 — Gather the git changes
 
-Run the following commands and analyze their output:
-
-```
-git log <base>...HEAD --oneline
-git diff <base>...HEAD --stat
-git diff <base>...HEAD
-```
-
-Summarize the key changes (files modified, added, deleted) and understand the intent behind them.
+Use the **nexkit-git-diff-analysis** skill with the confirmed `<base>` branch to gather the commit log, change summary and full diff. Summarize the key changes and understand the intent behind them.
 
 ### Step 3 — Identify context (optional)
 
-If a work item or issue ID (e.g., Azure DevOps PBI/Bug `AB#12345`, GitHub issue `#123`) is referenced in the branch name or commit messages:
-
-- Extract the work item ID (e.g., `AB#12345`)
-- Mention it in the PR description for traceability
+Use the **nexkit-git-work-item-extraction** skill to extract any work item or issue IDs (e.g., Azure DevOps `AB#12345`, GitHub `#123`) from the branch name and commit messages.
 
 ### Step 4 — Generate the PR description
 
