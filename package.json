@@ -149,13 +149,6 @@
           "group": "navigation@4"
         }
       ],
-      "scm/inputBox": [
-        {
-          "command": "nexus-nexkit-vscode.generateCommitMessage",
-          "when": "scmProvider == git",
-          "group": "navigation"
-        }
-      ],
       "scm/title": [
         {
           "command": "nexus-nexkit-vscode.generateCommitMessage",
