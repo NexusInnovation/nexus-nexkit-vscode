@@ -1,19 +1,26 @@
 import { useMemo, useState } from "preact/hooks";
 import { useDebounce } from "../../hooks/useDebounce";
 import { SearchBar } from "../atoms/SearchBar";
-import { RepositorySection } from "./RepositorySection";
 import { useTemplateData } from "../../hooks/useTemplateData";
 import { TemplateMetadataProvider } from "../../contexts/TemplateMetadataContext";
 import { CollapsibleSection } from "../molecules/CollapsibleSection";
+import { TypeSection } from "../molecules/TypeSection";
 import { useVSCodeAPI } from "../../hooks/useVSCodeAPI";
 import { FilterMenu } from "../atoms/FilterMenu";
-import { useFilterMode } from "../../hooks/useFilterMode";
-import { OperationMode } from "../../../../ai-template-files/models/aiTemplateFile";
+import { GroupMenu } from "../atoms/GroupMenu";
+import { useFilterMode, useGroupMode, useSelectedFirst, useTypeFilters, useRepositoryFilters } from "../../hooks/useFilterMode";
+import { TemplateItem } from "../atoms/TemplateItem";
+import {
+  AI_TEMPLATE_FILE_TYPES,
+  AITemplateFile,
+  InstalledTemplatesMap,
+  OperationMode,
+} from "../../../../ai-template-files/models/aiTemplateFile";
 
 /**
  * TemplateSection Component
- * Main template management section with search and collapse all functionality
- * Filtered to show only Developers mode repositories
+ * Main template management section with unified list, search, filtering, and grouping.
+ * All repositories are merged into a single list with configurable grouping.
  */
 export function TemplateSection() {
   const messenger = useVSCodeAPI();
@@ -23,6 +30,10 @@ export function TemplateSection() {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [filterMode, setFilterMode] = useFilterMode();
+  const [groupMode, setGroupMode] = useGroupMode();
+  const [selectedFirst, setSelectedFirst] = useSelectedFirst();
+  const [typeFilters, setTypeFilters] = useTypeFilters();
+  const [repositoryFilters, setRepositoryFilters] = useRepositoryFilters();
 
   // Get Developers mode repository names for filtering installed count
   const developersRepoNames = useMemo(() => new Set(repositories.map((r) => r.name)), [repositories]);
@@ -39,8 +50,174 @@ export function TemplateSection() {
     return count;
   }, [installedTemplates, developersRepoNames]);
 
+  // Flatten all templates from all repositories into a single list
+  const allTemplates = useMemo(() => {
+    const templates: AITemplateFile[] = [];
+    for (const repo of repositories) {
+      for (const type of AI_TEMPLATE_FILE_TYPES) {
+        templates.push(...repo.types[type]);
+      }
+    }
+    return templates;
+  }, [repositories]);
+
+  // Available types and repositories for filter menu
+  const availableTypes = useMemo(() => {
+    const types = new Set<string>();
+    for (const t of allTemplates) {
+      types.add(t.type);
+    }
+    return AI_TEMPLATE_FILE_TYPES.filter((type) => types.has(type));
+  }, [allTemplates]);
+
+  const availableRepositories = useMemo(() => {
+    return repositories.map((r) => r.name);
+  }, [repositories]);
+
+  // Apply all filters: search, status, type, repository
+  const filteredTemplates = useMemo(() => {
+    let result = allTemplates;
+
+    // Search filter
+    if (debouncedSearchQuery.length > 0) {
+      const query = debouncedSearchQuery.toLowerCase();
+      result = result.filter((t) => t.name.toLowerCase().includes(query));
+    }
+
+    // Status filter
+    if (filterMode !== "all") {
+      result = result.filter((t) => {
+        const installed = isTemplateInstalled(t);
+        return filterMode === "selected" ? installed : !installed;
+      });
+    }
+
+    // Type filter (empty = show all)
+    if (typeFilters.length > 0) {
+      result = result.filter((t) => typeFilters.includes(t.type));
+    }
+
+    // Repository filter (empty = show all)
+    if (repositoryFilters.length > 0) {
+      result = result.filter((t) => repositoryFilters.includes(t.repository));
+    }
+
+    return result;
+  }, [allTemplates, debouncedSearchQuery, filterMode, typeFilters, repositoryFilters, isTemplateInstalled]);
+
+  const isSearching = debouncedSearchQuery.length > 0;
+
   const updateInstalledTemplates = () => {
     messenger.sendMessage({ command: "updateInstalledTemplates", mode: OperationMode.Developers });
+  };
+
+  /**
+   * Render templates grouped by type
+   */
+  const renderGroupedByType = () => {
+    return AI_TEMPLATE_FILE_TYPES.map((type) => {
+      const templates = filteredTemplates.filter((t) => t.type === type);
+      if (templates.length === 0 && type !== "skills") return null;
+
+      return (
+        <TypeSection
+          key={`type::${type}`}
+          type={type}
+          templates={templates}
+          sectionKey={`unified::${type}`}
+          installedTemplates={installedTemplates}
+          onInstall={installTemplate}
+          onUninstall={uninstallTemplate}
+          isTemplateInstalled={isTemplateInstalled}
+          isSearching={isSearching}
+          selectedFirst={selectedFirst}
+          showRepository={availableRepositories.length > 1}
+        />
+      );
+    });
+  };
+
+  /**
+   * Render templates grouped by repository
+   */
+  const renderGroupedByRepository = () => {
+    return repositories
+      .filter((repo) => repositoryFilters.length === 0 || repositoryFilters.includes(repo.name))
+      .map((repo) => {
+        const repoTemplates = filteredTemplates.filter((t) => t.repository === repo.name);
+        if (repoTemplates.length === 0) return null;
+
+        return (
+          <div key={`repo::${repo.name}`} class="repository-group">
+            <div class="repository-group-header">{repo.name}</div>
+            {AI_TEMPLATE_FILE_TYPES.map((type) => {
+              const templates = repoTemplates.filter((t) => t.type === type);
+              if (templates.length === 0 && type !== "skills") return null;
+
+              return (
+                <TypeSection
+                  key={`repo::${repo.name}::${type}`}
+                  type={type}
+                  templates={templates}
+                  sectionKey={`repo::${repo.name}::${type}`}
+                  installedTemplates={installedTemplates}
+                  onInstall={installTemplate}
+                  onUninstall={uninstallTemplate}
+                  isTemplateInstalled={isTemplateInstalled}
+                  isSearching={isSearching}
+                  selectedFirst={selectedFirst}
+                  showRepository={false}
+                />
+              );
+            })}
+          </div>
+        );
+      });
+  };
+
+  /**
+   * Render templates as a flat list (no grouping)
+   */
+  const renderFlatList = () => {
+    // Sort: selected first if enabled
+    const sortedTemplates = selectedFirst
+      ? [...filteredTemplates].sort((a, b) => {
+          const aInstalled = isTemplateInstalled(a) ? 0 : 1;
+          const bInstalled = isTemplateInstalled(b) ? 0 : 1;
+          return aInstalled - bInstalled;
+        })
+      : filteredTemplates;
+
+    // Find separator boundary
+    let separatorIndex = -1;
+    if (selectedFirst) {
+      const firstUnselectedIdx = sortedTemplates.findIndex((t) => !isTemplateInstalled(t));
+      const hasSelected = sortedTemplates.some((t) => isTemplateInstalled(t));
+      if (hasSelected && firstUnselectedIdx > 0) {
+        separatorIndex = firstUnselectedIdx;
+      }
+    }
+
+    if (sortedTemplates.length === 0) {
+      return <p class="empty-message">No templates match your filters.</p>;
+    }
+
+    return (
+      <div class="flat-template-list">
+        {sortedTemplates.map((template, index) => (
+          <div key={`${template.repository}::${template.type}::${template.name}`}>
+            {index === separatorIndex && <div class="selected-separator" />}
+            <TemplateItem
+              template={template}
+              isInstalled={isTemplateInstalled(template)}
+              onInstall={installTemplate}
+              onUninstall={uninstallTemplate}
+              showRepository={availableRepositories.length > 1}
+            />
+          </div>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -62,21 +239,27 @@ export function TemplateSection() {
             )}
             <div class="search-filter-row">
               <SearchBar value={searchQuery} onChange={setSearchQuery} />
-              <FilterMenu filterMode={filterMode} onFilterChange={setFilterMode} />
+              <FilterMenu
+                filterMode={filterMode}
+                onFilterChange={setFilterMode}
+                typeFilters={typeFilters}
+                onTypeFiltersChange={setTypeFilters}
+                repositoryFilters={repositoryFilters}
+                onRepositoryFiltersChange={setRepositoryFilters}
+                availableTypes={availableTypes}
+                availableRepositories={availableRepositories}
+              />
+              <GroupMenu
+                groupMode={groupMode}
+                selectedFirst={selectedFirst}
+                onGroupChange={setGroupMode}
+                onSelectedFirstChange={setSelectedFirst}
+              />
             </div>
             <TemplateMetadataProvider>
-              {repositories.map((repo) => (
-                <RepositorySection
-                  key={repo.name}
-                  repository={repo}
-                  installedTemplates={installedTemplates}
-                  onInstall={installTemplate}
-                  onUninstall={uninstallTemplate}
-                  isTemplateInstalled={isTemplateInstalled}
-                  searchQuery={debouncedSearchQuery}
-                  filterMode={filterMode}
-                />
-              ))}
+              {groupMode === "type" && renderGroupedByType()}
+              {groupMode === "repository" && renderGroupedByRepository()}
+              {groupMode === "none" && renderFlatList()}
             </TemplateMetadataProvider>
           </div>
         )}

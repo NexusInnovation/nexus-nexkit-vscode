@@ -6,13 +6,14 @@ interface TemplateItemProps {
   isInstalled: boolean;
   onInstall: (template: AITemplateFile) => void;
   onUninstall: (template: AITemplateFile) => void;
+  showRepository?: boolean;
 }
 
 /**
  * TemplateItem Component
- * Individual template checkbox with label and info tooltip
+ * Individual template checkbox with label, repository source, and info tooltip
  */
-export function TemplateItem({ template, isInstalled, onInstall, onUninstall }: TemplateItemProps) {
+export function TemplateItem({ template, isInstalled, onInstall, onUninstall, showRepository = false }: TemplateItemProps) {
   const handleChange = async (e: Event) => {
     const checked = (e.target as HTMLInputElement).checked;
 
@@ -33,9 +34,12 @@ export function TemplateItem({ template, isInstalled, onInstall, onUninstall }: 
   return (
     <div class="template-item">
       <input type="checkbox" id={templateId} class="template-checkbox" checked={isInstalled} onChange={handleChange} />
-      <label htmlFor={templateId} class="template-label">
-        {displayName}
-      </label>
+      <div class="template-item-content">
+        <label htmlFor={templateId} class="template-label">
+          {displayName}
+        </label>
+        {showRepository && <span class="template-repository">{template.repository}</span>}
+      </div>
 
       <TemplateInfoTooltip template={template} />
     </div>
