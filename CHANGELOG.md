@@ -1,3 +1,7 @@
+## 3.5.0-beta.3 (2026-03-01)
+
+* feat(template): Feature/new-template-list (#102) ([90cf696](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/90cf696)), closes [#102](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/102) [#103](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/103)
+
 ## 3.5.0-beta.2 (2026-02-26)
 
 * Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([50a851a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/50a851a))
