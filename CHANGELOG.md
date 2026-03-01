@@ -1,3 +1,7 @@
+## 3.5.0-beta.5 (2026-03-01)
+
+* feat(hook): add hooks template type for managing hooks from public/private repositories (#100) ([a81d7ce](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a81d7ce)), closes [#100](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/100)
+
 ## 3.5.0-beta.4 (2026-03-01)
 
 * feat(core): add Edge Case Hunter Review and update manifests (#104) ([8cb4cb1](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8cb4cb1)), closes [#104](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/104)
