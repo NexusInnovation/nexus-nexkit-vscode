@@ -37,7 +37,7 @@ export function fuzzySearch<T>(query: string, items: T[], getText: (item: T) => 
   for (const item of items) {
     const fields = getText(item).map((f) => f.toLowerCase());
     const score = scoreItem(queryTokens, normalizedQuery, fields);
-    if (score > 0) {
+    if (score > 1) {
       results.push({ item, score });
     }
   }
