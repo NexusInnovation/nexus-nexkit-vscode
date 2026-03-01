@@ -24,6 +24,7 @@ function repo(
       skills: [],
       instructions: [],
       chatmodes: [],
+      hooks: [],
     },
   };
 }

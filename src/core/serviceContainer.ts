@@ -16,7 +16,6 @@ import { WorkspaceInitPromptService } from "../features/initialization/workspace
 import { WorkspaceInitializationService } from "../features/initialization/workspaceInitializationService";
 import { ModeSelectionPromptService } from "../features/initialization/modeSelectionPromptService";
 import { InstalledTemplatesStateManager } from "../features/ai-template-files/services/installedTemplatesStateManager";
-import { RepositoryManager } from "../features/ai-template-files/services/repositoryManager";
 import { ProfileService } from "../features/profile-management/services/profileService";
 import { ModeSelectionService } from "../features/initialization/modeSelectionService";
 import { DevOpsMcpConfigService } from "../features/apm-devops/devOpsMcpConfigService";
@@ -72,9 +71,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const mcpConfig = new MCPConfigService();
   const installedTemplatesState = new InstalledTemplatesStateManager(context);
   const aiTemplateData = new AITemplateDataService(installedTemplatesState);
-  const repositoryManager = new RepositoryManager();
-  repositoryManager.initialize();
-  const templateMetadata = new TemplateMetadataService(repositoryManager);
+  const templateMetadata = new TemplateMetadataService(aiTemplateData.getRepositoryManager());
   const backup = new GitHubTemplateBackupService();
   const updateStatusBar = new UpdateStatusBarService(context, extensionUpdate);
   const gitIgnoreConfigDeployer = new GitIgnoreConfigDeployer();

@@ -23,7 +23,7 @@ export interface AITemplateFile {
 /**
  * Types of ai template files
  */
-export const AI_TEMPLATE_FILE_TYPES = ["agents", "prompts", "skills", "instructions", "chatmodes"] as const;
+export const AI_TEMPLATE_FILE_TYPES = ["agents", "prompts", "skills", "instructions", "chatmodes", "hooks"] as const;
 
 /**
  * Types of ai template files

@@ -47,6 +47,7 @@ export type ExtensionMessage =
         skills: string[];
         instructions: string[];
         chatmodes: string[];
+        hooks: string[];
       };
     }
   | {

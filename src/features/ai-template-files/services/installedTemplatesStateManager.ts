@@ -117,6 +117,7 @@ export class InstalledTemplatesStateManager {
       skills: [],
       instructions: [],
       chatmodes: [],
+      hooks: [],
     };
 
     for (const template of state.templates) {

@@ -22,6 +22,7 @@ const TYPE_DISPLAY_NAMES: Record<string, string> = {
   skills: "Skills",
   instructions: "Coding Instructions",
   chatmodes: "Chat Modes",
+  hooks: "Hooks",
 };
 
 const TYPE_ICONS: Record<string, string> = {
@@ -39,6 +40,7 @@ const TYPE_DESCRIPTIONS: Record<string, string> = {
   instructions:
     "Language-specific and project-wide coding guidelines that inform GitHub Copilot about your preferred code style and conventions",
   chatmodes: "Specialized conversation modes that configure GitHub Copilot Chat for different development contexts and workflows",
+  hooks: "Event-driven scripts from public or private repositories that extend GitHub Copilot behavior at specific lifecycle points",
 };
 
 /**

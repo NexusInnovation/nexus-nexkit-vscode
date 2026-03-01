@@ -33,6 +33,7 @@ export function ProfileInfoTooltip({ profile }: ProfileInfoTooltipProps) {
     skills: [],
     instructions: [],
     chatmodes: [],
+    hooks: [],
   };
 
   profile.templates.forEach((template) => {
