@@ -6,8 +6,12 @@
 import * as path from "path";
 import * as Mocha from "mocha";
 import { glob } from "glob";
+import { setupBeforeAllTests } from "./mockAuthentication";
 
 export function run(): Promise<void> {
+  // Setup test mocks (e.g., GitHub authentication)
+  setupBeforeAllTests();
+
   // Create the mocha test runner
   const mocha = new Mocha({
     ui: "tdd",

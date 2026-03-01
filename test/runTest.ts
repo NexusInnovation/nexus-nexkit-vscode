@@ -39,11 +39,13 @@ async function main() {
       // Increase download idle timeout to avoid flaky failures on slower networks.
       timeout: 60000,
       launchArgs: [
-        `--user-data-dir=${userDataDir}`,
-        `--extensions-dir=${extensionsDir}`,
+        "--user-data-dir",
+        userDataDir,
+        "--extensions-dir",
+        extensionsDir,
         "--disable-extensions", // Disable other extensions during tests
         "--disable-gpu",
-        `${workspaceDir}`, // Open a temporary empty workspace
+        workspaceDir, // Open a temporary empty workspace
       ],
     });
   } catch (err) {
@@ -106,13 +108,7 @@ function setupGitHubAuthentication(testUserDataDir: string): void {
  * Detect execution environment
  */
 function detectEnvironment(): "ci" | "local" | "test" {
-  if (
-    process.env.CI ||
-    process.env.GITHUB_ACTIONS ||
-    process.env.TF_BUILD ||
-    process.env.JENKINS_HOME ||
-    process.env.TRAVIS
-  ) {
+  if (process.env.CI || process.env.GITHUB_ACTIONS || process.env.TF_BUILD || process.env.JENKINS_HOME || process.env.TRAVIS) {
     return "ci";
   }
 
@@ -137,8 +133,7 @@ function getUserDataDir(variant: "code" | "code-insiders" | "code-oss" = "code")
   const platform = process.platform;
   const homeDir = os.homedir();
 
-  const variantName =
-    variant === "code-insiders" ? "Code - Insiders" : variant === "code-oss" ? "Code - OSS" : "Code";
+  const variantName = variant === "code-insiders" ? "Code - Insiders" : variant === "code-oss" ? "Code - OSS" : "Code";
 
   let userDataDir: string;
 
