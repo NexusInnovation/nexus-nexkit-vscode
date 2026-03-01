@@ -95,6 +95,13 @@ suite("Unit: TemplateMetadataScannerService", () => {
     assert.strictEqual(scanner.isScanComplete(), true);
     assert.ok(completedIndex);
     assert.strictEqual(completedIndex!.length, 0);
+
+    // Verify progress events were fired
+    assert.ok(progressEvents.length >= 2, `Expected at least 2 progress events, got ${progressEvents.length}`);
+    assert.strictEqual(progressEvents[0].isScanning, true, "First event should show scanning started");
+    assert.strictEqual(progressEvents[0].totalCount, 0, "Total count should be 0 for empty templates");
+    const lastEvent = progressEvents[progressEvents.length - 1];
+    assert.strictEqual(lastEvent.isScanning, false, "Last event should show scanning completed");
   });
 
   test("Should scan all templates and build index", async () => {

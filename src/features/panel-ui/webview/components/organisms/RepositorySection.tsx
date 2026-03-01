@@ -19,8 +19,8 @@ interface RepositorySectionProps {
 
 /**
  * RepositorySection Component
- * @deprecated This component is kept for backward compatibility.
- * The unified TemplateSection now handles all rendering directly.
+ * Legacy / backward-compatible repository section component.
+ * Kept to support older code paths that still reference RepositorySection directly.
  */
 export function RepositorySection({
   repository,

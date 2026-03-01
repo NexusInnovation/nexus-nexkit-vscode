@@ -125,7 +125,10 @@ suite("Unit: fuzzySearch", () => {
       const codeHelperResult = results.find((r) => r.item.name === "my-code-helper");
       const decoderResult = results.find((r) => r.item.name === "decoder");
       if (codeHelperResult && decoderResult) {
-        assert.ok(codeHelperResult.score >= decoderResult.score, "Word boundary match should score >= than embedded match");
+        assert.ok(
+          codeHelperResult.score >= decoderResult.score,
+          "Word boundary match should score at least as high as embedded match (>=, equal scores acceptable)"
+        );
       }
     }
   });

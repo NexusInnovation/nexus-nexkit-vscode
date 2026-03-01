@@ -146,6 +146,11 @@ function fuzzyCharScore(query: string, field: string): number {
     return 0;
   }
 
+  // Guard against empty field (division by zero)
+  if (field.length === 0) {
+    return 0;
+  }
+
   // Score based on ratio of chars matched + consecutive bonus
   const ratio = queryIdx / field.length;
   return Math.min(5, Math.round(ratio * 5 + consecutiveBonus));

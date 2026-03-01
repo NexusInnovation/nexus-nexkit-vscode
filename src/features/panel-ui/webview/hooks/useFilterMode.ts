@@ -20,7 +20,7 @@ export function useFilterMode(): [FilterMode, (mode: FilterMode) => void] {
     const currentState = getWebviewState();
     currentState.filterMode = filterMode;
     setWebviewState(currentState);
-  }, [filterMode]);
+  }, [filterMode, getWebviewState, setWebviewState]);
 
   return [filterMode, setFilterMode];
 }
@@ -39,7 +39,7 @@ export function useGroupMode(): [GroupMode, (mode: GroupMode) => void] {
     const currentState = getWebviewState();
     currentState.groupMode = groupMode;
     setWebviewState(currentState);
-  }, [groupMode]);
+  }, [groupMode, getWebviewState, setWebviewState]);
 
   return [groupMode, setGroupMode];
 }
@@ -58,7 +58,7 @@ export function useSelectedFirst(): [boolean, (value: boolean) => void] {
     const currentState = getWebviewState();
     currentState.selectedFirst = selectedFirst;
     setWebviewState(currentState);
-  }, [selectedFirst]);
+  }, [selectedFirst, getWebviewState, setWebviewState]);
 
   return [selectedFirst, setSelectedFirst];
 }
@@ -78,7 +78,7 @@ export function useTypeFilters(): [string[], (types: string[]) => void] {
     const currentState = getWebviewState();
     currentState.typeFilters = typeFilters;
     setWebviewState(currentState);
-  }, [typeFilters]);
+  }, [typeFilters, getWebviewState, setWebviewState]);
 
   return [typeFilters, setTypeFilters];
 }
@@ -98,7 +98,7 @@ export function useRepositoryFilters(): [string[], (repos: string[]) => void] {
     const currentState = getWebviewState();
     currentState.repositoryFilters = repositoryFilters;
     setWebviewState(currentState);
-  }, [repositoryFilters]);
+  }, [repositoryFilters, getWebviewState, setWebviewState]);
 
   return [repositoryFilters, setRepositoryFilters];
 }
