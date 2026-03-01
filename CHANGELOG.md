@@ -1,3 +1,7 @@
+## 3.5.0-beta.4 (2026-03-01)
+
+* feat(core): add Edge Case Hunter Review and update manifests (#104) ([8cb4cb1](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8cb4cb1)), closes [#104](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/104)
+
 ## 3.5.0-beta.3 (2026-03-01)
 
 * feat(template): Feature/new-template-list (#102) ([90cf696](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/90cf696)), closes [#102](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/102) [#103](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/103)
