@@ -370,7 +370,7 @@ body {
 }
 
 .search-scan-indicator.search-scan-limited {
-  color: var(--vscode-editorWarning-foreground, #cca700);
+  color: var(--vscode-editorWarning-foreground);
 }
 
 .search-scan-spinner {
