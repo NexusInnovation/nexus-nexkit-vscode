@@ -10,6 +10,8 @@ import { FilterMenu } from "../atoms/FilterMenu";
 import { GroupMenu } from "../atoms/GroupMenu";
 import { useFilterMode, useGroupMode, useSelectedFirst, useTypeFilters, useRepositoryFilters } from "../../hooks/useFilterMode";
 import { TemplateItem } from "../atoms/TemplateItem";
+import { useAppState } from "../../hooks/useAppState";
+import { fuzzySearch } from "../../utils/fuzzySearch";
 import {
   AI_TEMPLATE_FILE_TYPES,
   AITemplateFile,
@@ -27,6 +29,7 @@ export function TemplateSection() {
   const { isReady, repositories, installedTemplates, installTemplate, uninstallTemplate, isTemplateInstalled } = useTemplateData(
     OperationMode.Developers
   );
+  const { metadataScan } = useAppState();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [filterMode, setFilterMode] = useFilterMode();
@@ -74,14 +77,37 @@ export function TemplateSection() {
     return repositories.map((r) => r.name);
   }, [repositories]);
 
-  // Apply all filters: search, status, type, repository
+  // Build a lookup map from metadata index for O(1) access during fuzzy search
+  const metadataLookup = useMemo(() => {
+    const map = new Map<string, { name: string; description: string }>();
+    for (const entry of metadataScan.index) {
+      map.set(entry.key, { name: entry.name, description: entry.description });
+    }
+    return map;
+  }, [metadataScan.index]);
+
+  // Apply all filters: search (fuzzy when available), status, type, repository
   const filteredTemplates = useMemo(() => {
     let result = allTemplates;
 
-    // Search filter
+    // Search filter — use fuzzy search when metadata scan is complete
     if (debouncedSearchQuery.length > 0) {
-      const query = debouncedSearchQuery.toLowerCase();
-      result = result.filter((t) => t.name.toLowerCase().includes(query));
+      if (metadataScan.isComplete && metadataLookup.size > 0) {
+        // Enhanced fuzzy search using name + description from metadata
+        const fuzzyResults = fuzzySearch(debouncedSearchQuery, result, (t) => {
+          const key = `${t.repository}::${t.type}::${t.name}`;
+          const meta = metadataLookup.get(key);
+          if (meta) {
+            return [meta.name, meta.description, t.name];
+          }
+          return [t.name];
+        });
+        result = fuzzyResults.map((r) => r.item);
+      } else {
+        // Fallback: simple filename search
+        const query = debouncedSearchQuery.toLowerCase();
+        result = result.filter((t) => t.name.toLowerCase().includes(query));
+      }
     }
 
     // Status filter
@@ -103,7 +129,16 @@ export function TemplateSection() {
     }
 
     return result;
-  }, [allTemplates, debouncedSearchQuery, filterMode, typeFilters, repositoryFilters, isTemplateInstalled]);
+  }, [
+    allTemplates,
+    debouncedSearchQuery,
+    filterMode,
+    typeFilters,
+    repositoryFilters,
+    isTemplateInstalled,
+    metadataScan.isComplete,
+    metadataLookup,
+  ]);
 
   const isSearching = debouncedSearchQuery.length > 0;
 
@@ -238,7 +273,12 @@ export function TemplateSection() {
               </div>
             )}
             <div class="search-filter-row">
-              <SearchBar value={searchQuery} onChange={setSearchQuery} />
+              <SearchBar
+                value={searchQuery}
+                onChange={setSearchQuery}
+                isScanning={metadataScan.isScanning}
+                isScanComplete={metadataScan.isComplete}
+              />
               <FilterMenu
                 filterMode={filterMode}
                 onFilterChange={setFilterMode}

@@ -151,8 +151,9 @@ body {
 /* Search and Filter Row */
 .search-filter-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
+  margin-bottom: 18px;
 }
 
 .search-filter-row .search-wrapper {
@@ -345,6 +346,51 @@ body {
 
 .search-clear-btn:hover {
   opacity: 1;
+}
+
+/* Metadata Scan Indicator — positioned absolutely so it doesn't affect layout */
+.search-scan-indicator {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px;
+  font-size: 0.75em;
+  color: var(--vscode-descriptionForeground);
+  opacity: 0.85;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.search-scan-indicator.search-scan-ready {
+  color: var(--vscode-textLink-foreground);
+}
+
+.search-scan-indicator.search-scan-limited {
+  color: var(--vscode-editorWarning-foreground, #cca700);
+}
+
+.search-scan-spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid var(--vscode-descriptionForeground);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: scan-spin 0.8s linear infinite;
+}
+
+@keyframes scan-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.search-scan-text {
+  white-space: nowrap;
 }
 
 /* Empty State */
