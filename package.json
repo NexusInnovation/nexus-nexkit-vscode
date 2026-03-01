@@ -416,7 +416,7 @@
     "publish-private": "npm version patch --tag-version-prefix=v && git push && git push --tags",
     "release": "semantic-release",
     "release:dry": "semantic-release --dry-run",
-    "prepare": "husky"
+    "prepare": "lefthook install"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.4.0",
@@ -443,7 +443,7 @@
     "esbuild": "^0.27.2",
     "eslint": "^9.36.0",
     "glob": "^11.0.0",
-    "husky": "^9.1.7",
+    "lefthook": "^2.1.1",
     "mocha": "^10.0.10",
     "nyc": "^15.1.0",
     "preact": "^10.25.4",
