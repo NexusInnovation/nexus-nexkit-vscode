@@ -5,6 +5,10 @@ import { useCallback } from "preact/hooks";
 const DEFAULT_STATE: WebviewPersistentState = {
   expandedState: {},
   filterMode: "all",
+  groupMode: "type",
+  selectedFirst: true,
+  typeFilters: [],
+  repositoryFilters: [],
 };
 
 /**

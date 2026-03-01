@@ -21,6 +21,7 @@ import { ModeSelectionService } from "../features/initialization/modeSelectionSe
 import { DevOpsMcpConfigService } from "../features/apm-devops/devOpsMcpConfigService";
 import { NexkitFileMigrationService } from "../features/initialization/nexkitFileMigrationService";
 import { CommitMessageService } from "../features/commit-management/commitMessageService";
+import { TemplateMetadataScannerService } from "../features/ai-template-files/services/templateMetadataScannerService";
 
 /**
  * Service container for dependency injection
@@ -49,6 +50,7 @@ export interface ServiceContainer {
   devOpsConfig: DevOpsMcpConfigService;
   nexkitFileMigration: NexkitFileMigrationService;
   commitMessage: CommitMessageService;
+  templateMetadataScanner: TemplateMetadataScannerService;
 }
 
 /**
@@ -85,12 +87,14 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const devOpsConfig = new DevOpsMcpConfigService();
   const nexkitFileMigration = new NexkitFileMigrationService();
   const commitMessage = new CommitMessageService();
+  const templateMetadataScanner = new TemplateMetadataScannerService(templateMetadata, aiTemplateData);
 
   // Register for disposal
   context.subscriptions.push(logging);
   context.subscriptions.push(aiTemplateData);
   context.subscriptions.push(telemetry);
   context.subscriptions.push(devOpsConfig);
+  context.subscriptions.push(templateMetadataScanner);
 
   logging.info("All services initialized successfully");
 
@@ -117,5 +121,6 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     devOpsConfig,
     nexkitFileMigration,
     commitMessage,
+    templateMetadataScanner,
   };
 }

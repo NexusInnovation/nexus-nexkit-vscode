@@ -2,18 +2,18 @@ import { useRef, useEffect } from "preact/hooks";
 import { TemplateItem } from "../atoms/TemplateItem";
 import { AITemplateFile, InstalledTemplatesMap } from "../../../../ai-template-files/models/aiTemplateFile";
 import { useExpansionState } from "../../hooks/useExpansionState";
-import { FilterMode } from "../../types";
 
 interface TypeSectionProps {
   type: string;
   templates: AITemplateFile[];
-  repository: string;
+  sectionKey: string;
   installedTemplates: InstalledTemplatesMap;
   onInstall: (template: AITemplateFile) => void;
   onUninstall: (template: AITemplateFile) => void;
   isTemplateInstalled: (template: AITemplateFile) => boolean;
-  searchQuery: string;
-  filterMode: FilterMode;
+  isSearching: boolean;
+  selectedFirst: boolean;
+  showRepository?: boolean;
 }
 
 const TYPE_DISPLAY_NAMES: Record<string, string> = {
@@ -23,6 +23,14 @@ const TYPE_DISPLAY_NAMES: Record<string, string> = {
   instructions: "Coding Instructions",
   chatmodes: "Chat Modes",
   hooks: "Hooks",
+};
+
+const TYPE_ICONS: Record<string, string> = {
+  agents: "codicon-hubot",
+  prompts: "codicon-comment-discussion",
+  skills: "codicon-package",
+  instructions: "codicon-book",
+  chatmodes: "codicon-chat-sparkle",
 };
 
 const TYPE_DESCRIPTIONS: Record<string, string> = {
@@ -38,47 +46,49 @@ const TYPE_DESCRIPTIONS: Record<string, string> = {
 /**
  * TypeSection Component
  * Collapsible section for a specific template type (agents, prompts, etc.)
+ * Supports templates from multiple repositories in a unified list
  */
 export function TypeSection({
   type,
   templates,
-  repository,
+  sectionKey,
   installedTemplates,
   onInstall,
   onUninstall,
   isTemplateInstalled,
-  searchQuery,
-  filterMode,
+  isSearching,
+  selectedFirst,
+  showRepository = true,
 }: TypeSectionProps) {
   const detailsRef = useRef<HTMLDetailsElement>(null);
-  const [isExpanded, setIsExpanded] = useExpansionState(`${repository}::${type}`);
+  const [isExpanded, setIsExpanded] = useExpansionState(sectionKey);
 
-  // Filter templates based on search query
-  const isSearching = searchQuery.length > 0;
-  let filteredTemplates = isSearching
-    ? templates.filter((t) => t.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    : templates;
-
-  // Apply filter mode
-  if (filterMode !== "all") {
-    filteredTemplates = filteredTemplates.filter((t) => {
-      const installed = isTemplateInstalled(t);
-      return filterMode === "selected" ? installed : !installed;
-    });
-  }
-
-  // Don't render if filtering results in no matches
-  // Exception: Always show Skills section even when empty
-  if (filteredTemplates.length === 0 && type !== "skills") {
+  // Don't render if no templates and not skills
+  if (templates.length === 0 && type !== "skills") {
     return null;
   }
 
+  // Sort: selected first if enabled
+  const sortedTemplates = selectedFirst
+    ? [...templates].sort((a, b) => {
+        const aInstalled = isTemplateInstalled(a) ? 0 : 1;
+        const bInstalled = isTemplateInstalled(b) ? 0 : 1;
+        return aInstalled - bInstalled;
+      })
+    : templates;
+
+  // Find the boundary between selected and unselected for the separator
+  let separatorIndex = -1;
+  if (selectedFirst) {
+    const firstUnselectedIdx = sortedTemplates.findIndex((t) => !isTemplateInstalled(t));
+    const hasSelected = sortedTemplates.some((t) => isTemplateInstalled(t));
+    if (hasSelected && firstUnselectedIdx > 0) {
+      separatorIndex = firstUnselectedIdx;
+    }
+  }
+
   // Calculate counts
-  const installedList = installedTemplates[type as keyof InstalledTemplatesMap] || [];
-  const installedCount = templates.filter((t) => {
-    const qualifiedName = `${t.repository}::${t.name}`;
-    return installedList.includes(qualifiedName);
-  }).length;
+  const installedCount = templates.filter((t) => isTemplateInstalled(t)).length;
   const totalCount = templates.length;
 
   // Sync the expanded state with the details element
@@ -94,26 +104,31 @@ export function TypeSection({
     }
   };
 
-  const displayName = TYPE_DISPLAY_NAMES[type];
+  const displayName = TYPE_DISPLAY_NAMES[type] || type;
   const description = TYPE_DESCRIPTIONS[type];
+  const iconClass = TYPE_ICONS[type];
   const headerText = isSearching
-    ? `${displayName} (${filteredTemplates.length} ${filteredTemplates.length === 1 ? "result" : "results"})`
+    ? `${displayName} (${templates.length} ${templates.length === 1 ? "result" : "results"})`
     : `${displayName} (${installedCount}/${totalCount})`;
 
   return (
-    <details ref={detailsRef} class="type-section" data-repository={repository} data-type={type} onToggle={handleToggle}>
+    <details ref={detailsRef} class="type-section" data-type={type} onToggle={handleToggle}>
       <summary class="type-header" title={description}>
+        {iconClass && <i class={`codicon ${iconClass} type-icon`} />}
         {headerText}
       </summary>
       <div class="template-list">
-        {filteredTemplates.map((template) => (
-          <TemplateItem
-            key={`${template.repository}::${template.type}::${template.name}`}
-            template={template}
-            isInstalled={isTemplateInstalled(template)}
-            onInstall={onInstall}
-            onUninstall={onUninstall}
-          />
+        {sortedTemplates.map((template, index) => (
+          <div key={`${template.repository}::${template.type}::${template.name}`}>
+            {index === separatorIndex && <div class="selected-separator" />}
+            <TemplateItem
+              template={template}
+              isInstalled={isTemplateInstalled(template)}
+              onInstall={onInstall}
+              onUninstall={onUninstall}
+              showRepository={showRepository}
+            />
+          </div>
         ))}
       </div>
     </details>

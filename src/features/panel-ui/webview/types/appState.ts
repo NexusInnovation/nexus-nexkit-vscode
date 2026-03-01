@@ -9,6 +9,7 @@ import {
   OperationMode,
   RepositoryTemplatesMap,
 } from "../../../ai-template-files/models/aiTemplateFile";
+import { TemplateMetadataEntry } from "../../../ai-template-files/services/templateMetadataScannerService";
 import { Profile } from "../../../profile-management/models/profile";
 import { DevOpsConnection } from "../../../apm-devops/models/devOpsConnection";
 
@@ -51,6 +52,22 @@ export interface AppState {
     isReady: boolean;
     error?: string;
   };
+
+  /**
+   * Metadata scan state for fuzzy search
+   */
+  metadataScan: {
+    /** Whether a scan is currently in progress */
+    isScanning: boolean;
+    /** Number of templates scanned so far */
+    scannedCount: number;
+    /** Total number of templates to scan */
+    totalCount: number;
+    /** Whether the scan has completed at least once */
+    isComplete: boolean;
+    /** The metadata index built by the scan, for fuzzy search */
+    index: TemplateMetadataEntry[];
+  };
 }
 
 /**
@@ -82,5 +99,12 @@ export const initialAppState: AppState = {
   devOpsConnections: {
     list: [],
     isReady: false,
+  },
+  metadataScan: {
+    isScanning: false,
+    scannedCount: 0,
+    totalCount: 0,
+    isComplete: false,
+    index: [],
   },
 };

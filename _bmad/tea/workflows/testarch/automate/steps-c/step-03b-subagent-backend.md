@@ -1,15 +1,15 @@
 ---
-name: 'step-03b-subprocess-backend'
-description: 'Subprocess: Generate backend tests only (unit, integration, contract)'
-subprocess: true
+name: 'step-03b-subagent-backend'
+description: 'Subagent: Generate backend tests only (unit, integration, contract)'
+subagent: true
 outputFile: '/tmp/tea-automate-backend-tests-{{timestamp}}.json'
 ---
 
-# Subprocess 3B-backend: Generate Backend Tests
+# Subagent 3B-backend: Generate Backend Tests
 
-## SUBPROCESS CONTEXT
+## SUBAGENT CONTEXT
 
-This is an **isolated subprocess** running in parallel with API test generation (and optionally E2E test generation for fullstack projects).
+This is an **isolated subagent** running in parallel with API test generation (and optionally E2E test generation for fullstack projects).
 
 **What you have from parent workflow:**
 
@@ -24,18 +24,18 @@ This is an **isolated subprocess** running in parallel with API test generation 
 
 ## MANDATORY EXECUTION RULES
 
-- Read this entire subprocess file before acting
+- Read this entire subagent file before acting
 - Generate backend tests ONLY (unit, integration, contract)
-- Output structured JSON to temp file using the subprocess output schema contract
+- Output structured JSON to temp file using the subagent output schema contract
 - Follow knowledge fragment patterns
-- Do NOT generate API endpoint tests (that's subprocess 3A)
-- Do NOT generate E2E tests (that's subprocess 3B)
+- Do NOT generate API endpoint tests (that's subagent 3A)
+- Do NOT generate E2E tests (that's subagent 3B-E2E)
 - Do NOT run tests (that's step 4)
 - Do NOT generate fixtures yet (that's step 3C aggregation)
 
 ---
 
-## SUBPROCESS TASK
+## SUBAGENT TASK
 
 ### 1. Identify Test Targets
 
@@ -152,7 +152,7 @@ Write JSON to temp file: `/tmp/tea-automate-backend-tests-{{timestamp}}.json`
 
 ```json
 {
-  "subprocessType": "backend",
+  "subagentType": "backend",
   "testsGenerated": [
     {
       "file": "tests/unit/test_user_service.py",
@@ -184,7 +184,7 @@ Write JSON to temp file: `/tmp/tea-automate-backend-tests-{{timestamp}}.json`
   },
   "status": "complete",
   "success": true,
-  "subprocess": "backend-tests",
+  "subagent": "backend-tests",
   "knowledge_fragments_used": ["test-levels-framework", "test-priorities-matrix", "data-factories"],
   "summary": "Generated 15 backend test cases (10 unit, 4 integration, 1 contract)"
 }
@@ -194,7 +194,7 @@ Write JSON to temp file: `/tmp/tea-automate-backend-tests-{{timestamp}}.json`
 
 ```json
 {
-  "subprocessType": "backend",
+  "subagentType": "backend",
   "testsGenerated": [],
   "coverageSummary": {
     "totalTests": 0,
@@ -203,7 +203,7 @@ Write JSON to temp file: `/tmp/tea-automate-backend-tests-{{timestamp}}.json`
   },
   "status": "partial",
   "success": false,
-  "subprocess": "backend-tests",
+  "subagent": "backend-tests",
   "error": "Error message describing what went wrong",
   "partial_output": {
     /* any tests generated before error */
@@ -215,23 +215,23 @@ Write JSON to temp file: `/tmp/tea-automate-backend-tests-{{timestamp}}.json`
 
 ## EXIT CONDITION
 
-Subprocess completes when:
+Subagent completes when:
 
 - All identified modules have backend test files generated
 - All tests follow language-idiomatic patterns
-- JSON output written to temp file using the subprocess output schema contract
+- JSON output written to temp file using the subagent output schema contract
 - Fixture needs tracked
 
-**Subprocess terminates here.** Parent workflow will read output and proceed to aggregation.
+**Subagent terminates here.** Parent workflow will read output and proceed to aggregation.
 
 ---
 
-## SUBPROCESS SUCCESS METRICS
+## SUBAGENT SUCCESS METRICS
 
 ### SUCCESS:
 
 - All backend tests generated following idiomatic patterns
-- JSON output valid and complete, matches subprocess output schema contract
+- JSON output valid and complete, matches subagent output schema contract
 - No E2E or browser tests included (out of scope)
 - Proper mocking used for external dependencies
 - Priority tags assigned to all test cases
@@ -242,5 +242,5 @@ Subprocess completes when:
 - Did not follow language-idiomatic patterns
 - Invalid or missing JSON output
 - Output schema does not match the contract
-- Ran tests (not subprocess responsibility)
+- Ran tests (not subagent responsibility)
 - Used real external services instead of mocks
