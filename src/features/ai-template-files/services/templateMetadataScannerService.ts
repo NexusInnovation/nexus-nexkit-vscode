@@ -75,6 +75,12 @@ export class TemplateMetadataScannerService implements vscode.Disposable {
     this.cancelScan();
 
     const templates = this._templateDataService.getAllTemplates();
+
+    this._index = [];
+    this._scanComplete = false;
+    this._progress = { isScanning: true, scannedCount: 0, totalCount: templates.length };
+    this._onScanProgressChanged.fire({ ...this._progress });
+
     if (templates.length === 0) {
       this._logging.info("[MetadataScanner] No templates to scan");
       this._scanComplete = true;
@@ -86,11 +92,6 @@ export class TemplateMetadataScannerService implements vscode.Disposable {
 
     this._cancellationSource = new vscode.CancellationTokenSource();
     const token = this._cancellationSource.token;
-
-    this._index = [];
-    this._scanComplete = false;
-    this._progress = { isScanning: true, scannedCount: 0, totalCount: templates.length };
-    this._onScanProgressChanged.fire({ ...this._progress });
 
     this._logging.info("[MetadataScanner] Starting background metadata scan", {
       templateCount: templates.length,
