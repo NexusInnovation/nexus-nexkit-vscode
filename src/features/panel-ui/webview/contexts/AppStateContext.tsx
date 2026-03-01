@@ -100,6 +100,31 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
             },
           }));
           break;
+
+        case "metadataScanProgress":
+          setState((prev) => ({
+            ...prev,
+            metadataScan: {
+              ...prev.metadataScan,
+              isScanning: message.progress.isScanning,
+              scannedCount: message.progress.scannedCount,
+              totalCount: message.progress.totalCount,
+            },
+          }));
+          break;
+
+        case "metadataScanComplete":
+          setState((prev) => ({
+            ...prev,
+            metadataScan: {
+              isScanning: false,
+              scannedCount: prev.metadataScan.totalCount,
+              totalCount: prev.metadataScan.totalCount,
+              isComplete: true,
+              index: message.index,
+            },
+          }));
+          break;
       }
     };
 
@@ -111,6 +136,8 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     const unsubscribeMetadata = messenger.onMessage("templateMetadataResponse", handleMessage);
     const unsubscribeDevOpsConnections = messenger.onMessage("devOpsConnectionsUpdate", handleMessage);
     const unsubscribeDevOpsError = messenger.onMessage("devOpsConnectionError", handleMessage);
+    const unsubscribeScanProgress = messenger.onMessage("metadataScanProgress", handleMessage);
+    const unsubscribeScanComplete = messenger.onMessage("metadataScanComplete", handleMessage);
 
     // Request initial state from extension
     messenger.sendMessage({ command: "webviewReady" });
@@ -124,6 +151,8 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       unsubscribeMetadata();
       unsubscribeDevOpsConnections();
       unsubscribeDevOpsError();
+      unsubscribeScanProgress();
+      unsubscribeScanComplete();
     };
   }, [messenger]);
 

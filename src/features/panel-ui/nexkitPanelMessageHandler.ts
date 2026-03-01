@@ -55,6 +55,16 @@ export class NexkitPanelMessageHandler {
 
     // Auto-refresh DevOps connections when they change
     this._services.devOpsConfig.onConnectionsChanged(() => this.sendDevOpsConnections());
+
+    // Forward metadata scan progress to webview
+    this._services.templateMetadataScanner.onScanProgressChanged((progress) => {
+      this.sendToWebview({ command: "metadataScanProgress", progress });
+    });
+
+    // Forward metadata scan completion to webview
+    this._services.templateMetadataScanner.onScanComplete((index) => {
+      this.sendToWebview({ command: "metadataScanComplete", index });
+    });
   }
 
   public async handleMessage(message: WebviewMessage): Promise<void> {
@@ -73,6 +83,7 @@ export class NexkitPanelMessageHandler {
     this.sendInstalledTemplates();
     this.sendProfilesData();
     this.sendDevOpsConnections();
+    this.sendMetadataScanState();
   }
 
   // ============================================================================
@@ -344,6 +355,26 @@ export class NexkitPanelMessageHandler {
       this.sendToWebview({
         command: "devOpsConnectionError",
         error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  /**
+   * Send current metadata scan state to the webview.
+   * If the scan is already complete, sends the full index immediately.
+   * Otherwise, sends the current progress.
+   */
+  private sendMetadataScanState(): void {
+    const scanner = this._services.templateMetadataScanner;
+    if (scanner.isScanComplete()) {
+      this.sendToWebview({
+        command: "metadataScanComplete",
+        index: [...scanner.getIndex()],
+      });
+    } else {
+      this.sendToWebview({
+        command: "metadataScanProgress",
+        progress: scanner.getProgress(),
       });
     }
   }
