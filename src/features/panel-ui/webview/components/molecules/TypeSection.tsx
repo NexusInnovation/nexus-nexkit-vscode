@@ -24,6 +24,14 @@ const TYPE_DISPLAY_NAMES: Record<string, string> = {
   chatmodes: "Chat Modes",
 };
 
+const TYPE_ICONS: Record<string, string> = {
+  agents: "codicon-hubot",
+  prompts: "codicon-comment-discussion",
+  skills: "codicon-package",
+  instructions: "codicon-book",
+  chatmodes: "codicon-chat-sparkle",
+};
+
 const TYPE_DESCRIPTIONS: Record<string, string> = {
   agents: "Specialized GitHub Copilot agents that extend functionality with custom behaviors and capabilities for specific tasks",
   prompts: "Reusable prompt templates for common coding tasks, refactoring patterns, and AI-assisted development workflows",
@@ -96,6 +104,7 @@ export function TypeSection({
 
   const displayName = TYPE_DISPLAY_NAMES[type] || type;
   const description = TYPE_DESCRIPTIONS[type];
+  const iconClass = TYPE_ICONS[type];
   const headerText = isSearching
     ? `${displayName} (${templates.length} ${templates.length === 1 ? "result" : "results"})`
     : `${displayName} (${installedCount}/${totalCount})`;
@@ -103,6 +112,7 @@ export function TypeSection({
   return (
     <details ref={detailsRef} class="type-section" data-type={type} onToggle={handleToggle}>
       <summary class="type-header" title={description}>
+        {iconClass && <i class={`codicon ${iconClass} type-icon`} />}
         {headerText}
       </summary>
       <div class="template-list">

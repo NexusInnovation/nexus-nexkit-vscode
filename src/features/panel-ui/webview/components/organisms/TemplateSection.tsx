@@ -248,6 +248,7 @@ export function TemplateSection() {
               onInstall={installTemplate}
               onUninstall={uninstallTemplate}
               showRepository={availableRepositories.length > 1}
+              showTypeIcon
             />
           </div>
         ))}

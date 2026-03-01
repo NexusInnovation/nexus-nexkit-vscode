@@ -471,6 +471,14 @@ details[open] > .type-header::before {
   transform: rotate(90deg);
 }
 
+/* Type icon in section header */
+.type-icon {
+  margin-right: 6px;
+  font-size: 14px;
+  opacity: 0.9;
+  flex-shrink: 0;
+}
+
 .type-header:hover {
   background-color: var(--vscode-list-hoverBackground);
 }
@@ -489,6 +497,14 @@ details[open] > .type-header::before {
   align-items: flex-start;
   gap: 8px;
   padding: 4px;
+}
+
+/* Type icon on individual template items (flat list) */
+.template-type-icon {
+  font-size: 14px;
+  opacity: 0.7;
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .template-item-content {
