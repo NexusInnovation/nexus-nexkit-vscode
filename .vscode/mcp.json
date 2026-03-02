@@ -2,23 +2,11 @@
   "servers": {
     "azureDevOps": {
       "command": "npx",
-      "args": [
-        "-y",
-        "@azure-devops/mcp",
-        "${input:ado_org}"
-      ]
+      "args": ["-y", "@azure-devops/mcp", "${input:ado_org}"]
     },
     "github": {
       "type": "http",
       "url": "https://api.githubcopilot.com/mcp/"
-    },
-    "M365AgentsToolkit MCP Server": {
-      "command": "npx",
-      "args": [
-        "@microsoft/m365agentstoolkit-mcp@latest",
-        "server",
-        "start"
-      ]
     }
   },
   "inputs": [
