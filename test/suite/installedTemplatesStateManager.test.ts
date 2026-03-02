@@ -144,6 +144,7 @@ suite("Unit: InstalledTemplatesStateManager", () => {
     assert.ok(map.prompts.includes("test-repo::test.prompt.md"));
     assert.strictEqual(map.instructions.length, 0);
     assert.strictEqual(map.chatmodes.length, 0);
+    assert.strictEqual(map.hooks.length, 0);
   });
 
   test("Should clear all state", async () => {

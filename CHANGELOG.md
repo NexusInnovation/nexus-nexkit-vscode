@@ -1,3 +1,19 @@
+## 3.5.0-beta.6 (2026-03-02)
+
+* feat(agents): add GitHub Copilot agent definitions for BMad method ([3a351e8](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3a351e8))
+
+## 3.5.0-beta.5 (2026-03-01)
+
+* feat(hook): add hooks template type for managing hooks from public/private repositories (#100) ([a81d7ce](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a81d7ce)), closes [#100](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/100)
+
+## 3.5.0-beta.4 (2026-03-01)
+
+* feat(core): add Edge Case Hunter Review and update manifests (#104) ([8cb4cb1](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8cb4cb1)), closes [#104](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/104)
+
+## 3.5.0-beta.3 (2026-03-01)
+
+* feat(template): Feature/new-template-list (#102) ([90cf696](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/90cf696)), closes [#102](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/102) [#103](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/103)
+
 ## 3.5.0-beta.2 (2026-02-26)
 
 * Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([50a851a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/50a851a))

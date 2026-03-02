@@ -208,6 +208,7 @@ export class TemplateFileOperations {
         skills: 0,
         instructions: 0,
         chatmodes: 0,
+        hooks: 0,
       },
     };
 

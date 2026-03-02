@@ -62,6 +62,13 @@ export class AITemplateDataService implements vscode.Disposable {
   }
 
   /**
+   * Get the shared repository manager instance
+   */
+  public getRepositoryManager(): RepositoryManager {
+    return this.repositoryManager;
+  }
+
+  /**
    * Initialize the service - fetch all templates from configured repositories
    */
   public async initialize(): Promise<void> {
@@ -93,6 +100,7 @@ export class AITemplateDataService implements vscode.Disposable {
           skills: 0,
           instructions: 0,
           chatmodes: 0,
+          hooks: 0,
         };
         for (const template of result.allTemplates) {
           countsByType[template.type]++;
@@ -128,12 +136,9 @@ export class AITemplateDataService implements vscode.Disposable {
         });
 
         if (result.allTemplates.length === 0) {
-          this._logging.warn(
-            "[Templates] No templates were loaded. This can lead to empty template lists in the UI.",
-            {
-              hint: "Check previous logs for per-repository failures (auth, rate limit, 404 path, network).",
-            }
-          );
+          this._logging.warn("[Templates] No templates were loaded. This can lead to empty template lists in the UI.", {
+            hint: "Check previous logs for per-repository failures (auth, rate limit, 404 path, network).",
+          });
         }
 
         // Setup file watchers for local repositories
@@ -192,6 +197,7 @@ export class AITemplateDataService implements vscode.Disposable {
         skills: 0,
         instructions: 0,
         chatmodes: 0,
+        hooks: 0,
       };
       for (const template of result.allTemplates) {
         countsByType[template.type]++;
@@ -294,6 +300,7 @@ export class AITemplateDataService implements vscode.Disposable {
       skills: [],
       instructions: [],
       chatmodes: [],
+      hooks: [],
     };
 
     for (const [type, entries] of Object.entries(allInstalled) as [keyof InstalledTemplatesMap, string[]][]) {
@@ -335,6 +342,7 @@ export class AITemplateDataService implements vscode.Disposable {
             skills: [],
             instructions: [],
             chatmodes: [],
+            hooks: [],
           },
         };
       }

@@ -1,8 +1,8 @@
 {
   "recommendations": [
-    "ms-azuretools.vscode-azurefunctions",
     "ms-vscode.vscode-typescript-next",
     "ms-vscode.vscode-json",
-    "esbenp.prettier-vscode"
+    "esbenp.prettier-vscode",
+    "ms-azuretools.vscode-azurefunctions"
   ]
 }
