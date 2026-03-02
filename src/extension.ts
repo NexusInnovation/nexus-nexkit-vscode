@@ -21,7 +21,8 @@ import { registerGenerateCommitMessageCommand } from "./features/commit-manageme
 
 /**
  * Extension activation
- * This method is called when the extension is first activated
+ * This method is called when the
+ * extension is first activated
  */
 export async function activate(context: vscode.ExtensionContext) {
   // Initialize core settings manager
