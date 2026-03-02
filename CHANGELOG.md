@@ -1,3 +1,7 @@
+## 3.5.0-beta.6 (2026-03-02)
+
+* feat(agents): add GitHub Copilot agent definitions for BMad method ([3a351e8](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3a351e8))
+
 ## 3.5.0-beta.5 (2026-03-01)
 
 * feat(hook): add hooks template type for managing hooks from public/private repositories (#100) ([a81d7ce](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a81d7ce)), closes [#100](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/100)
