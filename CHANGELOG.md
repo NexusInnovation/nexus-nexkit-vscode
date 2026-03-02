@@ -1,3 +1,8 @@
+## 3.5.0-beta.7 (2026-03-02)
+
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([e65654e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/e65654e))
+* feat(extension): Change for force build ([7b040a4](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/7b040a4))
+
 ## 3.5.0-beta.6 (2026-03-02)
 
 * feat(agents): add GitHub Copilot agent definitions for BMad method ([3a351e8](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3a351e8))
