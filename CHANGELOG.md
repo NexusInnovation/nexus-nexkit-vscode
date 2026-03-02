@@ -1,3 +1,22 @@
+## 3.5.0 (2026-03-02)
+
+* [skip ci] Merge pull request #96 from NexusInnovation/develop ([0897eaa](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/0897eaa)), closes [#96](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/96)
+* Develop (#106) ([3f024ec](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3f024ec)), closes [#106](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/106) [#102](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/102) [#103](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/103)
+* Include BMAD Method ([fb52746](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/fb52746))
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([50a851a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/50a851a))
+* Merge branch 'main' into develop ([9a9b424](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9a9b424))
+* Merge branch 'main' of https://github.com/NexusInnovation/nexus-nexkit-vscode ([6ca9073](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/6ca9073))
+* fix: Merge pull request #93 from NexusInnovation/feature/move-nexkit-files-to-.nexkit ([9b12d84](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9b12d84)), closes [#93](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/93)
+* fix: trigger release ([08a1196](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/08a1196))
+* feat: Include Full BMAD Method ([cf1cab3](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/cf1cab3))
+* feat: move Nexkit template files from .github to .nexkit directory ([416c842](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/416c842))
+* feat(initialization): add Nexkit file migration service ([71fed35](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/71fed35))
+* feat(release): Develop (#107) ([1f38647](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/1f38647)), closes [#107](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/107) [#102](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/102) [#103](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/103)
+* feat(release): Release v3.5.0 — Unified Template List, Hooks Management & BMad Agents (#105) ([f9b044b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/f9b044b)), closes [#105](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/105) [#102](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/102) [#103](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/103)
+* chore(release): v3.4.0-beta.1 [skip ci] ([9c8c1f3](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9c8c1f3))
+* chore(release): v3.5.0-beta.1 [skip ci] ([e7754bd](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/e7754bd))
+* chore(release): v3.5.0-beta.2 [skip ci] ([483909b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/483909b))
+
 ## 3.5.0-beta.7 (2026-03-02)
 
 * Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([e65654e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/e65654e))
