@@ -19,7 +19,8 @@ interface RepositorySectionProps {
 
 /**
  * RepositorySection Component
- * Displays a repository with its template types
+ * Legacy / backward-compatible repository section component.
+ * Kept to support older code paths that still reference RepositorySection directly.
  */
 export function RepositorySection({
   repository,
@@ -30,11 +31,28 @@ export function RepositorySection({
   searchQuery,
   filterMode,
 }: RepositorySectionProps) {
+  const isSearching = searchQuery.length > 0;
+
+  // Apply search and filter to get filtered templates per type
+  const getFilteredTemplates = (templates: AITemplateFile[]) => {
+    let result = templates;
+    if (isSearching) {
+      result = result.filter((t) => t.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    }
+    if (filterMode !== "all") {
+      result = result.filter((t) => {
+        const installed = isTemplateInstalled(t);
+        return filterMode === "selected" ? installed : !installed;
+      });
+    }
+    return result;
+  };
+
   return (
     <div class="repository-section">
       <h3 class="repository-name">{repository.name}</h3>
       {AI_TEMPLATE_FILE_TYPES.map((type) => {
-        const templates = repository.types[type];
+        const templates = getFilteredTemplates(repository.types[type]);
         // Skip section if no templates, except for skills which always shows
         if (templates.length === 0 && type !== "skills") return null;
 
@@ -43,13 +61,14 @@ export function RepositorySection({
             key={`${repository.name}::${type}`}
             type={type}
             templates={templates}
-            repository={repository.name}
+            sectionKey={`${repository.name}::${type}`}
             installedTemplates={installedTemplates}
             onInstall={onInstall}
             onUninstall={onUninstall}
             isTemplateInstalled={isTemplateInstalled}
-            searchQuery={searchQuery}
-            filterMode={filterMode}
+            isSearching={isSearching}
+            selectedFirst={false}
+            showRepository={false}
           />
         );
       })}

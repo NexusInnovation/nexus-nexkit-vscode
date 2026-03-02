@@ -18,6 +18,7 @@ function getCountsByType(repo: RepositoryTemplatesMap): Record<AITemplateFileTyp
     skills: repo.types.skills.length,
     instructions: repo.types.instructions.length,
     chatmodes: repo.types.chatmodes.length,
+    hooks: repo.types.hooks.length,
   };
 }
 

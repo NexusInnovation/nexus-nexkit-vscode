@@ -1,0 +1,7 @@
+commit-msg:
+  jobs:
+    - run: npx commitlint --edit {1}
+
+pre-commit:
+  jobs:
+    - run: npm run pretest

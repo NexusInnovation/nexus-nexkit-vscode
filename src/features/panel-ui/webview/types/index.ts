@@ -12,7 +12,19 @@ export interface WorkspaceState {
 
 export type FilterMode = "all" | "selected" | "unselected";
 
+export type GroupMode = "type" | "repository" | "none";
+
+export interface TemplateFilters {
+  status: FilterMode;
+  types: string[];
+  repositories: string[];
+}
+
 export interface WebviewPersistentState {
   expandedState: Record<string, boolean>;
   filterMode: FilterMode;
+  groupMode: GroupMode;
+  selectedFirst: boolean;
+  typeFilters: string[];
+  repositoryFilters: string[];
 }

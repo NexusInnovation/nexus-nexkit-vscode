@@ -42,6 +42,7 @@ export class RepositoryConfigManager {
         skills: "skills",
         instructions: "instructions",
         agents: "agents",
+        hooks: "hooks",
       },
     };
   }

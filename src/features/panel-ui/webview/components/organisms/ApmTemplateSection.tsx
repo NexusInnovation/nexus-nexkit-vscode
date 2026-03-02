@@ -7,6 +7,8 @@ import { CollapsibleSection } from "../molecules/CollapsibleSection";
 import { TemplateItem } from "../atoms/TemplateItem";
 import { AITemplateFile, OperationMode } from "../../../../ai-template-files/models/aiTemplateFile";
 import { useVSCodeAPI } from "../../hooks/useVSCodeAPI";
+import { useAppState } from "../../hooks/useAppState";
+import { fuzzySearch } from "../../utils/fuzzySearch";
 
 /**
  * ApmTemplateSection Component
@@ -18,6 +20,7 @@ export function ApmTemplateSection() {
   const { isReady, repositories, installedTemplates, installTemplate, uninstallTemplate, isTemplateInstalled } = useTemplateData(
     OperationMode.APM
   );
+  const { metadataScan } = useAppState();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
@@ -42,14 +45,34 @@ export function ApmTemplateSection() {
     }).length;
   }, [installedTemplates, apmRepoNames]);
 
-  // Filter agents by search query
+  // Build a lookup map from metadata index for O(1) access during fuzzy search
+  const metadataLookup = useMemo(() => {
+    const map = new Map<string, { name: string; description: string }>();
+    for (const entry of metadataScan.index) {
+      map.set(entry.key, { name: entry.name, description: entry.description });
+    }
+    return map;
+  }, [metadataScan.index]);
+
+  // Filter agents by search query — use fuzzy search when metadata is available
   const filteredAgents = useMemo(() => {
     if (!debouncedSearchQuery) {
       return agents;
     }
+    if (metadataScan.isComplete && metadataLookup.size > 0) {
+      const fuzzyResults = fuzzySearch(debouncedSearchQuery, agents, (agent) => {
+        const key = `${agent.repository}::${agent.type}::${agent.name}`;
+        const meta = metadataLookup.get(key);
+        if (meta) {
+          return [meta.name, meta.description, agent.name];
+        }
+        return [agent.name];
+      });
+      return fuzzyResults.map((r) => r.item);
+    }
     const query = debouncedSearchQuery.toLowerCase();
     return agents.filter((agent) => agent.name.toLowerCase().includes(query));
-  }, [agents, debouncedSearchQuery]);
+  }, [agents, debouncedSearchQuery, metadataScan.isComplete, metadataLookup]);
 
   const updateInstalledTemplates = () => {
     messenger.sendMessage({ command: "updateInstalledTemplates", mode: OperationMode.APM });
@@ -72,7 +95,13 @@ export function ApmTemplateSection() {
                 </button>
               </div>
             )}
-            <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search agents..." />
+            <SearchBar
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search agents..."
+              isScanning={metadataScan.isScanning}
+              isScanComplete={metadataScan.isComplete}
+            />
             <TemplateMetadataProvider>
               <div class="apm-agents-list">
                 {filteredAgents.length === 0 && (

@@ -21,7 +21,8 @@ import { registerGenerateCommitMessageCommand } from "./features/commit-manageme
 
 /**
  * Extension activation
- * This method is called when the extension is first activated
+ * This method is called when the
+ * extension is first activated
  */
 export async function activate(context: vscode.ExtensionContext) {
   // Initialize core settings manager
@@ -80,13 +81,24 @@ export async function activate(context: vscode.ExtensionContext) {
   services.workspaceInitPrompt.promptInitWorkspaceOnWorkspaceChange();
 
   // Initialize AI template data asynchronously (don't block extension activation)
-  services.aiTemplateData.initialize().catch((error) => {
-    services.logging.error("Failed to initialize AI template data", error);
-    // Track initialization errors
-    services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
-      context: "aiTemplateData.initialize",
+  services.aiTemplateData
+    .initialize()
+    .then(() => {
+      // Start background metadata scan after templates are loaded
+      services.templateMetadataScanner.startScan().catch((error) => {
+        services.logging.error("Failed to complete metadata scan", error);
+        services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+          context: "templateMetadataScanner.startScan",
+        });
+      });
+    })
+    .catch((error) => {
+      services.logging.error("Failed to initialize AI template data", error);
+      // Track initialization errors
+      services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+        context: "aiTemplateData.initialize",
+      });
     });
-  });
 
   // Sync installed templates state with filesystem on activation
   services.aiTemplateData.syncInstalledTemplates();
