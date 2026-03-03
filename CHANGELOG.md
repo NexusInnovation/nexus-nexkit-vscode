@@ -1,3 +1,7 @@
+## <small>3.5.1 (2026-03-03)</small>
+
+* fix(commit-management): auto-stage unstaged changes before generating commit message (#108) ([644195c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/644195c)), closes [#108](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/108)
+
 ## 3.5.0 (2026-03-02)
 
 * [skip ci] Merge pull request #96 from NexusInnovation/develop ([0897eaa](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/0897eaa)), closes [#96](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/96)
