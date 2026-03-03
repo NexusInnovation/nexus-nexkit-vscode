@@ -35,6 +35,9 @@ export class SettingsManager {
   private static readonly EXTENSION_AUTO_CHECK_UPDATES = "extension.autoCheckUpdates";
   private static readonly EXTENSION_UPDATE_CHECK_INTERVAL = "extension.updateCheckInterval";
 
+  // Template auto-refresh settings
+  private static readonly TEMPLATES_AUTO_REFRESH_INTERVAL = "templates.autoRefreshIntervalMinutes";
+
   // Extension update state keys (GlobalState)
   private static readonly EXTENSION_LAST_UPDATE_CHECK_STATE_KEY = "nexkit.extension.lastUpdateCheck";
 
@@ -158,6 +161,10 @@ export class SettingsManager {
 
   static getUpdateCheckIntervalHours(): number {
     return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<number>(this.EXTENSION_UPDATE_CHECK_INTERVAL, 24);
+  }
+
+  static getTemplatesAutoRefreshIntervalMinutes(): number {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<number>(this.TEMPLATES_AUTO_REFRESH_INTERVAL, 30);
   }
 
   static getLastUpdateCheck(): number {

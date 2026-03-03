@@ -436,9 +436,10 @@ export class AITemplateDataService implements vscode.Disposable {
    * triggers a lightweight refresh only when new commits are detected.
    */
   public setupRemoteAutoRefresh(): void {
-    const INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+    const intervalMinutes = SettingsManager.getTemplatesAutoRefreshIntervalMinutes();
+    const INTERVAL_MS = intervalMinutes * 60 * 1000;
 
-    this._logging.info("[Auto-Refresh] Starting remote auto-refresh", { intervalMinutes: 30 });
+    this._logging.info("[Auto-Refresh] Starting remote auto-refresh", { intervalMinutes });
 
     this.autoRefreshTimer = setInterval(async () => {
       await this.checkAndRefreshFromRemote();
