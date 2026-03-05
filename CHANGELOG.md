@@ -1,3 +1,4 @@
+<<<<<<< copilot/add-filewatcher-for-nexkit-files
 ## <small>3.5.1 (2026-03-03)</small>
 
 * fix(commit-management): auto-stage unstaged changes before generating commit message (#108) ([644195c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/644195c)), closes [#108](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/108)
@@ -20,6 +21,14 @@
 * chore(release): v3.4.0-beta.1 [skip ci] ([9c8c1f3](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9c8c1f3))
 * chore(release): v3.5.0-beta.1 [skip ci] ([e7754bd](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/e7754bd))
 * chore(release): v3.5.0-beta.2 [skip ci] ([483909b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/483909b))
+=======
+## 3.5.0-beta.8 (2026-03-02)
+
+* [skip ci] Merge pull request #96 from NexusInnovation/develop ([0897eaa](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/0897eaa)), closes [#96](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/96)
+* Develop (#106) ([3f024ec](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3f024ec)), closes [#106](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/106) [#102](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/102) [#103](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/103)
+* Merge branch 'main' into develop ([b8f7cff](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/b8f7cff))
+* feat(release): Release v3.5.0 — Unified Template List, Hooks Management & BMad Agents (#105) ([f9b044b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/f9b044b)), closes [#105](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/105) [#102](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/102) [#103](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/103)
+>>>>>>> develop
 
 ## 3.5.0-beta.7 (2026-03-02)
 
