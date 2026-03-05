@@ -25,7 +25,8 @@ export class WorkspaceInitializationService {
     services: ServiceContainer
   ) {
     // Run shared verification checks (gitignore, settings, file migration)
-    // These are the same checks that run at every startup via StartupVerificationService
+    // Delegates to StartupVerificationService — same checks that run at every startup.
+    // Returns migration summary for initialization reporting.
     const migrationSummary = await services.startupVerification.verifyWorkspaceConfiguration(
       workspaceFolder.uri.fsPath
     );

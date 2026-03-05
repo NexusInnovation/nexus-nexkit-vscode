@@ -110,11 +110,9 @@ suite("Unit: StartupVerificationService", () => {
   });
 
   test("verifyOnStartup should skip if no workspace folder", async () => {
-    const workspaceFoldersStub = sandbox.stub(vscode.workspace, "workspaceFolders").value(undefined);
+    sandbox.stub(vscode.workspace, "workspaceFolders").value(undefined);
 
     // Should not throw
     await service.verifyOnStartup();
-
-    workspaceFoldersStub.restore();
   });
 });
