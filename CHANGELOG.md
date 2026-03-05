@@ -1,3 +1,8 @@
+## 3.5.0-beta.9 (2026-03-05)
+
+* fix(nexkit-file-watcher): clarify warning message about managed file overwrites ([ef5c036](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ef5c036))
+* feat(nexkit-file-watcher): add file watcher to protect .nexkit managed files (#110) ([cc5209a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/cc5209a)), closes [#110](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/110) [#107](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/107) [#102](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/102) [#103](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/103)
+
 <<<<<<< copilot/add-filewatcher-for-nexkit-files
 ## <small>3.5.1 (2026-03-03)</small>
 
