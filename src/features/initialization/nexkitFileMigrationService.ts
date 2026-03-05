@@ -3,6 +3,7 @@ import * as path from "path";
 import { fileExists } from "../../shared/utils/fileHelper";
 import { AI_TEMPLATE_FILE_TYPES } from "../ai-template-files/models/aiTemplateFile";
 import { LoggingService } from "../../shared/services/loggingService";
+import { NexkitFileWatcherService } from "../nexkit-file-watcher/nexkitFileWatcherService";
 
 /**
  * Summary of files migrated from .github to .nexkit
@@ -46,43 +47,49 @@ export class NexkitFileMigrationService {
     const migratedFiles: Record<string, string[]> = {};
     let migratedCount = 0;
 
-    for (const templateType of AI_TEMPLATE_FILE_TYPES) {
-      const sourceDir = path.join(githubDir, templateType);
+    const watcher = NexkitFileWatcherService.getInstance();
+    watcher.beginBulkOperation();
+    try {
+      for (const templateType of AI_TEMPLATE_FILE_TYPES) {
+        const sourceDir = path.join(githubDir, templateType);
 
-      if (!(await fileExists(sourceDir))) {
-        continue;
-      }
+        if (!(await fileExists(sourceDir))) {
+          continue;
+        }
 
-      const files = await this.findNexkitFiles(sourceDir);
-      if (files.length === 0) {
-        continue;
-      }
+        const files = await this.findNexkitFiles(sourceDir);
+        if (files.length === 0) {
+          continue;
+        }
 
-      const targetDir = path.join(workspaceRoot, ".nexkit", templateType);
-      await fs.promises.mkdir(targetDir, { recursive: true });
+        const targetDir = path.join(workspaceRoot, ".nexkit", templateType);
+        await fs.promises.mkdir(targetDir, { recursive: true });
 
-      const movedFiles: string[] = [];
+        const movedFiles: string[] = [];
 
-      for (const fileName of files) {
-        const sourcePath = path.join(sourceDir, fileName);
-        const targetPath = path.join(targetDir, fileName);
+        for (const fileName of files) {
+          const sourcePath = path.join(sourceDir, fileName);
+          const targetPath = path.join(targetDir, fileName);
 
-        try {
-          await fs.promises.copyFile(sourcePath, targetPath);
-          await fs.promises.unlink(sourcePath);
-          movedFiles.push(fileName);
-          migratedCount++;
-          this._logging.info(`Migrated ${templateType}/${fileName} from .github to .nexkit`);
-        } catch (error) {
-          this._logging.error(
-            `Failed to migrate ${templateType}/${fileName}: ${error instanceof Error ? error.message : String(error)}`
-          );
+          try {
+            await fs.promises.copyFile(sourcePath, targetPath);
+            await fs.promises.unlink(sourcePath);
+            movedFiles.push(fileName);
+            migratedCount++;
+            this._logging.info(`Migrated ${templateType}/${fileName} from .github to .nexkit`);
+          } catch (error) {
+            this._logging.error(
+              `Failed to migrate ${templateType}/${fileName}: ${error instanceof Error ? error.message : String(error)}`
+            );
+          }
+        }
+
+        if (movedFiles.length > 0) {
+          migratedFiles[templateType] = movedFiles;
         }
       }
-
-      if (movedFiles.length > 0) {
-        migratedFiles[templateType] = movedFiles;
-      }
+    } finally {
+      await watcher.endBulkOperation();
     }
 
     if (migratedCount === 0) {
