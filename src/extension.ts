@@ -111,6 +111,11 @@ export async function activate(context: vscode.ExtensionContext) {
   // Sync installed templates state with filesystem on activation
   services.aiTemplateData.syncInstalledTemplates();
 
+  // Start watching .nexkit/ directory for external changes
+  services.nexkitFileWatcher.startWatching().catch((error) => {
+    services.logging.error("Failed to start .nexkit file watcher", error);
+  });
+
   // Watch for template repository configuration changes (to refetch templates)
   services.aiTemplateData.setupConfigurationWatcher();
 

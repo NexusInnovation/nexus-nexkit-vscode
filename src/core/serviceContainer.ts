@@ -24,6 +24,7 @@ import { CommitMessageService } from "../features/commit-management/commitMessag
 import { TemplateMetadataScannerService } from "../features/ai-template-files/services/templateMetadataScannerService";
 import { GitHubAuthPromptService } from "../features/initialization/githubAuthPromptService";
 import { StartupVerificationService } from "../features/initialization/startupVerificationService";
+import { NexkitFileWatcherService } from "../features/nexkit-file-watcher/nexkitFileWatcherService";
 
 /**
  * Service container for dependency injection
@@ -55,6 +56,7 @@ export interface ServiceContainer {
   templateMetadataScanner: TemplateMetadataScannerService;
   githubAuthPrompt: GitHubAuthPromptService;
   startupVerification: StartupVerificationService;
+  nexkitFileWatcher: NexkitFileWatcherService;
 }
 
 /**
@@ -99,6 +101,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     nexkitFileMigration,
     githubAuthPrompt
   );
+  const nexkitFileWatcher = NexkitFileWatcherService.getInstance();
 
   // Register for disposal
   context.subscriptions.push(logging);
@@ -106,6 +109,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   context.subscriptions.push(telemetry);
   context.subscriptions.push(devOpsConfig);
   context.subscriptions.push(templateMetadataScanner);
+  context.subscriptions.push(nexkitFileWatcher);
 
   logging.info("All services initialized successfully");
 
@@ -135,5 +139,6 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     templateMetadataScanner,
     githubAuthPrompt,
     startupVerification,
+    nexkitFileWatcher,
   };
 }

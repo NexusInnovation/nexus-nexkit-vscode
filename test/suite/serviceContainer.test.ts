@@ -47,6 +47,9 @@ suite("Unit: ServiceContainer", () => {
     if (services.aiTemplateData) {
       services.aiTemplateData.dispose();
     }
+    if (services.nexkitFileWatcher) {
+      services.nexkitFileWatcher.dispose();
+    }
   });
 
   test("Should initialize all required services", () => {
