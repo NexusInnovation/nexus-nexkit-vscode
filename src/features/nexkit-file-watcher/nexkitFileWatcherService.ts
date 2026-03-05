@@ -205,7 +205,7 @@ export class NexkitFileWatcherService implements vscode.Disposable {
 
       // Prompt user
       const choice = await vscode.window.showWarningMessage(
-        `The file "${relativePath}" is managed by Nexkit. Your changes have been temporarily reverted. Would you like to restore your changes?`,
+        `The file "${relativePath}" is managed by Nexkit. Your changes have been temporarily reverted. It may be overwritten or removed during template updates. Would you like to restore your changes?`,
         "Keep My Changes",
         "OK"
       );
