@@ -54,6 +54,18 @@ export class RecommendedSettingsConfigDeployer {
         const existingSettings = JSON.parse(existingContent);
         // Deep merge: template as base, user settings override
         settings = deepMerge(templateSettings, existingSettings);
+        // Display the differences between existing and merged settings for transparency
+        this._logging.debug("Differences between existing and merged settings:", {
+          existing: existingSettings,
+          merged: settings,
+        });
+        // Extract and log any new settings that are being added by the template
+        const newSettings = Object.keys(settings).filter((key) => !(key in existingSettings));
+        if (newSettings.length > 0) {
+          this._logging.info("New settings added from template:", newSettings);
+        } else {
+          this._logging.info("No new settings added from template.");
+        }
         this._logging.info("Merged existing settings with template settings.");
       } catch (error) {
         // If existing settings are invalid JSON, log warning but use template
