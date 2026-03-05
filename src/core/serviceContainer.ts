@@ -22,6 +22,8 @@ import { DevOpsMcpConfigService } from "../features/apm-devops/devOpsMcpConfigSe
 import { NexkitFileMigrationService } from "../features/initialization/nexkitFileMigrationService";
 import { CommitMessageService } from "../features/commit-management/commitMessageService";
 import { TemplateMetadataScannerService } from "../features/ai-template-files/services/templateMetadataScannerService";
+import { GitHubAuthPromptService } from "../features/initialization/githubAuthPromptService";
+import { StartupVerificationService } from "../features/initialization/startupVerificationService";
 import { NexkitFileWatcherService } from "../features/nexkit-file-watcher/nexkitFileWatcherService";
 
 /**
@@ -52,6 +54,8 @@ export interface ServiceContainer {
   nexkitFileMigration: NexkitFileMigrationService;
   commitMessage: CommitMessageService;
   templateMetadataScanner: TemplateMetadataScannerService;
+  githubAuthPrompt: GitHubAuthPromptService;
+  startupVerification: StartupVerificationService;
   nexkitFileWatcher: NexkitFileWatcherService;
 }
 
@@ -90,6 +94,13 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const nexkitFileMigration = new NexkitFileMigrationService();
   const commitMessage = new CommitMessageService();
   const templateMetadataScanner = new TemplateMetadataScannerService(templateMetadata, aiTemplateData);
+  const githubAuthPrompt = new GitHubAuthPromptService();
+  const startupVerification = new StartupVerificationService(
+    gitIgnoreConfigDeployer,
+    recommendedSettingsConfigDeployer,
+    nexkitFileMigration,
+    githubAuthPrompt
+  );
   const nexkitFileWatcher = NexkitFileWatcherService.getInstance();
 
   // Register for disposal
@@ -126,6 +137,8 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     nexkitFileMigration,
     commitMessage,
     templateMetadataScanner,
+    githubAuthPrompt,
+    startupVerification,
     nexkitFileWatcher,
   };
 }

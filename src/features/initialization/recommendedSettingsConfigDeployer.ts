@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { fileExists, deepMerge } from "../../shared/utils/fileHelper";
+import { LoggingService } from "../../shared/services/loggingService";
 
 /**
  * Template for VS Code workspace settings
@@ -10,21 +11,26 @@ const SETTINGS_TEMPLATE = {
   "typescript.preferences.importModuleSpecifier": "relative",
   "typescript.suggest.autoImports": true,
   "chat.promptFilesLocations": {
-    ".nexkit/prompts": true
+    ".nexkit/prompts": true,
   },
   "chat.instructionsFilesLocations": {
     ".nexkit/instructions": true,
-    ".nexkit/skills": true
+    ".nexkit/skills": true,
   },
   "chat.agentFilesLocations": {
-    ".nexkit/agents": true
+    ".nexkit/agents": true,
   },
+  "chat.hooksFilesLocations": {
+    ".nexkit/hooks": true,
+  },
+  "chat.useHooks": true,
 };
 
 /**
  * Service for deploying recommended VS Code settings to workspace
  */
 export class RecommendedSettingsConfigDeployer {
+  private readonly _logging = LoggingService.getInstance();
   /**
    * Deploy VS Code settings to the target workspace root
    * NON-DESTRUCTIVE: Deep merges with existing settings, user values take priority
@@ -38,6 +44,8 @@ export class RecommendedSettingsConfigDeployer {
 
     const templateSettings = SETTINGS_TEMPLATE;
 
+    this._logging.info("Deploying VS Code settings...");
+
     // Merge with existing settings if they exist (user settings take priority)
     let settings = templateSettings;
     if (await fileExists(targetPath)) {
@@ -46,12 +54,26 @@ export class RecommendedSettingsConfigDeployer {
         const existingSettings = JSON.parse(existingContent);
         // Deep merge: template as base, user settings override
         settings = deepMerge(templateSettings, existingSettings);
+        // Display the differences between existing and merged settings for transparency
+        this._logging.debug("Differences between existing and merged settings:", {
+          existing: existingSettings,
+          merged: settings,
+        });
+        // Extract and log any new settings that are being added by the template
+        const newSettings = Object.keys(settings).filter((key) => !(key in existingSettings));
+        if (newSettings.length > 0) {
+          this._logging.info("New settings added from template:", newSettings);
+        } else {
+          this._logging.info("No new settings added from template.");
+        }
+        this._logging.info("Merged existing settings with template settings.");
       } catch (error) {
         // If existing settings are invalid JSON, log warning but use template
-        console.warn("Existing .vscode/settings.json is invalid JSON. Using template settings.", error);
+        this._logging.warn("Existing .vscode/settings.json is invalid JSON. Using template settings.", error);
       }
     }
 
     await fs.promises.writeFile(targetPath, JSON.stringify(settings, null, 2), "utf8");
+    this._logging.info("VS Code settings deployed successfully.");
   }
 }

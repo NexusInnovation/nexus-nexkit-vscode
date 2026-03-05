@@ -3,7 +3,6 @@
 * fix(nexkit-file-watcher): clarify warning message about managed file overwrites ([ef5c036](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ef5c036))
 * feat(nexkit-file-watcher): add file watcher to protect .nexkit managed files (#110) ([cc5209a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/cc5209a)), closes [#110](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/110) [#107](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/107) [#102](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/102) [#103](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/103)
 
-<<<<<<< copilot/add-filewatcher-for-nexkit-files
 ## <small>3.5.1 (2026-03-03)</small>
 
 * fix(commit-management): auto-stage unstaged changes before generating commit message (#108) ([644195c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/644195c)), closes [#108](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/108)
@@ -26,7 +25,6 @@
 * chore(release): v3.4.0-beta.1 [skip ci] ([9c8c1f3](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9c8c1f3))
 * chore(release): v3.5.0-beta.1 [skip ci] ([e7754bd](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/e7754bd))
 * chore(release): v3.5.0-beta.2 [skip ci] ([483909b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/483909b))
-=======
 ## 3.5.0-beta.8 (2026-03-02)
 
 * [skip ci] Merge pull request #96 from NexusInnovation/develop ([0897eaa](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/0897eaa)), closes [#96](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/96)

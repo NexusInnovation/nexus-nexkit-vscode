@@ -3,8 +3,6 @@ import { ServiceContainer } from "../../core/serviceContainer";
 import { SettingsManager } from "../../core/settingsManager";
 import { BatchInstallSummary } from "../ai-template-files/services/templateFileOperations";
 
-import { MigrationSummary } from "./nexkitFileMigrationService";
-
 /**
  * Service for managing workspace initialization events
  * Provides event emitter for workspace initialization completion
@@ -26,16 +24,18 @@ export class WorkspaceInitializationService {
     profileName: string | null,
     services: ServiceContainer
   ) {
-    // Migrate any nexkit.* files from .github/<type>/ to .nexkit/<type>/
-    const migrationSummary = await services.nexkitFileMigration.migrateNexkitFiles(workspaceFolder.uri.fsPath);
+    // Run shared verification checks (gitignore, settings, file migration)
+    // Delegates to StartupVerificationService — same checks that run at every startup.
+    // Returns migration summary for initialization reporting.
+    const migrationSummary = await services.startupVerification.verifyWorkspaceConfiguration(
+      workspaceFolder.uri.fsPath
+    );
 
     // Backup and delete existing .nexkit template folders if they exist
     const backupPath = await services.backup.backupTemplates(workspaceFolder.uri.fsPath);
 
-    // Deploy configuration files
-    await services.gitIgnoreConfigDeployer.deployGitignore(workspaceFolder.uri.fsPath);
+    // Deploy init-only configuration files
     await services.recommendedExtensionsConfigDeployer.deployVscodeExtensions(workspaceFolder.uri.fsPath);
-    await services.recommendedSettingsConfigDeployer.deployVscodeSettings(workspaceFolder.uri.fsPath);
     await services.mcpConfigDeployer.deployWorkspaceMCPServers(workspaceFolder.uri.fsPath);
 
     let deploymentSummary: BatchInstallSummary | null = null;

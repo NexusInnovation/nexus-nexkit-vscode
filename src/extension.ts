@@ -80,6 +80,14 @@ export async function activate(context: vscode.ExtensionContext) {
   // Prompt for workspace initialization if needed
   services.workspaceInitPrompt.promptInitWorkspaceOnWorkspaceChange();
 
+  // Run startup verification checks (settings, gitignore, file migration, auth)
+  services.startupVerification.verifyOnStartup().catch((error) => {
+    services.logging.error("Failed to run startup verification", error);
+    services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+      context: "startupVerification.verifyOnStartup",
+    });
+  });
+
   // Initialize AI template data asynchronously (don't block extension activation)
   services.aiTemplateData
     .initialize()
