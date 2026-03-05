@@ -63,6 +63,7 @@ suite("Unit: ServiceContainer", () => {
     assert.ok(services.recommendedSettingsConfigDeployer, "RecommendedSettingsConfigDeployer should be initialized");
     assert.ok(services.aiTemplateFilesDeployer, "AITemplateFilesDeployer should be initialized");
     assert.ok(services.workspaceInitPrompt, "WorkspaceInitPromptService should be initialized");
+    assert.ok(services.githubAuthPrompt, "GitHubAuthPromptService should be initialized");
   });
 
   test("Should register disposables in context", () => {

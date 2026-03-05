@@ -80,6 +80,14 @@ export async function activate(context: vscode.ExtensionContext) {
   // Prompt for workspace initialization if needed
   services.workspaceInitPrompt.promptInitWorkspaceOnWorkspaceChange();
 
+  // Verify GitHub authentication on activation
+  services.githubAuthPrompt.ensureAuthenticated().catch((error) => {
+    services.logging.error("Failed to verify GitHub authentication", error);
+    services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+      context: "githubAuthPrompt.ensureAuthenticated",
+    });
+  });
+
   // Initialize AI template data asynchronously (don't block extension activation)
   services.aiTemplateData
     .initialize()

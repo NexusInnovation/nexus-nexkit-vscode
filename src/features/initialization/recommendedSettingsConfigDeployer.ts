@@ -19,6 +19,10 @@ const SETTINGS_TEMPLATE = {
   "chat.agentFilesLocations": {
     ".nexkit/agents": true
   },
+  "chat.hooksFilesLocations": {
+    ".nexkit/hooks": true
+  },
+  "chat.useHooks": true,
 };
 
 /**
