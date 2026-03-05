@@ -80,11 +80,11 @@ export async function activate(context: vscode.ExtensionContext) {
   // Prompt for workspace initialization if needed
   services.workspaceInitPrompt.promptInitWorkspaceOnWorkspaceChange();
 
-  // Verify GitHub authentication on activation
-  services.githubAuthPrompt.ensureAuthenticated().catch((error) => {
-    services.logging.error("Failed to verify GitHub authentication", error);
+  // Run startup verification checks (settings, gitignore, file migration, auth)
+  services.startupVerification.verifyOnStartup().catch((error) => {
+    services.logging.error("Failed to run startup verification", error);
     services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
-      context: "githubAuthPrompt.ensureAuthenticated",
+      context: "startupVerification.verifyOnStartup",
     });
   });
 

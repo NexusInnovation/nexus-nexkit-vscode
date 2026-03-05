@@ -23,6 +23,7 @@ import { NexkitFileMigrationService } from "../features/initialization/nexkitFil
 import { CommitMessageService } from "../features/commit-management/commitMessageService";
 import { TemplateMetadataScannerService } from "../features/ai-template-files/services/templateMetadataScannerService";
 import { GitHubAuthPromptService } from "../features/initialization/githubAuthPromptService";
+import { StartupVerificationService } from "../features/initialization/startupVerificationService";
 
 /**
  * Service container for dependency injection
@@ -53,6 +54,7 @@ export interface ServiceContainer {
   commitMessage: CommitMessageService;
   templateMetadataScanner: TemplateMetadataScannerService;
   githubAuthPrompt: GitHubAuthPromptService;
+  startupVerification: StartupVerificationService;
 }
 
 /**
@@ -91,6 +93,12 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const commitMessage = new CommitMessageService();
   const templateMetadataScanner = new TemplateMetadataScannerService(templateMetadata, aiTemplateData);
   const githubAuthPrompt = new GitHubAuthPromptService();
+  const startupVerification = new StartupVerificationService(
+    gitIgnoreConfigDeployer,
+    recommendedSettingsConfigDeployer,
+    nexkitFileMigration,
+    githubAuthPrompt
+  );
 
   // Register for disposal
   context.subscriptions.push(logging);
@@ -126,5 +134,6 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     commitMessage,
     templateMetadataScanner,
     githubAuthPrompt,
+    startupVerification,
   };
 }
