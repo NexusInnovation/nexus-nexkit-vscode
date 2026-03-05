@@ -5,11 +5,17 @@ import { LoggingService } from "../../shared/services/loggingService";
 /**
  * Minimal type definitions for the VS Code Git Extension API
  */
+interface GitChange {
+  readonly uri: vscode.Uri;
+}
+
 interface GitRepository {
   diff(cached: boolean): Promise<string>;
+  add(resources: string[]): Promise<void>;
   inputBox: { value: string };
   state: {
-    indexChanges: unknown[];
+    indexChanges: GitChange[];
+    workingTreeChanges: GitChange[];
   };
 }
 
@@ -73,10 +79,35 @@ export class CommitMessageService {
       return;
     }
 
-    const diff = await repo.diff(true);
+    let diff = await repo.diff(true);
     if (!diff || diff.trim().length === 0) {
-      vscode.window.showInformationMessage("Nexkit: No staged changes found. Please stage your changes first.");
-      return;
+      // No staged changes – automatically stage all unstaged files
+      const workingTreeChanges = repo.state.workingTreeChanges ?? [];
+
+      if (workingTreeChanges.length === 0) {
+        this._logging.info("No changes found to stage");
+        vscode.window.showInformationMessage("Nexkit: No changes found in the working tree.");
+        return;
+      }
+
+      this._logging.info(`Auto-staging ${workingTreeChanges.length} unstaged file(s)`);
+      try {
+        const filePaths = workingTreeChanges.map((c) => c.uri.fsPath);
+        await repo.add(filePaths);
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        this._logging.error(`Failed to stage changes: ${msg}`);
+        vscode.window.showErrorMessage(`Nexkit: Failed to stage changes: ${msg}`);
+        return;
+      }
+
+      // Re-read the diff now that changes have been staged
+      diff = await repo.diff(true);
+      if (!diff || diff.trim().length === 0) {
+        this._logging.warn("Diff is still empty after auto-staging");
+        vscode.window.showInformationMessage("Nexkit: No diff detected after staging. Please check your working tree.");
+        return;
+      }
     }
 
     const model = await this._selectLanguageModel();

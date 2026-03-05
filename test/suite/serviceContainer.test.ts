@@ -47,6 +47,9 @@ suite("Unit: ServiceContainer", () => {
     if (services.aiTemplateData) {
       services.aiTemplateData.dispose();
     }
+    if (services.nexkitFileWatcher) {
+      services.nexkitFileWatcher.dispose();
+    }
   });
 
   test("Should initialize all required services", () => {
@@ -63,6 +66,7 @@ suite("Unit: ServiceContainer", () => {
     assert.ok(services.recommendedSettingsConfigDeployer, "RecommendedSettingsConfigDeployer should be initialized");
     assert.ok(services.aiTemplateFilesDeployer, "AITemplateFilesDeployer should be initialized");
     assert.ok(services.workspaceInitPrompt, "WorkspaceInitPromptService should be initialized");
+    assert.ok(services.nexkitFileWatcher, "NexkitFileWatcherService should be initialized");
   });
 
   test("Should register disposables in context", () => {

@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { fileExists, copyDirectory } from "../../shared/utils/fileHelper";
 import { AI_TEMPLATE_FILE_TYPES } from "../ai-template-files/models/aiTemplateFile";
+import { NexkitFileWatcherService } from "../nexkit-file-watcher/nexkitFileWatcherService";
 
 /**
  * Template folder names in .nexkit directory
@@ -51,12 +52,18 @@ export class GitHubTemplateBackupService {
       return;
     }
 
-    // Delete only template folders
-    for (const folderName of TEMPLATE_FOLDERS) {
-      const folderPath = path.join(githubPath, folderName);
-      if (await fileExists(folderPath)) {
-        await fs.promises.rm(folderPath, { recursive: true, force: true });
+    const watcher = NexkitFileWatcherService.getInstance();
+    watcher.beginBulkOperation();
+    try {
+      // Delete only template folders
+      for (const folderName of TEMPLATE_FOLDERS) {
+        const folderPath = path.join(githubPath, folderName);
+        if (await fileExists(folderPath)) {
+          await fs.promises.rm(folderPath, { recursive: true, force: true });
+        }
       }
+    } finally {
+      await watcher.endBulkOperation();
     }
   }
 
@@ -107,6 +114,8 @@ export class GitHubTemplateBackupService {
       }
     }
 
+    const watcher = NexkitFileWatcherService.getInstance();
+    watcher.beginBulkOperation();
     try {
       // Delete current template folders
       await this.deleteTemplateFolders(workspaceRoot);
@@ -138,6 +147,8 @@ export class GitHubTemplateBackupService {
         await fs.promises.rm(tempBackupPath, { recursive: true, force: true });
       }
       throw error;
+    } finally {
+      await watcher.endBulkOperation();
     }
   }
 
