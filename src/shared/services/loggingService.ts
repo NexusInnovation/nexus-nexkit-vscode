@@ -57,7 +57,9 @@ export class LoggingService {
   public info(message: string, data?: unknown): void {
     if (this.logLevel <= LogLevel.INFO) {
       this.outputChannel.info(message);
-      this.showData(data);
+      if (this.logLevel <= LogLevel.DEBUG) {
+        this.showData(data);
+      }
     }
   }
 
@@ -67,7 +69,9 @@ export class LoggingService {
   public warn(message: string, data?: unknown): void {
     if (this.logLevel <= LogLevel.WARN) {
       this.outputChannel.warn(message);
-      this.showData(data);
+      if (this.logLevel <= LogLevel.DEBUG) {
+        this.showData(data);
+      }
     }
   }
 
