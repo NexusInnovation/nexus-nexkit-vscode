@@ -205,7 +205,7 @@ export class NexkitFileWatcherService implements vscode.Disposable {
 
       // Prompt user
       const choice = await vscode.window.showWarningMessage(
-        `The file "${relativePath}" is managed by Nexkit and your changes have been reverted. Do you want to keep your changes?`,
+        `The file "${relativePath}" is managed by Nexkit. Your changes have been temporarily reverted. Would you like to restore your changes?`,
         "Keep My Changes",
         "OK"
       );
@@ -288,7 +288,7 @@ export class NexkitFileWatcherService implements vscode.Disposable {
       const relativePath = this.getRelativePath(filePath);
 
       const choice = await vscode.window.showWarningMessage(
-        `The file "${relativePath}" is managed by Nexkit and has been restored. Do you want to delete it anyway?`,
+        `The file "${relativePath}" is managed by Nexkit and has been restored. Do you want to delete it permanently?`,
         "Delete Anyway",
         "OK"
       );

@@ -119,19 +119,23 @@ export class TemplateFileOperations {
       // Download all files in the directory
       const fileContents = await this.fetcherService.downloadDirectoryContents(templateFile);
 
-      // Create directory structure and write files
-      for (const [relativePath, content] of fileContents.entries()) {
-        const fullPath = path.join(targetPath, relativePath);
-        const fileDir = path.dirname(fullPath);
+      // Use bulk suppression for multi-file directory write
+      const watcher = NexkitFileWatcherService.getInstance();
+      watcher.beginBulkOperation();
+      try {
+        // Create directory structure and write files
+        for (const [relativePath, content] of fileContents.entries()) {
+          const fullPath = path.join(targetPath, relativePath);
+          const fileDir = path.dirname(fullPath);
 
-        // Create subdirectories as needed
-        await fs.promises.mkdir(fileDir, { recursive: true });
+          // Create subdirectories as needed
+          await fs.promises.mkdir(fileDir, { recursive: true });
 
-        // Suppress watcher for this internal write
-        NexkitFileWatcherService.getInstance().suppressPath(fullPath);
-
-        // Write file
-        await fs.promises.writeFile(fullPath, content, "utf8");
+          // Write file
+          await fs.promises.writeFile(fullPath, content, "utf8");
+        }
+      } finally {
+        await watcher.endBulkOperation();
       }
 
       // Add to installed state
