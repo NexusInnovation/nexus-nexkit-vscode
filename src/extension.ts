@@ -119,6 +119,9 @@ export async function activate(context: vscode.ExtensionContext) {
   // Watch for template repository configuration changes (to refetch templates)
   services.aiTemplateData.setupConfigurationWatcher();
 
+  // Periodically check remote GitHub repos for new commits and auto-refresh templates
+  services.aiTemplateData.setupRemoteAutoRefresh();
+
   // Propose to initialize workspace when changed
   context.subscriptions.push(
     vscode.workspace.onDidChangeWorkspaceFolders(() => {
