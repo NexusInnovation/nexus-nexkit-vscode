@@ -1,3 +1,7 @@
+## 3.6.0-beta.2 (2026-03-09)
+
+* feat:  Ajouter auto-refresh des templates GitHub par comparaison de commit SHA (#97) ([e38cd20](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/e38cd20)), closes [#97](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/97)
+
 ## 3.6.0-beta.1 (2026-03-05)
 
 * Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([e65654e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/e65654e))
