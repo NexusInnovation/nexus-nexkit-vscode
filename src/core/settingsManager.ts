@@ -23,6 +23,9 @@ export class SettingsManager {
   // Repository settings
   private static readonly REPOSITORIES = "repositories";
 
+  // Repository commit SHA state key (WorkspaceState)
+  private static readonly REPOSITORY_COMMIT_SHAS_KEY = "nexkit.repositories.commitShas";
+
   // Telemetry settings
   private static readonly TELEMETRY_ENABLED = "telemetry.enabled";
   private static readonly TELEMETRY_CONNECTION_STRING = "telemetry.connectionString";
@@ -31,6 +34,9 @@ export class SettingsManager {
   // Extension update settings
   private static readonly EXTENSION_AUTO_CHECK_UPDATES = "extension.autoCheckUpdates";
   private static readonly EXTENSION_UPDATE_CHECK_INTERVAL = "extension.updateCheckInterval";
+
+  // Template auto-refresh settings
+  private static readonly TEMPLATES_AUTO_REFRESH_INTERVAL = "templates.autoRefreshIntervalMinutes";
 
   // Extension update state keys (GlobalState)
   private static readonly EXTENSION_LAST_UPDATE_CHECK_STATE_KEY = "nexkit.extension.lastUpdateCheck";
@@ -111,6 +117,23 @@ export class SettingsManager {
     return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<T[]>(this.REPOSITORIES, []);
   }
 
+  static getRepositoryCommitSha(repoName: string): string | undefined {
+    if (!this.context) {
+      return undefined;
+    }
+    const shas = this.context.workspaceState.get<Record<string, string>>(this.REPOSITORY_COMMIT_SHAS_KEY, {});
+    return shas[repoName];
+  }
+
+  static async setRepositoryCommitSha(repoName: string, sha: string): Promise<void> {
+    if (!this.context) {
+      return;
+    }
+    const shas = this.context.workspaceState.get<Record<string, string>>(this.REPOSITORY_COMMIT_SHAS_KEY, {});
+    shas[repoName] = sha;
+    await this.context.workspaceState.update(this.REPOSITORY_COMMIT_SHAS_KEY, shas);
+  }
+
   static async setRepositories<T = any>(
     repositories: T[],
     target: vscode.ConfigurationTarget = vscode.ConfigurationTarget.Workspace
@@ -138,6 +161,10 @@ export class SettingsManager {
 
   static getUpdateCheckIntervalHours(): number {
     return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<number>(this.EXTENSION_UPDATE_CHECK_INTERVAL, 24);
+  }
+
+  static getTemplatesAutoRefreshIntervalMinutes(): number {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<number>(this.TEMPLATES_AUTO_REFRESH_INTERVAL, 30);
   }
 
   static getLastUpdateCheck(): number {

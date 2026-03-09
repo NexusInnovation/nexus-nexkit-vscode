@@ -1,3 +1,28 @@
+## 3.6.0-beta.2 (2026-03-09)
+
+* feat:  Ajouter auto-refresh des templates GitHub par comparaison de commit SHA (#97) ([e38cd20](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/e38cd20)), closes [#97](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/97)
+
+## 3.6.0-beta.1 (2026-03-05)
+
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([e65654e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/e65654e))
+* Merge branch 'main' into develop ([41f8a4a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/41f8a4a))
+* Merge branch 'main' into develop ([b8f7cff](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/b8f7cff))
+* feat(agents): add GitHub Copilot agent definitions for BMad method ([3a351e8](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3a351e8))
+* feat(core): add Edge Case Hunter Review and update manifests (#104) ([8cb4cb1](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8cb4cb1)), closes [#104](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/104)
+* feat(extension): Change for force build ([7b040a4](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/7b040a4))
+* feat(hook): add hooks template type for managing hooks from public/private repositories (#100) ([a81d7ce](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a81d7ce)), closes [#100](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/100)
+* feat(initialization): add hooks settings, GitHub auth check, and startup verification service (#112) ([6bc600f](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/6bc600f)), closes [#112](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/112) [#107](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/107) [#102](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/102) [#103](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/103)
+* feat(nexkit-file-watcher): add file watcher to protect .nexkit managed files (#110) ([cc5209a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/cc5209a)), closes [#110](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/110) [#107](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/107) [#102](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/102) [#103](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/103)
+* feat(template): Feature/new-template-list (#102) ([90cf696](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/90cf696)), closes [#102](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/102) [#103](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/103)
+* chore(release): v3.5.0-beta.3 [skip ci] ([26f747a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/26f747a))
+* chore(release): v3.5.0-beta.4 [skip ci] ([675771c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/675771c))
+* chore(release): v3.5.0-beta.5 [skip ci] ([fe6c2df](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/fe6c2df))
+* chore(release): v3.5.0-beta.6 [skip ci] ([ff3a0e6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ff3a0e6))
+* chore(release): v3.5.0-beta.7 [skip ci] ([312fb17](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/312fb17))
+* chore(release): v3.5.0-beta.8 [skip ci] ([8a61553](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8a61553))
+* chore(release): v3.5.0-beta.9 [skip ci] ([885749c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/885749c))
+* fix(nexkit-file-watcher): clarify warning message about managed file overwrites ([ef5c036](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ef5c036))
+
 ## <small>3.5.1 (2026-03-03)</small>
 
 * fix(commit-management): auto-stage unstaged changes before generating commit message (#108) ([644195c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/644195c)), closes [#108](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/108)

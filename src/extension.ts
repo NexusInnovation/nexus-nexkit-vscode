@@ -80,6 +80,14 @@ export async function activate(context: vscode.ExtensionContext) {
   // Prompt for workspace initialization if needed
   services.workspaceInitPrompt.promptInitWorkspaceOnWorkspaceChange();
 
+  // Run startup verification checks (settings, gitignore, file migration, auth)
+  services.startupVerification.verifyOnStartup().catch((error) => {
+    services.logging.error("Failed to run startup verification", error);
+    services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+      context: "startupVerification.verifyOnStartup",
+    });
+  });
+
   // Initialize AI template data asynchronously (don't block extension activation)
   services.aiTemplateData
     .initialize()
@@ -103,8 +111,16 @@ export async function activate(context: vscode.ExtensionContext) {
   // Sync installed templates state with filesystem on activation
   services.aiTemplateData.syncInstalledTemplates();
 
+  // Start watching .nexkit/ directory for external changes
+  services.nexkitFileWatcher.startWatching().catch((error) => {
+    services.logging.error("Failed to start .nexkit file watcher", error);
+  });
+
   // Watch for template repository configuration changes (to refetch templates)
   services.aiTemplateData.setupConfigurationWatcher();
+
+  // Periodically check remote GitHub repos for new commits and auto-refresh templates
+  services.aiTemplateData.setupRemoteAutoRefresh();
 
   // Propose to initialize workspace when changed
   context.subscriptions.push(

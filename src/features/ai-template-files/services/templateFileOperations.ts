@@ -5,6 +5,7 @@ import { AITemplateFile, AITemplateFileType, InstalledTemplatesMap } from "../mo
 import { fileExists, getWorkspaceRoot } from "../../../shared/utils/fileHelper";
 import { TemplateFetcherService } from "./templateFetcherService";
 import { InstalledTemplatesStateManager } from "./installedTemplatesStateManager";
+import { NexkitFileWatcherService } from "../../nexkit-file-watcher/nexkitFileWatcherService";
 
 /**
  * Options for installing a template
@@ -71,6 +72,9 @@ export class TemplateFileOperations {
       // Download file content
       const content = await this.fetcherService.downloadTemplate(templateFile);
 
+      // Suppress watcher for this internal write
+      NexkitFileWatcherService.getInstance().suppressPath(filePath);
+
       // Write file (overwrites if it already exists)
       await fs.promises.writeFile(filePath, content, "utf8");
 
@@ -115,16 +119,23 @@ export class TemplateFileOperations {
       // Download all files in the directory
       const fileContents = await this.fetcherService.downloadDirectoryContents(templateFile);
 
-      // Create directory structure and write files
-      for (const [relativePath, content] of fileContents.entries()) {
-        const fullPath = path.join(targetPath, relativePath);
-        const fileDir = path.dirname(fullPath);
+      // Use bulk suppression for multi-file directory write
+      const watcher = NexkitFileWatcherService.getInstance();
+      watcher.beginBulkOperation();
+      try {
+        // Create directory structure and write files
+        for (const [relativePath, content] of fileContents.entries()) {
+          const fullPath = path.join(targetPath, relativePath);
+          const fileDir = path.dirname(fullPath);
 
-        // Create subdirectories as needed
-        await fs.promises.mkdir(fileDir, { recursive: true });
+          // Create subdirectories as needed
+          await fs.promises.mkdir(fileDir, { recursive: true });
 
-        // Write file
-        await fs.promises.writeFile(fullPath, content, "utf8");
+          // Write file
+          await fs.promises.writeFile(fullPath, content, "utf8");
+        }
+      } finally {
+        await watcher.endBulkOperation();
       }
 
       // Add to installed state
@@ -163,10 +174,19 @@ export class TemplateFileOperations {
         return;
       }
 
+      // Suppress watcher for this internal delete
+      const watcher = NexkitFileWatcherService.getInstance();
+
       // Delete file or directory
       if (templateFile.isDirectory) {
-        await fs.promises.rm(targetPath, { recursive: true, force: true });
+        watcher.beginBulkOperation();
+        try {
+          await fs.promises.rm(targetPath, { recursive: true, force: true });
+        } finally {
+          await watcher.endBulkOperation();
+        }
       } else {
+        watcher.suppressPath(targetPath);
         await fs.promises.unlink(targetPath);
       }
 
