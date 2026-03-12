@@ -68,14 +68,15 @@ export function TypeSection({
     return null;
   }
 
-  // Sort: selected first if enabled
-  const sortedTemplates = selectedFirst
-    ? [...templates].sort((a, b) => {
-        const aInstalled = isTemplateInstalled(a) ? 0 : 1;
-        const bInstalled = isTemplateInstalled(b) ? 0 : 1;
-        return aInstalled - bInstalled;
-      })
-    : templates;
+  // Sort: alphabetically by name, selected first if enabled
+  const sortedTemplates = [...templates].sort((a, b) => {
+    if (selectedFirst) {
+      const aInstalled = isTemplateInstalled(a) ? 0 : 1;
+      const bInstalled = isTemplateInstalled(b) ? 0 : 1;
+      if (aInstalled !== bInstalled) return aInstalled - bInstalled;
+    }
+    return a.name.localeCompare(b.name);
+  });
 
   // Find the boundary between selected and unselected for the separator
   let separatorIndex = -1;
