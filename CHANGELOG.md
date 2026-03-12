@@ -1,3 +1,8 @@
+## <small>3.6.2-beta.1 (2026-03-12)</small>
+
+* fix(panel-ui): sort template list alphabetically by name (#119) ([71a0e90](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/71a0e90)), closes [#119](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/119)
+* ci: add FORCE_JAVASCRIPT_ACTIONS_TO_NODE24 to workflow files (#117) [skip ci] ([36ee3b4](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/36ee3b4)), closes [#117](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/117)
+
 ## <small>3.6.1 (2026-03-12)</small>
 
 * fix(telemetry): simplify connection string retrieval logic (#116) ([5d61d47](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/5d61d47)), closes [#116](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/116)
