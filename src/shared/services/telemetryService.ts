@@ -166,19 +166,6 @@ export class TelemetryService {
    * Get Application Insights connection string
    */
   private getConnectionString(): string | undefined {
-    // Priority 1: Environment variable (for development/testing)
-    const envConnectionString = process.env.APPLICATIONINSIGHTS_CONNECTION_STRING;
-    if (envConnectionString) {
-      return envConnectionString;
-    }
-
-    // Priority 2: VS Code configuration (from settings.json or default value)
-    const configConnectionString = SettingsManager.getTelemetryConnectionString();
-    if (configConnectionString) {
-      return configConnectionString;
-    }
-
-    // Priority 3: Default connection string (production)
     return "InstrumentationKey=1d613055-855f-4238-9727-dc14c7fab92d;IngestionEndpoint=https://canadacentral-1.in.applicationinsights.azure.com/;LiveEndpoint=https://canadacentral.livediagnostics.monitor.azure.com/;ApplicationId=dbe35447-e979-43d1-99fd-166d18ca41ad";
   }
 
