@@ -1,3 +1,7 @@
+## <small>3.6.1 (2026-03-12)</small>
+
+* fix(telemetry): simplify connection string retrieval logic (#116) ([5d61d47](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/5d61d47)), closes [#116](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/116)
+
 ## 3.6.0 (2026-03-12)
 
 * Develop (#113) ([fd406ad](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/fd406ad)), closes [#113](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/113) [#102](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/102) [#103](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/103)
