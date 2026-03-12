@@ -214,14 +214,15 @@ export function TemplateSection() {
    * Render templates as a flat list (no grouping)
    */
   const renderFlatList = () => {
-    // Sort: selected first if enabled
-    const sortedTemplates = selectedFirst
-      ? [...filteredTemplates].sort((a, b) => {
-          const aInstalled = isTemplateInstalled(a) ? 0 : 1;
-          const bInstalled = isTemplateInstalled(b) ? 0 : 1;
-          return aInstalled - bInstalled;
-        })
-      : filteredTemplates;
+    // Sort: alphabetically by name, selected first if enabled
+    const sortedTemplates = [...filteredTemplates].sort((a, b) => {
+      if (selectedFirst) {
+        const aInstalled = isTemplateInstalled(a) ? 0 : 1;
+        const bInstalled = isTemplateInstalled(b) ? 0 : 1;
+        if (aInstalled !== bInstalled) return aInstalled - bInstalled;
+      }
+      return a.name.localeCompare(b.name);
+    });
 
     // Find separator boundary
     let separatorIndex = -1;
