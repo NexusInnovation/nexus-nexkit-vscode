@@ -125,6 +125,16 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
             },
           }));
           break;
+
+        case "workflowListUpdate":
+          setState((prev) => ({
+            ...prev,
+            workflows: {
+              list: message.workflows,
+              isReady: true,
+            },
+          }));
+          break;
       }
     };
 
@@ -138,6 +148,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     const unsubscribeDevOpsError = messenger.onMessage("devOpsConnectionError", handleMessage);
     const unsubscribeScanProgress = messenger.onMessage("metadataScanProgress", handleMessage);
     const unsubscribeScanComplete = messenger.onMessage("metadataScanComplete", handleMessage);
+    const unsubscribeWorkflows = messenger.onMessage("workflowListUpdate", handleMessage);
 
     // Request initial state from extension
     messenger.sendMessage({ command: "webviewReady" });
@@ -153,6 +164,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       unsubscribeDevOpsError();
       unsubscribeScanProgress();
       unsubscribeScanComplete();
+      unsubscribeWorkflows();
     };
   }, [messenger]);
 

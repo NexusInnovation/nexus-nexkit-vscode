@@ -42,6 +42,9 @@ export class NexkitPanelMessageHandler {
       ["addDevOpsConnection", this.handleAddDevOpsConnection.bind(this)],
       ["removeDevOpsConnection", this.handleRemoveDevOpsConnection.bind(this)],
       ["setActiveDevOpsConnection", this.handleSetActiveDevOpsConnection.bind(this)],
+      // GitHub workflow runner handlers
+      ["listWorkflows", this.handleListWorkflows.bind(this)],
+      ["runWorkflow", this.handleRunWorkflow.bind(this)],
     ]);
 
     // Auto-refresh template data when it changes (e.g., after config update)
@@ -84,6 +87,7 @@ export class NexkitPanelMessageHandler {
     this.sendProfilesData();
     this.sendDevOpsConnections();
     this.sendMetadataScanState();
+    this.sendWorkflowList();
   }
 
   // ============================================================================
@@ -264,6 +268,25 @@ export class NexkitPanelMessageHandler {
   }
 
   // ============================================================================
+  // GITHUB WORKFLOW RUNNER HANDLERS
+  // ============================================================================
+
+  private async handleListWorkflows(message: WebviewMessage): Promise<void> {
+    await this.sendWorkflowList();
+  }
+
+  private async handleRunWorkflow(message: WebviewMessage & { command: "runWorkflow" }): Promise<void> {
+    this.trackWebviewAction("runWorkflow");
+    await this._services.githubWorkflowRunner.runWorkflow({
+      workflowFile: message.workflowFile,
+      job: message.job,
+      event: message.event,
+      dryRun: message.dryRun,
+      list: message.list,
+    });
+  }
+
+  // ============================================================================
   // DATA SENDERS - Send data to webview
   // ============================================================================
 
@@ -376,6 +399,18 @@ export class NexkitPanelMessageHandler {
         command: "metadataScanProgress",
         progress: scanner.getProgress(),
       });
+    }
+  }
+
+  private async sendWorkflowList(): Promise<void> {
+    try {
+      const workflows = await this._services.githubWorkflowRunner.listWorkflows();
+      this.sendToWebview({
+        command: "workflowListUpdate",
+        workflows,
+      });
+    } catch (error) {
+      console.error("Failed to list workflows:", error);
     }
   }
 

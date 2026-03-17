@@ -8,6 +8,7 @@ import { TemplateSection } from "./organisms/TemplateSection";
 import { ApmConnectionSection } from "./organisms/ApmConnectionSection";
 import { ApmTemplateSection } from "./organisms/ApmTemplateSection";
 import { ModeSelectionSection } from "./organisms/ModeSelectionSection";
+import { ToolsSection } from "./organisms/ToolsSection";
 
 /**
  * Root component for the Nexkit webview panel
@@ -42,6 +43,7 @@ export function App() {
           <ActionsSection isInitialized={workspace.isInitialized} />
           <ProfileSection />
           <TemplateSection />
+          <ToolsSection />
         </>
       )}
       {isAPMMode && (

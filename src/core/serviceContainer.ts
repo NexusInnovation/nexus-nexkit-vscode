@@ -25,6 +25,7 @@ import { TemplateMetadataScannerService } from "../features/ai-template-files/se
 import { GitHubAuthPromptService } from "../features/initialization/githubAuthPromptService";
 import { StartupVerificationService } from "../features/initialization/startupVerificationService";
 import { NexkitFileWatcherService } from "../features/nexkit-file-watcher/nexkitFileWatcherService";
+import { GitHubWorkflowRunnerService } from "../features/github-workflow-runner/githubWorkflowRunnerService";
 
 /**
  * Service container for dependency injection
@@ -57,6 +58,7 @@ export interface ServiceContainer {
   githubAuthPrompt: GitHubAuthPromptService;
   startupVerification: StartupVerificationService;
   nexkitFileWatcher: NexkitFileWatcherService;
+  githubWorkflowRunner: GitHubWorkflowRunnerService;
 }
 
 /**
@@ -102,6 +104,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     githubAuthPrompt
   );
   const nexkitFileWatcher = NexkitFileWatcherService.getInstance();
+  const githubWorkflowRunner = new GitHubWorkflowRunnerService();
 
   // Register for disposal
   context.subscriptions.push(logging);
@@ -140,5 +143,6 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     githubAuthPrompt,
     startupVerification,
     nexkitFileWatcher,
+    githubWorkflowRunner,
   };
 }
