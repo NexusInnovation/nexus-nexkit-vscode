@@ -12,6 +12,7 @@ import {
 import { TemplateMetadataEntry } from "../../../ai-template-files/services/templateMetadataScannerService";
 import { Profile } from "../../../profile-management/models/profile";
 import { DevOpsConnection } from "../../../apm-devops/models/devOpsConnection";
+import { WorkflowInfo } from "../../../github-workflow-runner/githubWorkflowRunnerService";
 
 /**
  * Complete application state
@@ -51,6 +52,14 @@ export interface AppState {
     list: DevOpsConnection[];
     isReady: boolean;
     error?: string;
+  };
+
+  /**
+   * GitHub workflow runner state
+   */
+  workflows: {
+    list: WorkflowInfo[];
+    isReady: boolean;
   };
 
   /**
@@ -97,6 +106,10 @@ export const initialAppState: AppState = {
     isReady: false,
   },
   devOpsConnections: {
+    list: [],
+    isReady: false,
+  },
+  workflows: {
     list: [],
     isReady: false,
   },

@@ -3,6 +3,7 @@ import { TemplateMetadata } from "../../ai-template-files/models/templateMetadat
 import { TemplateMetadataEntry, MetadataScanProgress } from "../../ai-template-files/services/templateMetadataScannerService";
 import { Profile } from "../../profile-management/models/profile";
 import { DevOpsConnection } from "../../apm-devops/models/devOpsConnection";
+import { WorkflowInfo } from "../../github-workflow-runner/githubWorkflowRunnerService";
 
 /**
  * Messages sent FROM the webview TO the extension
@@ -23,7 +24,10 @@ export type WebviewMessage =
   | { command: "getDevOpsConnections" }
   | { command: "addDevOpsConnection"; url: string }
   | { command: "removeDevOpsConnection"; connectionId: string }
-  | { command: "setActiveDevOpsConnection"; connectionId: string };
+  | { command: "setActiveDevOpsConnection"; connectionId: string }
+  // GitHub workflow runner messages
+  | { command: "listWorkflows" }
+  | { command: "runWorkflow"; workflowFile: string; job?: string; event: string; dryRun: boolean; list: boolean };
 
 /**
  * Messages sent FROM the extension TO the webview
@@ -76,4 +80,9 @@ export type ExtensionMessage =
   | {
       command: "metadataScanComplete";
       index: TemplateMetadataEntry[];
+    }
+  // GitHub workflow runner messages
+  | {
+      command: "workflowListUpdate";
+      workflows: WorkflowInfo[];
     };
