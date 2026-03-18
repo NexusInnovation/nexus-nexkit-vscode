@@ -3,7 +3,6 @@ import { useDebounce } from "../../hooks/useDebounce";
 import { SearchBar } from "../atoms/SearchBar";
 import { useTemplateData } from "../../hooks/useTemplateData";
 import { TemplateMetadataProvider } from "../../contexts/TemplateMetadataContext";
-import { CollapsibleSection } from "../molecules/CollapsibleSection";
 import { TemplateItem } from "../atoms/TemplateItem";
 import { AITemplateFile, OperationMode } from "../../../../ai-template-files/models/aiTemplateFile";
 import { useVSCodeAPI } from "../../hooks/useVSCodeAPI";
@@ -79,50 +78,48 @@ export function ApmTemplateSection() {
   };
 
   return (
-    <CollapsibleSection id="apm-templates" title="Agent Templates" defaultExpanded>
-      <>
-        {!isReady && <p class="loading">Loading agent templates...</p>}
-        {isReady && (
-          <div class="template-section">
-            {installedAgentsCount > 0 && (
-              <div class="action-item">
-                <button
-                  class="action-button"
-                  onClick={updateInstalledTemplates}
-                  title="Update all installed agents to their latest versions from repositories."
-                >
-                  <span>Update Installed Templates ({installedAgentsCount})</span>
-                </button>
-              </div>
-            )}
-            <SearchBar
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder="Search agents..."
-              isScanning={metadataScan.isScanning}
-              isScanComplete={metadataScan.isComplete}
-            />
-            <TemplateMetadataProvider>
-              <div class="apm-agents-list">
-                {filteredAgents.length === 0 && (
-                  <p class="empty-message">
-                    {debouncedSearchQuery ? "No agents match your search." : "No agent templates available."}
-                  </p>
-                )}
-                {filteredAgents.map((agent) => (
-                  <TemplateItem
-                    key={`${agent.repository}::${agent.name}`}
-                    template={agent}
-                    isInstalled={isTemplateInstalled(agent)}
-                    onInstall={() => installTemplate(agent)}
-                    onUninstall={() => uninstallTemplate(agent)}
-                  />
-                ))}
-              </div>
-            </TemplateMetadataProvider>
-          </div>
-        )}
-      </>
-    </CollapsibleSection>
+    <>
+      {!isReady && <p class="loading">Loading agent templates...</p>}
+      {isReady && (
+        <div class="template-section">
+          {installedAgentsCount > 0 && (
+            <div class="action-item">
+              <button
+                class="action-button"
+                onClick={updateInstalledTemplates}
+                title="Update all installed agents to their latest versions from repositories."
+              >
+                <span>Update Installed Templates ({installedAgentsCount})</span>
+              </button>
+            </div>
+          )}
+          <SearchBar
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search agents..."
+            isScanning={metadataScan.isScanning}
+            isScanComplete={metadataScan.isComplete}
+          />
+          <TemplateMetadataProvider>
+            <div class="apm-agents-list">
+              {filteredAgents.length === 0 && (
+                <p class="empty-message">
+                  {debouncedSearchQuery ? "No agents match your search." : "No agent templates available."}
+                </p>
+              )}
+              {filteredAgents.map((agent) => (
+                <TemplateItem
+                  key={`${agent.repository}::${agent.name}`}
+                  template={agent}
+                  isInstalled={isTemplateInstalled(agent)}
+                  onInstall={() => installTemplate(agent)}
+                  onUninstall={() => uninstallTemplate(agent)}
+                />
+              ))}
+            </div>
+          </TemplateMetadataProvider>
+        </div>
+      )}
+    </>
   );
 }

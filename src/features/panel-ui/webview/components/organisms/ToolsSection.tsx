@@ -1,12 +1,11 @@
 import { useEffect } from "preact/hooks";
-import { CollapsibleSection } from "../molecules/CollapsibleSection";
 import { WorkflowRunnerTool } from "../molecules/WorkflowRunnerTool";
 import { useVSCodeAPI } from "../../hooks/useVSCodeAPI";
 import { useAppState } from "../../hooks/useAppState";
 
 /**
  * ToolsSection Component
- * Collapsible section providing developer tools (e.g., GitHub workflow runner)
+ * Developer tools section (e.g., GitHub workflow runner)
  */
 export function ToolsSection() {
   const messenger = useVSCodeAPI();
@@ -19,9 +18,5 @@ export function ToolsSection() {
     }
   }, []);
 
-  return (
-    <CollapsibleSection id="tools" title="Tools">
-      <WorkflowRunnerTool />
-    </CollapsibleSection>
-  );
+  return <WorkflowRunnerTool />;
 }

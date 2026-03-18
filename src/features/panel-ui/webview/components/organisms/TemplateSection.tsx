@@ -3,7 +3,6 @@ import { useDebounce } from "../../hooks/useDebounce";
 import { SearchBar } from "../atoms/SearchBar";
 import { useTemplateData } from "../../hooks/useTemplateData";
 import { TemplateMetadataProvider } from "../../contexts/TemplateMetadataContext";
-import { CollapsibleSection } from "../molecules/CollapsibleSection";
 import { TypeSection } from "../molecules/TypeSection";
 import { useVSCodeAPI } from "../../hooks/useVSCodeAPI";
 import { FilterMenu } from "../atoms/FilterMenu";
@@ -258,54 +257,52 @@ export function TemplateSection() {
   };
 
   return (
-    <CollapsibleSection id="templates" title="Templates" defaultExpanded>
-      <>
-        {!isReady && <p class="loading">Loading templates...</p>}
-        {isReady && (
-          <div class="template-section">
-            {installedTemplatesCount > 0 && (
-              <div class="action-item">
-                <button
-                  class="action-button"
-                  onClick={updateInstalledTemplates}
-                  title="Update all installed templates to their latest versions from repositories."
-                >
-                  <span>Update Installed Templates ({installedTemplatesCount})</span>
-                </button>
-              </div>
-            )}
-            <div class="search-filter-row">
-              <SearchBar
-                value={searchQuery}
-                onChange={setSearchQuery}
-                isScanning={metadataScan.isScanning}
-                isScanComplete={metadataScan.isComplete}
-              />
-              <FilterMenu
-                filterMode={filterMode}
-                onFilterChange={setFilterMode}
-                typeFilters={typeFilters}
-                onTypeFiltersChange={setTypeFilters}
-                repositoryFilters={repositoryFilters}
-                onRepositoryFiltersChange={setRepositoryFilters}
-                availableTypes={availableTypes}
-                availableRepositories={availableRepositories}
-              />
-              <GroupMenu
-                groupMode={groupMode}
-                selectedFirst={selectedFirst}
-                onGroupChange={setGroupMode}
-                onSelectedFirstChange={setSelectedFirst}
-              />
+    <>
+      {!isReady && <p class="loading">Loading templates...</p>}
+      {isReady && (
+        <div class="template-section">
+          {installedTemplatesCount > 0 && (
+            <div class="action-item">
+              <button
+                class="action-button"
+                onClick={updateInstalledTemplates}
+                title="Update all installed templates to their latest versions from repositories."
+              >
+                <span>Update Installed Templates ({installedTemplatesCount})</span>
+              </button>
             </div>
-            <TemplateMetadataProvider>
-              {groupMode === "type" && renderGroupedByType()}
-              {groupMode === "repository" && renderGroupedByRepository()}
-              {groupMode === "none" && renderFlatList()}
-            </TemplateMetadataProvider>
+          )}
+          <div class="search-filter-row">
+            <SearchBar
+              value={searchQuery}
+              onChange={setSearchQuery}
+              isScanning={metadataScan.isScanning}
+              isScanComplete={metadataScan.isComplete}
+            />
+            <FilterMenu
+              filterMode={filterMode}
+              onFilterChange={setFilterMode}
+              typeFilters={typeFilters}
+              onTypeFiltersChange={setTypeFilters}
+              repositoryFilters={repositoryFilters}
+              onRepositoryFiltersChange={setRepositoryFilters}
+              availableTypes={availableTypes}
+              availableRepositories={availableRepositories}
+            />
+            <GroupMenu
+              groupMode={groupMode}
+              selectedFirst={selectedFirst}
+              onGroupChange={setGroupMode}
+              onSelectedFirstChange={setSelectedFirst}
+            />
           </div>
-        )}
-      </>
-    </CollapsibleSection>
+          <TemplateMetadataProvider>
+            {groupMode === "type" && renderGroupedByType()}
+            {groupMode === "repository" && renderGroupedByRepository()}
+            {groupMode === "none" && renderFlatList()}
+          </TemplateMetadataProvider>
+        </div>
+      )}
+    </>
   );
 }

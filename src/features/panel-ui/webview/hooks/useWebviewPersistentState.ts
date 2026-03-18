@@ -9,6 +9,7 @@ const DEFAULT_STATE: WebviewPersistentState = {
   selectedFirst: true,
   typeFilters: [],
   repositoryFilters: [],
+  activeTab: undefined,
 };
 
 /**
