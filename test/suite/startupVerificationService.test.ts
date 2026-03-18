@@ -18,6 +18,10 @@ import { GitIgnoreConfigDeployer } from "../../src/features/initialization/gitIg
 import { RecommendedSettingsConfigDeployer } from "../../src/features/initialization/recommendedSettingsConfigDeployer";
 import { NexkitFileMigrationService } from "../../src/features/initialization/nexkitFileMigrationService";
 import { GitHubAuthPromptService } from "../../src/features/initialization/githubAuthPromptService";
+import { CopilotHookFileDeployer } from "../../src/features/initialization/copilotHookFileDeployer";
+import { ProjectTypeDetectorService } from "../../src/features/initialization/projectTypeDetectorService";
+import { TestCommandResolverService } from "../../src/features/initialization/testCommandResolverService";
+import { SettingsManager } from "../../src/core/settingsManager";
 
 suite("Unit: StartupVerificationService", () => {
   let service: StartupVerificationService;
@@ -28,6 +32,7 @@ suite("Unit: StartupVerificationService", () => {
   let settingsDeployer: RecommendedSettingsConfigDeployer;
   let migrationService: NexkitFileMigrationService;
   let authPromptService: GitHubAuthPromptService;
+  let copilotHookFileDeployer: CopilotHookFileDeployer;
 
   setup(() => {
     sandbox = sinon.createSandbox();
@@ -38,11 +43,19 @@ suite("Unit: StartupVerificationService", () => {
     migrationService = new NexkitFileMigrationService();
     authPromptService = new GitHubAuthPromptService();
 
+    const projectTypeDetector = new ProjectTypeDetectorService();
+    const testCommandResolver = new TestCommandResolverService();
+    copilotHookFileDeployer = new CopilotHookFileDeployer(projectTypeDetector, testCommandResolver);
+
+    // Stub setting to enable hook by default in tests
+    sandbox.stub(SettingsManager, "isCopilotAutoTestHookEnabled").returns(true);
+
     service = new StartupVerificationService(
       gitIgnoreDeployer,
       settingsDeployer,
       migrationService,
-      authPromptService
+      authPromptService,
+      copilotHookFileDeployer
     );
   });
 

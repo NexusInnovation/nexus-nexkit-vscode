@@ -25,6 +25,9 @@ import { TemplateMetadataScannerService } from "../features/ai-template-files/se
 import { GitHubAuthPromptService } from "../features/initialization/githubAuthPromptService";
 import { StartupVerificationService } from "../features/initialization/startupVerificationService";
 import { NexkitFileWatcherService } from "../features/nexkit-file-watcher/nexkitFileWatcherService";
+import { ProjectTypeDetectorService } from "../features/initialization/projectTypeDetectorService";
+import { TestCommandResolverService } from "../features/initialization/testCommandResolverService";
+import { CopilotHookFileDeployer } from "../features/initialization/copilotHookFileDeployer";
 
 /**
  * Service container for dependency injection
@@ -57,6 +60,9 @@ export interface ServiceContainer {
   githubAuthPrompt: GitHubAuthPromptService;
   startupVerification: StartupVerificationService;
   nexkitFileWatcher: NexkitFileWatcherService;
+  projectTypeDetector: ProjectTypeDetectorService;
+  testCommandResolver: TestCommandResolverService;
+  copilotHookFileDeployer: CopilotHookFileDeployer;
 }
 
 /**
@@ -95,11 +101,15 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const commitMessage = new CommitMessageService();
   const templateMetadataScanner = new TemplateMetadataScannerService(templateMetadata, aiTemplateData);
   const githubAuthPrompt = new GitHubAuthPromptService();
+  const projectTypeDetector = new ProjectTypeDetectorService();
+  const testCommandResolver = new TestCommandResolverService();
+  const copilotHookFileDeployer = new CopilotHookFileDeployer(projectTypeDetector, testCommandResolver);
   const startupVerification = new StartupVerificationService(
     gitIgnoreConfigDeployer,
     recommendedSettingsConfigDeployer,
     nexkitFileMigration,
-    githubAuthPrompt
+    githubAuthPrompt,
+    copilotHookFileDeployer
   );
   const nexkitFileWatcher = NexkitFileWatcherService.getInstance();
 
@@ -140,5 +150,8 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     githubAuthPrompt,
     startupVerification,
     nexkitFileWatcher,
+    projectTypeDetector,
+    testCommandResolver,
+    copilotHookFileDeployer,
   };
 }

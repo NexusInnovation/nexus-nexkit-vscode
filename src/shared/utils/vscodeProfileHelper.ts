@@ -17,8 +17,7 @@ export class VSCodeProfileHelper {
     const platform = process.platform;
     const homeDir = os.homedir();
 
-    const variantName =
-      variant === "code-insiders" ? "Code - Insiders" : variant === "code-oss" ? "Code - OSS" : "Code";
+    const variantName = variant === "code-insiders" ? "Code - Insiders" : variant === "code-oss" ? "Code - OSS" : "Code";
 
     let userDataDir: string;
 

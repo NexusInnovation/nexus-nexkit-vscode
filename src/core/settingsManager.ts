@@ -244,6 +244,11 @@ export class SettingsManager {
     await vscode.workspace.getConfiguration(this.NEXKIT_SECTION).update(this.MODE, mode, vscode.ConfigurationTarget.Global);
   }
 
+  // Copilot Auto-Test Hook
+  static isCopilotAutoTestHookEnabled(): boolean {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<boolean>("copilot.autoTestHookEnabled", true);
+  }
+
   // Commit Message
   static isCommitMessageEnabled(): boolean {
     return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<boolean>("commitMessage.enabled", true);
@@ -254,10 +259,7 @@ export class SettingsManager {
   }
 
   static getCommitMessageSystemPrompt(): string {
-    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<string>(
-      "commitMessage.systemPrompt",
-      ""
-    );
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<string>("commitMessage.systemPrompt", "");
   }
 
   // Active DevOps Connection (using workspace state)

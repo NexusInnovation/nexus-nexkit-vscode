@@ -27,9 +27,7 @@ export class WorkspaceInitializationService {
     // Run shared verification checks (gitignore, settings, file migration)
     // Delegates to StartupVerificationService — same checks that run at every startup.
     // Returns migration summary for initialization reporting.
-    const migrationSummary = await services.startupVerification.verifyWorkspaceConfiguration(
-      workspaceFolder.uri.fsPath
-    );
+    const migrationSummary = await services.startupVerification.verifyWorkspaceConfiguration(workspaceFolder.uri.fsPath);
 
     // Backup and delete existing .nexkit template folders if they exist
     const backupPath = await services.backup.backupTemplates(workspaceFolder.uri.fsPath);

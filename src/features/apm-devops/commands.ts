@@ -34,9 +34,7 @@ export function registerAddDevOpsConnectionCommand(context: vscode.ExtensionCont
 
       try {
         const connection = await services.devOpsConfig.addConnection(url.trim());
-        vscode.window.showInformationMessage(
-          `Added Azure DevOps connection: ${connection.organization}/${connection.project}`
-        );
+        vscode.window.showInformationMessage(`Added Azure DevOps connection: ${connection.organization}/${connection.project}`);
 
         services.telemetry.trackEvent("devops.connection.added", {
           organization: connection.organization,

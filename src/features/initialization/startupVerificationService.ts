@@ -4,6 +4,7 @@ import { GitIgnoreConfigDeployer } from "./gitIgnoreConfigDeployer";
 import { RecommendedSettingsConfigDeployer } from "./recommendedSettingsConfigDeployer";
 import { NexkitFileMigrationService, MigrationSummary } from "./nexkitFileMigrationService";
 import { GitHubAuthPromptService } from "./githubAuthPromptService";
+import { CopilotHookFileDeployer } from "./copilotHookFileDeployer";
 
 /**
  * Service that runs essential Nexkit verification checks at every VS Code startup.
@@ -18,7 +19,8 @@ export class StartupVerificationService {
     private readonly _gitIgnoreConfigDeployer: GitIgnoreConfigDeployer,
     private readonly _recommendedSettingsConfigDeployer: RecommendedSettingsConfigDeployer,
     private readonly _nexkitFileMigration: NexkitFileMigrationService,
-    private readonly _githubAuthPrompt: GitHubAuthPromptService
+    private readonly _githubAuthPrompt: GitHubAuthPromptService,
+    private readonly _copilotHookFileDeployer: CopilotHookFileDeployer
   ) {}
 
   /**
@@ -56,6 +58,11 @@ export class StartupVerificationService {
     await this._recommendedSettingsConfigDeployer.deployVscodeSettings(workspaceRoot);
 
     // Migrate any nexkit.* files still in .github/<type>/ to .nexkit/<type>/
-    return await this._nexkitFileMigration.migrateNexkitFiles(workspaceRoot);
+    const migrationSummary = await this._nexkitFileMigration.migrateNexkitFiles(workspaceRoot);
+
+    // Ensure Copilot auto-test hook is deployed (if enabled)
+    await this._copilotHookFileDeployer.deployCopilotTestHook(workspaceRoot);
+
+    return migrationSummary;
   }
 }

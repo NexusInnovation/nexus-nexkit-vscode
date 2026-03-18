@@ -114,7 +114,7 @@ suite("Unit: ModeSelectionService", () => {
       // Try to get the mode (may fail if setting is not registered in test environment)
       const savedMode = SettingsManager.getUserMode();
       // In some test environments, the setting may not be registered
-  // So we just verify the function doesn't throw
+      // So we just verify the function doesn't throw
       assert.ok(true);
     } catch (error: any) {
       if (error.message && error.message.includes("not a registered configuration")) {

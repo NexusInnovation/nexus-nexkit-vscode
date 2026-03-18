@@ -27,11 +27,7 @@ export function ModeSelectionSection() {
       </div>
 
       <div class="mode-selection-cards">
-        <button
-          class="mode-card"
-          onClick={() => handleSelectMode(OperationMode.Developers)}
-          type="button"
-        >
+        <button class="mode-card" onClick={() => handleSelectMode(OperationMode.Developers)} type="button">
           <div class="mode-card-icon">
             <i class="codicon codicon-code"></i>
           </div>
@@ -47,11 +43,7 @@ export function ModeSelectionSection() {
           </div>
         </button>
 
-        <button
-          class="mode-card"
-          onClick={() => handleSelectMode(OperationMode.APM)}
-          type="button"
-        >
+        <button class="mode-card" onClick={() => handleSelectMode(OperationMode.APM)} type="button">
           <div class="mode-card-icon">
             <i class="codicon codicon-dashboard"></i>
           </div>

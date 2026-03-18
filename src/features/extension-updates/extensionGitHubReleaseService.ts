@@ -29,11 +29,7 @@ export class ExtensionGitHubReleaseService {
    * @param requireAuth If true, will prompt for authentication if not already authenticated
    */
   private async getAuthHeaders(requireAuth: boolean = true): Promise<Record<string, string>> {
-    return await GitHubAuthHelper.getAuthHeaders(
-      ["repo"],
-      "nexus-nexkit-vscode-Extension",
-      requireAuth
-    );
+    return await GitHubAuthHelper.getAuthHeaders(["repo"], "nexus-nexkit-vscode-Extension", requireAuth);
   }
 
   /**

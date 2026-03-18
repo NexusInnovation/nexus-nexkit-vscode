@@ -75,9 +75,7 @@ export class ModeSelectionService {
       await SettingsManager.setFirstTimeUser(false);
 
       // Show confirmation message
-      vscode.window.showInformationMessage(
-        `Nexkit configured in ${selectedMode} Mode. You can change this in settings anytime.`
-      );
+      vscode.window.showInformationMessage(`Nexkit configured in ${selectedMode} Mode. You can change this in settings anytime.`);
     } else {
       // User dismissed prompt, mark as no longer first-time but keep mode as notset
       await SettingsManager.setFirstTimeUser(false);

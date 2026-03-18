@@ -187,10 +187,7 @@ export class LocalFolderTemplateProvider {
         return null;
       }
 
-      console.error(
-        `Error reading SKILL.md metadata for local skill '${templateFile.name}' from '${skillMdUri.fsPath}':`,
-        error
-      );
+      console.error(`Error reading SKILL.md metadata for local skill '${templateFile.name}' from '${skillMdUri.fsPath}':`, error);
       throw error;
     }
   }

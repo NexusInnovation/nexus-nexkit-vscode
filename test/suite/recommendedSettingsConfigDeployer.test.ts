@@ -57,14 +57,10 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
       "editor.fontSize": 14,
       "chat.promptFilesLocations": {
         ".nexkit/prompts": true,
-        "custom/prompts": true
-      }
+        "custom/prompts": true,
+      },
     };
-    fs.writeFileSync(
-      path.join(settingsDir, "settings.json"),
-      JSON.stringify(existingSettings, null, 2),
-      "utf8"
-    );
+    fs.writeFileSync(path.join(settingsDir, "settings.json"), JSON.stringify(existingSettings, null, 2), "utf8");
 
     await deployer.deployVscodeSettings(tempDir);
 

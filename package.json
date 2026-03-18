@@ -355,6 +355,12 @@
           "scope": "application",
           "markdownDescription": "User mode for Nexkit. **APM Mode** provides optimized templates and settings for Application Performance Management workflows. **Developer Mode** provides comprehensive development tools and templates."
         },
+        "nexkit.copilot.autoTestHookEnabled": {
+          "type": "boolean",
+          "default": true,
+          "scope": "resource",
+          "description": "Automatically deploy a Copilot agent hook that runs tests after every code change made by Copilot. The test command is detected from the project type (Node.js, .NET, Python)."
+        },
         "nexkit.commitMessage.enabled": {
           "type": "boolean",
           "default": true,

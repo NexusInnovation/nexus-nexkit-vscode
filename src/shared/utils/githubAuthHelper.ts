@@ -18,13 +18,7 @@ export class GitHubAuthHelper {
    */
   public static detectEnvironment(): ExecutionEnvironment {
     // Check for CI environment indicators
-    if (
-      process.env.CI ||
-      process.env.GITHUB_ACTIONS ||
-      process.env.TF_BUILD ||
-      process.env.JENKINS_HOME ||
-      process.env.TRAVIS
-    ) {
+    if (process.env.CI || process.env.GITHUB_ACTIONS || process.env.TF_BUILD || process.env.JENKINS_HOME || process.env.TRAVIS) {
       return "ci";
     }
 

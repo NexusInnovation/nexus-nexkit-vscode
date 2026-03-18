@@ -2,18 +2,15 @@ import * as assert from "assert";
 import { getApmAgentDiagnostics } from "../../src/features/panel-ui/utils/templateDiagnostics";
 import { OperationMode, RepositoryTemplatesMap } from "../../src/features/ai-template-files/models/aiTemplateFile";
 
-function repo(
-  name: string,
-  modes: OperationMode[] | undefined,
-  agents: number
-): RepositoryTemplatesMap {
-  const createTemplates = (count: number) => Array.from({ length: count }, (_, i) => ({
-    name: `t${i}.md`,
-    type: "agents" as const,
-    rawUrl: "https://example.invalid",
-    repository: name,
-    repositoryUrl: "https://example.invalid",
-  }));
+function repo(name: string, modes: OperationMode[] | undefined, agents: number): RepositoryTemplatesMap {
+  const createTemplates = (count: number) =>
+    Array.from({ length: count }, (_, i) => ({
+      name: `t${i}.md`,
+      type: "agents" as const,
+      rawUrl: "https://example.invalid",
+      repository: name,
+      repositoryUrl: "https://example.invalid",
+    }));
 
   return {
     name,
@@ -45,10 +42,7 @@ suite("Unit: templateDiagnostics", () => {
   });
 
   test("Should aggregate agents across APM repositories", () => {
-    const repositories: RepositoryTemplatesMap[] = [
-      repo("Apm1", [OperationMode.APM], 2),
-      repo("Apm2", [OperationMode.APM], 3),
-    ];
+    const repositories: RepositoryTemplatesMap[] = [repo("Apm1", [OperationMode.APM], 2), repo("Apm2", [OperationMode.APM], 3)];
 
     const diag = getApmAgentDiagnostics(repositories);
 
