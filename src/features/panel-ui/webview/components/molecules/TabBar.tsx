@@ -10,13 +10,14 @@ interface TabBarProps {
   tabs: TabDefinition[];
   activeTab: string;
   onTabChange: (tabId: string) => void;
+  badges?: Record<string, boolean>;
 }
 
 /**
  * TabBar Component
  * Renders a horizontal icon tab bar for switching between panel sections.
  */
-export function TabBar({ tabs, activeTab, onTabChange }: TabBarProps): JSX.Element {
+export function TabBar({ tabs, activeTab, onTabChange, badges }: TabBarProps): JSX.Element {
   return (
     <div class="tab-bar" role="tablist">
       {tabs.map((tab) => (
@@ -29,7 +30,10 @@ export function TabBar({ tabs, activeTab, onTabChange }: TabBarProps): JSX.Eleme
           title={tab.label}
           onClick={() => onTabChange(tab.id)}
         >
-          <i class={`codicon codicon-${tab.icon}`} />
+          <span class="tab-icon-wrapper">
+            <i class={`codicon codicon-${tab.icon}`} />
+            {badges?.[tab.id] && <span class="tab-badge" />}
+          </span>
         </button>
       ))}
     </div>

@@ -3,11 +3,15 @@ import { WorkflowRunnerTool } from "../molecules/WorkflowRunnerTool";
 import { useVSCodeAPI } from "../../hooks/useVSCodeAPI";
 import { useAppState } from "../../hooks/useAppState";
 
+interface ToolsSectionProps {
+  isInitialized: boolean;
+}
+
 /**
  * ToolsSection Component
- * Developer tools section (e.g., GitHub workflow runner)
+ * Developer tools section with workspace initialization and workflow runner
  */
-export function ToolsSection() {
+export function ToolsSection({ isInitialized }: ToolsSectionProps) {
   const messenger = useVSCodeAPI();
   const { workflows } = useAppState();
 
@@ -18,5 +22,23 @@ export function ToolsSection() {
     }
   }, []);
 
-  return <WorkflowRunnerTool />;
+  const initializeWorkspace = () => {
+    messenger.sendMessage({ command: "initWorkspace" });
+  };
+
+  return (
+    <>
+      {!isInitialized && (
+        <div class="actions-section">
+          <div class="action-item">
+            <button class="action-button" onClick={initializeWorkspace}>
+              <span>Initialize Project</span>
+            </button>
+            <p class="button-description">Set up Nexkit templates and configuration for your workspace</p>
+          </div>
+        </div>
+      )}
+      <WorkflowRunnerTool />
+    </>
+  );
 }

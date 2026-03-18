@@ -1,8 +1,8 @@
-import { useMemo } from "preact/hooks";
+import { useEffect, useMemo } from "preact/hooks";
 import { useAppState } from "../hooks/useAppState";
 import { useMode } from "../hooks/useMode";
 import { useActiveTab } from "../hooks/useActiveTab";
-import { ActionsSection } from "./organisms/ActionsSection";
+import { useWebviewPersistentState } from "../hooks/useWebviewPersistentState";
 import { ApmActionsSection } from "./organisms/ApmActionsSection";
 import { FooterSection } from "./organisms/FooterSection";
 import { ProfileSection } from "./organisms/ProfileSection";
@@ -24,8 +24,9 @@ const TAB_DEFINITIONS: Record<string, TabDefinition> = {
  * Root component for the Nexkit webview panel
  */
 export function App() {
-  const { workspace } = useAppState();
+  const { workspace, profiles } = useAppState();
   const { isNoneMode, isDevelopersMode, isAPMMode } = useMode();
+  const { getWebviewState, setWebviewState } = useWebviewPersistentState();
 
   // Build the list of visible tabs based on the current mode
   const tabs = useMemo<TabDefinition[]>(() => {
@@ -40,6 +41,37 @@ export function App() {
 
   const tabIds = useMemo(() => tabs.map((t) => t.id), [tabs]);
   const [activeTab, setActiveTab] = useActiveTab(tabIds);
+
+  // Clear profile badge when the user visits the profile tab
+  useEffect(() => {
+    if (activeTab === "profile" && profiles.isReady) {
+      const state = getWebviewState();
+      if (state.lastSeenProfileCount !== profiles.list.length) {
+        state.lastSeenProfileCount = profiles.list.length;
+        setWebviewState(state);
+      }
+    }
+  }, [activeTab, profiles.list.length, profiles.isReady]);
+
+  // Compute tab badges
+  const badges = useMemo<Record<string, boolean>>(() => {
+    const result: Record<string, boolean> = {};
+
+    // Tools badge: workspace needs initialization
+    if (isDevelopersMode && !workspace.isInitialized) {
+      result.tools = true;
+    }
+
+    // Profile badge: new profile saved since last visit (hidden while viewing)
+    if (isDevelopersMode && profiles.isReady && activeTab !== "profile") {
+      const lastSeen = getWebviewState().lastSeenProfileCount;
+      if (lastSeen !== undefined && profiles.list.length > lastSeen) {
+        result.profile = true;
+      }
+    }
+
+    return result;
+  }, [isDevelopersMode, workspace.isInitialized, profiles.isReady, profiles.list.length, activeTab]);
 
   if (!workspace.isReady) {
     return null;
@@ -62,16 +94,15 @@ export function App() {
 
   return (
     <div class="container">
-      {isDevelopersMode && <ActionsSection isInitialized={workspace.isInitialized} />}
       {isAPMMode && <ApmActionsSection isInitialized={workspace.isInitialized} />}
 
-      <TabBar tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+      <TabBar tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} badges={badges} />
 
       <div class="tab-content" role="tabpanel">
         {isDevelopersMode && (
           <>
             {activeTab === "template" && <TemplateSection />}
-            {activeTab === "tools" && <ToolsSection />}
+            {activeTab === "tools" && <ToolsSection isInitialized={workspace.isInitialized} />}
             {activeTab === "profile" && <ProfileSection />}
           </>
         )}

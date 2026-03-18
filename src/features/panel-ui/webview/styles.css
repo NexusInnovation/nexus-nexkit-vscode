@@ -137,6 +137,22 @@ body {
   color: var(--vscode-focusBorder);
 }
 
+.tab-icon-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.tab-badge {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--vscode-focusBorder);
+  pointer-events: none;
+}
+
 .tab-content {
   min-height: 0;
 }

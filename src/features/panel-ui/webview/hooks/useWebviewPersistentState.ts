@@ -10,6 +10,7 @@ const DEFAULT_STATE: WebviewPersistentState = {
   typeFilters: [],
   repositoryFilters: [],
   activeTab: undefined,
+  lastSeenProfileCount: undefined,
 };
 
 /**
