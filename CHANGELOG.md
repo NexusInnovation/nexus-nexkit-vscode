@@ -1,3 +1,10 @@
+## 3.7.0-beta.1 (2026-03-19)
+
+* feat(ui): New tab layout and Github Workflow Run Tester ([1b18eb2](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/1b18eb2)), closes [#126](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/126)
+* chore(release): Use tabs to select section in NexKit panel (#123) ([ae965a4](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ae965a4)), closes [#123](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/123) [#126](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/126)
+* Feature/refresh template button behaviour (#124) ([56a62a7](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/56a62a7)), closes [#124](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/124) [#125](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/125)
+* docs(codebase): add detailed exploration summary for NexKit (#122) ([5955d94](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/5955d94)), closes [#122](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/122)
+
 ## <small>3.6.2-beta.1 (2026-03-12)</small>
 
 * fix(panel-ui): sort template list alphabetically by name (#119) ([71a0e90](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/71a0e90)), closes [#119](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/119)
