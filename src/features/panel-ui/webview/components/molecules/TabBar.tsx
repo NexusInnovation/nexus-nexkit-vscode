@@ -19,11 +19,15 @@ interface TabBarProps {
  */
 export function TabBar({ tabs, activeTab, onTabChange, badges }: TabBarProps): JSX.Element {
   return (
-    <div class="tab-bar">
+    <div class="tab-bar" role="tablist">
       {tabs.map((tab) => (
         <button
           key={tab.id}
+          id={`tab-${tab.id}`}
           class={`tab-button ${activeTab === tab.id ? "active" : ""}`}
+          role="tab"
+          aria-selected={activeTab === tab.id}
+          aria-controls={`panel-${tab.id}`}
           aria-label={tab.label}
           title={tab.label}
           onClick={() => onTabChange(tab.id)}

@@ -159,7 +159,13 @@ export class GitHubWorkflowRunnerService {
         "Open Docker Install Page"
       );
       if (action === "Open Docker Install Page") {
-        vscode.env.openExternal(vscode.Uri.parse("https://www.docker.com/products/docker-desktop/"));
+        try {
+          await vscode.env.openExternal(vscode.Uri.parse("https://www.docker.com/products/docker-desktop/"));
+        } catch (err) {
+          void vscode.window.showErrorMessage(
+            "Failed to open Docker install page. Please open it manually: https://www.docker.com/products/docker-desktop/"
+          );
+        }
       }
       return;
     }

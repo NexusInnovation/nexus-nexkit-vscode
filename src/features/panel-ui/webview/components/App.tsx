@@ -53,6 +53,17 @@ export function App() {
     }
   }, [activeTab, profiles.list.length, profiles.isReady]);
 
+  // Initialize lastSeenProfileCount when profiles first become ready
+  useEffect(() => {
+    if (isDevelopersMode && profiles.isReady) {
+      const state = getWebviewState();
+      if (state.lastSeenProfileCount === undefined) {
+        state.lastSeenProfileCount = profiles.list.length;
+        setWebviewState(state);
+      }
+    }
+  }, [isDevelopersMode, profiles.isReady, profiles.list.length]);
+
   // Compute tab badges
   const badges = useMemo<Record<string, boolean>>(() => {
     const result: Record<string, boolean> = {};
