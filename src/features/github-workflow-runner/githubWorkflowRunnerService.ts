@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
-import { execSync } from "child_process";
+import { exec, execSync } from "child_process";
 
 /**
  * Install commands for act, ordered by preference
@@ -170,7 +170,7 @@ export class GitHubWorkflowRunnerService {
       return;
     }
 
-    if (!this.isDockerRunning()) {
+    if (!(await this.isDockerRunning())) {
       vscode.window.showErrorMessage("Docker is installed but not running. Please start Docker Desktop and try again.");
       return;
     }
@@ -218,13 +218,21 @@ export class GitHubWorkflowRunnerService {
   /**
    * Checks whether the Docker daemon is currently running.
    */
-  public isDockerRunning(): boolean {
-    try {
-      execSync("docker info", { encoding: "utf-8", timeout: 10000, stdio: "pipe" });
-      return true;
-    } catch {
-      return false;
-    }
+  public isDockerRunning(): Promise<boolean> {
+    return new Promise((resolve) => {
+      let settled = false;
+      const settle = (result: boolean) => {
+        if (!settled) {
+          settled = true;
+          resolve(result);
+        }
+      };
+      const proc = exec("docker info", { timeout: 10000 });
+      proc.stdout?.resume();
+      proc.stderr?.resume();
+      proc.on("close", (code) => settle(code === 0));
+      proc.on("error", () => settle(false));
+    });
   }
 
   /**
