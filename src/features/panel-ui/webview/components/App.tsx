@@ -1,7 +1,9 @@
+import { useEffect, useMemo } from "preact/hooks";
 import { useAppState } from "../hooks/useAppState";
 import { useMode } from "../hooks/useMode";
+import { useActiveTab } from "../hooks/useActiveTab";
+import { useWebviewPersistentState } from "../hooks/useWebviewPersistentState";
 import { ApmActionsSection } from "./organisms/ApmActionsSection";
-import { ActionsSection } from "./organisms/ActionsSection";
 import { FooterSection } from "./organisms/FooterSection";
 import { ProfileSection } from "./organisms/ProfileSection";
 import { TemplateSection } from "./organisms/TemplateSection";
@@ -9,13 +11,78 @@ import { ApmConnectionSection } from "./organisms/ApmConnectionSection";
 import { ApmTemplateSection } from "./organisms/ApmTemplateSection";
 import { ModeSelectionSection } from "./organisms/ModeSelectionSection";
 import { ToolsSection } from "./organisms/ToolsSection";
+import { TabBar, TabDefinition } from "./molecules/TabBar";
+
+const TAB_DEFINITIONS: Record<string, TabDefinition> = {
+  template: { id: "template", icon: "file-code", label: "Templates" },
+  project: { id: "project", icon: "azure-devops", label: "Project" },
+  tools: { id: "tools", icon: "tools", label: "Tools" },
+  profile: { id: "profile", icon: "account", label: "Profiles" },
+};
 
 /**
  * Root component for the Nexkit webview panel
  */
 export function App() {
-  const { workspace } = useAppState();
+  const { workspace, profiles } = useAppState();
   const { isNoneMode, isDevelopersMode, isAPMMode } = useMode();
+  const { getWebviewState, setWebviewState } = useWebviewPersistentState();
+
+  // Build the list of visible tabs based on the current mode
+  const tabs = useMemo<TabDefinition[]>(() => {
+    if (isDevelopersMode) {
+      return [TAB_DEFINITIONS.template, TAB_DEFINITIONS.tools, TAB_DEFINITIONS.profile];
+    }
+    if (isAPMMode) {
+      return [TAB_DEFINITIONS.template, TAB_DEFINITIONS.project];
+    }
+    return [];
+  }, [isDevelopersMode, isAPMMode]);
+
+  const tabIds = useMemo(() => tabs.map((t) => t.id), [tabs]);
+  const [activeTab, setActiveTab] = useActiveTab(tabIds);
+
+  // Clear profile badge when the user visits the profile tab
+  useEffect(() => {
+    if (activeTab === "profile" && profiles.isReady) {
+      const state = getWebviewState();
+      if (state.lastSeenProfileCount !== profiles.list.length) {
+        state.lastSeenProfileCount = profiles.list.length;
+        setWebviewState(state);
+      }
+    }
+  }, [activeTab, profiles.list.length, profiles.isReady]);
+
+  // Initialize lastSeenProfileCount when profiles first become ready
+  useEffect(() => {
+    if (isDevelopersMode && profiles.isReady) {
+      const state = getWebviewState();
+      if (state.lastSeenProfileCount === undefined) {
+        state.lastSeenProfileCount = profiles.list.length;
+        setWebviewState(state);
+      }
+    }
+  }, [isDevelopersMode, profiles.isReady, profiles.list.length]);
+
+  // Compute tab badges
+  const badges = useMemo<Record<string, boolean>>(() => {
+    const result: Record<string, boolean> = {};
+
+    // Tools badge: workspace needs initialization
+    if (isDevelopersMode && !workspace.isInitialized) {
+      result.tools = true;
+    }
+
+    // Profile badge: new profile saved since last visit (hidden while viewing)
+    if (isDevelopersMode && profiles.isReady && activeTab !== "profile") {
+      const lastSeen = getWebviewState().lastSeenProfileCount;
+      if (lastSeen !== undefined && profiles.list.length > lastSeen) {
+        result.profile = true;
+      }
+    }
+
+    return result;
+  }, [isDevelopersMode, workspace.isInitialized, profiles.isReady, profiles.list.length, activeTab]);
 
   if (!workspace.isReady) {
     return null;
@@ -38,21 +105,46 @@ export function App() {
 
   return (
     <div class="container">
-      {isDevelopersMode && (
-        <>
-          <ActionsSection isInitialized={workspace.isInitialized} />
-          <ProfileSection />
-          <TemplateSection />
-          <ToolsSection />
-        </>
-      )}
-      {isAPMMode && (
-        <>
-          <ApmTemplateSection />
-          <ApmActionsSection isInitialized={workspace.isInitialized} />
-          <ApmConnectionSection />
-        </>
-      )}
+      {isAPMMode && <ApmActionsSection isInitialized={workspace.isInitialized} />}
+
+      <TabBar tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} badges={badges} />
+
+      <div class="tab-content">
+        {isDevelopersMode && (
+          <>
+            {activeTab === "template" && (
+              <div class="tab-panel" role="tabpanel" id="template-tabpanel">
+                <TemplateSection />
+              </div>
+            )}
+            {activeTab === "tools" && (
+              <div class="tab-panel" role="tabpanel" id="tools-tabpanel">
+                <ToolsSection isInitialized={workspace.isInitialized} />
+              </div>
+            )}
+            {activeTab === "profile" && (
+              <div class="tab-panel" role="tabpanel" id="profile-tabpanel">
+                <ProfileSection />
+              </div>
+            )}
+          </>
+        )}
+        {isAPMMode && (
+          <>
+            {activeTab === "template" && (
+              <div class="tab-panel" role="tabpanel" id="template-tabpanel">
+                <ApmTemplateSection />
+              </div>
+            )}
+            {activeTab === "project" && (
+              <div class="tab-panel" role="tabpanel" id="project-tabpanel">
+                <ApmConnectionSection />
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
       <FooterSection />
     </div>
   );

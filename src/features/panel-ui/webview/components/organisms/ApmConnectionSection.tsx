@@ -1,5 +1,4 @@
 import { useState } from "preact/hooks";
-import { CollapsibleSection } from "../molecules/CollapsibleSection";
 import { useDevOpsConnections } from "../../hooks/useDevOpsConnections";
 
 /**
@@ -65,83 +64,81 @@ export function ApmConnectionSection() {
   const displayError = localError || error;
 
   return (
-    <CollapsibleSection id="connections" title="DevOps Projects" defaultExpanded>
-      <>
-        {!isReady && <p class="loading">Loading projects...</p>}
+    <>
+      {!isReady && <p class="loading">Loading projects...</p>}
 
-        {isReady && (
-          <>
-            {/* Connection List */}
-            {connections.length === 0 && !isAddingNew && (
-              <p class="empty-message">No DevOps projects configured. Add a project to enable Azure DevOps MCP integration.</p>
-            )}
+      {isReady && (
+        <>
+          {/* Connection List */}
+          {connections.length === 0 && !isAddingNew && (
+            <p class="empty-message">No DevOps projects configured. Add a project to enable Azure DevOps MCP integration.</p>
+          )}
 
-            {connections.length > 0 && (
-              <div class="connections-list">
-                {connections.map((connection) => (
-                  <div
-                    key={connection.id}
-                    class={`connection-item ${connection.isActive ? "active" : "inactive"}`}
-                    onClick={() => handleConnectionClick(connection)}
-                    title={connection.isActive ? "Active project" : "Click to make this the active project"}
-                  >
-                    <div class="connection-info">
-                      <div class="connection-name">
-                        {connection.isActive && <i class="codicon codicon-circle-filled connection-active-icon"></i>}
-                        {!connection.isActive && <i class="codicon codicon-circle-outline connection-inactive-icon"></i>}
-                        {connection.organization}/{connection.project}
-                      </div>
-                      {connection.isActive && <div class="connection-details">Active • MCP: azure-devops</div>}
+          {connections.length > 0 && (
+            <div class="connections-list">
+              {connections.map((connection) => (
+                <div
+                  key={connection.id}
+                  class={`connection-item ${connection.isActive ? "active" : "inactive"}`}
+                  onClick={() => handleConnectionClick(connection)}
+                  title={connection.isActive ? "Active project" : "Click to make this the active project"}
+                >
+                  <div class="connection-info">
+                    <div class="connection-name">
+                      {connection.isActive && <i class="codicon codicon-circle-filled connection-active-icon"></i>}
+                      {!connection.isActive && <i class="codicon codicon-circle-outline connection-inactive-icon"></i>}
+                      {connection.organization}/{connection.project}
                     </div>
-                    <div class="connection-actions">
-                      <button
-                        class="connection-action-button delete-button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeConnection(connection.id);
-                        }}
-                        title={`Remove project "${connection.organization}/${connection.project}"`}
-                      >
-                        <i class="codicon codicon-trash"></i>
-                      </button>
-                    </div>
+                    {connection.isActive && <div class="connection-details">Active • MCP: azure-devops</div>}
                   </div>
-                ))}
-              </div>
-            )}
-
-            {/* Add New Connection Form */}
-            {isAddingNew ? (
-              <div class="add-connection-form">
-                <input
-                  type="text"
-                  class="connection-url-input"
-                  placeholder="https://dev.azure.com/org/project"
-                  value={newUrl}
-                  onInput={(e) => setNewUrl((e.target as HTMLInputElement).value)}
-                  onKeyDown={handleKeyDown}
-                  autofocus
-                />
-                <div class="add-connection-actions">
-                  <button class="button secondary" onClick={handleCancelAdd}>
-                    Cancel
-                  </button>
-                  <button class="button primary" onClick={handleSubmitUrl}>
-                    Add
-                  </button>
+                  <div class="connection-actions">
+                    <button
+                      class="connection-action-button delete-button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeConnection(connection.id);
+                      }}
+                      title={`Remove project "${connection.organization}/${connection.project}"`}
+                    >
+                      <i class="codicon codicon-trash"></i>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <button class="button add-connection-button" onClick={handleAddClick}>
-                <i class="codicon codicon-add"></i> Add Project
-              </button>
-            )}
+              ))}
+            </div>
+          )}
 
-            {/* Error Display */}
-            {displayError && <div class="connection-error">{displayError}</div>}
-          </>
-        )}
-      </>
-    </CollapsibleSection>
+          {/* Add New Connection Form */}
+          {isAddingNew ? (
+            <div class="add-connection-form">
+              <input
+                type="text"
+                class="connection-url-input"
+                placeholder="https://dev.azure.com/org/project"
+                value={newUrl}
+                onInput={(e) => setNewUrl((e.target as HTMLInputElement).value)}
+                onKeyDown={handleKeyDown}
+                autofocus
+              />
+              <div class="add-connection-actions">
+                <button class="button secondary" onClick={handleCancelAdd}>
+                  Cancel
+                </button>
+                <button class="button primary" onClick={handleSubmitUrl}>
+                  Add
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button class="button add-connection-button" onClick={handleAddClick}>
+              <i class="codicon codicon-add"></i> Add Project
+            </button>
+          )}
+
+          {/* Error Display */}
+          {displayError && <div class="connection-error">{displayError}</div>}
+        </>
+      )}
+    </>
   );
 }

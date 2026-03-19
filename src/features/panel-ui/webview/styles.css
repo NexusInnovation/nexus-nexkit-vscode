@@ -98,6 +98,65 @@ body {
   border-top: none;
 }
 
+/* ============================================ */
+/* Tab Bar                                      */
+/* ============================================ */
+
+.tab-bar {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+
+.tab-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 8px 0;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--vscode-foreground);
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s ease, border-color 0.15s ease;
+  font-size: 16px;
+}
+
+.tab-button:hover {
+  opacity: 1;
+  background-color: var(--vscode-list-hoverBackground);
+}
+
+.tab-button.active {
+  opacity: 1;
+  border-bottom-color: var(--vscode-focusBorder);
+  color: var(--vscode-focusBorder);
+}
+
+.tab-icon-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.tab-badge {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--vscode-focusBorder);
+  pointer-events: none;
+}
+
+.tab-content {
+  min-height: 0;
+}
+
 .section .section-header {
   cursor: pointer;
   user-select: none;

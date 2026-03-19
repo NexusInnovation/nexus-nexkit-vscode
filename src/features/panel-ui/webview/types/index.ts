@@ -27,4 +27,6 @@ export interface WebviewPersistentState {
   selectedFirst: boolean;
   typeFilters: string[];
   repositoryFilters: string[];
+  activeTab?: string;
+  lastSeenProfileCount?: number;
 }
