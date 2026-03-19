@@ -71,6 +71,8 @@ suite("Unit: GitHubWorkflowRunnerService", () => {
   test("Should create terminal and send act command for runWorkflow", async () => {
     const mockUri = vscode.Uri.file("/mock/workspace");
     sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: mockUri, name: "mock", index: 0 }]);
+    sandbox.stub(service, "isDockerInstalled").returns(true);
+    sandbox.stub(service, "isDockerRunning").returns(true);
     sandbox.stub(service, "findActPath").returns("/usr/bin/act");
 
     const mockTerminal = {
@@ -103,6 +105,8 @@ suite("Unit: GitHubWorkflowRunnerService", () => {
   test("Should not include --job flag when job is not specified", async () => {
     const mockUri = vscode.Uri.file("/mock/workspace");
     sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: mockUri, name: "mock", index: 0 }]);
+    sandbox.stub(service, "isDockerInstalled").returns(true);
+    sandbox.stub(service, "isDockerRunning").returns(true);
     sandbox.stub(service, "findActPath").returns("/usr/bin/act");
 
     const mockTerminal = {
@@ -126,6 +130,8 @@ suite("Unit: GitHubWorkflowRunnerService", () => {
   test("Should use --list flag when list is true", async () => {
     const mockUri = vscode.Uri.file("/mock/workspace");
     sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: mockUri, name: "mock", index: 0 }]);
+    sandbox.stub(service, "isDockerInstalled").returns(true);
+    sandbox.stub(service, "isDockerRunning").returns(true);
     sandbox.stub(service, "findActPath").returns("/usr/bin/act");
 
     const mockTerminal = {
@@ -213,6 +219,8 @@ suite("Unit: GitHubWorkflowRunnerService", () => {
     const mockUri = vscode.Uri.file("/mock/workspace");
     sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: mockUri, name: "mock", index: 0 }]);
     sandbox.stub(service, "findActPath").returns(undefined);
+    sandbox.stub(service, "isDockerInstalled").returns(true);
+    sandbox.stub(service, "isDockerRunning").returns(true);
 
     // User dismisses the dialog
     const warningStub = sandbox.stub(vscode.window, "showWarningMessage").resolves(undefined);
@@ -231,5 +239,106 @@ suite("Unit: GitHubWorkflowRunnerService", () => {
       createTerminalStub.notCalled || warningStub.called || errorStub.called,
       "Should prompt user about missing act instead of running"
     );
+  });
+
+  // ============================================================================
+  // Docker availability tests
+  // ============================================================================
+
+  test("Should have isDockerInstalled method", () => {
+    assert.strictEqual(typeof service.isDockerInstalled, "function");
+  });
+
+  test("Should have isDockerRunning method", () => {
+    assert.strictEqual(typeof service.isDockerRunning, "function");
+  });
+
+  test("Should show error when Docker is not installed", async () => {
+    const mockUri = vscode.Uri.file("/mock/workspace");
+    sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: mockUri, name: "mock", index: 0 }]);
+    sandbox.stub(service, "isDockerInstalled").returns(false);
+
+    const errorStub = sandbox.stub(vscode.window, "showErrorMessage").resolves(undefined);
+    const createTerminalStub = sandbox.stub(vscode.window, "createTerminal");
+
+    await service.runWorkflow({
+      workflowFile: ".github/workflows/ci.yml",
+      event: "push",
+      dryRun: false,
+      list: false,
+    });
+
+    assert.ok(errorStub.calledOnce, "Should show error message");
+    assert.ok(
+      errorStub.firstCall.args[0].includes("Docker is required"),
+      "Error message should mention Docker is required"
+    );
+    assert.ok(createTerminalStub.notCalled, "Should not create terminal");
+  });
+
+  test("Should open Docker install page when user clicks action", async () => {
+    const mockUri = vscode.Uri.file("/mock/workspace");
+    sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: mockUri, name: "mock", index: 0 }]);
+    sandbox.stub(service, "isDockerInstalled").returns(false);
+
+    sandbox.stub(vscode.window, "showErrorMessage").resolves("Open Docker Install Page" as any);
+    const openExternalStub = sandbox.stub(vscode.env, "openExternal");
+
+    await service.runWorkflow({
+      workflowFile: ".github/workflows/ci.yml",
+      event: "push",
+      dryRun: false,
+      list: false,
+    });
+
+    assert.ok(openExternalStub.calledOnce, "Should open external URL");
+  });
+
+  test("Should show error when Docker is installed but not running", async () => {
+    const mockUri = vscode.Uri.file("/mock/workspace");
+    sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: mockUri, name: "mock", index: 0 }]);
+    sandbox.stub(service, "isDockerInstalled").returns(true);
+    sandbox.stub(service, "isDockerRunning").returns(false);
+
+    const errorStub = sandbox.stub(vscode.window, "showErrorMessage").resolves(undefined);
+    const createTerminalStub = sandbox.stub(vscode.window, "createTerminal");
+
+    await service.runWorkflow({
+      workflowFile: ".github/workflows/ci.yml",
+      event: "push",
+      dryRun: false,
+      list: false,
+    });
+
+    assert.ok(errorStub.calledOnce, "Should show error message");
+    assert.ok(
+      errorStub.firstCall.args[0].includes("not running"),
+      "Error message should mention Docker is not running"
+    );
+    assert.ok(createTerminalStub.notCalled, "Should not create terminal");
+  });
+
+  test("Should proceed when Docker is installed and running", async () => {
+    const mockUri = vscode.Uri.file("/mock/workspace");
+    sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: mockUri, name: "mock", index: 0 }]);
+    sandbox.stub(service, "isDockerInstalled").returns(true);
+    sandbox.stub(service, "isDockerRunning").returns(true);
+    sandbox.stub(service, "findActPath").returns("/usr/bin/act");
+
+    const mockTerminal = {
+      show: sandbox.stub(),
+      sendText: sandbox.stub(),
+    };
+    sandbox.stub(vscode.window, "createTerminal").returns(mockTerminal as any);
+
+    await service.runWorkflow({
+      workflowFile: ".github/workflows/ci.yml",
+      event: "push",
+      dryRun: false,
+      list: false,
+    });
+
+    assert.ok(mockTerminal.show.calledOnce, "Should create and show terminal");
+    assert.ok(mockTerminal.sendText.calledOnce, "Should send act command");
   });
 });

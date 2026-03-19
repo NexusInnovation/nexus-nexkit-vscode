@@ -141,6 +141,7 @@ export class GitHubWorkflowRunnerService {
   /**
    * Runs a workflow locally by invoking `act` directly in a VS Code terminal.
    *
+   * If Docker is not installed or not running, shows an error message.
    * If `act` is not installed, prompts the user to install it automatically
    * via winget, chocolatey, or scoop.
    */
@@ -148,6 +149,25 @@ export class GitHubWorkflowRunnerService {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders || workspaceFolders.length === 0) {
       vscode.window.showErrorMessage("No workspace folder open.");
+      return;
+    }
+
+    // Check if Docker is installed and running
+    if (!this.isDockerInstalled()) {
+      const action = await vscode.window.showErrorMessage(
+        "Docker is required to run GitHub workflows locally but was not found. Please install Docker Desktop and try again.",
+        "Open Docker Install Page"
+      );
+      if (action === "Open Docker Install Page") {
+        vscode.env.openExternal(vscode.Uri.parse("https://www.docker.com/products/docker-desktop/"));
+      }
+      return;
+    }
+
+    if (!this.isDockerRunning()) {
+      vscode.window.showErrorMessage(
+        "Docker is installed but not running. Please start Docker Desktop and try again."
+      );
       return;
     }
 
@@ -182,6 +202,25 @@ export class GitHubWorkflowRunnerService {
    */
   public isActInstalled(): boolean {
     return this.findActPath() !== undefined;
+  }
+
+  /**
+   * Checks whether Docker is installed on the system.
+   */
+  public isDockerInstalled(): boolean {
+    return this.resolveFromPath("docker") !== undefined;
+  }
+
+  /**
+   * Checks whether the Docker daemon is currently running.
+   */
+  public isDockerRunning(): boolean {
+    try {
+      execSync("docker info", { encoding: "utf-8", timeout: 10000, stdio: "pipe" });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /**
