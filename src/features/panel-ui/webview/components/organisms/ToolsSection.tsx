@@ -1,5 +1,6 @@
 import { useEffect } from "preact/hooks";
 import { WorkflowRunnerTool } from "../molecules/WorkflowRunnerTool";
+import { CollapsibleSection } from "../molecules/CollapsibleSection";
 import { useVSCodeAPI } from "../../hooks/useVSCodeAPI";
 import { useAppState } from "../../hooks/useAppState";
 
@@ -38,7 +39,9 @@ export function ToolsSection({ isInitialized }: ToolsSectionProps) {
           </div>
         </div>
       )}
-      <WorkflowRunnerTool />
+      <CollapsibleSection id="tools-workflow-runner" title="GitHub Workflow Runner">
+        <WorkflowRunnerTool />
+      </CollapsibleSection>
     </>
   );
 }
