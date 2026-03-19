@@ -56,6 +56,11 @@ suite("Unit: AITemplateDataService", () => {
     assert.ok(service.onInitialized);
     assert.ok(service.onDataChanged);
     assert.ok(service.onError);
+    assert.ok(service.onUpdatesAvailableChanged);
+  });
+
+  test("Should have updatesAvailable default to false", () => {
+    assert.strictEqual(service.getUpdatesAvailable(), false);
   });
 
   test("Should return empty array before initialization", () => {
