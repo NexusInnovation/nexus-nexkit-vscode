@@ -72,7 +72,7 @@ suite("Unit: GitHubWorkflowRunnerService", () => {
     const mockUri = vscode.Uri.file("/mock/workspace");
     sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: mockUri, name: "mock", index: 0 }]);
     sandbox.stub(service, "isDockerInstalled").returns(true);
-    sandbox.stub(service, "isDockerRunning").returns(true);
+    sandbox.stub(service, "isDockerRunning").resolves(true);
     sandbox.stub(service, "findActPath").returns("/usr/bin/act");
 
     const mockTerminal = {
@@ -106,7 +106,7 @@ suite("Unit: GitHubWorkflowRunnerService", () => {
     const mockUri = vscode.Uri.file("/mock/workspace");
     sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: mockUri, name: "mock", index: 0 }]);
     sandbox.stub(service, "isDockerInstalled").returns(true);
-    sandbox.stub(service, "isDockerRunning").returns(true);
+    sandbox.stub(service, "isDockerRunning").resolves(true);
     sandbox.stub(service, "findActPath").returns("/usr/bin/act");
 
     const mockTerminal = {
@@ -131,7 +131,7 @@ suite("Unit: GitHubWorkflowRunnerService", () => {
     const mockUri = vscode.Uri.file("/mock/workspace");
     sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: mockUri, name: "mock", index: 0 }]);
     sandbox.stub(service, "isDockerInstalled").returns(true);
-    sandbox.stub(service, "isDockerRunning").returns(true);
+    sandbox.stub(service, "isDockerRunning").resolves(true);
     sandbox.stub(service, "findActPath").returns("/usr/bin/act");
 
     const mockTerminal = {
@@ -220,7 +220,7 @@ suite("Unit: GitHubWorkflowRunnerService", () => {
     sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: mockUri, name: "mock", index: 0 }]);
     sandbox.stub(service, "findActPath").returns(undefined);
     sandbox.stub(service, "isDockerInstalled").returns(true);
-    sandbox.stub(service, "isDockerRunning").returns(true);
+    sandbox.stub(service, "isDockerRunning").resolves(true);
 
     // User dismisses the dialog
     const warningStub = sandbox.stub(vscode.window, "showWarningMessage").resolves(undefined);
@@ -295,7 +295,7 @@ suite("Unit: GitHubWorkflowRunnerService", () => {
     const mockUri = vscode.Uri.file("/mock/workspace");
     sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: mockUri, name: "mock", index: 0 }]);
     sandbox.stub(service, "isDockerInstalled").returns(true);
-    sandbox.stub(service, "isDockerRunning").returns(false);
+    sandbox.stub(service, "isDockerRunning").resolves(false);
 
     const errorStub = sandbox.stub(vscode.window, "showErrorMessage").resolves(undefined);
     const createTerminalStub = sandbox.stub(vscode.window, "createTerminal");
@@ -316,7 +316,7 @@ suite("Unit: GitHubWorkflowRunnerService", () => {
     const mockUri = vscode.Uri.file("/mock/workspace");
     sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: mockUri, name: "mock", index: 0 }]);
     sandbox.stub(service, "isDockerInstalled").returns(true);
-    sandbox.stub(service, "isDockerRunning").returns(true);
+    sandbox.stub(service, "isDockerRunning").resolves(true);
     sandbox.stub(service, "findActPath").returns("/usr/bin/act");
 
     const mockTerminal = {
