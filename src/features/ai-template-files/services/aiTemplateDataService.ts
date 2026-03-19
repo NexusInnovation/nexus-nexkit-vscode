@@ -449,8 +449,8 @@ export class AITemplateDataService implements vscode.Disposable {
     // Install batch without backups (overwrite existing)
     const summary = await this.installBatch(templatesToUpdate, { silent: true, overwrite: true });
 
-    // Clear updates available flag after successful update
-    if (this._updatesAvailable) {
+    // Clear updates available flag only after a full (all-modes) update
+    if (!mode && this._updatesAvailable) {
       this._updatesAvailable = false;
       this._onUpdatesAvailableChanged.fire(false);
     }
@@ -549,13 +549,30 @@ export class AITemplateDataService implements vscode.Disposable {
 
       if (SettingsManager.isTemplatesAutoUpdateEnabled()) {
         // Auto-update: silently update installed templates
-        await this.updateInstalledTemplates();
-        vscode.window.showInformationMessage(`Nexkit: Templates auto-refreshed and updated from ${label}.`);
+        const summary = (await this.updateInstalledTemplates()) as any;
+        const updatedCount =
+          typeof summary?.updatedCount === "number"
+            ? summary.updatedCount
+            : typeof summary?.updated === "number"
+            ? summary.updated
+            : undefined;
+
+        if (typeof updatedCount === "number" && updatedCount > 0) {
+          vscode.window.showInformationMessage(
+            `Nexkit: Templates auto-refreshed and updated from ${label}.`
+          );
+        } else {
+          vscode.window.showInformationMessage(
+            `Nexkit: Templates auto-refreshed from ${label} (no installed templates required updates).`
+          );
+        }
       } else {
         // Manual update: signal that updates are available
         this._updatesAvailable = true;
         this._onUpdatesAvailableChanged.fire(true);
-        vscode.window.showInformationMessage(`Nexkit: Template updates available from ${label}. Use the sidebar to update.`);
+        vscode.window.showInformationMessage(
+          `Nexkit: Template updates available from ${label}. Open the Nexkit sidebar to install or update templates.`
+        );
       }
     }
   }

@@ -148,7 +148,7 @@ export class NexkitPanelMessageHandler {
   }
 
   private async handleUpdateInstalledTemplates(
-    message: WebviewMessage & { command: "updateInstalledTemplates"; mode?: string }
+    message: WebviewMessage & { command: "updateInstalledTemplates" }
   ): Promise<void> {
     this.trackWebviewAction("updateInstalledTemplates");
     await vscode.commands.executeCommand(Commands.UPDATE_INSTALLED_TEMPLATES, message.mode);
