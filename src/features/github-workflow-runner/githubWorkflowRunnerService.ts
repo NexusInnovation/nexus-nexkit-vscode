@@ -165,9 +165,7 @@ export class GitHubWorkflowRunnerService {
     }
 
     if (!this.isDockerRunning()) {
-      vscode.window.showErrorMessage(
-        "Docker is installed but not running. Please start Docker Desktop and try again."
-      );
+      vscode.window.showErrorMessage("Docker is installed but not running. Please start Docker Desktop and try again.");
       return;
     }
 

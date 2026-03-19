@@ -269,10 +269,7 @@ suite("Unit: GitHubWorkflowRunnerService", () => {
     });
 
     assert.ok(errorStub.calledOnce, "Should show error message");
-    assert.ok(
-      errorStub.firstCall.args[0].includes("Docker is required"),
-      "Error message should mention Docker is required"
-    );
+    assert.ok(errorStub.firstCall.args[0].includes("Docker is required"), "Error message should mention Docker is required");
     assert.ok(createTerminalStub.notCalled, "Should not create terminal");
   });
 
@@ -311,10 +308,7 @@ suite("Unit: GitHubWorkflowRunnerService", () => {
     });
 
     assert.ok(errorStub.calledOnce, "Should show error message");
-    assert.ok(
-      errorStub.firstCall.args[0].includes("not running"),
-      "Error message should mention Docker is not running"
-    );
+    assert.ok(errorStub.firstCall.args[0].includes("not running"), "Error message should mention Docker is not running");
     assert.ok(createTerminalStub.notCalled, "Should not create terminal");
   });
 
