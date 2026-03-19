@@ -259,10 +259,7 @@ export class SettingsManager {
   }
 
   static getCommitMessageSystemPrompt(): string {
-    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<string>(
-      "commitMessage.systemPrompt",
-      ""
-    );
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<string>("commitMessage.systemPrompt", "");
   }
 
   // Active DevOps Connection (using workspace state)
