@@ -81,6 +81,11 @@ export type ExtensionMessage =
       command: "metadataScanComplete";
       index: TemplateMetadataEntry[];
     }
+  // Template updates available
+  | {
+      command: "templateUpdatesAvailable";
+      updatesAvailable: boolean;
+    }
   // GitHub workflow runner messages
   | {
       command: "workflowListUpdate";

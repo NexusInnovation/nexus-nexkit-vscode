@@ -37,6 +37,7 @@ export class SettingsManager {
 
   // Template auto-refresh settings
   private static readonly TEMPLATES_AUTO_REFRESH_INTERVAL = "templates.autoRefreshIntervalMinutes";
+  private static readonly TEMPLATES_AUTO_UPDATE_ON_REFRESH = "templates.autoUpdateOnRefresh";
 
   // Extension update state keys (GlobalState)
   private static readonly EXTENSION_LAST_UPDATE_CHECK_STATE_KEY = "nexkit.extension.lastUpdateCheck";
@@ -167,6 +168,10 @@ export class SettingsManager {
     return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<number>(this.TEMPLATES_AUTO_REFRESH_INTERVAL, 30);
   }
 
+  static isTemplatesAutoUpdateEnabled(): boolean {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<boolean>(this.TEMPLATES_AUTO_UPDATE_ON_REFRESH, true);
+  }
+
   static getLastUpdateCheck(): number {
     if (!this.context) {
       throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
@@ -254,10 +259,7 @@ export class SettingsManager {
   }
 
   static getCommitMessageSystemPrompt(): string {
-    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<string>(
-      "commitMessage.systemPrompt",
-      ""
-    );
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<string>("commitMessage.systemPrompt", "");
   }
 
   // Active DevOps Connection (using workspace state)

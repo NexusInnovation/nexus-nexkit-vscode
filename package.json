@@ -280,6 +280,12 @@
           "scope": "application",
           "description": "Minutes between automatic remote template refresh checks."
         },
+        "nexkit.templates.autoUpdateOnRefresh": {
+          "type": "boolean",
+          "default": true,
+          "scope": "application",
+          "description": "Automatically update installed templates when new versions are detected from repositories. When disabled, a button will appear in the sidebar to manually trigger updates."
+        },
         "nexkit.mcpSetup.dismissed": {
           "type": "boolean",
           "default": false,

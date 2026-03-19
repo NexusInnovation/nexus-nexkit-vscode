@@ -33,6 +33,8 @@ export class AITemplateDataService implements vscode.Disposable {
 
   private readonly _onInitialized = new vscode.EventEmitter<void>();
   private readonly _onError = new vscode.EventEmitter<Error>();
+  private readonly _onUpdatesAvailableChanged = new vscode.EventEmitter<boolean>();
+  private _updatesAvailable = false;
   private configChangeListener: vscode.Disposable | undefined;
   private fileWatchers: Map<string, vscode.FileSystemWatcher> = new Map();
   private refreshTimers: Map<string, NodeJS.Timeout> = new Map();
@@ -53,6 +55,11 @@ export class AITemplateDataService implements vscode.Disposable {
    */
   public readonly onError: vscode.Event<Error> = this._onError.event;
 
+  /**
+   * Event fired when template updates availability changes
+   */
+  public readonly onUpdatesAvailableChanged: vscode.Event<boolean> = this._onUpdatesAvailableChanged.event;
+
   constructor(stateManager: InstalledTemplatesStateManager) {
     this.stateManager = stateManager;
     this.repositoryManager = new RepositoryManager();
@@ -69,6 +76,13 @@ export class AITemplateDataService implements vscode.Disposable {
    */
   public getRepositoryManager(): RepositoryManager {
     return this.repositoryManager;
+  }
+
+  /**
+   * Whether template updates are available from repositories
+   */
+  public getUpdatesAvailable(): boolean {
+    return this._updatesAvailable;
   }
 
   /**
@@ -435,6 +449,12 @@ export class AITemplateDataService implements vscode.Disposable {
     // Install batch without backups (overwrite existing)
     const summary = await this.installBatch(templatesToUpdate, { silent: true, overwrite: true });
 
+    // Clear updates available flag only after a full (all-modes) update
+    if (!mode && this._updatesAvailable) {
+      this._updatesAvailable = false;
+      this._onUpdatesAvailableChanged.fire(false);
+    }
+
     return {
       ...summary,
       skipped: skippedCount,
@@ -526,7 +546,34 @@ export class AITemplateDataService implements vscode.Disposable {
     if (updatedRepos.length > 0) {
       const label =
         updatedRepos.length === 1 ? `"${updatedRepos[0]}"` : `${updatedRepos.length} repositories (${updatedRepos.join(", ")})`;
-      vscode.window.showInformationMessage(`Nexkit: Templates auto-refreshed from ${label}.`);
+
+      if (SettingsManager.isTemplatesAutoUpdateEnabled()) {
+        // Auto-update: silently update installed templates
+        const summary = (await this.updateInstalledTemplates()) as any;
+        const updatedCount =
+          typeof summary?.updatedCount === "number"
+            ? summary.updatedCount
+            : typeof summary?.updated === "number"
+            ? summary.updated
+            : undefined;
+
+        if (typeof updatedCount === "number" && updatedCount > 0) {
+          vscode.window.showInformationMessage(
+            `Nexkit: Templates auto-refreshed and updated from ${label}.`
+          );
+        } else {
+          vscode.window.showInformationMessage(
+            `Nexkit: Templates auto-refreshed from ${label} (no installed templates required updates).`
+          );
+        }
+      } else {
+        // Manual update: signal that updates are available
+        this._updatesAvailable = true;
+        this._onUpdatesAvailableChanged.fire(true);
+        vscode.window.showInformationMessage(
+          `Nexkit: Template updates available from ${label}. Open the Nexkit sidebar to install or update templates.`
+        );
+      }
     }
   }
 
@@ -560,6 +607,7 @@ export class AITemplateDataService implements vscode.Disposable {
     this.dataStore.dispose();
     this._onInitialized.dispose();
     this._onError.dispose();
+    this._onUpdatesAvailableChanged.dispose();
     this.configChangeListener?.dispose();
     this.disposeFileWatchers();
     if (this.autoRefreshTimer) {
