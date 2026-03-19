@@ -35,6 +35,7 @@ export interface AppState {
     repositories: RepositoryTemplatesMap[];
     installed: InstalledTemplatesMap;
     isReady: boolean;
+    updatesAvailable: boolean;
   };
 
   /**
@@ -100,6 +101,7 @@ export const initialAppState: AppState = {
       hooks: [],
     },
     isReady: false,
+    updatesAvailable: false,
   },
   profiles: {
     list: [],

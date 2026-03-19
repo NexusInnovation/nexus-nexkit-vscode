@@ -137,6 +137,11 @@ suite("Unit: SettingsManager", () => {
     assert.strictEqual(typeof isFirstTime, "boolean");
   });
 
+  test("Should get templates auto update enabled status", () => {
+    const isEnabled = SettingsManager.isTemplatesAutoUpdateEnabled();
+    assert.strictEqual(typeof isEnabled, "boolean");
+  });
+
   test("Should set first time user status", async () => {
     await SettingsManager.setFirstTimeUser(false);
     const isFirstTime = SettingsManager.isFirstTimeUser();

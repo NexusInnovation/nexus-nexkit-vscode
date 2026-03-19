@@ -19,7 +19,8 @@ export function ApmTemplateSection() {
   const { isReady, repositories, installedTemplates, installTemplate, uninstallTemplate, isTemplateInstalled } = useTemplateData(
     OperationMode.APM
   );
-  const { metadataScan } = useAppState();
+  const state = useAppState();
+  const { metadataScan } = state;
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
@@ -82,7 +83,7 @@ export function ApmTemplateSection() {
       {!isReady && <p class="loading">Loading agent templates...</p>}
       {isReady && (
         <div class="template-section">
-          {installedAgentsCount > 0 && (
+        {installedAgentsCount > 0 && state.templates.updatesAvailable && (
             <div class="action-item">
               <button
                 class="action-button"

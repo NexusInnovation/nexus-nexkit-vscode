@@ -68,6 +68,11 @@ export class NexkitPanelMessageHandler {
     this._services.templateMetadataScanner.onScanComplete((index) => {
       this.sendToWebview({ command: "metadataScanComplete", index });
     });
+
+    // Forward template updates available state to webview
+    this._services.aiTemplateData.onUpdatesAvailableChanged((updatesAvailable) => {
+      this.sendToWebview({ command: "templateUpdatesAvailable", updatesAvailable });
+    });
   }
 
   public async handleMessage(message: WebviewMessage): Promise<void> {
@@ -84,6 +89,7 @@ export class NexkitPanelMessageHandler {
     await this.sendTemplateData();
     await this._services.aiTemplateData.syncInstalledTemplates();
     this.sendInstalledTemplates();
+    this.sendUpdatesAvailable();
     this.sendProfilesData();
     this.sendDevOpsConnections();
     this.sendMetadataScanState();
@@ -142,11 +148,12 @@ export class NexkitPanelMessageHandler {
   }
 
   private async handleUpdateInstalledTemplates(
-    message: WebviewMessage & { command: "updateInstalledTemplates"; mode?: string }
+    message: WebviewMessage & { command: "updateInstalledTemplates" }
   ): Promise<void> {
     this.trackWebviewAction("updateInstalledTemplates");
     await vscode.commands.executeCommand(Commands.UPDATE_INSTALLED_TEMPLATES, message.mode);
     this.sendInstalledTemplates();
+    this.sendUpdatesAvailable();
   }
 
   private async handleGetTemplateMetadata(message: WebviewMessage & { command: "getTemplateMetadata" }): Promise<void> {
@@ -352,6 +359,13 @@ export class NexkitPanelMessageHandler {
         context: "webview.sendInstalledTemplates",
       });
     }
+  }
+
+  private sendUpdatesAvailable(): void {
+    this.sendToWebview({
+      command: "templateUpdatesAvailable",
+      updatesAvailable: this._services.aiTemplateData.getUpdatesAvailable(),
+    });
   }
 
   private sendProfilesData(): void {

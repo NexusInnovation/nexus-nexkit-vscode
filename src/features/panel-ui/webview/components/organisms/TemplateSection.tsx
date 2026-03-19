@@ -28,7 +28,8 @@ export function TemplateSection() {
   const { isReady, repositories, installedTemplates, installTemplate, uninstallTemplate, isTemplateInstalled } = useTemplateData(
     OperationMode.Developers
   );
-  const { metadataScan } = useAppState();
+  const state = useAppState();
+  const { metadataScan } = state;
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [filterMode, setFilterMode] = useFilterMode();
@@ -261,7 +262,7 @@ export function TemplateSection() {
       {!isReady && <p class="loading">Loading templates...</p>}
       {isReady && (
         <div class="template-section">
-          {installedTemplatesCount > 0 && (
+        {installedTemplatesCount > 0 && state.templates.updatesAvailable && (
             <div class="action-item">
               <button
                 class="action-button"
