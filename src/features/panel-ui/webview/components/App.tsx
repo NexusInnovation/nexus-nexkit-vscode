@@ -98,18 +98,38 @@ export function App() {
 
       <TabBar tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} badges={badges} />
 
-      <div class="tab-content" role="tabpanel">
+      <div class="tab-content">
         {isDevelopersMode && (
           <>
-            {activeTab === "template" && <TemplateSection />}
-            {activeTab === "tools" && <ToolsSection isInitialized={workspace.isInitialized} />}
-            {activeTab === "profile" && <ProfileSection />}
+            {activeTab === "template" && (
+              <div class="tab-panel" role="tabpanel" id="template-tabpanel">
+                <TemplateSection />
+              </div>
+            )}
+            {activeTab === "tools" && (
+              <div class="tab-panel" role="tabpanel" id="tools-tabpanel">
+                <ToolsSection isInitialized={workspace.isInitialized} />
+              </div>
+            )}
+            {activeTab === "profile" && (
+              <div class="tab-panel" role="tabpanel" id="profile-tabpanel">
+                <ProfileSection />
+              </div>
+            )}
           </>
         )}
         {isAPMMode && (
           <>
-            {activeTab === "template" && <ApmTemplateSection />}
-            {activeTab === "project" && <ApmConnectionSection />}
+            {activeTab === "template" && (
+              <div class="tab-panel" role="tabpanel" id="template-tabpanel">
+                <ApmTemplateSection />
+              </div>
+            )}
+            {activeTab === "project" && (
+              <div class="tab-panel" role="tabpanel" id="project-tabpanel">
+                <ApmConnectionSection />
+              </div>
+            )}
           </>
         )}
       </div>
