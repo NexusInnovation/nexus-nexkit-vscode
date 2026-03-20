@@ -1,3 +1,8 @@
+## 3.7.0-beta.6 (2026-03-20)
+
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([108b8b4](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/108b8b4))
+* feat(scripts): enhance default act image support for matrix runners ([32b451e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/32b451e))
+
 ## 3.7.0-beta.5 (2026-03-20)
 
 * Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([d28c983](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/d28c983))
