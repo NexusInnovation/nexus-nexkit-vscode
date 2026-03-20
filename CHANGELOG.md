@@ -1,3 +1,9 @@
+## 3.7.0-beta.4 (2026-03-20)
+
+* feat: replace inline PowerShell terminal command with cross-platform scripts (#130) ([7b3e3a6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/7b3e3a6)), closes [#130](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/130)
+* chore(vscodeignore): update exclusions to include only runtime-essential files ([8697fac](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8697fac))
+* Apply suggestions from code review ([5916f43](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/5916f43))
+
 ## 3.7.0-beta.3 (2026-03-20)
 
 * Merge branch 'main' into develop ([ea19c85](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ea19c85))

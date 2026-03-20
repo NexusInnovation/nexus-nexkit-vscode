@@ -100,11 +100,17 @@ const PLATFORM_MAPPINGS: string[] = [
 /**
  * Service for discovering and running GitHub Actions workflows locally using act.
  *
- * Invokes `act` (nektos/act) directly in a VS Code terminal — no external
- * scripts are required. The extension ships the full runner logic.
+ * Invokes `act` (nektos/act) via packaged helper scripts in the `scripts/` directory:
+ * - `Run-GitHubWorkflow.ps1` on Windows (PowerShell)
+ * - `run-github-workflow.sh` on macOS/Linux (bash)
  */
 export class GitHubWorkflowRunnerService {
   private _actPath: string | undefined;
+  private readonly _extensionUri: vscode.Uri;
+
+  constructor(extensionUri: vscode.Uri) {
+    this._extensionUri = extensionUri;
+  }
 
   /**
    * Discovers all workflow YAML files in the .github/workflows/ directory of the workspace
@@ -185,9 +191,10 @@ export class GitHubWorkflowRunnerService {
       return;
     }
 
-    // Check if act is available; prompt to install if not
-    const actPath = this.findActPath();
-    if (!actPath) {
+    // Check if act is available; prompt to install if not.
+    // This pre-check provides a VS Code UI dialog for better UX — the packaged
+    // scripts also perform their own act discovery when they run in the terminal.
+    if (!this.findActPath()) {
       const willInstall = await this.promptInstallAct();
       if (!willInstall) {
         return;
@@ -200,8 +207,7 @@ export class GitHubWorkflowRunnerService {
     const rootPath = rootUri.fsPath;
     const workflowAbsolutePath = vscode.Uri.joinPath(rootUri, params.workflowFile).fsPath;
 
-    const actArgs = this.buildActArgs(params, workflowAbsolutePath, rootPath);
-    const command = `& "${actPath}" ${actArgs.join(" ")}; Write-Host ""; Read-Host "Press Enter to close"; exit`;
+    const command = this.buildScriptCommand(params, workflowAbsolutePath);
 
     const terminal = vscode.window.createTerminal({
       name: "GitHub Workflow Runner",
@@ -385,6 +391,62 @@ export class GitHubWorkflowRunnerService {
       }
     }
     return available;
+  }
+
+  /**
+   * Builds the OS-appropriate terminal command to run the workflow via a packaged script.
+   *
+   * On Windows, invokes `Run-GitHubWorkflow.ps1` (PowerShell).
+   * On macOS/Linux, invokes `run-github-workflow.sh` (bash).
+   */
+  private buildScriptCommand(params: RunWorkflowParams, workflowAbsolutePath: string): string {
+    if (process.platform === "win32") {
+      const scriptPath = vscode.Uri.joinPath(this._extensionUri, "scripts", "Run-GitHubWorkflow.ps1").fsPath;
+      const args = this.buildPowerShellScriptArgs(params, workflowAbsolutePath);
+      return `& "${scriptPath}" ${args}`;
+    } else {
+      const scriptPath = vscode.Uri.joinPath(this._extensionUri, "scripts", "run-github-workflow.sh").fsPath;
+      const args = this.buildShellScriptArgs(params, workflowAbsolutePath);
+      return `bash "${scriptPath}" ${args}`;
+    }
+  }
+
+  /**
+   * Builds PowerShell-style arguments for `Run-GitHubWorkflow.ps1`.
+   */
+  private buildPowerShellScriptArgs(params: RunWorkflowParams, workflowAbsolutePath: string): string {
+    const args: string[] = [];
+    args.push(`-WorkflowFile "${workflowAbsolutePath}"`);
+    args.push(`-Event "${params.event}"`);
+    if (params.job) {
+      args.push(`-Job "${params.job}"`);
+    }
+    if (params.dryRun) {
+      args.push("-DryRun");
+    }
+    if (params.list) {
+      args.push("-List");
+    }
+    return args.join(" ");
+  }
+
+  /**
+   * Builds POSIX shell-style arguments for `run-github-workflow.sh`.
+   */
+  private buildShellScriptArgs(params: RunWorkflowParams, workflowAbsolutePath: string): string {
+    const args: string[] = [];
+    args.push(`--workflow-file "${workflowAbsolutePath}"`);
+    args.push(`--event "${params.event}"`);
+    if (params.job) {
+      args.push(`--job "${params.job}"`);
+    }
+    if (params.dryRun) {
+      args.push("--dry-run");
+    }
+    if (params.list) {
+      args.push("--list");
+    }
+    return args.join(" ");
   }
 
   /**

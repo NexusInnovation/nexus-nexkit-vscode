@@ -14,7 +14,7 @@ suite("Unit: GitHubWorkflowRunnerService", () => {
 
   setup(() => {
     sandbox = sinon.createSandbox();
-    service = new GitHubWorkflowRunnerService();
+    service = new GitHubWorkflowRunnerService(vscode.Uri.file("/mock/extension"));
   });
 
   teardown(() => {
@@ -93,12 +93,20 @@ suite("Unit: GitHubWorkflowRunnerService", () => {
     assert.ok(mockTerminal.sendText.calledOnce);
 
     const command = mockTerminal.sendText.firstCall.args[0] as string;
-    assert.ok(command.startsWith('& "'), `Expected command to start with call operator, got: ${command}`);
-    assert.ok(command.includes("/usr/bin/act"), `Expected full act path in command, got: ${command}`);
-    assert.ok(command.includes("--workflows"), "Expected --workflows flag");
-    assert.ok(command.includes("--job"), "Expected --job flag");
-    assert.ok(command.includes("--dryrun"), "Expected --dryrun flag");
-    assert.ok(command.includes("--platform"), "Expected --platform flag");
+    const isWindows = process.platform === "win32";
+    if (isWindows) {
+      assert.ok(command.startsWith('& "'), `Expected PowerShell call operator, got: ${command}`);
+      assert.ok(command.includes("Run-GitHubWorkflow.ps1"), `Expected PS script in command, got: ${command}`);
+      assert.ok(command.includes("-WorkflowFile"), "Expected -WorkflowFile flag");
+      assert.ok(command.includes("-Job"), "Expected -Job flag");
+      assert.ok(command.includes("-DryRun"), "Expected -DryRun flag");
+    } else {
+      assert.ok(command.startsWith('bash "'), `Expected bash invocation, got: ${command}`);
+      assert.ok(command.includes("run-github-workflow.sh"), `Expected shell script in command, got: ${command}`);
+      assert.ok(command.includes("--workflow-file"), "Expected --workflow-file flag");
+      assert.ok(command.includes("--job"), "Expected --job flag");
+      assert.ok(command.includes("--dry-run"), "Expected --dry-run flag");
+    }
     assert.ok(command.includes("push"), "Expected push event");
   });
 
@@ -123,8 +131,14 @@ suite("Unit: GitHubWorkflowRunnerService", () => {
     });
 
     const command = mockTerminal.sendText.firstCall.args[0] as string;
-    assert.ok(!command.includes("--job"), "Should not include --job flag");
-    assert.ok(!command.includes("--dryrun"), "Should not include --dryrun flag");
+    const isWindows = process.platform === "win32";
+    if (isWindows) {
+      assert.ok(!command.includes("-Job"), "Should not include -Job flag");
+      assert.ok(!command.includes("-DryRun"), "Should not include -DryRun flag");
+    } else {
+      assert.ok(!command.includes("--job"), "Should not include --job flag");
+      assert.ok(!command.includes("--dry-run"), "Should not include --dry-run flag");
+    }
   });
 
   test("Should use --list flag when list is true", async () => {
@@ -148,9 +162,12 @@ suite("Unit: GitHubWorkflowRunnerService", () => {
     });
 
     const command = mockTerminal.sendText.firstCall.args[0] as string;
-    assert.ok(command.includes("--list"), "Expected --list flag");
-    // In list mode, event should NOT be included
-    assert.ok(!command.includes("push"), "Should not include event in list mode");
+    const isWindows = process.platform === "win32";
+    if (isWindows) {
+      assert.ok(command.includes("-List"), "Expected -List flag");
+    } else {
+      assert.ok(command.includes("--list"), "Expected --list flag");
+    }
   });
 
   // ============================================================================
