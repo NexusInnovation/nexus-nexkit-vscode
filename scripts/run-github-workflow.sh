@@ -115,8 +115,7 @@ fail()        { printf '[FAIL] %s\n' "$1" >&2; exit 1; }
 
 # --- Resolve repository root ---
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(pwd)"
 
 if [[ ! -d "$REPO_ROOT/.git" ]]; then
   fail "Could not locate the repository root. Run this script from the repo or its scripts/ directory."
