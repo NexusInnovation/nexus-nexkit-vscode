@@ -30,7 +30,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - name: Install Linux dependencies
-        if: matrix.os == 'ubuntu-latest'
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y xvfb \
@@ -40,7 +40,7 @@ jobs:
             libxrandr2 libpango-1.0-0 libcairo2
 
       - name: Start Xvfb
-        if: matrix.os == 'ubuntu-latest'
+        if: runner.os == 'Linux'
         run: |
           export DISPLAY=:99
           Xvfb :99 -screen 0 1920x1080x16 &
@@ -69,10 +69,10 @@ jobs:
         run: npm run test-compile
 
       - name: Run tests
-        if: matrix.os != 'ubuntu-latest'
+        if: runner.os != 'Linux'
         run: npm test
       - name: Run tests (headless)
-        if: matrix.os == 'ubuntu-latest'
+        if: runner.os == 'Linux'
         run: xvfb-run -a npm test
 
       - name: Upload test results
