@@ -287,9 +287,13 @@ if (-not [string]::IsNullOrWhiteSpace($Platform)) {
     $actArgs.Add($Platform)
 }
 else {
-    # Default to a commonly used act image
+    # Default to a commonly used act image for all matrix runners
     $actArgs.Add('--platform')
     $actArgs.Add('ubuntu-latest=catthehacker/ubuntu:act-latest')
+    $actArgs.Add('--platform')
+    $actArgs.Add('windows-latest=catthehacker/ubuntu:act-latest')
+    $actArgs.Add('--platform')
+    $actArgs.Add('macos-latest=catthehacker/ubuntu:act-latest')
 }
 
 # Secrets file
