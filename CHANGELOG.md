@@ -1,3 +1,9 @@
+## 3.7.0-beta.3 (2026-03-20)
+
+* Merge branch 'main' into develop ([ea19c85](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ea19c85))
+* fix(ui panel): Some fixes (#120) ([dfe1f71](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/dfe1f71)), closes [#120](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/120) [#117](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/117)
+* fix(uipanel): Small fixersw (#121) ([31ac005](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/31ac005)), closes [#121](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/121) [#117](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/117)
+
 ## 3.7.0-beta.2 (2026-03-20)
 
 * fix(ci): Fix/make github action test work (#128 ([c760260](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c760260)), closes [#128](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/128)
