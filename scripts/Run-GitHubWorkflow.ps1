@@ -36,6 +36,11 @@
     Override the runner platform mapping. 
     Defaults to ubuntu-latest=catthehacker/ubuntu:act-latest.
 
+.PARAMETER ArtifactServerPath
+    Path where uploaded artifacts will be stored locally.
+    Defaults to .act-artifacts in the repository root.
+    act starts a local artifact server so upload-artifact actions work.
+
 .PARAMETER DryRun
     Parse and display what would be executed without actually running.
 
@@ -97,6 +102,9 @@ param(
 
     [Parameter()]
     [string]$Platform,
+
+    [Parameter()]
+    [string]$ArtifactServerPath,
 
     [Parameter()]
     [switch]$DryRun,
@@ -316,6 +324,17 @@ if (-not [string]::IsNullOrWhiteSpace($EnvFile)) {
     Write-Host "Env file : $([System.IO.Path]::GetRelativePath($repoRoot, $EnvFile))" -ForegroundColor White
 }
 
+# Artifact server (local upload simulation)
+if ([string]::IsNullOrWhiteSpace($ArtifactServerPath)) {
+    $ArtifactServerPath = Join-Path $repoRoot '.act-artifacts'
+}
+if (-not (Test-Path $ArtifactServerPath)) {
+    New-Item -ItemType Directory -Path $ArtifactServerPath -Force | Out-Null
+}
+$actArgs.Add('--artifact-server-path')
+$actArgs.Add($ArtifactServerPath)
+Write-Host "Artifacts: $([System.IO.Path]::GetRelativePath($repoRoot, $ArtifactServerPath))" -ForegroundColor White
+
 # Verbose
 if ($VerbosePreference -eq 'Continue') {
     $actArgs.Add('--verbose')
@@ -367,6 +386,15 @@ finally {
 if ($exitCode -eq 0) {
     Write-Host ''
     Write-Success "Workflow completed successfully."
+    # List collected artifacts
+    $artifactItems = Get-ChildItem -Path $ArtifactServerPath -Recurse -File -ErrorAction SilentlyContinue
+    if ($artifactItems) {
+        Write-Host "`nCollected artifacts (in $([System.IO.Path]::GetRelativePath($repoRoot, $ArtifactServerPath))/):"
+        foreach ($item in $artifactItems) {
+            $rel = [System.IO.Path]::GetRelativePath($ArtifactServerPath, $item.FullName)
+            Write-Host "  - $rel ($([math]::Round($item.Length / 1KB, 1)) KB)" -ForegroundColor Gray
+        }
+    }
 }
 else {
     Write-Host ''
