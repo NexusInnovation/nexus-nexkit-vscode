@@ -29,9 +29,15 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
-      - name: Install Xvfb
+      - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get update && sudo apt-get install -y xvfb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb \
+            libgtk-3-0 libgbm1 libnss3 libnspr4 libasound2-dev \
+            libxkbcommon0 libatk1.0-0 libatk-bridge2.0-0 \
+            libcups2 libdrm2 libxcomposite1 libxdamage1 \
+            libxrandr2 libpango-1.0-0 libcairo2
 
       - name: Start Xvfb
         if: matrix.os == 'ubuntu-latest'

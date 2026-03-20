@@ -83,9 +83,19 @@ export interface RunWorkflowParams {
 }
 
 /**
- * Default platform mapping for act
+ * Default Docker image used by act for all GitHub-hosted runner labels.
  */
-const DEFAULT_PLATFORM = "ubuntu-latest=catthehacker/ubuntu:act-latest";
+const ACT_DEFAULT_IMAGE = "catthehacker/ubuntu:act-latest";
+
+/**
+ * Platform mappings for act — maps every common GitHub-hosted runner label
+ * to the same Linux Docker image so that matrix-based `runs-on` resolves correctly.
+ */
+const PLATFORM_MAPPINGS: string[] = [
+  `ubuntu-latest=${ACT_DEFAULT_IMAGE}`,
+  `windows-latest=${ACT_DEFAULT_IMAGE}`,
+  `macos-latest=${ACT_DEFAULT_IMAGE}`,
+];
 
 /**
  * Service for discovering and running GitHub Actions workflows locally using act.
@@ -387,6 +397,7 @@ export class GitHubWorkflowRunnerService {
       // List mode: only show jobs, don't run anything
       args.push("--workflows", `"${workflowAbsolutePath}"`);
       args.push("--list");
+      args.push("--matrix", "os:ubuntu-latest");
       return args;
     }
 
@@ -401,14 +412,14 @@ export class GitHubWorkflowRunnerService {
       args.push("--job", `"${params.job}"`);
     }
 
-    // Platform mapping
-    args.push("--platform", DEFAULT_PLATFORM);
+    // Platform mappings — map all common runner labels so matrix runs-on resolves
+    for (const mapping of PLATFORM_MAPPINGS) {
+      args.push("--platform", mapping);
+    }
 
-    // Auto-detect .secrets file in workspace root
-    const secretsPath = path.join(rootPath, ".secrets");
-    // Use vscode.Uri to build the path but check via workspace.fs would be async,
-    // so we reference the path and let act handle a missing file gracefully.
-    // act itself ignores --secret-file if the file doesn't exist.
+    // Local artifact storage so upload-artifact actions don't fail
+    const artifactDir = path.join(rootPath, ".act-artifacts");
+    args.push("--artifact-server-path", `"${artifactDir}"`);
 
     // Dry run
     if (params.dryRun) {
