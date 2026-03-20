@@ -1,3 +1,8 @@
+## 3.7.0-beta.5 (2026-03-20)
+
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([d28c983](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/d28c983))
+* feat(scripts): add artifact server path support for local workflows ([c9489a7](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c9489a7))
+
 ## 3.7.0-beta.4 (2026-03-20)
 
 * feat: replace inline PowerShell terminal command with cross-platform scripts (#130) ([7b3e3a6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/7b3e3a6)), closes [#130](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/130)
