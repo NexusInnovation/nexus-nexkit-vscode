@@ -4,6 +4,9 @@ node_modules
 .vscode-test/
 *.vsix
 
+# act (local workflow runner) artifacts
+.act-artifacts/
+
 # Environment files with sensitive data
 .env
 .env.local

@@ -166,7 +166,9 @@ suite("Unit: GitHubWorkflowRunnerService", () => {
 
     assert.ok(args.includes("push"), "Should include event");
     assert.ok(args.includes("--workflows"), "Should include --workflows");
-    assert.ok(args.includes("--platform"), "Should include --platform");
+    const platformCount = args.filter((a) => a === "--platform").length;
+    assert.strictEqual(platformCount, 3, "Should include 3 --platform mappings (ubuntu, windows, macos)");
+    assert.ok(args.includes("--artifact-server-path"), "Should include --artifact-server-path");
     assert.ok(!args.includes("--dryrun"), "Should not include --dryrun");
     assert.ok(!args.includes("--list"), "Should not include --list");
     assert.ok(!args.includes("--job"), "Should not include --job");
