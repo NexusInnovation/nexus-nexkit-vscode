@@ -1,3 +1,7 @@
+## 3.7.0-beta.2 (2026-03-20)
+
+* fix(ci): Fix/make github action test work (#128 ([c760260](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c760260)), closes [#128](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/128)
+
 ## 3.7.0-beta.1 (2026-03-19)
 
 * feat(ui): New tab layout and Github Workflow Run Tester ([1b18eb2](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/1b18eb2)), closes [#126](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/126)
