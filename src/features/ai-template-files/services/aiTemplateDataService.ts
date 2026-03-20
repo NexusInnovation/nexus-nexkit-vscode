@@ -449,8 +449,8 @@ export class AITemplateDataService implements vscode.Disposable {
     // Install batch without backups (overwrite existing)
     const summary = await this.installBatch(templatesToUpdate, { silent: true, overwrite: true });
 
-    // Clear updates available flag only after a full (all-modes) update
-    if (!mode && this._updatesAvailable) {
+    // Clear updates available flag after a successful update
+    if (this._updatesAvailable) {
       this._updatesAvailable = false;
       this._onUpdatesAvailableChanged.fire(false);
     }
@@ -568,8 +568,10 @@ export class AITemplateDataService implements vscode.Disposable {
         }
       } else {
         // Manual update: signal that updates are available
-        this._updatesAvailable = true;
-        this._onUpdatesAvailableChanged.fire(true);
+        if (!this._updatesAvailable) {
+          this._updatesAvailable = true;
+          this._onUpdatesAvailableChanged.fire(true);
+        }
         vscode.window.showInformationMessage(
           `Nexkit: Template updates available from ${label}. Open the Nexkit sidebar to install or update templates.`
         );
