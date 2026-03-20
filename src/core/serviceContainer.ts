@@ -104,7 +104,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     githubAuthPrompt
   );
   const nexkitFileWatcher = NexkitFileWatcherService.getInstance();
-  const githubWorkflowRunner = new GitHubWorkflowRunnerService();
+  const githubWorkflowRunner = new GitHubWorkflowRunnerService(context.extensionUri);
 
   // Register for disposal
   context.subscriptions.push(logging);
