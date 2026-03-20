@@ -136,12 +136,9 @@ function Write-Fail {
 
 #region --- Resolve repository root ---
 
-if ($PSScriptRoot) {
-    $repoRoot = Split-Path -Parent $PSScriptRoot
-}
-else {
-    $repoRoot = (Get-Location).Path
-}
+$repoRoot = (Get-Location).Path
+
+Write-Host "Running from repository: $repoRoot" -ForegroundColor White
 
 # Sanity check: we should be inside a git repo
 if (-not (Test-Path (Join-Path $repoRoot '.git'))) {

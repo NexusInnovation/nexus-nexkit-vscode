@@ -12,3 +12,5 @@
 !out/webview/styles.css
 !out/webview/static/**
 !media/**
+!scripts/run-github-workflow.sh
+!scripts/Run-GitHubWorkflow.ps1
