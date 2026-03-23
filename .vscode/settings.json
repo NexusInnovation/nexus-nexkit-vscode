@@ -23,5 +23,7 @@
   "debug.internalConsoleOptions": "neverOpen",
   "azureFunctions.projectLanguageModel": 4,
   "azureFunctions.preDeployTask": "npm prune (functions)",
-  "githubPullRequests.ignoredPullRequestBranches": ["develop"]
+  "githubPullRequests.ignoredPullRequestBranches": [
+    "develop"
+  ]
 }
