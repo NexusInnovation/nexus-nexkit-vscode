@@ -1,3 +1,7 @@
+## 3.7.0-beta.7 (2026-03-23)
+
+* feat(github-workflow-runner): update terminal name to indicate experimental status ([258f896](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/258f896))
+
 ## 3.7.0-beta.6 (2026-03-20)
 
 * Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([108b8b4](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/108b8b4))
