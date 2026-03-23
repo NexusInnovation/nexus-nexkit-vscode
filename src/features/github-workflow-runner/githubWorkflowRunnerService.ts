@@ -210,7 +210,7 @@ export class GitHubWorkflowRunnerService {
     const command = this.buildScriptCommand(params, workflowAbsolutePath);
 
     const terminal = vscode.window.createTerminal({
-      name: "GitHub Workflow Runner",
+      name: "GitHub Workflow Runner (Expérimental)",
       cwd: rootPath,
     });
     terminal.show();
