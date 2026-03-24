@@ -42,6 +42,9 @@ export class NexkitPanelMessageHandler {
       ["addDevOpsConnection", this.handleAddDevOpsConnection.bind(this)],
       ["removeDevOpsConnection", this.handleRemoveDevOpsConnection.bind(this)],
       ["setActiveDevOpsConnection", this.handleSetActiveDevOpsConnection.bind(this)],
+      // GitHub workflow runner handlers
+      ["listWorkflows", this.handleListWorkflows.bind(this)],
+      ["runWorkflow", this.handleRunWorkflow.bind(this)],
     ]);
 
     // Auto-refresh template data when it changes (e.g., after config update)
@@ -65,6 +68,11 @@ export class NexkitPanelMessageHandler {
     this._services.templateMetadataScanner.onScanComplete((index) => {
       this.sendToWebview({ command: "metadataScanComplete", index });
     });
+
+    // Forward template updates available state to webview
+    this._services.aiTemplateData.onUpdatesAvailableChanged((updatesAvailable) => {
+      this.sendToWebview({ command: "templateUpdatesAvailable", updatesAvailable });
+    });
   }
 
   public async handleMessage(message: WebviewMessage): Promise<void> {
@@ -81,9 +89,11 @@ export class NexkitPanelMessageHandler {
     await this.sendTemplateData();
     await this._services.aiTemplateData.syncInstalledTemplates();
     this.sendInstalledTemplates();
+    this.sendUpdatesAvailable();
     this.sendProfilesData();
     this.sendDevOpsConnections();
     this.sendMetadataScanState();
+    this.sendWorkflowList();
   }
 
   // ============================================================================
@@ -138,11 +148,12 @@ export class NexkitPanelMessageHandler {
   }
 
   private async handleUpdateInstalledTemplates(
-    message: WebviewMessage & { command: "updateInstalledTemplates"; mode?: string }
+    message: WebviewMessage & { command: "updateInstalledTemplates" }
   ): Promise<void> {
     this.trackWebviewAction("updateInstalledTemplates");
     await vscode.commands.executeCommand(Commands.UPDATE_INSTALLED_TEMPLATES, message.mode);
     this.sendInstalledTemplates();
+    this.sendUpdatesAvailable();
   }
 
   private async handleGetTemplateMetadata(message: WebviewMessage & { command: "getTemplateMetadata" }): Promise<void> {
@@ -264,6 +275,25 @@ export class NexkitPanelMessageHandler {
   }
 
   // ============================================================================
+  // GITHUB WORKFLOW RUNNER HANDLERS
+  // ============================================================================
+
+  private async handleListWorkflows(message: WebviewMessage): Promise<void> {
+    await this.sendWorkflowList();
+  }
+
+  private async handleRunWorkflow(message: WebviewMessage & { command: "runWorkflow" }): Promise<void> {
+    this.trackWebviewAction("runWorkflow");
+    await this._services.githubWorkflowRunner.runWorkflow({
+      workflowFile: message.workflowFile,
+      job: message.job,
+      event: message.event,
+      dryRun: message.dryRun,
+      list: message.list,
+    });
+  }
+
+  // ============================================================================
   // DATA SENDERS - Send data to webview
   // ============================================================================
 
@@ -331,6 +361,13 @@ export class NexkitPanelMessageHandler {
     }
   }
 
+  private sendUpdatesAvailable(): void {
+    this.sendToWebview({
+      command: "templateUpdatesAvailable",
+      updatesAvailable: this._services.aiTemplateData.getUpdatesAvailable(),
+    });
+  }
+
   private sendProfilesData(): void {
     try {
       const profiles = this._services.profileService.getProfiles();
@@ -376,6 +413,18 @@ export class NexkitPanelMessageHandler {
         command: "metadataScanProgress",
         progress: scanner.getProgress(),
       });
+    }
+  }
+
+  private async sendWorkflowList(): Promise<void> {
+    try {
+      const workflows = await this._services.githubWorkflowRunner.listWorkflows();
+      this.sendToWebview({
+        command: "workflowListUpdate",
+        workflows,
+      });
+    } catch (error) {
+      console.error("Failed to list workflows:", error);
     }
   }
 

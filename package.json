@@ -2,7 +2,7 @@
   "name": "nexus-nexkit-vscode",
   "displayName": "Nexkit",
   "description": "VS Code extension for Nexkit",
-  "version": "3.6.2-beta.1",
+  "version": "3.7.0-beta.7",
   "publisher": "NexusInnovation",
   "private": true,
   "license": "MIT",
@@ -279,6 +279,12 @@
           "minimum": 5,
           "scope": "application",
           "description": "Minutes between automatic remote template refresh checks."
+        },
+        "nexkit.templates.autoUpdateOnRefresh": {
+          "type": "boolean",
+          "default": true,
+          "scope": "application",
+          "description": "Automatically update installed templates when new versions are detected from repositories. When disabled, a button will appear in the sidebar to manually trigger updates."
         },
         "nexkit.mcpSetup.dismissed": {
           "type": "boolean",

@@ -1,3 +1,40 @@
+## 3.7.0-beta.7 (2026-03-23)
+
+* feat(github-workflow-runner): update terminal name to indicate experimental status ([258f896](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/258f896))
+
+## 3.7.0-beta.6 (2026-03-20)
+
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([108b8b4](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/108b8b4))
+* feat(scripts): enhance default act image support for matrix runners ([32b451e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/32b451e))
+
+## 3.7.0-beta.5 (2026-03-20)
+
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([d28c983](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/d28c983))
+* feat(scripts): add artifact server path support for local workflows ([c9489a7](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c9489a7))
+
+## 3.7.0-beta.4 (2026-03-20)
+
+* feat: replace inline PowerShell terminal command with cross-platform scripts (#130) ([7b3e3a6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/7b3e3a6)), closes [#130](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/130)
+* chore(vscodeignore): update exclusions to include only runtime-essential files ([8697fac](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8697fac))
+* Apply suggestions from code review ([5916f43](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/5916f43))
+
+## 3.7.0-beta.3 (2026-03-20)
+
+* Merge branch 'main' into develop ([ea19c85](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ea19c85))
+* fix(ui panel): Some fixes (#120) ([dfe1f71](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/dfe1f71)), closes [#120](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/120) [#117](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/117)
+* fix(uipanel): Small fixersw (#121) ([31ac005](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/31ac005)), closes [#121](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/121) [#117](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/117)
+
+## 3.7.0-beta.2 (2026-03-20)
+
+* fix(ci): Fix/make github action test work (#128 ([c760260](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c760260)), closes [#128](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/128)
+
+## 3.7.0-beta.1 (2026-03-19)
+
+* feat(ui): New tab layout and Github Workflow Run Tester ([1b18eb2](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/1b18eb2)), closes [#126](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/126)
+* chore(release): Use tabs to select section in NexKit panel (#123) ([ae965a4](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ae965a4)), closes [#123](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/123) [#126](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/126)
+* Feature/refresh template button behaviour (#124) ([56a62a7](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/56a62a7)), closes [#124](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/124) [#125](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/125)
+* docs(codebase): add detailed exploration summary for NexKit (#122) ([5955d94](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/5955d94)), closes [#122](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/122)
+
 ## <small>3.6.2-beta.1 (2026-03-12)</small>
 
 * fix(panel-ui): sort template list alphabetically by name (#119) ([71a0e90](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/71a0e90)), closes [#119](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/119)

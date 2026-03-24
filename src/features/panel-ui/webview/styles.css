@@ -98,6 +98,65 @@ body {
   border-top: none;
 }
 
+/* ============================================ */
+/* Tab Bar                                      */
+/* ============================================ */
+
+.tab-bar {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+
+.tab-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 8px 0;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--vscode-foreground);
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s ease, border-color 0.15s ease;
+  font-size: 16px;
+}
+
+.tab-button:hover {
+  opacity: 1;
+  background-color: var(--vscode-list-hoverBackground);
+}
+
+.tab-button.active {
+  opacity: 1;
+  border-bottom-color: var(--vscode-focusBorder);
+  color: var(--vscode-focusBorder);
+}
+
+.tab-icon-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.tab-badge {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--vscode-focusBorder);
+  pointer-events: none;
+}
+
+.tab-content {
+  min-height: 0;
+}
+
 .section .section-header {
   cursor: pointer;
   user-select: none;
@@ -1126,6 +1185,167 @@ details[open] > .type-header::before {
   font-size: 0.9em;
   color: var(--vscode-descriptionForeground);
   margin: 0;
+}
+
+/* ============================================================================
+   WORKFLOW RUNNER (Tools Section)
+   ============================================================================ */
+
+.workflow-runner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.workflow-runner-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.workflow-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.workflow-label {
+  font-size: 0.8em;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.workflow-select-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.workflow-select {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 0.9em;
+  font-family: var(--vscode-font-family);
+  color: var(--vscode-dropdown-foreground);
+  background-color: var(--vscode-dropdown-background);
+  border: 1px solid var(--vscode-dropdown-border);
+  border-radius: 4px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.workflow-select:focus {
+  border-color: var(--vscode-focusBorder);
+}
+
+.workflow-input {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 0.9em;
+  font-family: var(--vscode-font-family);
+  color: var(--vscode-input-foreground);
+  background-color: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border);
+  border-radius: 4px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.workflow-input:focus {
+  border-color: var(--vscode-focusBorder);
+}
+
+.workflow-input::placeholder {
+  color: var(--vscode-input-placeholderForeground);
+}
+
+.workflow-icon-btn {
+  background: none;
+  border: none;
+  color: var(--vscode-foreground);
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+  border-radius: 4px;
+}
+
+.workflow-icon-btn:hover {
+  opacity: 1;
+  background-color: var(--vscode-toolbar-hoverBackground);
+}
+
+.workflow-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.workflow-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85em;
+  color: var(--vscode-foreground);
+  cursor: pointer;
+  user-select: none;
+}
+
+.workflow-checkbox-label input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+  accent-color: var(--vscode-button-background);
+}
+
+.workflow-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.workflow-run-btn,
+.workflow-list-btn,
+.workflow-refresh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.workflow-run-btn {
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+}
+
+.workflow-run-btn:hover:not(:disabled) {
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+.workflow-list-btn {
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+}
+
+.workflow-list-btn:hover:not(:disabled) {
+  background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+.workflow-refresh-btn {
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  flex: 0;
+  padding: 6px 12px;
+}
+
+.workflow-refresh-btn:hover:not(:disabled) {
+  background-color: var(--vscode-button-secondaryHoverBackground);
 }
 
 .mode-card-features {
