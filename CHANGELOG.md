@@ -1,3 +1,13 @@
+## 3.7.0-beta.8 (2026-03-24)
+
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([931edd2](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/931edd2))
+* Merge branch 'main' into develop ([55103c4](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/55103c4))
+* refactor(core, ui, tests): improve code quality and update .vscodeignore ([96e0489](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/96e0489))
+* feat: Enhance CI workflows and improve template management features (#131) ([a311e8a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a311e8a)), closes [#131](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/131) [#117](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/117)
+* feat: New UI with Github Workflow runner (experimental) ([d7e6221](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/d7e6221)), closes [#117](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/117)
+* style(vscode): fix JSON formatting in settings.json ([fcdc654](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/fcdc654))
+* chore(vscode): update settings for GitHub and Azure Functions ([bb27fc6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/bb27fc6))
+
 ## 3.7.0-beta.7 (2026-03-23)
 
 * feat(github-workflow-runner): update terminal name to indicate experimental status ([258f896](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/258f896))
