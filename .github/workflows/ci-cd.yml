@@ -137,7 +137,8 @@ jobs:
       ) || (
         github.event_name == 'pull_request' &&
         (github.base_ref == 'main' || github.base_ref == 'develop')
-      )
+      ) ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true')
     outputs:
       vsix-name: ${{ steps.package.outputs.vsix-name }}
       vsix-size: ${{ steps.size.outputs.size }}
@@ -241,7 +242,8 @@ jobs:
     name: PR Preview Build
     needs: [quality-gate, security]
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'develop'
+    if: (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'develop')  ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true')
     permissions:
       contents: read
       pull-requests: write
