@@ -1,3 +1,7 @@
+## 3.7.0-beta.9 (2026-03-24)
+
+* fix(ci-cd): enhance workflow dispatch and remove unused job ([4d6d004](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4d6d004))
+
 ## 3.7.0-beta.8 (2026-03-24)
 
 * Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([931edd2](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/931edd2))
