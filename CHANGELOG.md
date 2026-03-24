@@ -1,3 +1,12 @@
+## 3.7.0 (2026-03-24)
+
+* feat: Develop (#133) ([b35eab8](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/b35eab8)), closes [#133](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/133) [#117](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/117)
+* feat: Enhance CI workflows and improve template management features (#131) ([a311e8a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a311e8a)), closes [#131](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/131) [#117](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/117)
+* feat: New Release (#132) ([a871873](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a871873)), closes [#132](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/132) [#117](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/117)
+* feat: New UI with Github Workflow runner (experimental) ([d7e6221](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/d7e6221)), closes [#117](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/117)
+* fix(ui panel): Some fixes (#120) ([dfe1f71](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/dfe1f71)), closes [#120](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/120) [#117](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/117)
+* fix(uipanel): Small fixersw (#121) ([31ac005](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/31ac005)), closes [#121](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/121) [#117](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/117)
+
 ## 3.7.0-beta.9 (2026-03-24)
 
 * fix(ci-cd): enhance workflow dispatch and remove unused job ([4d6d004](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4d6d004))
