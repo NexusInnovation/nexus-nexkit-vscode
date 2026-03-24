@@ -1,16 +1,45 @@
-# Exclude everything by default
-**
+# Exclude development and tooling files; keep build output and runtime dependencies by default
 
-# Include only runtime-essential files
-!package.json
-!README.md
-!LICENSE.md
-!CHANGELOG.md
-!out/extension.js
-!out/webview.js
-!out/webview/index.html
-!out/webview/styles.css
-!out/webview/static/**
-!media/**
-!scripts/run-github-workflow.sh
-!scripts/Run-GitHubWorkflow.ps1
+# Editor and workspace settings
+.vscode/**
+.vscode-test/**
+
+# Git and CI metadata
+.git/**
+.gitignore
+.gitattributes
+.github/**
+
+# BMAD / project tooling artifacts (not needed at runtime)
+_bmad/**
+_bmad-output/**
+
+# Source and tests (compiled output in out/** is what we ship)
+src/**
+test/**
+tests/**
+coverage/**
+
+# TypeScript sources and maps (exclude if present; use compiled JS instead)
+**/*.ts
+**/*.tsx
+**/*.map
+**/*.tsbuildinfo
+
+# Common local tooling / configuration files
+.eslintrc*
+.prettierrc*
+tsconfig*.json
+jest.config.*
+webpack.config.*
+rollup.config.*
+
+# Logs and temporary files
+npm-debug.log*
+yarn-error.log*
+*.log
+*.tmp
+
+# Note: We intentionally do NOT ignore out/** or node_modules/**
+# so that all compiled extension code and its runtime dependencies
+# are included in the packaged VSIX.

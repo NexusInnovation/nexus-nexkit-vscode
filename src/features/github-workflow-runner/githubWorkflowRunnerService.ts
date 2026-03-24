@@ -210,7 +210,7 @@ export class GitHubWorkflowRunnerService {
     const command = this.buildScriptCommand(params, workflowAbsolutePath);
 
     const terminal = vscode.window.createTerminal({
-      name: "GitHub Workflow Runner (Expérimental)",
+      name: "GitHub Workflow Runner (Experimental)",
       cwd: rootPath,
     });
     terminal.show();
@@ -457,7 +457,7 @@ export class GitHubWorkflowRunnerService {
 
     if (params.list) {
       // List mode: only show jobs, don't run anything
-      args.push("--workflows", `"${workflowAbsolutePath}"`);
+      args.push("--workflows", workflowAbsolutePath);
       args.push("--list");
       args.push("--matrix", "os:ubuntu-latest");
       return args;
@@ -467,11 +467,11 @@ export class GitHubWorkflowRunnerService {
     args.push(params.event);
 
     // Workflow file
-    args.push("--workflows", `"${workflowAbsolutePath}"`);
+    args.push("--workflows", workflowAbsolutePath);
 
     // Job filter
     if (params.job) {
-      args.push("--job", `"${params.job}"`);
+      args.push("--job", params.job);
     }
 
     // Platform mappings — map all common runner labels so matrix runs-on resolves
@@ -480,8 +480,9 @@ export class GitHubWorkflowRunnerService {
     }
 
     // Local artifact storage so upload-artifact actions don't fail
-    const artifactDir = path.join(rootPath, ".act-artifacts");
-    args.push("--artifact-server-path", `"${artifactDir}"`);
+    // Normalize to forward slashes — act runs inside Docker (Linux) and requires POSIX paths
+    const artifactDir = path.join(rootPath, ".act-artifacts").replace(/\\/g, "/");
+    args.push("--artifact-server-path", artifactDir);
 
     // Dry run
     if (params.dryRun) {

@@ -37,7 +37,11 @@ export class SettingsManager {
 
   // Template auto-refresh settings
   private static readonly TEMPLATES_AUTO_REFRESH_INTERVAL = "templates.autoRefreshIntervalMinutes";
+  /**
+   * @deprecated Use TEMPLATES_AUTO_UPDATE_ENABLED instead.
+   */
   private static readonly TEMPLATES_AUTO_UPDATE_ON_REFRESH = "templates.autoUpdateOnRefresh";
+  private static readonly TEMPLATES_AUTO_UPDATE_ENABLED = "templates.autoUpdateOnRefresh";
 
   // Extension update state keys (GlobalState)
   private static readonly EXTENSION_LAST_UPDATE_CHECK_STATE_KEY = "nexkit.extension.lastUpdateCheck";

@@ -137,11 +137,57 @@ suite("Unit: SettingsManager", () => {
     assert.strictEqual(typeof isFirstTime, "boolean");
   });
 
-  test("Should get templates auto update enabled status", () => {
-    const isEnabled = SettingsManager.isTemplatesAutoUpdateEnabled();
-    assert.strictEqual(typeof isEnabled, "boolean");
+  test("Should return true when templates auto update is enabled", () => {
+    const originalGetConfiguration = vscode.workspace.getConfiguration;
+
+    (vscode.workspace as any).getConfiguration = (section?: string) => {
+      if (section === "nexkit") {
+        return {
+          get: (key: string, defaultValue?: any) => {
+            if (key === "templates.autoUpdateOnRefresh") {
+              return true;
+            }
+            return defaultValue;
+          },
+        } as any;
+      }
+
+      return originalGetConfiguration(section as any);
+    };
+
+    try {
+      const isEnabled = SettingsManager.isTemplatesAutoUpdateEnabled();
+      assert.strictEqual(isEnabled, true);
+    } finally {
+      (vscode.workspace as any).getConfiguration = originalGetConfiguration;
+    }
   });
 
+  test("Should return false when templates auto update is disabled", () => {
+    const originalGetConfiguration = vscode.workspace.getConfiguration;
+
+    (vscode.workspace as any).getConfiguration = (section?: string) => {
+      if (section === "nexkit") {
+        return {
+          get: (key: string, defaultValue?: any) => {
+            if (key === "templates.autoUpdateOnRefresh") {
+              return false;
+            }
+            return defaultValue;
+          },
+        } as any;
+      }
+
+      return originalGetConfiguration(section as any);
+    };
+
+    try {
+      const isEnabled = SettingsManager.isTemplatesAutoUpdateEnabled();
+      assert.strictEqual(isEnabled, false);
+    } finally {
+      (vscode.workspace as any).getConfiguration = originalGetConfiguration;
+    }
+  });
   test("Should set first time user status", async () => {
     await SettingsManager.setFirstTimeUser(false);
     const isFirstTime = SettingsManager.isFirstTimeUser();

@@ -175,30 +175,73 @@ suite("Unit: GitHubWorkflowRunnerService", () => {
   // ============================================================================
 
   test("buildActArgs should produce correct args for a standard run", () => {
+    const workflowPath = "/workspace/.github/workflows/ci.yml";
+    const workspaceRoot = "/workspace";
+
     const args = service.buildActArgs(
       { workflowFile: ".github/workflows/ci.yml", event: "push", dryRun: false, list: false },
-      "/workspace/.github/workflows/ci.yml",
-      "/workspace"
+      workflowPath,
+      workspaceRoot
     );
 
+    // Event should be present and in the first position
     assert.ok(args.includes("push"), "Should include event");
-    assert.ok(args.includes("--workflows"), "Should include --workflows");
-    const platformCount = args.filter((a) => a === "--platform").length;
-    assert.strictEqual(platformCount, 3, "Should include 3 --platform mappings (ubuntu, windows, macos)");
-    assert.ok(args.includes("--artifact-server-path"), "Should include --artifact-server-path");
+    assert.strictEqual(args[0], "push", "Event should be the first argument");
+
+    // --workflows flag should be present and immediately followed by the workflow file path
+    const workflowsIndex = args.indexOf("--workflows");
+    assert.notStrictEqual(workflowsIndex, -1, "Should include --workflows");
+    assert.strictEqual(args[workflowsIndex + 1], workflowPath, "Workflow path should follow --workflows flag");
+
+    // Platform mappings: three mappings with correct format and order
+    const platformFlagIndices = args
+      .map((value, index) => ({ value, index }))
+      .filter((entry) => entry.value === "--platform")
+      .map((entry) => entry.index);
+
+    assert.strictEqual(platformFlagIndices.length, 3, "Should include 3 --platform mappings (ubuntu, windows, macos)");
+
+    const platformMappings = platformFlagIndices.map((i) => args[i + 1]);
+
+    // Ensure mappings are in the expected label=image format
+    assert.deepStrictEqual(
+      platformMappings,
+      [
+        "ubuntu-latest=catthehacker/ubuntu:act-latest",
+        "windows-latest=catthehacker/ubuntu:act-latest",
+        "macos-latest=catthehacker/ubuntu:act-latest",
+      ],
+      "Platform mappings should be in the expected format and order"
+    );
+
+    // Artifact server path should be present and include the workspace root
+    const artifactIndex = args.indexOf("--artifact-server-path");
+    assert.notStrictEqual(artifactIndex, -1, "Should include --artifact-server-path");
+    const artifactPath = args[artifactIndex + 1];
+    assert.ok(
+      typeof artifactPath === "string" && artifactPath.includes(workspaceRoot),
+      "Artifact path should include workspace root"
+    );
+
+    // Flags that should NOT be present for a standard run
     assert.ok(!args.includes("--dryrun"), "Should not include --dryrun");
     assert.ok(!args.includes("--list"), "Should not include --list");
     assert.ok(!args.includes("--job"), "Should not include --job");
   });
 
   test("buildActArgs should include --job when job is specified", () => {
+    const workflowPath = "/workspace/.github/workflows/ci.yml";
+    const workspaceRoot = "/workspace";
+
     const args = service.buildActArgs(
       { workflowFile: ".github/workflows/ci.yml", event: "push", job: "test", dryRun: false, list: false },
-      "/workspace/.github/workflows/ci.yml",
-      "/workspace"
+      workflowPath,
+      workspaceRoot
     );
 
-    assert.ok(args.includes("--job"), "Should include --job flag");
+    const jobIndex = args.indexOf("--job");
+    assert.notStrictEqual(jobIndex, -1, "Should include --job flag");
+    assert.strictEqual(args[jobIndex + 1], "test", "Job name should follow --job flag");
   });
 
   test("buildActArgs should include --dryrun when dryRun is true", () => {

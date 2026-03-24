@@ -29,8 +29,7 @@ export function useActiveTab(availableTabIds: string[]): [string, (tabId: string
   // Persist active tab to VS Code webview state
   useEffect(() => {
     const currentState = getWebviewState();
-    currentState.activeTab = activeTab;
-    setWebviewState(currentState);
+    setWebviewState({ ...currentState, activeTab });
   }, [activeTab]);
 
   return [activeTab, setActiveTab];

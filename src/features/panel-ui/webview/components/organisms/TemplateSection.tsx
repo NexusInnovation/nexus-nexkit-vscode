@@ -28,8 +28,7 @@ export function TemplateSection() {
   const { isReady, repositories, installedTemplates, installTemplate, uninstallTemplate, isTemplateInstalled } = useTemplateData(
     OperationMode.Developers
   );
-  const state = useAppState();
-  const { metadataScan } = state;
+  const { metadataScan, templates } = useAppState();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [filterMode, setFilterMode] = useFilterMode();
@@ -262,15 +261,24 @@ export function TemplateSection() {
       {!isReady && <p class="loading">Loading templates...</p>}
       {isReady && (
         <div class="template-section">
-        {installedTemplatesCount > 0 && state.templates.updatesAvailable && (
+          {installedTemplatesCount > 0 && (
             <div class="action-item">
-              <button
-                class="action-button"
-                onClick={updateInstalledTemplates}
-                title="Update all installed templates to their latest versions from repositories."
-              >
-                <span>Update Installed Templates ({installedTemplatesCount})</span>
-              </button>
+              {templates.updatesAvailable ? (
+                <button
+                  class="action-button"
+                  onClick={updateInstalledTemplates}
+                  title="Update all installed templates to their latest versions from repositories."
+                >
+                  <span>Update Installed Templates ({installedTemplatesCount})</span>
+                </button>
+              ) : (
+                <span
+                  class="action-indicator"
+                  title="All installed templates are up to date; there are no updates available."
+                >
+                  Installed templates are up to date ({installedTemplatesCount})
+                </span>
+              )}
             </div>
           )}
           <div class="search-filter-row">
