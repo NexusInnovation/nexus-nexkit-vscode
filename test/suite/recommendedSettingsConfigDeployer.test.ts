@@ -43,7 +43,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     assert.deepStrictEqual(content["chat.promptFilesLocations"], { ".nexkit/prompts": true });
     assert.deepStrictEqual(content["chat.instructionsFilesLocations"], { ".nexkit/instructions": true, ".nexkit/skills": true });
     assert.deepStrictEqual(content["chat.agentFilesLocations"], { ".nexkit/agents": true });
-    assert.deepStrictEqual(content["chat.hooksFilesLocations"], { ".nexkit/hooks": true });
+    assert.deepStrictEqual(content["chat.hookFilesLocations"], { ".nexkit/hooks": true });
 
     // Verify hooks enabled
     assert.strictEqual(content["chat.useHooks"], true);
@@ -57,14 +57,10 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
       "editor.fontSize": 14,
       "chat.promptFilesLocations": {
         ".nexkit/prompts": true,
-        "custom/prompts": true
-      }
+        "custom/prompts": true,
+      },
     };
-    fs.writeFileSync(
-      path.join(settingsDir, "settings.json"),
-      JSON.stringify(existingSettings, null, 2),
-      "utf8"
-    );
+    fs.writeFileSync(path.join(settingsDir, "settings.json"), JSON.stringify(existingSettings, null, 2), "utf8");
 
     await deployer.deployVscodeSettings(tempDir);
 
@@ -78,7 +74,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     assert.strictEqual(content["chat.promptFilesLocations"][".nexkit/prompts"], true);
 
     // New settings should be added
-    assert.deepStrictEqual(content["chat.hooksFilesLocations"], { ".nexkit/hooks": true });
+    assert.deepStrictEqual(content["chat.hookFilesLocations"], { ".nexkit/hooks": true });
     assert.strictEqual(content["chat.useHooks"], true);
   });
 
@@ -100,6 +96,6 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     const content = JSON.parse(fs.readFileSync(path.join(settingsDir, "settings.json"), "utf8"));
     // Template settings should be applied
     assert.strictEqual(content["chat.useHooks"], true);
-    assert.deepStrictEqual(content["chat.hooksFilesLocations"], { ".nexkit/hooks": true });
+    assert.deepStrictEqual(content["chat.hookFilesLocations"], { ".nexkit/hooks": true });
   });
 });

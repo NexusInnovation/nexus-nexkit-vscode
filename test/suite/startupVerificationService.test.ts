@@ -38,12 +38,7 @@ suite("Unit: StartupVerificationService", () => {
     migrationService = new NexkitFileMigrationService();
     authPromptService = new GitHubAuthPromptService();
 
-    service = new StartupVerificationService(
-      gitIgnoreDeployer,
-      settingsDeployer,
-      migrationService,
-      authPromptService
-    );
+    service = new StartupVerificationService(gitIgnoreDeployer, settingsDeployer, migrationService, authPromptService);
   });
 
   teardown(() => {
@@ -75,7 +70,7 @@ suite("Unit: StartupVerificationService", () => {
     assert.ok(fs.existsSync(settingsPath));
     const settings = JSON.parse(fs.readFileSync(settingsPath, "utf8"));
     assert.deepStrictEqual(settings["chat.agentFilesLocations"], { ".nexkit/agents": true });
-    assert.deepStrictEqual(settings["chat.hooksFilesLocations"], { ".nexkit/hooks": true });
+    assert.deepStrictEqual(settings["chat.hookFilesLocations"], { ".nexkit/hooks": true });
     assert.deepStrictEqual(settings["chat.promptFilesLocations"], { ".nexkit/prompts": true });
     assert.strictEqual(settings["chat.useHooks"], true);
   });

@@ -12,10 +12,13 @@
   "chat.agentFilesLocations": {
     ".nexkit/agents": true
   },
-  "chat.hookFilesLocations": {
+  "chat.hooksFilesLocations": {
     ".nexkit/hooks": true
   },
   "chat.useHooks": true,
+  "chat.hookFilesLocations": {
+    ".nexkit/hooks": true
+  },
   "azureFunctions.deploySubpath": "infrastructure\\badge-service",
   "azureFunctions.postDeployTask": "npm install (functions)",
   "azureFunctions.projectLanguage": "TypeScript",
@@ -23,5 +26,7 @@
   "debug.internalConsoleOptions": "neverOpen",
   "azureFunctions.projectLanguageModel": 4,
   "azureFunctions.preDeployTask": "npm prune (functions)",
-  "githubPullRequests.ignoredPullRequestBranches": ["develop"]
+  "githubPullRequests.ignoredPullRequestBranches": [
+    "develop"
+  ]
 }
