@@ -1,3 +1,7 @@
+## 3.7.0-beta.10 (2026-03-24)
+
+* feat(ci): support workflow dispatch for release creation ([7a069d0](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/7a069d0))
+
 ## 3.7.0-beta.9 (2026-03-24)
 
 * fix(ci-cd): enhance workflow dispatch and remove unused job ([4d6d004](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4d6d004))
