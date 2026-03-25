@@ -1,3 +1,8 @@
+## 3.7.0-beta.11 (2026-03-25)
+
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([c3cece9](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c3cece9))
+* fix(settings): correct key name and format JSON files ([183bd40](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/183bd40))
+
 ## 3.7.0-beta.10 (2026-03-24)
 
 * feat(ci): support workflow dispatch for release creation ([7a069d0](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/7a069d0))
