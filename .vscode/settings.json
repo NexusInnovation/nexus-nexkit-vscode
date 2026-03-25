@@ -12,7 +12,7 @@
   "chat.agentFilesLocations": {
     ".nexkit/agents": true
   },
-  "chat.hooksFilesLocations": {
+  "chat.hookFilesLocations": {
     ".nexkit/hooks": true
   },
   "chat.useHooks": true,
@@ -23,7 +23,5 @@
   "debug.internalConsoleOptions": "neverOpen",
   "azureFunctions.projectLanguageModel": 4,
   "azureFunctions.preDeployTask": "npm prune (functions)",
-  "githubPullRequests.ignoredPullRequestBranches": [
-    "develop"
-  ]
+  "githubPullRequests.ignoredPullRequestBranches": ["develop"]
 }

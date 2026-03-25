@@ -304,14 +304,14 @@ async function removeNexkitFromVSCodeSettings(workspaceRoot: string): Promise<vo
     // Remove Nexkit-specific settings (add more as needed)
     const nexkitKeys = Object.keys(settings).filter(
       (key) =>
-        key.startsWith("github.copilot.chat.mode") ||
-        key.startsWith("github.copilot.chat.codeGeneration.instructions") ||
-        key === "github.copilot.chat.useProjectTemplates" ||
-        key === "chat.promptFilesLocations" ||
-        key === "chat.instructionsFilesLocations" ||
-        key === "chat.agentFilesLocations" ||
-        key === "chat.hooksFilesLocations" ||
-        key === "chat.useHooks"
+      key.startsWith("github.copilot.chat.mode") ||
+      key.startsWith("github.copilot.chat.codeGeneration.instructions") ||
+      key === "github.copilot.chat.useProjectTemplates" ||
+      key === "chat.promptFilesLocations" ||
+      key === "chat.instructionsFilesLocations" ||
+      key === "chat.agentFilesLocations" ||
+      key === "chat.hookFilesLocations" ||
+      key === "chat.useHooks"
     );
 
     if (nexkitKeys.length > 0) {

@@ -160,7 +160,7 @@ nexkit.mcpSetup.dismissed         // boolean
   "chat.promptFilesLocations": { ".nexkit/prompts": true },
   "chat.instructionsFilesLocations": { ".nexkit/instructions": true, ".nexkit/skills": true },
   "chat.agentFilesLocations": { ".nexkit/agents": true },
-  "chat.hooksFilesLocations": { ".nexkit/hooks": true },
+  "chat.hookFilesLocations": { ".nexkit/hooks": true },
   "chat.useHooks": true
 }
 ```
@@ -493,7 +493,7 @@ const SETTINGS_TEMPLATE = {
   "chat.agentFilesLocations": {
     ".nexkit/agents": true,
   },
-  "chat.hooksFilesLocations": {
+  "chat.hookFilesLocations": {
     ".nexkit/hooks": true,           // ← Hooks location
   },
   "chat.useHooks": true,             // ← Enable hooks globally

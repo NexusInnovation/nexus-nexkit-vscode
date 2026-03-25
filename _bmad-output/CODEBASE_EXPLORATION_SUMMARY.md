@@ -13,11 +13,11 @@ The project uses **Lefthook** for Git hook management.
 
 #### Files Involved
 
-| File | Purpose |
-|------|---------|
-| `lefthook.yml` | Hook configuration |
-| `package.json` | Hook setup command (`prepare` script) |
-| `.github/workflows/commitlint.yml` | CI workflow for commit validation |
+| File                               | Purpose                               |
+| ---------------------------------- | ------------------------------------- |
+| `lefthook.yml`                     | Hook configuration                    |
+| `package.json`                     | Hook setup command (`prepare` script) |
+| `.github/workflows/commitlint.yml` | CI workflow for commit validation     |
 
 #### Hook Definitions
 
@@ -40,7 +40,7 @@ The project also configures VS Code chat hooks:
 
 ```json
 {
-  "chat.hooksFilesLocations": {
+  "chat.hookFilesLocations": {
     ".nexkit/hooks": true
   },
   "chat.useHooks": true
@@ -93,13 +93,13 @@ test script
 
 ### Key Test Framework Details
 
-| Tool | Purpose | Config |
-|------|---------|--------|
-| **TypeScript** | Type compilation | `tsconfig.json` |
-| **Mocha** | Test runner | Tests in `test/suite/` |
-| **Sinon** | Mocking/stubbing | Used in unit tests |
-| **NYC/nyc** | Coverage reporting | `test:coverage` script |
-| **@vscode/test-electron** | VS Code extension testing | ESM test environment |
+| Tool                      | Purpose                   | Config                 |
+| ------------------------- | ------------------------- | ---------------------- |
+| **TypeScript**            | Type compilation          | `tsconfig.json`        |
+| **Mocha**                 | Test runner               | Tests in `test/suite/` |
+| **Sinon**                 | Mocking/stubbing          | Used in unit tests     |
+| **NYC/nyc**               | Coverage reporting        | `test:coverage` script |
+| **@vscode/test-electron** | VS Code extension testing | ESM test environment   |
 
 ### Test File Structure
 
@@ -163,16 +163,16 @@ workspaceInitializationService.initializeWorkspace()
 
 ### Validation Checklist During Initialization
 
-| Step | Service | Validation |
-|------|---------|-----------|
-| 1. Verify Config | `StartupVerificationService` | Checks gitignore, settings, file migration |
-| 2. Backup | `BackupService` | Backs up `.nexkit/` templates before operations |
-| 3. Deploy Extensions | `RecommendedExtensionsConfigDeployer` | Creates/merges `.vscode/extensions.json` |
-| 4. Deploy MCP | `MCPConfigDeployer` | Creates/merges `.vscode/mcp.json` |
-| 5. Deploy Settings | `RecommendedSettingsConfigDeployer` | Deep-merges `.vscode/settings.json` |
-| 6. Deploy Gitignore | `GitIgnoreConfigDeployer` | Adds `.nexkit/` section with delimiters |
-| 7. Apply Profile or Defaults | `ProfileService` or `AITemplateFilesDeployer` | Installs templates to `.nexkit/` |
-| 8. Mark as Initialized | `SettingsManager` | Sets `nexkit.workspace.initialized = true` |
+| Step                         | Service                                       | Validation                                      |
+| ---------------------------- | --------------------------------------------- | ----------------------------------------------- |
+| 1. Verify Config             | `StartupVerificationService`                  | Checks gitignore, settings, file migration      |
+| 2. Backup                    | `BackupService`                               | Backs up `.nexkit/` templates before operations |
+| 3. Deploy Extensions         | `RecommendedExtensionsConfigDeployer`         | Creates/merges `.vscode/extensions.json`        |
+| 4. Deploy MCP                | `MCPConfigDeployer`                           | Creates/merges `.vscode/mcp.json`               |
+| 5. Deploy Settings           | `RecommendedSettingsConfigDeployer`           | Deep-merges `.vscode/settings.json`             |
+| 6. Deploy Gitignore          | `GitIgnoreConfigDeployer`                     | Adds `.nexkit/` section with delimiters         |
+| 7. Apply Profile or Defaults | `ProfileService` or `AITemplateFilesDeployer` | Installs templates to `.nexkit/`                |
+| 8. Mark as Initialized       | `SettingsManager`                             | Sets `nexkit.workspace.initialized = true`      |
 
 ### StartupVerificationService Details
 
@@ -240,13 +240,13 @@ interface Deployer {
 
 ### Existing Deployers
 
-| Deployer | Output | Pattern | Operation |
-|----------|--------|---------|-----------|
-| `GitIgnoreConfigDeployer` | `.gitignore` | Section markers | Non-destructive |
-| `RecommendedSettingsConfigDeployer` | `.vscode/settings.json` | Deep merge | User settings win |
-| `RecommendedExtensionsConfigDeployer` | `.vscode/extensions.json` | Array merge | No duplicates |
-| `MCPConfigDeployer` | `.vscode/mcp.json` | Deep merge | Preserve server entries |
-| `AITemplateFilesDeployer` | `.nexkit/` templates | File write + backup | Overwrite (with backup) |
+| Deployer                              | Output                    | Pattern             | Operation               |
+| ------------------------------------- | ------------------------- | ------------------- | ----------------------- |
+| `GitIgnoreConfigDeployer`             | `.gitignore`              | Section markers     | Non-destructive         |
+| `RecommendedSettingsConfigDeployer`   | `.vscode/settings.json`   | Deep merge          | User settings win       |
+| `RecommendedExtensionsConfigDeployer` | `.vscode/extensions.json` | Array merge         | No duplicates           |
+| `MCPConfigDeployer`                   | `.vscode/mcp.json`        | Deep merge          | Preserve server entries |
+| `AITemplateFilesDeployer`             | `.nexkit/` templates      | File write + backup | Overwrite (with backup) |
 
 ### Deployer Patterns in Detail
 
@@ -618,17 +618,17 @@ function initializeServices(context: vscode.ExtensionContext): ServiceContainer 
 
 ## Summary Table
 
-| Aspect | Status | Details |
-|--------|--------|---------|
-| **Git Hooks** | ✅ Fully Configured | Lefthook + pre-commit (lint/test), commit-msg (commitlint) |
-| **Test Commands** | ✅ Well-Defined | npm test, npm run test:unit, npm run test:coverage |
-| **Test Execution** | ✅ Automated | pretest hook + Mocha runner + coverage reports |
-| **Initialization Flow** | ✅ Well-Orchestrated | 8-step process with validation at each stage |
-| **Validation Patterns** | ✅ Standardized | Return `{ valid, error }` objects consistently |
-| **File Deployers** | ✅ Excellent Pattern | 5 deployers with different strategies (merge, dedupe, sections) |
-| **Project Type Detection** | ❌ Not Implemented | Ready to implement using provided patterns |
-| **Settings Architecture** | ✅ Three-Tier System | GlobalState + WorkspaceState + Configuration |
-| **Service Container** | ✅ Well-Implemented | DI pattern with ordered initialization |
+| Aspect                     | Status              | Details                                                         |
+| -------------------------- | ------------------- | --------------------------------------------------------------- |
+| **Git Hooks**              | ✅ Fully Configured  | Lefthook + pre-commit (lint/test), commit-msg (commitlint)      |
+| **Test Commands**          | ✅ Well-Defined      | npm test, npm run test:unit, npm run test:coverage              |
+| **Test Execution**         | ✅ Automated         | pretest hook + Mocha runner + coverage reports                  |
+| **Initialization Flow**    | ✅ Well-Orchestrated | 8-step process with validation at each stage                    |
+| **Validation Patterns**    | ✅ Standardized      | Return `{ valid, error }` objects consistently                  |
+| **File Deployers**         | ✅ Excellent Pattern | 5 deployers with different strategies (merge, dedupe, sections) |
+| **Project Type Detection** | ❌ Not Implemented   | Ready to implement using provided patterns                      |
+| **Settings Architecture**  | ✅ Three-Tier System | GlobalState + WorkspaceState + Configuration                    |
+| **Service Container**      | ✅ Well-Implemented  | DI pattern with ordered initialization                          |
 
 ---
 
