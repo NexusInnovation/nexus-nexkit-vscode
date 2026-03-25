@@ -1,3 +1,9 @@
+## 3.7.0-beta.12 (2026-03-25)
+
+* fix(output): remove codebase exploration summary file ([9f0da06](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9f0da06))
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([df87d83](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/df87d83))
+* refactor(vscode-settings): update settings structure and remove artifact index ([e94cf98](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/e94cf98))
+
 ## 3.7.0-beta.11 (2026-03-25)
 
 * Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([c3cece9](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c3cece9))
