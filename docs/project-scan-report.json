@@ -7,7 +7,7 @@
     },
     "mode": "initial_scan",
     "scan_level": "deep",
-    "project_root": "c:\\git\\nexkit\\nexus-nexkit-vscode",
+    "project_root": "{project-root}",
     "project_knowledge": "docs",
     "completed_steps": [
         {

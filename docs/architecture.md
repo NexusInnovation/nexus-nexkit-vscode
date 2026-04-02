@@ -196,12 +196,12 @@ Direct calls to `vscode.workspace.getConfiguration()` are forbidden outside `Set
 
 Two esbuild entry points producing two bundles:
 
-| Bundle    | Entry                                    | Output             | Target             |
-| --------- | ---------------------------------------- | ------------------ | ------------------ |
-| Extension | `src/extension.ts`                       | `out/extension.js` | Node.js (CommonJS) |
-| Webview   | `src/features/panel-ui/webview/main.tsx` | `out/webview.js`   | Browser (ESM)      |
+| Bundle    | Entry                                    | Output             | Target                 |
+| --------- | ---------------------------------------- | ------------------ | ---------------------- |
+| Extension | `src/extension.ts`                       | `out/extension.js` | Node.js (CommonJS)     |
+| Webview   | `src/features/panel-ui/webview/main.tsx` | `out/webview.js`   | Browser (IIFE bundle)  |
 
-Static assets (HTML, CSS, codicons) are copied from `src/features/panel-ui/webview/static/` to `out/webview/static/`.
+Static assets (HTML, CSS, codicons) are copied from `src/features/panel-ui/webview/static/` and from `src/features/panel-ui/webview/index.html` and `styles.css` to the corresponding locations under `out/webview/`.
 
 ## Testing Strategy
 
