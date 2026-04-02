@@ -1,7 +1,5 @@
 {
   "editor.formatOnSave": true,
-  "typescript.preferences.importModuleSpecifier": "relative",
-  "typescript.suggest.autoImports": true,
   "chat.promptFilesLocations": {
     ".nexkit/prompts": true
   },
@@ -11,9 +9,6 @@
   },
   "chat.agentFilesLocations": {
     ".nexkit/agents": true
-  },
-  "chat.hooksFilesLocations": {
-    ".nexkit/hooks": true
   },
   "chat.useHooks": true,
   "chat.hookFilesLocations": {
@@ -26,7 +21,5 @@
   "debug.internalConsoleOptions": "neverOpen",
   "azureFunctions.projectLanguageModel": 4,
   "azureFunctions.preDeployTask": "npm prune (functions)",
-  "githubPullRequests.ignoredPullRequestBranches": [
-    "develop"
-  ]
+  "githubPullRequests.ignoredPullRequestBranches": ["develop"]
 }
