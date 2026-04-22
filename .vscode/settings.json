@@ -9,8 +9,7 @@
     ".nexkit/hooks": true
   },
   "chat.instructionsFilesLocations": {
-    ".nexkit/instructions": true,
-    ".nexkit/skills": true
+    ".nexkit/instructions": true
   },
   "chat.promptFilesLocations": {
     ".nexkit/prompts": true
