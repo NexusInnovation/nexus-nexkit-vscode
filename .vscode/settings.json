@@ -1,32 +1,23 @@
 {
   "editor.formatOnSave": true,
-  "typescript.preferences.importModuleSpecifier": "relative",
-  "typescript.suggest.autoImports": true,
   "chat.promptFilesLocations": {
     ".nexkit/prompts": true
   },
   "chat.instructionsFilesLocations": {
-    ".nexkit/instructions": true,
-    ".nexkit/skills": true
+    ".nexkit/instructions": true
   },
   "chat.agentFilesLocations": {
     ".nexkit/agents": true
   },
-  "chat.hooksFilesLocations": {
-    ".nexkit/hooks": true
+  "chat.agentSkillsLocations": {
+    ".nexkit/skills": true
   },
   "chat.useHooks": true,
   "chat.hookFilesLocations": {
     ".nexkit/hooks": true
   },
-  "azureFunctions.deploySubpath": "infrastructure\\badge-service",
-  "azureFunctions.postDeployTask": "npm install (functions)",
-  "azureFunctions.projectLanguage": "TypeScript",
-  "azureFunctions.projectRuntime": "~4",
   "debug.internalConsoleOptions": "neverOpen",
-  "azureFunctions.projectLanguageModel": 4,
-  "azureFunctions.preDeployTask": "npm prune (functions)",
-  "githubPullRequests.ignoredPullRequestBranches": [
-    "develop"
-  ]
+  "githubPullRequests.ignoredPullRequestBranches": ["develop"],
+  "chat.useCustomAgentHooks": true,
+  "chat.useClaudeHooks": true
 }

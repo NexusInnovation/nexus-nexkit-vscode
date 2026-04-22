@@ -421,6 +421,7 @@
     "pretest": "npm run test-compile && npm run lint",
     "test": "node ./out/test/runTest.js",
     "test:unit": "node ./out/test/runTest.js",
+    "test:headless": "node ./out/test/runHeadlessTest.js",
     "test:integration": "node ./out/test/runTest.js",
     "test:coverage": "nyc --reporter=lcovonly --reporter=text node ./out/test/runTest.js",
     "lint": "eslint src --ext ts",
