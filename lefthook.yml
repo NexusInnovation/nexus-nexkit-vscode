@@ -4,4 +4,8 @@ commit-msg:
 
 pre-commit:
   jobs:
-    - run: npm run pretest
+    - run: npm run pretest && npm run test:unit
+
+pre-push:
+  jobs:
+    - run: npm run pretest && npm run test
