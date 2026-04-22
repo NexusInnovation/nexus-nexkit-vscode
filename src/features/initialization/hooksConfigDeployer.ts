@@ -101,10 +101,16 @@ export class HooksConfigDeployer {
 
         // Prefer test:headless > test:unit > test
         if (scripts["test:headless"]) {
-          return { command: "npm run test-compile && npm run test:headless" };
+          return {
+            command: "npm run test-compile && npm run test:headless",
+            windows: "npm run test-compile; npm run test:headless",
+          };
         }
         if (scripts["test:unit"]) {
-          return { command: "npm run test-compile && npm run test:unit" };
+          return {
+            command: "npm run test-compile && npm run test:unit",
+            windows: "npm run test-compile; npm run test:unit",
+          };
         }
         if (scripts["test"]) {
           return { command: "npm test" };

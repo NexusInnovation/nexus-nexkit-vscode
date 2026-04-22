@@ -39,6 +39,7 @@ suite("Unit: HooksConfigDeployer", () => {
     assert.ok(fs.existsSync(hookPath));
     const config = JSON.parse(fs.readFileSync(hookPath, "utf8"));
     assert.ok(config.hooks.Stop[0].command.includes("test:headless"));
+    assert.ok(config.hooks.Stop[0].windows?.includes("test:headless"));
   });
 
   test("Should detect Node.js test:unit script when no test:headless", async () => {
@@ -52,6 +53,7 @@ suite("Unit: HooksConfigDeployer", () => {
 
     const config = JSON.parse(fs.readFileSync(path.join(tempDir, ".nexkit", "hooks", "run-tests.json"), "utf8"));
     assert.ok(config.hooks.Stop[0].command.includes("test:unit"));
+    assert.ok(config.hooks.Stop[0].windows?.includes("test:unit"));
   });
 
   test("Should detect Node.js test script as fallback", async () => {
