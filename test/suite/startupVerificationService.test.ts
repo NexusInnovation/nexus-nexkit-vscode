@@ -41,7 +41,13 @@ suite("Unit: StartupVerificationService", () => {
     migrationService = new NexkitFileMigrationService();
     authPromptService = new GitHubAuthPromptService();
 
-    service = new StartupVerificationService(gitIgnoreDeployer, settingsDeployer, hooksConfigDeployer, migrationService, authPromptService);
+    service = new StartupVerificationService(
+      gitIgnoreDeployer,
+      settingsDeployer,
+      hooksConfigDeployer,
+      migrationService,
+      authPromptService
+    );
   });
 
   teardown(() => {
