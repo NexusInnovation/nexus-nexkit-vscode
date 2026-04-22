@@ -332,8 +332,9 @@ Le dossier `.nexkit/` est automatiquement configuré comme source pour GitHub Co
 ```json
 {
   "chat.promptFilesLocations":       { ".nexkit/prompts": true },
-  "chat.instructionsFilesLocations": { ".nexkit/instructions": true, ".nexkit/skills": true },
-  "chat.agentFilesLocations":        { ".nexkit/agents": true }
+  "chat.instructionsFilesLocations": { ".nexkit/instructions": true },
+  "chat.agentFilesLocations":        { ".nexkit/agents": true },
+  "chat.agentSkillsLocations":       { ".nexkit/skills": true }
 }
 ```
 
