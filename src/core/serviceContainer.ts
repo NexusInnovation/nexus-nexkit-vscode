@@ -26,6 +26,7 @@ import { GitHubAuthPromptService } from "../features/initialization/githubAuthPr
 import { StartupVerificationService } from "../features/initialization/startupVerificationService";
 import { NexkitFileWatcherService } from "../features/nexkit-file-watcher/nexkitFileWatcherService";
 import { GitHubWorkflowRunnerService } from "../features/github-workflow-runner/githubWorkflowRunnerService";
+import { HooksConfigDeployer } from "../features/initialization/hooksConfigDeployer";
 
 /**
  * Service container for dependency injection
@@ -56,6 +57,7 @@ export interface ServiceContainer {
   commitMessage: CommitMessageService;
   templateMetadataScanner: TemplateMetadataScannerService;
   githubAuthPrompt: GitHubAuthPromptService;
+  hooksConfigDeployer: HooksConfigDeployer;
   startupVerification: StartupVerificationService;
   nexkitFileWatcher: NexkitFileWatcherService;
   githubWorkflowRunner: GitHubWorkflowRunnerService;
@@ -97,9 +99,11 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const commitMessage = new CommitMessageService();
   const templateMetadataScanner = new TemplateMetadataScannerService(templateMetadata, aiTemplateData);
   const githubAuthPrompt = new GitHubAuthPromptService();
+  const hooksConfigDeployer = new HooksConfigDeployer();
   const startupVerification = new StartupVerificationService(
     gitIgnoreConfigDeployer,
     recommendedSettingsConfigDeployer,
+    hooksConfigDeployer,
     nexkitFileMigration,
     githubAuthPrompt
   );
@@ -141,6 +145,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     commitMessage,
     templateMetadataScanner,
     githubAuthPrompt,
+    hooksConfigDeployer,
     startupVerification,
     nexkitFileWatcher,
     githubWorkflowRunner,

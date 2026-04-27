@@ -41,9 +41,10 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
 
     // Verify chat file locations
     assert.deepStrictEqual(content["chat.promptFilesLocations"], { ".nexkit/prompts": true });
-    assert.deepStrictEqual(content["chat.instructionsFilesLocations"], { ".nexkit/instructions": true, ".nexkit/skills": true });
+    assert.deepStrictEqual(content["chat.instructionsFilesLocations"], { ".nexkit/instructions": true });
     assert.deepStrictEqual(content["chat.agentFilesLocations"], { ".nexkit/agents": true });
     assert.deepStrictEqual(content["chat.hookFilesLocations"], { ".nexkit/hooks": true });
+    assert.deepStrictEqual(content["chat.agentSkillsLocations"], { ".nexkit/skills": true });
 
     // Verify hooks enabled
     assert.strictEqual(content["chat.useHooks"], true);

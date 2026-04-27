@@ -309,6 +309,7 @@ async function removeNexkitFromVSCodeSettings(workspaceRoot: string): Promise<vo
       key === "github.copilot.chat.useProjectTemplates" ||
       key === "chat.promptFilesLocations" ||
       key === "chat.instructionsFilesLocations" ||
+      key === "chat.agentSkillsLocations" ||
       key === "chat.agentFilesLocations" ||
       key === "chat.hookFilesLocations" ||
       key === "chat.useHooks"
