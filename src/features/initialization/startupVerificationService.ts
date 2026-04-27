@@ -3,6 +3,7 @@ import { LoggingService } from "../../shared/services/loggingService";
 import { GitIgnoreConfigDeployer } from "./gitIgnoreConfigDeployer";
 import { RecommendedSettingsConfigDeployer } from "./recommendedSettingsConfigDeployer";
 import { NexkitFileMigrationService, MigrationSummary } from "./nexkitFileMigrationService";
+import { HooksConfigDeployer } from "./hooksConfigDeployer";
 import { GitHubAuthPromptService } from "./githubAuthPromptService";
 
 /**
@@ -17,6 +18,7 @@ export class StartupVerificationService {
   constructor(
     private readonly _gitIgnoreConfigDeployer: GitIgnoreConfigDeployer,
     private readonly _recommendedSettingsConfigDeployer: RecommendedSettingsConfigDeployer,
+    private readonly _hooksConfigDeployer: HooksConfigDeployer,
     private readonly _nexkitFileMigration: NexkitFileMigrationService,
     private readonly _githubAuthPrompt: GitHubAuthPromptService
   ) {}
@@ -54,6 +56,9 @@ export class StartupVerificationService {
 
     // Ensure VS Code settings contain all required chat file locations and hooks
     await this._recommendedSettingsConfigDeployer.deployVscodeSettings(workspaceRoot);
+
+    // Deploy run-tests hook based on detected test framework
+    await this._hooksConfigDeployer.deployRunTestsHook(workspaceRoot);
 
     // Migrate any nexkit.* files still in .github/<type>/ to .nexkit/<type>/
     return await this._nexkitFileMigration.migrateNexkitFiles(workspaceRoot);

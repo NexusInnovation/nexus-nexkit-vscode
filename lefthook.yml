@@ -5,3 +5,7 @@ commit-msg:
 pre-commit:
   jobs:
     - run: npm run pretest
+
+pre-push:
+  jobs:
+    - run: npm run pretest && npm run test:headless

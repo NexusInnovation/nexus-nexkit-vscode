@@ -7,21 +7,20 @@ import { LoggingService } from "../../shared/services/loggingService";
  * Template for VS Code workspace settings
  */
 const SETTINGS_TEMPLATE = {
-  "editor.formatOnSave": true,
-  "typescript.preferences.importModuleSpecifier": "relative",
-  "typescript.suggest.autoImports": true,
-  "chat.promptFilesLocations": {
-    ".nexkit/prompts": true,
-  },
-  "chat.instructionsFilesLocations": {
-    ".nexkit/instructions": true,
-    ".nexkit/skills": true,
-  },
   "chat.agentFilesLocations": {
     ".nexkit/agents": true,
   },
+  "chat.agentSkillsLocations": {
+    ".nexkit/skills": true,
+  },
   "chat.hookFilesLocations": {
     ".nexkit/hooks": true,
+  },
+  "chat.instructionsFilesLocations": {
+    ".nexkit/instructions": true,
+  },
+  "chat.promptFilesLocations": {
+    ".nexkit/prompts": true,
   },
   "chat.useHooks": true,
 };
