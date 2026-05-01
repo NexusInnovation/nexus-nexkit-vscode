@@ -1,3 +1,10 @@
+## 3.7.0-beta.13 (2026-05-01)
+
+* fix(merge): Merge branch 'main' into develop (#139) ([f7a64bf](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/f7a64bf)), closes [#139](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/139)
+* feat(initialization): add HooksConfigDeployer and enhance pre-commit/pre-push hooks (#137) ([d84dddb](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/d84dddb)), closes [#137](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/137)
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([43e469b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/43e469b))
+* docs(project-context): add project context file for AI agents ([64a4824](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/64a4824))
+
 ## 3.8.0 (2026-03-24)
 
 * Apply suggestions from code review ([5916f43](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/5916f43))
