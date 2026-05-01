@@ -17,6 +17,7 @@ import { StartupVerificationService } from "../../src/features/initialization/st
 import { GitIgnoreConfigDeployer } from "../../src/features/initialization/gitIgnoreConfigDeployer";
 import { RecommendedSettingsConfigDeployer } from "../../src/features/initialization/recommendedSettingsConfigDeployer";
 import { NexkitFileMigrationService } from "../../src/features/initialization/nexkitFileMigrationService";
+import { HooksConfigDeployer } from "../../src/features/initialization/hooksConfigDeployer";
 import { GitHubAuthPromptService } from "../../src/features/initialization/githubAuthPromptService";
 
 suite("Unit: StartupVerificationService", () => {
@@ -27,6 +28,7 @@ suite("Unit: StartupVerificationService", () => {
   let gitIgnoreDeployer: GitIgnoreConfigDeployer;
   let settingsDeployer: RecommendedSettingsConfigDeployer;
   let migrationService: NexkitFileMigrationService;
+  let hooksConfigDeployer: HooksConfigDeployer;
   let authPromptService: GitHubAuthPromptService;
 
   setup(() => {
@@ -35,12 +37,14 @@ suite("Unit: StartupVerificationService", () => {
 
     gitIgnoreDeployer = new GitIgnoreConfigDeployer();
     settingsDeployer = new RecommendedSettingsConfigDeployer();
+    hooksConfigDeployer = new HooksConfigDeployer();
     migrationService = new NexkitFileMigrationService();
     authPromptService = new GitHubAuthPromptService();
 
     service = new StartupVerificationService(
       gitIgnoreDeployer,
       settingsDeployer,
+      hooksConfigDeployer,
       migrationService,
       authPromptService
     );
@@ -75,7 +79,7 @@ suite("Unit: StartupVerificationService", () => {
     assert.ok(fs.existsSync(settingsPath));
     const settings = JSON.parse(fs.readFileSync(settingsPath, "utf8"));
     assert.deepStrictEqual(settings["chat.agentFilesLocations"], { ".nexkit/agents": true });
-    assert.deepStrictEqual(settings["chat.hooksFilesLocations"], { ".nexkit/hooks": true });
+    assert.deepStrictEqual(settings["chat.hookFilesLocations"], { ".nexkit/hooks": true });
     assert.deepStrictEqual(settings["chat.promptFilesLocations"], { ".nexkit/prompts": true });
     assert.strictEqual(settings["chat.useHooks"], true);
   });

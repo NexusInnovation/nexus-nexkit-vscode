@@ -1,3 +1,26 @@
+## 3.9.0-beta.1 (2026-05-01)
+
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([43e469b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/43e469b))
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([df87d83](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/df87d83))
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([c3cece9](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c3cece9))
+* Merge branch 'main' into develop ([d596dbe](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/d596dbe))
+* chore(release): v3.7.0-beta.11 [skip ci] ([31aad58](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/31aad58))
+* chore(release): v3.7.0-beta.12 [skip ci] ([56bc6bd](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/56bc6bd))
+* chore(release): v3.7.0-beta.13 [skip ci] ([a9c4ca6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a9c4ca6))
+* fix(merge): Merge branch 'main' into develop (#139) ([f7a64bf](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/f7a64bf)), closes [#139](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/139)
+* fix(output): remove codebase exploration summary file ([9f0da06](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9f0da06))
+* fix(settings): correct key name and format JSON files ([183bd40](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/183bd40))
+* feat(initialization): add HooksConfigDeployer and enhance pre-commit/pre-push hooks (#137) ([d84dddb](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/d84dddb)), closes [#137](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/137)
+* docs(project-context): add project context file for AI agents ([64a4824](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/64a4824))
+* refactor(vscode-settings): update settings structure and remove artifact index ([e94cf98](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/e94cf98))
+
+## 3.7.0-beta.13 (2026-05-01)
+
+* fix(merge): Merge branch 'main' into develop (#139) ([f7a64bf](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/f7a64bf)), closes [#139](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/139)
+* feat(initialization): add HooksConfigDeployer and enhance pre-commit/pre-push hooks (#137) ([d84dddb](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/d84dddb)), closes [#137](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/137)
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([43e469b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/43e469b))
+* docs(project-context): add project context file for AI agents ([64a4824](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/64a4824))
+
 ## 3.8.0 (2026-03-24)
 
 * Apply suggestions from code review ([5916f43](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/5916f43))

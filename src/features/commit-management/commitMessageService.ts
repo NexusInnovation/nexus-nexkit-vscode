@@ -48,6 +48,9 @@ main change: one liner defining the change
 Rules:
 - Keep the subject line under 72 characters
 - Use imperative mood ("add feature" not "added feature")
+- scope must be lowercase and without spaces (use hyphens if needed)
+- In the bullet points, focus on the main changes and their impact, not implementation details
+- If the diff includes changes to multiple unrelated files, try to identify the main themes and group changes accordingly
 - Do not end with a period
 - Be specific and meaningful about what changed
 - list at most 5 <main changes>
