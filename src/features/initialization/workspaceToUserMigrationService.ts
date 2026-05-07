@@ -287,22 +287,32 @@ export class WorkspaceToUserMigrationService {
         "chat.promptFilesLocations",
       ];
 
+      const isLegacyNexkitLocation = (loc: string): boolean =>
+        loc.startsWith(".nexkit/") || loc.includes("/.nexkit/");
+
       for (const key of chatLocationKeys) {
         if (settings[key]) {
-          // Remove entries that reference .nexkit/
+          // Remove entries that reference the legacy workspace .nexkit/ directory
           const locations = settings[key] as Record<string, boolean>;
           const filtered: Record<string, boolean> = {};
+          let removedAny = false;
+
           for (const [loc, enabled] of Object.entries(locations)) {
-            if (!loc.includes(".nexkit")) {
-              filtered[loc] = enabled;
+            if (isLegacyNexkitLocation(loc)) {
+              removedAny = true;
+              continue;
             }
+            filtered[loc] = enabled;
           }
-          if (Object.keys(filtered).length === 0) {
-            delete settings[key];
-          } else {
-            settings[key] = filtered;
+
+          if (removedAny) {
+            if (Object.keys(filtered).length === 0) {
+              delete settings[key];
+            } else {
+              settings[key] = filtered;
+            }
+            modified = true;
           }
-          modified = true;
         }
       }
 
