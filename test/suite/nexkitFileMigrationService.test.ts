@@ -194,4 +194,21 @@ suite("Unit: NexkitFileMigrationService", () => {
     assert.strictEqual(result.migratedCount, 1);
     assert.ok(fs.existsSync(path.join(tempDir, ".nexkit", "chatmodes", "nexkit.chatmode.md")));
   });
+
+  test("Should keep .github/copilot-instructions.md untouched", async () => {
+    const githubDir = path.join(tempDir, ".github");
+    const agentsDir = path.join(githubDir, "agents");
+    const copilotInstructionsPath = path.join(githubDir, "copilot-instructions.md");
+    fs.mkdirSync(agentsDir, { recursive: true });
+    fs.writeFileSync(path.join(agentsDir, "nexkit.agent.md"), "agent content");
+    fs.writeFileSync(copilotInstructionsPath, "# Project instructions");
+
+    const result = await service.migrateNexkitFiles(tempDir);
+
+    assert.ok(result);
+    assert.strictEqual(result.migratedCount, 1);
+    assert.ok(fs.existsSync(path.join(tempDir, ".nexkit", "agents", "nexkit.agent.md")));
+    assert.ok(fs.existsSync(copilotInstructionsPath));
+    assert.strictEqual(fs.readFileSync(copilotInstructionsPath, "utf8"), "# Project instructions");
+  });
 });
