@@ -16,10 +16,7 @@ node_modules
 infrastructure/badge-service/node_modules/
 infrastructure/badge-service/dist/
 infrastructure/badge-service/local.settings.json
-
-# BEGIN NexKit
-.nexkit/
-# END NexKit
+
 # Squad: ignore runtime state (logs, inbox, sessions)
 .squad/orchestration-log/
 .squad/log/
