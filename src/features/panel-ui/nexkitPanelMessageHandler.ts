@@ -147,9 +147,7 @@ export class NexkitPanelMessageHandler {
     }
   }
 
-  private async handleUpdateInstalledTemplates(
-    message: WebviewMessage & { command: "updateInstalledTemplates" }
-  ): Promise<void> {
+  private async handleUpdateInstalledTemplates(message: WebviewMessage & { command: "updateInstalledTemplates" }): Promise<void> {
     this.trackWebviewAction("updateInstalledTemplates");
     await vscode.commands.executeCommand(Commands.UPDATE_INSTALLED_TEMPLATES, message.mode);
     this.sendInstalledTemplates();
@@ -301,12 +299,16 @@ export class NexkitPanelMessageHandler {
     const hasWorkspace = (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
     const isInitialized = SettingsManager.isWorkspaceInitialized();
     const mode = SettingsManager.getMode();
+    const deployMode = SettingsManager.getTemplateDeployMode();
+    const workspaceOverrideActive = SettingsManager.isWorkspaceOverrideActive();
 
     this.sendToWebview({
       command: "workspaceStateUpdate",
       hasWorkspace,
       isInitialized,
       mode,
+      deployMode,
+      workspaceOverrideActive,
     });
   }
 

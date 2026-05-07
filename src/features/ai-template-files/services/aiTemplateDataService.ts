@@ -14,6 +14,7 @@ import { TemplateFileOperations, InstallOptions, BatchInstallSummary } from "./t
 import { InstalledTemplatesStateManager } from "./installedTemplatesStateManager";
 import { RepositoryTemplateProvider } from "../providers/repositoryTemplateProvider";
 import { SettingsManager } from "../../../core/settingsManager";
+import { UserDirectoryService } from "./userDirectoryService";
 
 /**
  * Main facade service for AI template data management
@@ -60,12 +61,13 @@ export class AITemplateDataService implements vscode.Disposable {
    */
   public readonly onUpdatesAvailableChanged: vscode.Event<boolean> = this._onUpdatesAvailableChanged.event;
 
-  constructor(stateManager: InstalledTemplatesStateManager) {
+  constructor(stateManager: InstalledTemplatesStateManager, userDirectoryService?: UserDirectoryService) {
     this.stateManager = stateManager;
     this.repositoryManager = new RepositoryManager();
     this.fetcherService = new TemplateFetcherService(this.repositoryManager);
     this.dataStore = new TemplateDataStore();
-    this.fileOperations = new TemplateFileOperations(this.fetcherService, this.stateManager);
+    const userDir = userDirectoryService ?? new UserDirectoryService();
+    this.fileOperations = new TemplateFileOperations(this.fetcherService, this.stateManager, userDir);
 
     // Forward data change events
     this.onDataChanged = this.dataStore.onDataChanged;
@@ -554,13 +556,11 @@ export class AITemplateDataService implements vscode.Disposable {
           typeof summary?.updatedCount === "number"
             ? summary.updatedCount
             : typeof summary?.updated === "number"
-            ? summary.updated
-            : undefined;
+              ? summary.updated
+              : undefined;
 
         if (typeof updatedCount === "number" && updatedCount > 0) {
-          vscode.window.showInformationMessage(
-            `Nexkit: Templates auto-refreshed and updated from ${label}.`
-          );
+          vscode.window.showInformationMessage(`Nexkit: Templates auto-refreshed and updated from ${label}.`);
         } else {
           vscode.window.showInformationMessage(
             `Nexkit: Templates auto-refreshed from ${label} (no installed templates required updates).`
