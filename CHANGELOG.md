@@ -1,3 +1,9 @@
+## 3.9.0-beta.3 (2026-05-07)
+
+* Fix semantic-release parsing gap so `main` pushes create releases (#143) ([b8ef2bd](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/b8ef2bd)), closes [#143](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/143)
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([cc7f1d4](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/cc7f1d4))
+* fix(settings): Add newline at end of settings.json file ([d1f62fb](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/d1f62fb))
+
 ## 3.9.0-beta.2 (2026-05-07)
 
 * fix(ci): prevent `Comment on PR` step from running outside PR context (#140) ([e735419](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/e735419)), closes [#140](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/140)
