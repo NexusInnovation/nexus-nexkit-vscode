@@ -44,6 +44,8 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
               hasWorkspace: message.hasWorkspace,
               isInitialized: message.isInitialized,
               mode: message.mode,
+              deployMode: message.deployMode,
+              workspaceOverrideActive: message.workspaceOverrideActive,
               isReady: true,
             },
           }));
