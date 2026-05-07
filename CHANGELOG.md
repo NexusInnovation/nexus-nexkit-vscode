@@ -1,3 +1,9 @@
+## 3.9.0 (2026-05-07)
+
+* Refactor settings structure and enhance hook configurations (#144) ([9575819](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9575819)), closes [#144](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/144) [#137](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/137)
+* feature(release): Refactor settings structure and enhance HooksConfigDeployer (#141) ([e3cd8b1](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/e3cd8b1)), closes [#141](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/141) [#137](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/137)
+* refactor(settings): Refactor settings structure and enhance hook configurations (#138) ([e42e8a3](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/e42e8a3)), closes [#138](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/138) [#137](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/137)
+
 ## 3.9.0-beta.2 (2026-05-07)
 
 * fix(ci): prevent `Comment on PR` step from running outside PR context (#140) ([e735419](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/e735419)), closes [#140](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/140)
