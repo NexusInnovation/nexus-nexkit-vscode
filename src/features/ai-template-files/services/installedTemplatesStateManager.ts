@@ -3,6 +3,8 @@ import * as path from "path";
 import { AITemplateFile, AITemplateFileType, AI_TEMPLATE_FILE_TYPES } from "../models/aiTemplateFile";
 import { InstalledTemplateRecord, InstalledTemplatesState } from "../models/installedTemplateRecord";
 import { fileExists, getWorkspaceRoot } from "../../../shared/utils/fileHelper";
+import { UserDirectoryService } from "./userDirectoryService";
+import { SettingsManager } from "../../../core/settingsManager";
 
 /**
  * Service for managing installed templates state
@@ -11,7 +13,10 @@ import { fileExists, getWorkspaceRoot } from "../../../shared/utils/fileHelper";
 export class InstalledTemplatesStateManager {
   private static readonly STATE_KEY = "nexkit.installedTemplates";
 
-  constructor(private readonly context: vscode.ExtensionContext) {}
+  constructor(
+    private readonly context: vscode.ExtensionContext,
+    private readonly _userDirectoryService?: UserDirectoryService
+  ) {}
 
   /**
    * Get all installed templates from workspace state
@@ -82,12 +87,20 @@ export class InstalledTemplatesStateManager {
    */
   public async syncWithFileSystem(): Promise<void> {
     const state = this.getState();
-    const workspaceRoot = getWorkspaceRoot();
     const templatesToKeep: InstalledTemplateRecord[] = [];
+
+    // Determine the root to check based on deploy mode
+    let nexkitRoot: string;
+    if (SettingsManager.isUserDeployMode() && this._userDirectoryService) {
+      nexkitRoot = this._userDirectoryService.getUserNexkitRoot();
+    } else {
+      const workspaceRoot = getWorkspaceRoot();
+      nexkitRoot = path.join(workspaceRoot, ".nexkit");
+    }
 
     // Check each installed template if file still exists
     for (const template of state.templates) {
-      const filePath = path.join(workspaceRoot, ".nexkit", template.type, template.name);
+      const filePath = path.join(nexkitRoot, template.type, template.name);
 
       if (await fileExists(filePath)) {
         templatesToKeep.push(template);

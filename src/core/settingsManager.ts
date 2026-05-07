@@ -43,6 +43,9 @@ export class SettingsManager {
   private static readonly TEMPLATES_AUTO_UPDATE_ON_REFRESH = "templates.autoUpdateOnRefresh";
   private static readonly TEMPLATES_AUTO_UPDATE_ENABLED = "templates.autoUpdateOnRefresh";
 
+  // Template deploy mode
+  private static readonly TEMPLATES_DEPLOY_MODE = "templates.deployMode";
+
   // Extension update state keys (GlobalState)
   private static readonly EXTENSION_LAST_UPDATE_CHECK_STATE_KEY = "nexkit.extension.lastUpdateCheck";
 
@@ -174,6 +177,38 @@ export class SettingsManager {
 
   static isTemplatesAutoUpdateEnabled(): boolean {
     return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<boolean>(this.TEMPLATES_AUTO_UPDATE_ON_REFRESH, true);
+  }
+
+  static getTemplateDeployMode(): "user" | "workspace" {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<"user" | "workspace">(this.TEMPLATES_DEPLOY_MODE, "user");
+  }
+
+  static isUserDeployMode(): boolean {
+    return this.getTemplateDeployMode() === "user";
+  }
+
+  /**
+   * Determines whether the workspace has per-project template overrides active.
+   * True when deployMode is "workspace" OR a .nexkit/ directory exists in the workspace root.
+   * When active, both user-level and workspace-level template paths should coexist.
+   */
+  static isWorkspaceOverrideActive(): boolean {
+    if (this.getTemplateDeployMode() === "workspace") {
+      return true;
+    }
+    // Auto-detect: check if a .nexkit/ directory exists in the workspace
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) {
+      return false;
+    }
+    try {
+      const fs = require("fs");
+      const path = require("path");
+      const nexkitPath = path.join(workspaceFolder.uri.fsPath, ".nexkit");
+      return fs.existsSync(nexkitPath) && fs.statSync(nexkitPath).isDirectory();
+    } catch {
+      return false;
+    }
   }
 
   static getLastUpdateCheck(): number {

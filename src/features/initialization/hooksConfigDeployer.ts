@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { fileExists, deepMerge } from "../../shared/utils/fileHelper";
 import { LoggingService } from "../../shared/services/loggingService";
+import { UserDirectoryService } from "../ai-template-files/services/userDirectoryService";
 
 /**
  * Test command detection result
@@ -35,6 +36,8 @@ interface HookConfig {
 export class HooksConfigDeployer {
   private readonly _logging = LoggingService.getInstance();
 
+  constructor(private readonly _userDirectory?: UserDirectoryService) {}
+
   /**
    * Deploy the run-tests hook to the workspace.
    * Detects the project test command and writes .nexkit/hooks/run-tests.json.
@@ -49,41 +52,73 @@ export class HooksConfigDeployer {
       }
 
       const hooksDir = path.join(targetRoot, ".nexkit", "hooks");
-      await fs.promises.mkdir(hooksDir, { recursive: true });
-
-      const hookPath = path.join(hooksDir, "run-tests.json");
-      const hookConfig: HookConfig = {
-        hooks: {
-          Stop: [
-            {
-              type: "command",
-              command: testCommand.command,
-              ...(testCommand.windows && { windows: testCommand.windows }),
-              timeout: 120,
-            },
-          ],
-        },
-      };
-
-      // Merge with existing hook file if present
-      if (await fileExists(hookPath)) {
-        const existingContent = await fs.promises.readFile(hookPath, "utf8");
-        try {
-          const existingConfig = JSON.parse(existingContent);
-          const merged = deepMerge(hookConfig, existingConfig);
-          await fs.promises.writeFile(hookPath, JSON.stringify(merged, null, 2), "utf8");
-          this._logging.info("Merged run-tests hook with existing configuration.");
-          return;
-        } catch {
-          this._logging.warn("Existing run-tests.json is invalid JSON — overwriting with detected config.");
-        }
-      }
-
-      await fs.promises.writeFile(hookPath, JSON.stringify(hookConfig, null, 2), "utf8");
-      this._logging.info(`Deployed run-tests hook: ${testCommand.command}`);
+      await this._writeHookFile(hooksDir, testCommand);
     } catch (error) {
       this._logging.error("Failed to deploy run-tests hook:", error);
     }
+  }
+
+  /**
+   * Deploy the run-tests hook to the user-level directory.
+   * Detects the project test command and writes to the user .nexkit/hooks/ directory.
+   * @param targetRoot Absolute path to the workspace root (for test command detection)
+   */
+  public async deployRunTestsHookToUserDir(targetRoot: string): Promise<void> {
+    if (!this._userDirectory) {
+      this._logging.warn("UserDirectoryService not available — skipping user-level hook deployment.");
+      return;
+    }
+
+    try {
+      const testCommand = await this._detectTestCommand(targetRoot);
+      if (!testCommand) {
+        this._logging.info("No test framework detected — skipping user-level run-tests hook deployment.");
+        return;
+      }
+
+      const hooksDir = path.join(this._userDirectory.getUserNexkitRoot(), "hooks");
+      await this._writeHookFile(hooksDir, testCommand);
+    } catch (error) {
+      this._logging.error("Failed to deploy user-level run-tests hook:", error);
+    }
+  }
+
+  /**
+   * Write the hook configuration file to the specified directory.
+   */
+  private async _writeHookFile(hooksDir: string, testCommand: DetectedTestCommand): Promise<void> {
+    await fs.promises.mkdir(hooksDir, { recursive: true });
+
+    const hookPath = path.join(hooksDir, "run-tests.json");
+    const hookConfig: HookConfig = {
+      hooks: {
+        Stop: [
+          {
+            type: "command",
+            command: testCommand.command,
+            ...(testCommand.windows && { windows: testCommand.windows }),
+            timeout: 120,
+          },
+        ],
+      },
+    };
+
+    // Merge with existing hook file if present
+    if (await fileExists(hookPath)) {
+      const existingContent = await fs.promises.readFile(hookPath, "utf8");
+      try {
+        const existingConfig = JSON.parse(existingContent);
+        const merged = deepMerge(hookConfig, existingConfig);
+        await fs.promises.writeFile(hookPath, JSON.stringify(merged, null, 2), "utf8");
+        this._logging.info("Merged run-tests hook with existing configuration.");
+        return;
+      } catch {
+        this._logging.warn("Existing run-tests.json is invalid JSON — overwriting with detected config.");
+      }
+    }
+
+    await fs.promises.writeFile(hookPath, JSON.stringify(hookConfig, null, 2), "utf8");
+    this._logging.info(`Deployed run-tests hook: ${testCommand.command}`);
   }
 
   /**
