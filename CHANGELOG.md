@@ -1,3 +1,8 @@
+## 3.9.0-beta.4 (2026-05-07)
+
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([ff23688](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ff23688))
+* feat(copilot-skills): add initial collaboration, error recovery, and git workflow skills ([26e5d20](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/26e5d20))
+
 ## 3.9.0-beta.3 (2026-05-07)
 
 * Fix semantic-release parsing gap so `main` pushes create releases (#143) ([b8ef2bd](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/b8ef2bd)), closes [#143](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/143)
