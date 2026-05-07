@@ -37,3 +37,14 @@ How to decide who handles what.
 5. **"Team, ..." → fan-out.** Spawn all relevant agents in parallel as `mode: "background"`.
 6. **Anticipate downstream work.** If a feature is being built, spawn the tester to write test cases from requirements simultaneously.
 7. **Issue-labeled work** — when a `squad:{member}` label is applied to an issue, route to that member. The Lead handles all `squad` (base label) triage.
+
+## Work Type → Agent
+
+| Work Type | Primary | Secondary |
+|-----------|---------|----------|
+| architecture, decisions | Danny | — |
+| VS Code services | Rusty | — |
+| Preact webview | Linus | — |
+| GitHub, MCP flows | Basher | — |
+| tests, reliability | Livingston | — |
+

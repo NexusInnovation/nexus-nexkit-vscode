@@ -1,16 +1,11 @@
-# Project Context
-
-- **Project:** nexus-nexkit-vscode
-- **Created:** 2026-05-07
+# Scribe — History
 
 ## Core Context
 
-Agent Scribe initialized and ready for work.
-
-## Recent Updates
-
-📌 Team initialized on 2026-05-07
+- **Project:** A TypeScript VS Code extension with a Preact sidebar that manages AI templates, workspace setup, MCP configuration, and self-updates.
+- **Role:** Session Logger
+- **Joined:** 2026-05-07T15:47:16.742Z
 
 ## Learnings
 
-Initial setup complete.
+<!-- Append learnings below -->
