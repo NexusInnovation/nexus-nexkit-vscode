@@ -373,14 +373,14 @@ Les templates déployés suivent cette structure (dans le répertoire utilisateu
 
 > (1) [Anthropic](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)
 
-Les paramètres VS Code sont configurés au niveau utilisateur (Global) avec des chemins absolus :
+Les paramètres VS Code sont configurés au niveau utilisateur (Global) avec des chemins relatifs `~/` :
 
 ```json
 {
-  "chat.promptFilesLocations":       { "/chemin/absolu/vers/.nexkit/prompts": true },
-  "chat.instructionsFilesLocations": { "/chemin/absolu/vers/.nexkit/instructions": true },
-  "chat.agentFilesLocations":        { "/chemin/absolu/vers/.nexkit/agents": true },
-  "chat.agentSkillsLocations":       { "/chemin/absolu/vers/.nexkit/skills": true }
+  "chat.promptFilesLocations":       { "~/AppData/Roaming/Code/User/.nexkit/prompts": true },
+  "chat.instructionsFilesLocations": { "~/AppData/Roaming/Code/User/.nexkit/instructions": true },
+  "chat.agentFilesLocations":        { "~/AppData/Roaming/Code/User/.nexkit/agents": true },
+  "chat.agentSkillsLocations":       { "~/AppData/Roaming/Code/User/.nexkit/skills": true }
 }
 ```
 

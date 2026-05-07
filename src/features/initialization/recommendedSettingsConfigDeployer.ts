@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
+import * as os from "os";
 import * as path from "path";
 import { fileExists } from "../../shared/utils/fileHelper";
 import { LoggingService } from "../../shared/services/loggingService";
@@ -32,7 +33,7 @@ const LEGACY_WORKSPACE_KEYS = [
 
 /**
  * Service for deploying recommended VS Code chat settings to user-level (global) scope.
- * Uses absolute paths from UserDirectoryService.
+ * Uses ~/ relative paths from UserDirectoryService (VS Code requires relative or ~/ paths).
  */
 export class RecommendedSettingsConfigDeployer {
   private readonly _logging = LoggingService.getInstance();
@@ -56,9 +57,10 @@ export class RecommendedSettingsConfigDeployer {
   }
 
   /**
-   * Write chat.*Locations settings to ConfigurationTarget.Global using absolute paths
+   * Write chat.*Locations settings to ConfigurationTarget.Global using ~/relative paths
    * from UserDirectoryService. Merges with any existing user entries.
-   * When workspace override is active, also includes workspace .nexkit/ paths.
+   * VS Code requires chat.*Locations paths to be relative to the workspace or start with ~/.
+   * When workspace override is active, also includes workspace .nexkit/ paths (relative).
    */
   private async _deployUserLevelChatSettings(workspaceRoot: string): Promise<void> {
     const locations = this._userDirectory.getAbsoluteTemplateLocations();
@@ -66,23 +68,23 @@ export class RecommendedSettingsConfigDeployer {
     const workspaceOverrideActive = SettingsManager.isWorkspaceOverrideActive();
 
     for (const [settingKey, subdir] of Object.entries(CHAT_LOCATION_SETTINGS)) {
-      const absolutePath = this._toForwardSlashPath(locations[subdir]);
+      const tildePath = this._toTildePath(locations[subdir]);
       // Suffix key removes the "chat." prefix for the update call
       const shortKey = settingKey.replace("chat.", "");
 
       // Read existing user-level value (merge, don't overwrite)
       const existing: Record<string, boolean> | undefined = chatConfig.inspect<Record<string, boolean>>(shortKey)?.globalValue;
-      const merged: Record<string, boolean> = { ...existing, [absolutePath]: true };
+      const merged: Record<string, boolean> = { ...existing, [tildePath]: true };
 
-      // When workspace override is active, also add workspace .nexkit/ paths
+      // When workspace override is active, also add workspace .nexkit/ paths (relative)
       if (workspaceOverrideActive) {
-        const workspacePath = this._toForwardSlashPath(path.join(workspaceRoot, ".nexkit", subdir));
-        merged[workspacePath] = true;
+        const workspaceRelativePath = `.nexkit/${subdir}`;
+        merged[workspaceRelativePath] = true;
       }
 
       await chatConfig.update(shortKey, merged, vscode.ConfigurationTarget.Global);
       this._logging.debug(
-        `Set user-level ${settingKey}: added ${absolutePath}${workspaceOverrideActive ? ` + workspace path` : ""}`
+        `Set user-level ${settingKey}: added ${tildePath}${workspaceOverrideActive ? ` + workspace path` : ""}`
       );
     }
 
@@ -116,7 +118,7 @@ export class RecommendedSettingsConfigDeployer {
           if (typeof settings[key] === "object" && settings[key] !== null && !Array.isArray(settings[key])) {
             const locationObj = settings[key] as Record<string, boolean>;
             for (const pathKey of Object.keys(locationObj)) {
-              if (pathKey.startsWith(".nexkit/") || pathKey.includes("/.nexkit/")) {
+              if (this._isNexkitManagedPath(pathKey)) {
                 delete locationObj[pathKey];
                 modified = true;
               }
@@ -162,9 +164,26 @@ export class RecommendedSettingsConfigDeployer {
   }
 
   /**
-   * Convert a path to use forward slashes (cross-platform compatibility in settings).
+   * Check whether a path is a NexKit-managed entry that should be cleaned up.
+   * Detects both legacy relative paths (.nexkit/) and absolute paths containing .nexkit/.
    */
-  private _toForwardSlashPath(p: string): string {
-    return p.replace(/\\/g, "/");
+  private _isNexkitManagedPath(pathKey: string): boolean {
+    return pathKey.startsWith(".nexkit/") || pathKey.includes("/.nexkit/");
+  }
+
+  /**
+   * Convert an absolute path to a ~/ relative path with forward slashes.
+   * VS Code chat.*Locations require paths to be relative or start with ~/.
+   */
+  private _toTildePath(absolutePath: string): string {
+    const homeDir = os.homedir().replace(/\\/g, "/");
+    const normalized = absolutePath.replace(/\\/g, "/");
+
+    if (normalized.startsWith(homeDir)) {
+      return "~" + normalized.slice(homeDir.length);
+    }
+
+    // Fallback: return forward-slashed path if not under home directory
+    return normalized;
   }
 }
