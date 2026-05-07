@@ -226,4 +226,90 @@ suite("Unit: WorkspaceToUserMigrationService", () => {
     assert.ok((backupService.backupTemplates as sinon.SinonStub).calledOnce);
     assert.ok((backupService.backupTemplates as sinon.SinonStub).calledWith(workspaceRoot));
   });
+
+  test("detectWorkspaceInstallation detects directory-based templates (skills)", async () => {
+    const workspaceRoot = path.join(tempDir, "with-skills");
+    const nexkitDir = path.join(workspaceRoot, ".nexkit");
+    // skills are directories, not files
+    fs.mkdirSync(path.join(nexkitDir, "skills", "my-skill"), { recursive: true });
+    fs.writeFileSync(path.join(nexkitDir, "skills", "my-skill", "index.md"), "skill content");
+
+    const result = await service.detectWorkspaceInstallation(workspaceRoot);
+
+    assert.strictEqual(result.hasWorkspaceNexkit, true);
+    assert.deepStrictEqual(result.templateFiles["skills"], ["my-skill"]);
+  });
+
+  test("executeMigration copies directory-based templates (skills) to user directory", async () => {
+    const workspaceRoot = path.join(tempDir, "migration-skills");
+    const nexkitDir = path.join(workspaceRoot, ".nexkit");
+    // Create a skill as a directory
+    fs.mkdirSync(path.join(nexkitDir, "skills", "my-skill"), { recursive: true });
+    fs.writeFileSync(path.join(nexkitDir, "skills", "my-skill", "index.md"), "skill content");
+
+    fs.mkdirSync(path.join(userNexkitRoot, "skills"), { recursive: true });
+
+    const summary = await service.executeMigration(workspaceRoot, false);
+
+    assert.strictEqual(summary.copiedCount, 1);
+    assert.deepStrictEqual(summary.copiedFiles["skills"], ["my-skill"]);
+
+    // Verify directory was copied recursively
+    assert.ok(fs.existsSync(path.join(userNexkitRoot, "skills", "my-skill", "index.md")));
+  });
+
+  test("executeMigration skips skill directories that already exist in user directory", async () => {
+    const workspaceRoot = path.join(tempDir, "migration-skills-skip");
+    const nexkitDir = path.join(workspaceRoot, ".nexkit");
+    fs.mkdirSync(path.join(nexkitDir, "skills", "existing-skill"), { recursive: true });
+    fs.writeFileSync(path.join(nexkitDir, "skills", "existing-skill", "index.md"), "workspace version");
+
+    // Pre-create skill directory in user directory
+    fs.mkdirSync(path.join(userNexkitRoot, "skills", "existing-skill"), { recursive: true });
+    fs.writeFileSync(path.join(userNexkitRoot, "skills", "existing-skill", "index.md"), "user version");
+
+    const summary = await service.executeMigration(workspaceRoot, false);
+
+    assert.strictEqual(summary.copiedCount, 0);
+    assert.strictEqual(summary.skippedCount, 1);
+
+    // Verify user version was NOT overwritten
+    const content = fs.readFileSync(path.join(userNexkitRoot, "skills", "existing-skill", "index.md"), "utf8");
+    assert.strictEqual(content, "user version");
+  });
+
+  test("executeMigration skips project-specific instructions when flag is set", async () => {
+    const workspaceRoot = path.join(tempDir, "migration-skip-instructions");
+    const nexkitDir = path.join(workspaceRoot, ".nexkit");
+    fs.mkdirSync(path.join(nexkitDir, "instructions"), { recursive: true });
+    fs.writeFileSync(path.join(nexkitDir, "instructions", "nexkit.csharp.md"), "c# guidelines");
+    fs.writeFileSync(path.join(nexkitDir, "instructions", "project-specific.md"), "local rules");
+
+    fs.mkdirSync(path.join(userNexkitRoot, "instructions"), { recursive: true });
+
+    const summary = await service.executeMigration(workspaceRoot, false, true);
+
+    // Only nexkit.csharp.md should be copied; project-specific.md should be skipped
+    assert.strictEqual(summary.copiedCount, 1);
+    assert.deepStrictEqual(summary.copiedFiles["instructions"], ["nexkit.csharp.md"]);
+
+    assert.ok(fs.existsSync(path.join(userNexkitRoot, "instructions", "nexkit.csharp.md")));
+    assert.ok(!fs.existsSync(path.join(userNexkitRoot, "instructions", "project-specific.md")));
+  });
+
+  test("executeMigration migrates all instructions when skipProjectSpecificInstructions is false", async () => {
+    const workspaceRoot = path.join(tempDir, "migration-all-instructions");
+    const nexkitDir = path.join(workspaceRoot, ".nexkit");
+    fs.mkdirSync(path.join(nexkitDir, "instructions"), { recursive: true });
+    fs.writeFileSync(path.join(nexkitDir, "instructions", "nexkit.csharp.md"), "c# guidelines");
+    fs.writeFileSync(path.join(nexkitDir, "instructions", "project-specific.md"), "local rules");
+
+    fs.mkdirSync(path.join(userNexkitRoot, "instructions"), { recursive: true });
+
+    const summary = await service.executeMigration(workspaceRoot, false, false);
+
+    assert.strictEqual(summary.copiedCount, 2);
+    assert.ok(fs.existsSync(path.join(userNexkitRoot, "instructions", "nexkit.csharp.md")));
+    assert.ok(fs.existsSync(path.join(userNexkitRoot, "instructions", "project-specific.md")));
+  });
 });

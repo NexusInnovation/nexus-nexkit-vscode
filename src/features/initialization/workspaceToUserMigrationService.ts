@@ -107,9 +107,10 @@ export class WorkspaceToUserMigrationService {
 
       try {
         const entries = await fs.promises.readdir(typeDir, { withFileTypes: true });
-        const files = entries.filter((e) => e.isFile()).map((e) => e.name);
-        if (files.length > 0) {
-          templateFiles[templateType] = files;
+        // Include both files and directories (e.g. skills/ are directory-based templates)
+        const names = entries.filter((e) => e.isFile() || e.isDirectory()).map((e) => e.name);
+        if (names.length > 0) {
+          templateFiles[templateType] = names;
         }
       } catch {
         // Directory not readable — skip
@@ -136,8 +137,13 @@ export class WorkspaceToUserMigrationService {
    * Creates a backup before any destructive operations.
    * @param workspaceRoot Workspace root path
    * @param deleteWorkspaceDir Whether to delete .nexkit/ from workspace after copying
+   * @param skipProjectSpecificInstructions Whether to skip non-nexkit instruction files
    */
-  public async executeMigration(workspaceRoot: string, deleteWorkspaceDir: boolean): Promise<WorkspaceToUserMigrationSummary> {
+  public async executeMigration(
+    workspaceRoot: string,
+    deleteWorkspaceDir: boolean,
+    skipProjectSpecificInstructions: boolean = false
+  ): Promise<WorkspaceToUserMigrationSummary> {
     const nexkitDir = path.join(workspaceRoot, ".nexkit");
 
     // Step 0: Create backup as safety net
@@ -151,8 +157,8 @@ export class WorkspaceToUserMigrationService {
     await this._userDirectory.ensureUserDirectoryStructure();
 
     // Step 2: Copy templates to user directory
-    const { copiedCount, copiedFiles, skippedCount } = await this._copyTemplatesToUserDir(nexkitDir);
-    this._logging.info(`Migration: copied ${copiedCount} files, skipped ${skippedCount} (already exist).`);
+    const { copiedCount, copiedFiles, skippedCount } = await this._copyTemplatesToUserDir(nexkitDir, skipProjectSpecificInstructions);
+    this._logging.info(`Migration: copied ${copiedCount} items, skipped ${skippedCount} (already exist).`);
 
     // Step 3: Remove .nexkit/ section from .gitignore
     const gitignoreCleaned = await this._removeGitignoreSection(workspaceRoot);
@@ -176,11 +182,14 @@ export class WorkspaceToUserMigrationService {
   }
 
   /**
-   * Copy all template files from workspace .nexkit/ to user directory.
-   * Skips files that already exist in the user directory (no overwrite).
+   * Copy all template files/directories from workspace .nexkit/ to user directory.
+   * Skips entries that already exist in the user directory (no overwrite).
+   * When skipProjectSpecificInstructions is true, instruction files not prefixed with
+   * "nexkit." are treated as project-specific and left in the workspace.
    */
   private async _copyTemplatesToUserDir(
-    workspaceNexkitDir: string
+    workspaceNexkitDir: string,
+    skipProjectSpecificInstructions: boolean = false
   ): Promise<{ copiedCount: number; copiedFiles: Record<string, string[]>; skippedCount: number }> {
     const userLocations = this._userDirectory.getAbsoluteTemplateLocations();
     const copiedFiles: Record<string, string[]> = {};
@@ -209,22 +218,36 @@ export class WorkspaceToUserMigrationService {
 
       const copied: string[] = [];
       for (const entry of entries) {
-        if (!entry.isFile()) {
+        // When requested, skip project-specific instruction files (not prefixed with nexkit.)
+        if (skipProjectSpecificInstructions && templateType === "instructions" && entry.isFile() && !entry.name.startsWith("nexkit.")) {
+          this._logging.info(`Skipped project-specific instruction: ${entry.name}`);
           continue;
         }
 
         const sourcePath = path.join(sourceDir, entry.name);
         const targetPath = path.join(targetDir, entry.name);
 
-        if (await fileExists(targetPath)) {
-          skippedCount++;
-          this._logging.info(`Skipped ${templateType}/${entry.name} (already exists in user directory).`);
-          continue;
-        }
+        if (entry.isFile()) {
+          if (await fileExists(targetPath)) {
+            skippedCount++;
+            this._logging.info(`Skipped ${templateType}/${entry.name} (already exists in user directory).`);
+            continue;
+          }
 
-        await fs.promises.copyFile(sourcePath, targetPath);
-        copied.push(entry.name);
-        copiedCount++;
+          await fs.promises.copyFile(sourcePath, targetPath);
+          copied.push(entry.name);
+          copiedCount++;
+        } else if (entry.isDirectory()) {
+          if (await fileExists(targetPath)) {
+            skippedCount++;
+            this._logging.info(`Skipped ${templateType}/${entry.name}/ (already exists in user directory).`);
+            continue;
+          }
+
+          await copyDirectory(sourcePath, targetPath);
+          copied.push(entry.name);
+          copiedCount++;
+        }
       }
 
       if (copied.length > 0) {
@@ -342,8 +365,8 @@ export class WorkspaceToUserMigrationService {
     workspaceRoot: string,
     detection: WorkspaceMigrationDetection
   ): Promise<void> {
-    const fileCount = Object.values(detection.templateFiles).reduce((sum, files) => sum + files.length, 0);
-    const message = `NexKit now stores templates in your user directory. ${fileCount} template file(s) found in workspace .nexkit/. Migrate now?`;
+    const itemCount = Object.values(detection.templateFiles).reduce((sum, names) => sum + names.length, 0);
+    const message = `NexKit now stores templates in your user directory. ${itemCount} template(s) found in workspace .nexkit/. Migrate now?`;
 
     const migrate = "Migrate";
     const later = "Later";
@@ -368,6 +391,7 @@ export class WorkspaceToUserMigrationService {
     detection: WorkspaceMigrationDetection
   ): Promise<void> {
     // Ask about project-specific instructions if detected
+    let skipProjectSpecificInstructions = false;
     if (detection.hasProjectSpecificInstructions) {
       const instructionsChoice = await vscode.window.showInformationMessage(
         "Some instruction files in .nexkit/instructions/ appear to be project-specific. Migrate them to user directory anyway?",
@@ -375,8 +399,7 @@ export class WorkspaceToUserMigrationService {
         "Skip project-specific"
       );
       if (instructionsChoice === "Skip project-specific") {
-        // The user wants to keep project-specific instructions in workspace — we'll skip them
-        // by not migrating the instructions directory at all (handled by skipping in copy logic)
+        skipProjectSpecificInstructions = true;
         this._logging.info("User chose to skip project-specific instructions during migration.");
       }
     }
@@ -395,15 +418,15 @@ export class WorkspaceToUserMigrationService {
         progress.report({ increment: 10, message: "Creating backup..." });
 
         try {
-          const summary = await this.executeMigration(workspaceRoot, deleteWorkspaceDir);
+          const summary = await this.executeMigration(workspaceRoot, deleteWorkspaceDir, skipProjectSpecificInstructions);
 
           await this._setMigrationState(context, workspaceRoot, "completed");
 
           progress.report({ increment: 90, message: "Migration complete!" });
 
           vscode.window.showInformationMessage(
-            `Migration complete: ${summary.copiedCount} file(s) migrated to user directory.` +
-              (summary.skippedCount > 0 ? ` ${summary.skippedCount} file(s) skipped (already existed).` : "")
+            `Migration complete: ${summary.copiedCount} template(s) migrated to user directory.` +
+              (summary.skippedCount > 0 ? ` ${summary.skippedCount} template(s) skipped (already existed).` : "")
           );
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error);
