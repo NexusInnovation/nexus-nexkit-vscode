@@ -27,6 +27,7 @@ import { StartupVerificationService } from "../features/initialization/startupVe
 import { NexkitFileWatcherService } from "../features/nexkit-file-watcher/nexkitFileWatcherService";
 import { GitHubWorkflowRunnerService } from "../features/github-workflow-runner/githubWorkflowRunnerService";
 import { HooksConfigDeployer } from "../features/initialization/hooksConfigDeployer";
+import { UserDirectoryService } from "../features/ai-template-files/services/userDirectoryService";
 
 /**
  * Service container for dependency injection
@@ -61,6 +62,7 @@ export interface ServiceContainer {
   startupVerification: StartupVerificationService;
   nexkitFileWatcher: NexkitFileWatcherService;
   githubWorkflowRunner: GitHubWorkflowRunnerService;
+  userDirectory: UserDirectoryService;
 }
 
 /**
@@ -109,6 +111,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   );
   const nexkitFileWatcher = NexkitFileWatcherService.getInstance();
   const githubWorkflowRunner = new GitHubWorkflowRunnerService(context.extensionUri);
+  const userDirectory = new UserDirectoryService();
 
   // Register for disposal
   context.subscriptions.push(logging);
@@ -149,5 +152,6 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     startupVerification,
     nexkitFileWatcher,
     githubWorkflowRunner,
+    userDirectory,
   };
 }
