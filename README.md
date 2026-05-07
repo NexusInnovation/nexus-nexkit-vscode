@@ -313,6 +313,13 @@ Lorsque vous exécutez "Nexkit: Initialize Workspace" :
 3. **Installation de Templates** : Agents, prompts et chatmodes du dépôt Nexus Templates sont installés dans `.nexkit/`
 4. **Marquage du Workspace** : Définit `nexkit.workspace.initialized` pour éviter les invites dupliquées
 
+### Stratégie pour `copilot-instructions.md`
+
+- Nexkit **ne déploie pas** automatiquement `.github/copilot-instructions.md`.
+- Si votre projet contient déjà ce fichier, Nexkit le **conserve tel quel**.
+- Ce fichier reste un fichier projet (racine `.github/`) propre à votre contexte.
+- Les instructions utilisateur restent supportées via `chat.instructionsFilesLocations`, pointant vers `.nexkit/instructions`.
+
 ### Structure des Templates
 
 Les templates déployés dans votre workspace suivent cette structure :
