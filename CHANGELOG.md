@@ -1,3 +1,9 @@
+## 3.9.0-beta.2 (2026-05-07)
+
+* fix(ci): prevent `Comment on PR` step from running outside PR context (#140) ([e735419](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/e735419)), closes [#140](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/140)
+* Merge branch 'main' into develop ([b571b56](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/b571b56))
+* refactor(settings): Refactor settings structure and enhance hook configurations (#138) ([e42e8a3](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/e42e8a3)), closes [#138](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/138) [#137](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/137)
+
 ## 3.9.0-beta.1 (2026-05-01)
 
 * Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([43e469b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/43e469b))
