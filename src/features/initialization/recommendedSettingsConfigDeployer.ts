@@ -4,7 +4,7 @@ import { getNexkitUserDirectory } from "../../shared/utils/fileHelper";
 import { LoggingService } from "../../shared/services/loggingService";
 
 /**
- * Service for deploying recommended VS Code settings to workspace
+ * Service for deploying recommended VS Code settings at user-global scope
  */
 export class RecommendedSettingsConfigDeployer {
   private readonly _logging = LoggingService.getInstance();
@@ -52,8 +52,9 @@ export class RecommendedSettingsConfigDeployer {
         continue;
       }
 
-      const existingLocations = config.get<Record<string, boolean>>(key, {});
-      const mergedLocations = { ...value, ...existingLocations };
+      const existingGlobalLocations =
+        config.inspect<Record<string, boolean>>(key)?.globalValue ?? {};
+      const mergedLocations = { ...value, ...existingGlobalLocations };
       await config.update(key, mergedLocations, vscode.ConfigurationTarget.Global);
     }
 

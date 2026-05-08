@@ -89,7 +89,7 @@ export class GitHubTemplateBackupService {
   /**
    * Restore template folders from a specific backup
    * @param workspaceRoot Absolute path to workspace root
-   * @param backupName Name of the backup folder (e.g., ".github.backup-2024-01-01T12-00-00")
+   * @param backupName Name of the backup folder (e.g., ".nexkit.backup-2024-01-01T12-00-00")
    */
   public async restoreBackup(workspaceRoot: string, backupName: string): Promise<void> {
     const nexkitRoot = getNexkitUserDirectory(vscode.env.appName);
