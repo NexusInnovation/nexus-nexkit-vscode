@@ -167,7 +167,7 @@ export class TemplateFileOperations {
       if (!(await fileExists(targetPath))) {
         if (!silent) {
           vscode.window.showWarningMessage(
-            `${templateFile.isDirectory ? "Skill" : "File"} ${templateFile.name} not found in .nexkit/${templateFile.type}/`
+            `${templateFile.isDirectory ? "Skill" : "File"} ${templateFile.name} not found in Nexkit templates (${templateFile.type})`
           );
         }
         return;
@@ -194,7 +194,7 @@ export class TemplateFileOperations {
 
       if (!silent) {
         vscode.window.showInformationMessage(
-          `Removed ${templateFile.isDirectory ? "skill" : "template"} ${templateFile.name} from .nexkit/${templateFile.type}/`
+          `Removed ${templateFile.isDirectory ? "skill" : "template"} ${templateFile.name} from Nexkit templates (${templateFile.type})`
         );
       }
     } catch (error) {

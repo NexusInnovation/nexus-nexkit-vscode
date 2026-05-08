@@ -34,6 +34,7 @@ export class RecommendedSettingsConfigDeployer {
   /**
    * Deploy VS Code settings at user-global scope
    * NON-DESTRUCTIVE: merges with existing user settings, existing values keep priority
+   * @param _targetRoot kept for compatibility with existing call sites
    */
   async deployVscodeSettings(_targetRoot: string): Promise<void> {
     const templateSettings = this.getSettingsTemplate();
@@ -44,8 +45,10 @@ export class RecommendedSettingsConfigDeployer {
 
     for (const [key, value] of Object.entries(templateSettings)) {
       if (typeof value === "boolean") {
-        const existing = config.get<boolean>(key, value);
-        await config.update(key, existing, vscode.ConfigurationTarget.Global);
+        const inspect = config.inspect<boolean>(key);
+        if (inspect?.globalValue === undefined) {
+          await config.update(key, value, vscode.ConfigurationTarget.Global);
+        }
         continue;
       }
 

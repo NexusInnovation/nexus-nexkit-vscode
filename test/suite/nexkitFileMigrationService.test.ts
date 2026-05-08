@@ -15,18 +15,18 @@ suite("Unit: NexkitFileMigrationService", () => {
   let service: NexkitFileMigrationService;
   let tempDir: string;
   let userNexkitDir: string;
-  let originalHome: string | undefined;
+  let originalHomeEnv: string | undefined;
 
   setup(async () => {
     service = new NexkitFileMigrationService();
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "nexkit-migration-test-"));
-    originalHome = process.env.HOME;
+    originalHomeEnv = process.env.HOME;
     process.env.HOME = tempDir;
     userNexkitDir = getNexkitUserDirectory(vscode.env.appName);
   });
 
   teardown(async () => {
-    process.env.HOME = originalHome;
+    process.env.HOME = originalHomeEnv;
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });
     } catch (error) {
@@ -231,5 +231,6 @@ suite("Unit: NexkitFileMigrationService", () => {
     assert.ok(result.migratedCount >= 1);
     assert.ok(fs.existsSync(path.join(userNexkitDir, "agents", "legacy.agent.md")));
     assert.ok(!fs.existsSync(path.join(legacyAgentsDir, "legacy.agent.md")));
+    assert.ok(!fs.existsSync(path.join(tempDir, ".nexkit")));
   });
 });

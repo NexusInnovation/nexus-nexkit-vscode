@@ -31,9 +31,10 @@ suite("Unit: StartupVerificationService", () => {
   let migrationService: NexkitFileMigrationService;
   let hooksConfigDeployer: HooksConfigDeployer;
   let authPromptService: GitHubAuthPromptService;
-  let originalHome: string | undefined;
+  let originalHomeEnv: string | undefined;
   let originalGetConfiguration: typeof vscode.workspace.getConfiguration;
   let configStore: Record<string, any>;
+  let updateTargets: vscode.ConfigurationTarget[];
 
   setup(() => {
     sandbox = sinon.createSandbox();
@@ -44,15 +45,18 @@ suite("Unit: StartupVerificationService", () => {
     hooksConfigDeployer = new HooksConfigDeployer();
     migrationService = new NexkitFileMigrationService();
     authPromptService = new GitHubAuthPromptService();
-    originalHome = process.env.HOME;
+    originalHomeEnv = process.env.HOME;
     process.env.HOME = tempDir;
     configStore = {};
+    updateTargets = [];
     originalGetConfiguration = vscode.workspace.getConfiguration;
     (vscode.workspace as any).getConfiguration = () =>
       ({
         get: (key: string, defaultValue?: any) => (key in configStore ? configStore[key] : defaultValue),
-        update: async (key: string, value: any) => {
+        inspect: (key: string) => ({ globalValue: configStore[key] }),
+        update: async (key: string, value: any, target: vscode.ConfigurationTarget) => {
           configStore[key] = value;
+          updateTargets.push(target);
         },
       }) as any;
 
@@ -67,7 +71,7 @@ suite("Unit: StartupVerificationService", () => {
 
   teardown(() => {
     (vscode.workspace as any).getConfiguration = originalGetConfiguration;
-    process.env.HOME = originalHome;
+    process.env.HOME = originalHomeEnv;
     sandbox.restore();
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });
@@ -94,6 +98,7 @@ suite("Unit: StartupVerificationService", () => {
     assert.deepStrictEqual(configStore["chat.hookFilesLocations"], { [path.join(userNexkitDir, "hooks")]: true });
     assert.deepStrictEqual(configStore["chat.promptFilesLocations"], { [path.join(userNexkitDir, "prompts")]: true });
     assert.strictEqual(configStore["chat.useHooks"], true);
+    assert.ok(updateTargets.every((target) => target === vscode.ConfigurationTarget.Global));
   });
 
   test("verifyWorkspaceConfiguration should migrate nexkit files", async () => {

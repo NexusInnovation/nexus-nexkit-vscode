@@ -15,18 +15,18 @@ suite("Unit: GitHubTemplateBackupService", () => {
   let service: GitHubTemplateBackupService;
   let tempDir: string;
   let nexkitDir: string;
-  let originalHome: string | undefined;
+  let originalHomeEnv: string | undefined;
 
   setup(async () => {
     service = new GitHubTemplateBackupService();
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "nexkit-backup-test-"));
-    originalHome = process.env.HOME;
+    originalHomeEnv = process.env.HOME;
     process.env.HOME = tempDir;
     nexkitDir = getNexkitUserDirectory(vscode.env.appName);
   });
 
   teardown(async () => {
-    process.env.HOME = originalHome;
+    process.env.HOME = originalHomeEnv;
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });
     } catch (error) {

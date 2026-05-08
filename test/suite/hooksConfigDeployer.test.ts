@@ -14,19 +14,19 @@ import { getNexkitUserDirectory } from "../../src/shared/utils/fileHelper";
 suite("Unit: HooksConfigDeployer", () => {
   let deployer: HooksConfigDeployer;
   let tempDir: string;
-  let originalHome: string | undefined;
+  let originalHomeEnv: string | undefined;
   let hooksRoot: string;
 
   setup(() => {
     deployer = new HooksConfigDeployer();
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "nexkit-hooks-test-"));
-    originalHome = process.env.HOME;
+    originalHomeEnv = process.env.HOME;
     process.env.HOME = tempDir;
     hooksRoot = path.join(getNexkitUserDirectory(vscode.env.appName), "hooks");
   });
 
   teardown(() => {
-    process.env.HOME = originalHome;
+    process.env.HOME = originalHomeEnv;
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });
     } catch (error) {

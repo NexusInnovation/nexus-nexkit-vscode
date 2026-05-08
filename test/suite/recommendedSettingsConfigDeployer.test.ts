@@ -14,7 +14,7 @@ import { getNexkitUserDirectory } from "../../src/shared/utils/fileHelper";
 suite("Unit: RecommendedSettingsConfigDeployer", () => {
   let deployer: RecommendedSettingsConfigDeployer;
   let tempDir: string;
-  let originalHome: string | undefined;
+  let originalHomeEnv: string | undefined;
   let originalGetConfiguration: typeof vscode.workspace.getConfiguration;
   let configStore: Record<string, any>;
   let updateCalls: Array<{ key: string; value: any; target: vscode.ConfigurationTarget }>;
@@ -22,7 +22,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
   setup(async () => {
     deployer = new RecommendedSettingsConfigDeployer();
     tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "nexkit-settings-test-"));
-    originalHome = process.env.HOME;
+    originalHomeEnv = process.env.HOME;
     process.env.HOME = tempDir;
 
     configStore = {};
@@ -31,6 +31,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     (vscode.workspace as any).getConfiguration = () =>
       ({
         get: (key: string, defaultValue?: any) => (key in configStore ? configStore[key] : defaultValue),
+        inspect: (key: string) => ({ globalValue: configStore[key] }),
         update: async (key: string, value: any, target: vscode.ConfigurationTarget) => {
           updateCalls.push({ key, value, target });
           configStore[key] = value;
@@ -40,7 +41,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
 
   teardown(async () => {
     (vscode.workspace as any).getConfiguration = originalGetConfiguration;
-    process.env.HOME = originalHome;
+    process.env.HOME = originalHomeEnv;
     try {
       await fs.promises.rm(tempDir, { recursive: true, force: true });
     } catch (error) {

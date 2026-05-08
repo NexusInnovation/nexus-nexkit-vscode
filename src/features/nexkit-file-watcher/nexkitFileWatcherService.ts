@@ -47,7 +47,7 @@ export class NexkitFileWatcherService implements vscode.Disposable {
     await this.cacheDirectoryContents(nexkitDir);
 
     // Create file system watcher for user-level .nexkit/**/*
-    const pattern = new vscode.RelativePattern(nexkitDir, "**/*");
+    const pattern = new vscode.RelativePattern(vscode.Uri.file(nexkitDir), "**/*");
     this._watcher = vscode.workspace.createFileSystemWatcher(pattern);
 
     this._disposables.push(this._watcher.onDidChange((uri) => this.handleFileChange(uri)));
@@ -107,13 +107,11 @@ export class NexkitFileWatcherService implements vscode.Disposable {
    * Rebuild the file cache by scanning the .nexkit/ directory.
    */
   private async rescanCache(): Promise<void> {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!this._nexkitDir && !workspaceFolder) {
+    if (!this._nexkitDir) {
       return;
     }
     this._fileCache.clear();
-    const nexkitDir = this._nexkitDir || path.join(workspaceFolder!.uri.fsPath, ".nexkit");
-    await this.cacheDirectoryContents(nexkitDir);
+    await this.cacheDirectoryContents(this._nexkitDir);
   }
 
   /**

@@ -70,7 +70,7 @@ export class GitHubTemplateBackupService {
 
   /**
    * List available backups
-   * @param workspaceRoot Absolute path to workspace root
+   * @param _workspaceRoot kept for compatibility with existing call sites
    * @returns Array of backup folder names, sorted by date (newest first)
    */
   public async listBackups(_workspaceRoot: string): Promise<string[]> {
@@ -105,7 +105,7 @@ export class GitHubTemplateBackupService {
     await fs.promises.mkdir(githubPath, { recursive: true });
 
     // Create temp backup of current template folders
-    const tempBackupPath = path.join(nexkitRoot, ".nexkit.temp");
+    const tempBackupPath = path.join(nexkitRoot, ".temp-backup");
     if (await this.hasAnyTemplateFolders(githubPath)) {
       await fs.promises.mkdir(tempBackupPath, { recursive: true });
       for (const folderName of TEMPLATE_FOLDERS) {
@@ -197,7 +197,7 @@ export class GitHubTemplateBackupService {
 
   /**
    * Create backup directory with template folders
-   * @param workspaceRoot Absolute path to workspace root
+   * @param _workspaceRoot kept for compatibility with existing call sites
    * @param githubPath Absolute path to .nexkit directory
    * @returns Path to backup directory
    */
