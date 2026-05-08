@@ -1,3 +1,9 @@
+## 3.10.0-beta.2 (2026-05-08)
+
+* feat(workspace): remove unused function task and add workspace configuration ([616e837](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/616e837))
+* feat!(core): Feature/invisible nexkit (#158) ([5fc1be4](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/5fc1be4)), closes [#158](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/158)
+* feat!(major):  Feature/invisible nexkit (#157) ([85ebc44](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/85ebc44)), closes [#157](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/157)
+
 ## 3.10.0-beta.1 (2026-05-07)
 
 * Clarify and preserve project-level `copilot-instructions.md` handling during Nexkit initialization ( ([a2a8df0](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a2a8df0)), closes [#156](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/156)
