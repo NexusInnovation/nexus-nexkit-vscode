@@ -7,18 +7,26 @@ import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
+import * as vscode from "vscode";
 import { HooksConfigDeployer } from "../../src/features/initialization/hooksConfigDeployer";
+import { getNexkitUserDirectory } from "../../src/shared/utils/fileHelper";
 
 suite("Unit: HooksConfigDeployer", () => {
   let deployer: HooksConfigDeployer;
   let tempDir: string;
+  let originalHome: string | undefined;
+  let hooksRoot: string;
 
   setup(() => {
     deployer = new HooksConfigDeployer();
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "nexkit-hooks-test-"));
+    originalHome = process.env.HOME;
+    process.env.HOME = tempDir;
+    hooksRoot = path.join(getNexkitUserDirectory(vscode.env.appName), "hooks");
   });
 
   teardown(() => {
+    process.env.HOME = originalHome;
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });
     } catch (error) {
@@ -35,7 +43,7 @@ suite("Unit: HooksConfigDeployer", () => {
 
     await deployer.deployRunTestsHook(tempDir);
 
-    const hookPath = path.join(tempDir, ".nexkit", "hooks", "run-tests.json");
+    const hookPath = path.join(hooksRoot, "run-tests.json");
     assert.ok(fs.existsSync(hookPath));
     const config = JSON.parse(fs.readFileSync(hookPath, "utf8"));
     assert.ok(config.hooks.Stop[0].command.includes("test:headless"));
@@ -51,7 +59,7 @@ suite("Unit: HooksConfigDeployer", () => {
 
     await deployer.deployRunTestsHook(tempDir);
 
-    const config = JSON.parse(fs.readFileSync(path.join(tempDir, ".nexkit", "hooks", "run-tests.json"), "utf8"));
+    const config = JSON.parse(fs.readFileSync(path.join(hooksRoot, "run-tests.json"), "utf8"));
     assert.ok(config.hooks.Stop[0].command.includes("test:unit"));
     assert.ok(config.hooks.Stop[0].windows?.includes("test:unit"));
   });
@@ -61,7 +69,7 @@ suite("Unit: HooksConfigDeployer", () => {
 
     await deployer.deployRunTestsHook(tempDir);
 
-    const config = JSON.parse(fs.readFileSync(path.join(tempDir, ".nexkit", "hooks", "run-tests.json"), "utf8"));
+    const config = JSON.parse(fs.readFileSync(path.join(hooksRoot, "run-tests.json"), "utf8"));
     assert.strictEqual(config.hooks.Stop[0].command, "npm test");
   });
 
@@ -70,7 +78,7 @@ suite("Unit: HooksConfigDeployer", () => {
 
     await deployer.deployRunTestsHook(tempDir);
 
-    const config = JSON.parse(fs.readFileSync(path.join(tempDir, ".nexkit", "hooks", "run-tests.json"), "utf8"));
+    const config = JSON.parse(fs.readFileSync(path.join(hooksRoot, "run-tests.json"), "utf8"));
     assert.strictEqual(config.hooks.Stop[0].command, "dotnet test");
   });
 
@@ -79,7 +87,7 @@ suite("Unit: HooksConfigDeployer", () => {
 
     await deployer.deployRunTestsHook(tempDir);
 
-    const config = JSON.parse(fs.readFileSync(path.join(tempDir, ".nexkit", "hooks", "run-tests.json"), "utf8"));
+    const config = JSON.parse(fs.readFileSync(path.join(hooksRoot, "run-tests.json"), "utf8"));
     assert.strictEqual(config.hooks.Stop[0].command, "dotnet test");
   });
 
@@ -88,7 +96,7 @@ suite("Unit: HooksConfigDeployer", () => {
 
     await deployer.deployRunTestsHook(tempDir);
 
-    const config = JSON.parse(fs.readFileSync(path.join(tempDir, ".nexkit", "hooks", "run-tests.json"), "utf8"));
+    const config = JSON.parse(fs.readFileSync(path.join(hooksRoot, "run-tests.json"), "utf8"));
     assert.strictEqual(config.hooks.Stop[0].command, "python -m pytest");
   });
 
@@ -97,33 +105,32 @@ suite("Unit: HooksConfigDeployer", () => {
 
     await deployer.deployRunTestsHook(tempDir);
 
-    const config = JSON.parse(fs.readFileSync(path.join(tempDir, ".nexkit", "hooks", "run-tests.json"), "utf8"));
+    const config = JSON.parse(fs.readFileSync(path.join(hooksRoot, "run-tests.json"), "utf8"));
     assert.strictEqual(config.hooks.Stop[0].command, "go test ./...");
   });
 
   test("Should skip deployment when no test framework detected", async () => {
     await deployer.deployRunTestsHook(tempDir);
 
-    const hookPath = path.join(tempDir, ".nexkit", "hooks", "run-tests.json");
+    const hookPath = path.join(hooksRoot, "run-tests.json");
     assert.ok(!fs.existsSync(hookPath));
   });
 
   test("Should merge with existing hook configuration", async () => {
-    const hooksDir = path.join(tempDir, ".nexkit", "hooks");
-    fs.mkdirSync(hooksDir, { recursive: true });
+    fs.mkdirSync(hooksRoot, { recursive: true });
 
     const existingConfig = {
       hooks: {
         PostToolUse: [{ type: "command", command: "npx prettier --write" }],
       },
     };
-    fs.writeFileSync(path.join(hooksDir, "run-tests.json"), JSON.stringify(existingConfig), "utf8");
+    fs.writeFileSync(path.join(hooksRoot, "run-tests.json"), JSON.stringify(existingConfig), "utf8");
 
     fs.writeFileSync(path.join(tempDir, "package.json"), JSON.stringify({ scripts: { test: "jest" } }), "utf8");
 
     await deployer.deployRunTestsHook(tempDir);
 
-    const config = JSON.parse(fs.readFileSync(path.join(hooksDir, "run-tests.json"), "utf8"));
+    const config = JSON.parse(fs.readFileSync(path.join(hooksRoot, "run-tests.json"), "utf8"));
     // Existing hook should be preserved
     assert.ok(config.hooks.PostToolUse);
     // New Stop hook should be added
@@ -135,7 +142,7 @@ suite("Unit: HooksConfigDeployer", () => {
 
     await deployer.deployRunTestsHook(tempDir);
 
-    const hookPath = path.join(tempDir, ".nexkit", "hooks", "run-tests.json");
+    const hookPath = path.join(hooksRoot, "run-tests.json");
     assert.ok(!fs.existsSync(hookPath));
   });
 });

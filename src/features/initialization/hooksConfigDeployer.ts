@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
-import { fileExists, deepMerge } from "../../shared/utils/fileHelper";
+import * as vscode from "vscode";
+import { fileExists, deepMerge, getNexkitUserDirectory } from "../../shared/utils/fileHelper";
 import { LoggingService } from "../../shared/services/loggingService";
 
 /**
@@ -48,7 +49,7 @@ export class HooksConfigDeployer {
         return;
       }
 
-      const hooksDir = path.join(targetRoot, ".nexkit", "hooks");
+      const hooksDir = path.join(getNexkitUserDirectory(vscode.env.appName), "hooks");
       await fs.promises.mkdir(hooksDir, { recursive: true });
 
       const hookPath = path.join(hooksDir, "run-tests.json");

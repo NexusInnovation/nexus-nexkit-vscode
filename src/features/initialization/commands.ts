@@ -67,7 +67,7 @@ export function registerInitializeWorkspaceCommand(context: vscode.ExtensionCont
       let resultMessage = "Nexkit project initialized successfully!";
 
       if (migrationSummary) {
-        resultMessage += ` Migrated ${migrationSummary.migratedCount} file(s) from .github to .nexkit.`;
+        resultMessage += ` Migrated ${migrationSummary.migratedCount} legacy file(s) to user .nexkit storage.`;
       }
 
       if (deploymentSummary !== null && deploymentSummary.installed > 0) {

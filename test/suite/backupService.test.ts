@@ -7,18 +7,26 @@ import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
+import * as vscode from "vscode";
 import { GitHubTemplateBackupService } from "../../src/features/backup-management/backupService";
+import { getNexkitUserDirectory } from "../../src/shared/utils/fileHelper";
 
 suite("Unit: GitHubTemplateBackupService", () => {
   let service: GitHubTemplateBackupService;
   let tempDir: string;
+  let nexkitDir: string;
+  let originalHome: string | undefined;
 
   setup(async () => {
     service = new GitHubTemplateBackupService();
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "nexkit-backup-test-"));
+    originalHome = process.env.HOME;
+    process.env.HOME = tempDir;
+    nexkitDir = getNexkitUserDirectory(vscode.env.appName);
   });
 
   teardown(async () => {
+    process.env.HOME = originalHome;
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });
     } catch (error) {
@@ -40,7 +48,6 @@ suite("Unit: GitHubTemplateBackupService", () => {
 
   test("Should backup only template folders from .nexkit directory", async () => {
     // Create .nexkit directory with template folders and other content
-    const nexkitDir = path.join(tempDir, ".nexkit");
     fs.mkdirSync(nexkitDir, { recursive: true });
 
     // Create template folders
@@ -64,6 +71,7 @@ suite("Unit: GitHubTemplateBackupService", () => {
     // Verify backup was created
     assert.ok(backupPath);
     assert.ok(fs.existsSync(backupPath as string));
+    assert.ok((backupPath as string).startsWith(nexkitDir));
     assert.ok((backupPath as string).includes(".nexkit.backup-"));
 
     // Verify template folders were backed up
@@ -85,7 +93,6 @@ suite("Unit: GitHubTemplateBackupService", () => {
   });
 
   test("Should delete only template folders, preserving other .nexkit content", async () => {
-    const nexkitDir = path.join(tempDir, ".nexkit");
     fs.mkdirSync(nexkitDir, { recursive: true });
 
     // Create template folders
@@ -113,8 +120,8 @@ suite("Unit: GitHubTemplateBackupService", () => {
 
   test("Should list backups in workspace root", async () => {
     // Create some test backup directories
-    fs.mkdirSync(path.join(tempDir, ".nexkit.backup-2024-01-01T12-00-00"));
-    fs.mkdirSync(path.join(tempDir, ".nexkit.backup-2024-01-02T12-00-00"));
+    fs.mkdirSync(path.join(nexkitDir, ".nexkit.backup-2024-01-01T12-00-00"), { recursive: true });
+    fs.mkdirSync(path.join(nexkitDir, ".nexkit.backup-2024-01-02T12-00-00"), { recursive: true });
 
     const backups = await service.listBackups(tempDir);
 
@@ -126,10 +133,8 @@ suite("Unit: GitHubTemplateBackupService", () => {
   });
 
   test("Should restore template folders from backup", async () => {
-    const nexkitDir = path.join(tempDir, ".nexkit");
-
     // Create a backup directory
-    const backupDir = path.join(tempDir, ".nexkit.backup-2024-01-01T12-00-00");
+    const backupDir = path.join(nexkitDir, ".nexkit.backup-2024-01-01T12-00-00");
     fs.mkdirSync(path.join(backupDir, "agents"), { recursive: true });
     fs.writeFileSync(path.join(backupDir, "agents", "restored.agent.md"), "restored content");
 
@@ -157,7 +162,6 @@ suite("Unit: GitHubTemplateBackupService", () => {
   });
 
   test("Should return null when backing up .nexkit with no template folders", async () => {
-    const nexkitDir = path.join(tempDir, ".nexkit");
     fs.mkdirSync(nexkitDir, { recursive: true });
 
     // Only create non-template content
@@ -169,8 +173,6 @@ suite("Unit: GitHubTemplateBackupService", () => {
   });
 
   test("Should handle partial template folders", async () => {
-    const nexkitDir = path.join(tempDir, ".nexkit");
-
     // Only create some template folders
     fs.mkdirSync(path.join(nexkitDir, "agents"), { recursive: true });
     fs.writeFileSync(path.join(nexkitDir, "agents", "test.agent.md"), "content");
@@ -188,8 +190,8 @@ suite("Unit: GitHubTemplateBackupService", () => {
 
   test("Should cleanup old backups based on retention policy", async () => {
     // Create backup directories with different ages
-    const oldBackup = path.join(tempDir, ".nexkit.backup-2020-01-01T12-00-00");
-    const recentBackup = path.join(tempDir, ".nexkit.backup-2026-01-01T12-00-00");
+    const oldBackup = path.join(nexkitDir, ".nexkit.backup-2020-01-01T12-00-00");
+    const recentBackup = path.join(nexkitDir, ".nexkit.backup-2026-01-01T12-00-00");
 
     fs.mkdirSync(oldBackup);
     fs.mkdirSync(recentBackup);

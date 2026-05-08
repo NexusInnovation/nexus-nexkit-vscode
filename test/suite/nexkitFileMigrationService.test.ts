@@ -7,18 +7,26 @@ import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
+import * as vscode from "vscode";
 import { NexkitFileMigrationService } from "../../src/features/initialization/nexkitFileMigrationService";
+import { getNexkitUserDirectory } from "../../src/shared/utils/fileHelper";
 
 suite("Unit: NexkitFileMigrationService", () => {
   let service: NexkitFileMigrationService;
   let tempDir: string;
+  let userNexkitDir: string;
+  let originalHome: string | undefined;
 
   setup(async () => {
     service = new NexkitFileMigrationService();
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "nexkit-migration-test-"));
+    originalHome = process.env.HOME;
+    process.env.HOME = tempDir;
+    userNexkitDir = getNexkitUserDirectory(vscode.env.appName);
   });
 
   teardown(async () => {
+    process.env.HOME = originalHome;
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });
     } catch (error) {
@@ -65,8 +73,8 @@ suite("Unit: NexkitFileMigrationService", () => {
     assert.deepStrictEqual(result.migratedFiles["agents"]?.sort(), ["nexkit.code-review.md", "nexkit.test-writer.md"].sort());
 
     // Verify files exist in .nexkit/agents
-    assert.ok(fs.existsSync(path.join(tempDir, ".nexkit", "agents", "nexkit.code-review.md")));
-    assert.ok(fs.existsSync(path.join(tempDir, ".nexkit", "agents", "nexkit.test-writer.md")));
+    assert.ok(fs.existsSync(path.join(userNexkitDir, "agents", "nexkit.code-review.md")));
+    assert.ok(fs.existsSync(path.join(userNexkitDir, "agents", "nexkit.test-writer.md")));
 
     // Verify files removed from .github/agents
     assert.ok(!fs.existsSync(path.join(agentsDir, "nexkit.code-review.md")));
@@ -98,9 +106,9 @@ suite("Unit: NexkitFileMigrationService", () => {
     assert.deepStrictEqual(result.migratedFiles["instructions"], ["nexkit.instruction.md"]);
 
     // Verify all files migrated
-    assert.ok(fs.existsSync(path.join(tempDir, ".nexkit", "agents", "nexkit.agent.md")));
-    assert.ok(fs.existsSync(path.join(tempDir, ".nexkit", "prompts", "nexkit.prompt.md")));
-    assert.ok(fs.existsSync(path.join(tempDir, ".nexkit", "instructions", "nexkit.instruction.md")));
+    assert.ok(fs.existsSync(path.join(userNexkitDir, "agents", "nexkit.agent.md")));
+    assert.ok(fs.existsSync(path.join(userNexkitDir, "prompts", "nexkit.prompt.md")));
+    assert.ok(fs.existsSync(path.join(userNexkitDir, "instructions", "nexkit.instruction.md")));
   });
 
   test("Should only move files starting with nexkit. and leave other files untouched", async () => {
@@ -117,7 +125,7 @@ suite("Unit: NexkitFileMigrationService", () => {
     assert.deepStrictEqual(result.migratedFiles["agents"], ["nexkit.managed.md"]);
 
     // Verify nexkit.* moved
-    assert.ok(fs.existsSync(path.join(tempDir, ".nexkit", "agents", "nexkit.managed.md")));
+    assert.ok(fs.existsSync(path.join(userNexkitDir, "agents", "nexkit.managed.md")));
     assert.ok(!fs.existsSync(path.join(agentsDir, "nexkit.managed.md")));
 
     // Verify other files untouched
@@ -133,7 +141,7 @@ suite("Unit: NexkitFileMigrationService", () => {
 
     await service.migrateNexkitFiles(tempDir);
 
-    const migratedContent = fs.readFileSync(path.join(tempDir, ".nexkit", "agents", "nexkit.agent.md"), "utf8");
+    const migratedContent = fs.readFileSync(path.join(userNexkitDir, "agents", "nexkit.agent.md"), "utf8");
     assert.strictEqual(migratedContent, originalContent);
   });
 
@@ -162,13 +170,13 @@ suite("Unit: NexkitFileMigrationService", () => {
     fs.writeFileSync(path.join(promptsDir, "nexkit.prompt.md"), "prompt content");
 
     // Verify .nexkit doesn't exist yet
-    assert.ok(!fs.existsSync(path.join(tempDir, ".nexkit")));
+    assert.ok(!fs.existsSync(path.join(userNexkitDir, "prompts")));
 
     await service.migrateNexkitFiles(tempDir);
 
-    // Verify .nexkit/prompts was created
-    assert.ok(fs.existsSync(path.join(tempDir, ".nexkit", "prompts")));
-    assert.ok(fs.existsSync(path.join(tempDir, ".nexkit", "prompts", "nexkit.prompt.md")));
+    // Verify user .nexkit/prompts was created
+    assert.ok(fs.existsSync(path.join(userNexkitDir, "prompts")));
+    assert.ok(fs.existsSync(path.join(userNexkitDir, "prompts", "nexkit.prompt.md")));
   });
 
   test("Should handle skills directory migration", async () => {
@@ -180,7 +188,7 @@ suite("Unit: NexkitFileMigrationService", () => {
 
     assert.ok(result);
     assert.strictEqual(result.migratedCount, 1);
-    assert.ok(fs.existsSync(path.join(tempDir, ".nexkit", "skills", "nexkit.skill.md")));
+    assert.ok(fs.existsSync(path.join(userNexkitDir, "skills", "nexkit.skill.md")));
   });
 
   test("Should handle chatmodes directory migration", async () => {
@@ -192,7 +200,7 @@ suite("Unit: NexkitFileMigrationService", () => {
 
     assert.ok(result);
     assert.strictEqual(result.migratedCount, 1);
-    assert.ok(fs.existsSync(path.join(tempDir, ".nexkit", "chatmodes", "nexkit.chatmode.md")));
+    assert.ok(fs.existsSync(path.join(userNexkitDir, "chatmodes", "nexkit.chatmode.md")));
   });
 
   test("Should keep .github/copilot-instructions.md untouched", async () => {
@@ -207,8 +215,21 @@ suite("Unit: NexkitFileMigrationService", () => {
 
     assert.ok(result);
     assert.strictEqual(result.migratedCount, 1);
-    assert.ok(fs.existsSync(path.join(tempDir, ".nexkit", "agents", "nexkit.agent.md")));
+    assert.ok(fs.existsSync(path.join(userNexkitDir, "agents", "nexkit.agent.md")));
     assert.ok(fs.existsSync(copilotInstructionsPath));
     assert.strictEqual(fs.readFileSync(copilotInstructionsPath, "utf8"), "# Project instructions");
+  });
+
+  test("Should migrate legacy workspace .nexkit content to user .nexkit", async () => {
+    const legacyAgentsDir = path.join(tempDir, ".nexkit", "agents");
+    fs.mkdirSync(legacyAgentsDir, { recursive: true });
+    fs.writeFileSync(path.join(legacyAgentsDir, "legacy.agent.md"), "legacy content");
+
+    const result = await service.migrateNexkitFiles(tempDir);
+
+    assert.ok(result);
+    assert.ok(result.migratedCount >= 1);
+    assert.ok(fs.existsSync(path.join(userNexkitDir, "agents", "legacy.agent.md")));
+    assert.ok(!fs.existsSync(path.join(legacyAgentsDir, "legacy.agent.md")));
   });
 });

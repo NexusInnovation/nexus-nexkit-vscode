@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 import { AITemplateFile, AITemplateFileType, InstalledTemplatesMap } from "../models/aiTemplateFile";
-import { fileExists, getWorkspaceRoot } from "../../../shared/utils/fileHelper";
+import { fileExists, getNexkitUserDirectory } from "../../../shared/utils/fileHelper";
 import { TemplateFetcherService } from "./templateFetcherService";
 import { InstalledTemplatesStateManager } from "./installedTemplatesStateManager";
 import { NexkitFileWatcherService } from "../../nexkit-file-watcher/nexkitFileWatcherService";
@@ -38,8 +38,7 @@ export class TemplateFileOperations {
    * Get the directory path for a type of template
    */
   private getTemplateTypePath(templateFileType: AITemplateFileType): string {
-    const workspaceRoot = getWorkspaceRoot();
-    return path.join(workspaceRoot, ".nexkit", templateFileType);
+    return path.join(getNexkitUserDirectory(vscode.env.appName), templateFileType);
   }
 
   /**
@@ -168,7 +167,7 @@ export class TemplateFileOperations {
       if (!(await fileExists(targetPath))) {
         if (!silent) {
           vscode.window.showWarningMessage(
-            `${templateFile.isDirectory ? "Skill" : "File"} ${templateFile.name} not found in .github/${templateFile.type}/`
+            `${templateFile.isDirectory ? "Skill" : "File"} ${templateFile.name} not found in .nexkit/${templateFile.type}/`
           );
         }
         return;
@@ -195,7 +194,7 @@ export class TemplateFileOperations {
 
       if (!silent) {
         vscode.window.showInformationMessage(
-          `Removed ${templateFile.isDirectory ? "skill" : "template"} ${templateFile.name} from .github/${templateFile.type}/`
+          `Removed ${templateFile.isDirectory ? "skill" : "template"} ${templateFile.name} from .nexkit/${templateFile.type}/`
         );
       }
     } catch (error) {

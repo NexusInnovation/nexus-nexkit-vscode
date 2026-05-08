@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
-import { fileExists, copyDirectory } from "../../shared/utils/fileHelper";
+import * as vscode from "vscode";
+import { fileExists, copyDirectory, getNexkitUserDirectory } from "../../shared/utils/fileHelper";
 import { AI_TEMPLATE_FILE_TYPES } from "../ai-template-files/models/aiTemplateFile";
 import { NexkitFileWatcherService } from "../nexkit-file-watcher/nexkitFileWatcherService";
 
@@ -21,7 +22,7 @@ export class GitHubTemplateBackupService {
    * @returns Path to backup directory or null if nothing was backed up
    */
   public async backupTemplates(workspaceRoot: string): Promise<string | null> {
-    const githubPath = path.join(workspaceRoot, ".nexkit");
+    const githubPath = getNexkitUserDirectory(vscode.env.appName);
 
     if (!(await fileExists(githubPath))) {
       return null;
@@ -46,7 +47,7 @@ export class GitHubTemplateBackupService {
    * @param workspaceRoot Absolute path to workspace root
    */
   public async deleteTemplateFolders(workspaceRoot: string): Promise<void> {
-    const githubPath = path.join(workspaceRoot, ".nexkit");
+    const githubPath = getNexkitUserDirectory(vscode.env.appName);
 
     if (!(await fileExists(githubPath))) {
       return;
@@ -72,9 +73,10 @@ export class GitHubTemplateBackupService {
    * @param workspaceRoot Absolute path to workspace root
    * @returns Array of backup folder names, sorted by date (newest first)
    */
-  public async listBackups(workspaceRoot: string): Promise<string[]> {
+  public async listBackups(_workspaceRoot: string): Promise<string[]> {
     try {
-      const entries = await fs.promises.readdir(workspaceRoot);
+      const backupRoot = getNexkitUserDirectory(vscode.env.appName);
+      const entries = await fs.promises.readdir(backupRoot);
       return entries
         .filter((entry) => entry.startsWith(".nexkit.backup-"))
         .sort()
@@ -90,19 +92,20 @@ export class GitHubTemplateBackupService {
    * @param backupName Name of the backup folder (e.g., ".github.backup-2024-01-01T12-00-00")
    */
   public async restoreBackup(workspaceRoot: string, backupName: string): Promise<void> {
-    const backupPath = path.join(workspaceRoot, backupName);
+    const nexkitRoot = getNexkitUserDirectory(vscode.env.appName);
+    const backupPath = path.join(nexkitRoot, backupName);
 
     if (!(await fileExists(backupPath))) {
       throw new Error(`Backup ${backupName} not found`);
     }
 
-    const githubPath = path.join(workspaceRoot, ".nexkit");
+    const githubPath = nexkitRoot;
 
     // Create .nexkit directory if it doesn't exist
     await fs.promises.mkdir(githubPath, { recursive: true });
 
     // Create temp backup of current template folders
-    const tempBackupPath = path.join(workspaceRoot, ".github.temp");
+    const tempBackupPath = path.join(nexkitRoot, ".nexkit.temp");
     if (await this.hasAnyTemplateFolders(githubPath)) {
       await fs.promises.mkdir(tempBackupPath, { recursive: true });
       for (const folderName of TEMPLATE_FOLDERS) {
@@ -164,7 +167,7 @@ export class GitHubTemplateBackupService {
     const backups = await this.listBackups(workspaceRoot);
 
     for (const backup of backups) {
-      const backupPath = path.join(workspaceRoot, backup);
+      const backupPath = path.join(getNexkitUserDirectory(vscode.env.appName), backup);
       try {
         const stats = await fs.promises.stat(backupPath);
         if (stats.mtime < cutoffDate) {
@@ -198,9 +201,9 @@ export class GitHubTemplateBackupService {
    * @param githubPath Absolute path to .nexkit directory
    * @returns Path to backup directory
    */
-  private async createBackupDirectory(workspaceRoot: string, githubPath: string): Promise<string> {
+  private async createBackupDirectory(_workspaceRoot: string, githubPath: string): Promise<string> {
     const timestamp = new Date().toISOString().slice(0, 19).replace(/T/g, "_").replace(/:/g, "-");
-    const backupPath = path.join(workspaceRoot, `.nexkit.backup-${timestamp}`);
+    const backupPath = path.join(getNexkitUserDirectory(vscode.env.appName), `.nexkit.backup-${timestamp}`);
     await fs.promises.mkdir(backupPath, { recursive: true });
 
     for (const folderName of TEMPLATE_FOLDERS) {

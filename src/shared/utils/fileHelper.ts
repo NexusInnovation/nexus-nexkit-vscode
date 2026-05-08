@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
 
@@ -23,6 +24,31 @@ export function getWorkspaceRoot(): string {
     throw new Error("No workspace folder open");
   }
   return workspaceFolder.uri.fsPath;
+}
+
+/**
+ * Get VS Code user settings directory (platform-aware)
+ */
+export function getVSCodeUserDirectory(appName: string = vscode.env.appName): string {
+  const homeDir = os.homedir();
+  const variantName =
+    appName.includes("Insiders") ? "Code - Insiders" : appName.includes("OSS") ? "Code - OSS" : "Code";
+
+  switch (process.platform) {
+    case "win32":
+      return path.join(process.env.APPDATA || path.join(homeDir, "AppData", "Roaming"), variantName, "User");
+    case "darwin":
+      return path.join(homeDir, "Library", "Application Support", variantName, "User");
+    default:
+      return path.join(homeDir, ".config", variantName, "User");
+  }
+}
+
+/**
+ * Get Nexkit managed templates root directory in VS Code user settings
+ */
+export function getNexkitUserDirectory(appName: string = vscode.env.appName): string {
+  return path.join(getVSCodeUserDirectory(appName), ".nexkit");
 }
 
 /**

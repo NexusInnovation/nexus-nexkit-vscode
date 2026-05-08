@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as path from "path";
 import { AITemplateFile, AITemplateFileType, AI_TEMPLATE_FILE_TYPES } from "../models/aiTemplateFile";
 import { InstalledTemplateRecord, InstalledTemplatesState } from "../models/installedTemplateRecord";
-import { fileExists, getWorkspaceRoot } from "../../../shared/utils/fileHelper";
+import { fileExists, getNexkitUserDirectory } from "../../../shared/utils/fileHelper";
 
 /**
  * Service for managing installed templates state
@@ -82,12 +82,12 @@ export class InstalledTemplatesStateManager {
    */
   public async syncWithFileSystem(): Promise<void> {
     const state = this.getState();
-    const workspaceRoot = getWorkspaceRoot();
+    const nexkitRoot = getNexkitUserDirectory(vscode.env.appName);
     const templatesToKeep: InstalledTemplateRecord[] = [];
 
     // Check each installed template if file still exists
     for (const template of state.templates) {
-      const filePath = path.join(workspaceRoot, ".nexkit", template.type, template.name);
+      const filePath = path.join(nexkitRoot, template.type, template.name);
 
       if (await fileExists(filePath)) {
         templatesToKeep.push(template);

@@ -1,9 +1,9 @@
 /**
  * Tests for StartupVerificationService
  * Verifies that essential Nexkit checks run at every VS Code startup:
- * - .gitignore contains .nexkit/ exclusion
- * - VS Code settings contain all required chat file locations
- * - nexkit.* files are migrated from .github to .nexkit
+ * - project .gitignore is not modified
+ * - VS Code chat file settings are applied at global scope
+ * - legacy nexkit files are migrated to user .nexkit
  * - GitHub authentication is verified
  */
 
@@ -19,6 +19,7 @@ import { RecommendedSettingsConfigDeployer } from "../../src/features/initializa
 import { NexkitFileMigrationService } from "../../src/features/initialization/nexkitFileMigrationService";
 import { HooksConfigDeployer } from "../../src/features/initialization/hooksConfigDeployer";
 import { GitHubAuthPromptService } from "../../src/features/initialization/githubAuthPromptService";
+import { getNexkitUserDirectory } from "../../src/shared/utils/fileHelper";
 
 suite("Unit: StartupVerificationService", () => {
   let service: StartupVerificationService;
@@ -30,6 +31,9 @@ suite("Unit: StartupVerificationService", () => {
   let migrationService: NexkitFileMigrationService;
   let hooksConfigDeployer: HooksConfigDeployer;
   let authPromptService: GitHubAuthPromptService;
+  let originalHome: string | undefined;
+  let originalGetConfiguration: typeof vscode.workspace.getConfiguration;
+  let configStore: Record<string, any>;
 
   setup(() => {
     sandbox = sinon.createSandbox();
@@ -40,6 +44,17 @@ suite("Unit: StartupVerificationService", () => {
     hooksConfigDeployer = new HooksConfigDeployer();
     migrationService = new NexkitFileMigrationService();
     authPromptService = new GitHubAuthPromptService();
+    originalHome = process.env.HOME;
+    process.env.HOME = tempDir;
+    configStore = {};
+    originalGetConfiguration = vscode.workspace.getConfiguration;
+    (vscode.workspace as any).getConfiguration = () =>
+      ({
+        get: (key: string, defaultValue?: any) => (key in configStore ? configStore[key] : defaultValue),
+        update: async (key: string, value: any) => {
+          configStore[key] = value;
+        },
+      }) as any;
 
     service = new StartupVerificationService(
       gitIgnoreDeployer,
@@ -51,6 +66,8 @@ suite("Unit: StartupVerificationService", () => {
   });
 
   teardown(() => {
+    (vscode.workspace as any).getConfiguration = originalGetConfiguration;
+    process.env.HOME = originalHome;
     sandbox.restore();
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });
@@ -63,25 +80,20 @@ suite("Unit: StartupVerificationService", () => {
     assert.ok(service);
   });
 
-  test("verifyWorkspaceConfiguration should deploy gitignore", async () => {
+  test("verifyWorkspaceConfiguration should not create or modify .gitignore", async () => {
     await service.verifyWorkspaceConfiguration(tempDir);
 
     const gitignorePath = path.join(tempDir, ".gitignore");
-    assert.ok(fs.existsSync(gitignorePath));
-    const content = fs.readFileSync(gitignorePath, "utf8");
-    assert.ok(content.includes(".nexkit/"));
+    assert.ok(!fs.existsSync(gitignorePath));
   });
 
-  test("verifyWorkspaceConfiguration should deploy settings", async () => {
+  test("verifyWorkspaceConfiguration should deploy global settings", async () => {
     await service.verifyWorkspaceConfiguration(tempDir);
-
-    const settingsPath = path.join(tempDir, ".vscode", "settings.json");
-    assert.ok(fs.existsSync(settingsPath));
-    const settings = JSON.parse(fs.readFileSync(settingsPath, "utf8"));
-    assert.deepStrictEqual(settings["chat.agentFilesLocations"], { ".nexkit/agents": true });
-    assert.deepStrictEqual(settings["chat.hookFilesLocations"], { ".nexkit/hooks": true });
-    assert.deepStrictEqual(settings["chat.promptFilesLocations"], { ".nexkit/prompts": true });
-    assert.strictEqual(settings["chat.useHooks"], true);
+    const userNexkitDir = getNexkitUserDirectory(vscode.env.appName);
+    assert.deepStrictEqual(configStore["chat.agentFilesLocations"], { [path.join(userNexkitDir, "agents")]: true });
+    assert.deepStrictEqual(configStore["chat.hookFilesLocations"], { [path.join(userNexkitDir, "hooks")]: true });
+    assert.deepStrictEqual(configStore["chat.promptFilesLocations"], { [path.join(userNexkitDir, "prompts")]: true });
+    assert.strictEqual(configStore["chat.useHooks"], true);
   });
 
   test("verifyWorkspaceConfiguration should migrate nexkit files", async () => {
@@ -92,8 +104,9 @@ suite("Unit: StartupVerificationService", () => {
 
     await service.verifyWorkspaceConfiguration(tempDir);
 
-    // File should be migrated to .nexkit/agents
-    assert.ok(fs.existsSync(path.join(tempDir, ".nexkit", "agents", "nexkit.test-agent.md")));
+    const userNexkitDir = getNexkitUserDirectory(vscode.env.appName);
+    // File should be migrated to user .nexkit/agents
+    assert.ok(fs.existsSync(path.join(userNexkitDir, "agents", "nexkit.test-agent.md")));
     assert.ok(!fs.existsSync(path.join(agentsDir, "nexkit.test-agent.md")));
   });
 
@@ -102,15 +115,7 @@ suite("Unit: StartupVerificationService", () => {
     await service.verifyWorkspaceConfiguration(tempDir);
     await service.verifyWorkspaceConfiguration(tempDir);
 
-    const gitignorePath = path.join(tempDir, ".gitignore");
-    const content = fs.readFileSync(gitignorePath, "utf8");
-    // Should have exactly one NexKit section, not duplicated
-    const matches = content.match(/# BEGIN NexKit/g);
-    assert.strictEqual(matches?.length, 1);
-
-    const settingsPath = path.join(tempDir, ".vscode", "settings.json");
-    const settings = JSON.parse(fs.readFileSync(settingsPath, "utf8"));
-    assert.strictEqual(settings["chat.useHooks"], true);
+    assert.strictEqual(configStore["chat.useHooks"], true);
   });
 
   test("verifyOnStartup should skip if no workspace folder", async () => {

@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 import { LoggingService } from "../../shared/services/loggingService";
+import { getNexkitUserDirectory } from "../../shared/utils/fileHelper";
 
 /**
  * Service that monitors the .nexkit/ directory for external file changes.
@@ -22,6 +23,7 @@ export class NexkitFileWatcherService implements vscode.Disposable {
   private readonly _disposables: vscode.Disposable[] = [];
   private readonly _processingPaths: Set<string> = new Set();
   private _bulkSuppressionDepth = 0;
+  private _nexkitDir = "";
 
   /**
    * Get or create the singleton instance
@@ -38,19 +40,14 @@ export class NexkitFileWatcherService implements vscode.Disposable {
    * Call this after extension activation.
    */
   public async startWatching(): Promise<void> {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) {
-      this._logging.info("No workspace folder open, skipping .nexkit file watcher setup");
-      return;
-    }
-
-    const nexkitDir = path.join(workspaceFolder.uri.fsPath, ".nexkit");
+    const nexkitDir = getNexkitUserDirectory(vscode.env.appName);
+    this._nexkitDir = nexkitDir;
 
     // Initial cache of existing files
     await this.cacheDirectoryContents(nexkitDir);
 
-    // Create file system watcher for .nexkit/**/*
-    const pattern = new vscode.RelativePattern(workspaceFolder, ".nexkit/**/*");
+    // Create file system watcher for user-level .nexkit/**/*
+    const pattern = new vscode.RelativePattern(nexkitDir, "**/*");
     this._watcher = vscode.workspace.createFileSystemWatcher(pattern);
 
     this._disposables.push(this._watcher.onDidChange((uri) => this.handleFileChange(uri)));
@@ -58,7 +55,7 @@ export class NexkitFileWatcherService implements vscode.Disposable {
     this._disposables.push(this._watcher.onDidDelete((uri) => this.handleFileDelete(uri)));
     this._disposables.push(this._watcher);
 
-    this._logging.info("Started watching .nexkit/ directory for external changes");
+    this._logging.info(`Started watching user .nexkit directory for external changes: ${nexkitDir}`);
   }
 
   /**
@@ -111,11 +108,12 @@ export class NexkitFileWatcherService implements vscode.Disposable {
    */
   private async rescanCache(): Promise<void> {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) {
+    if (!this._nexkitDir && !workspaceFolder) {
       return;
     }
     this._fileCache.clear();
-    await this.cacheDirectoryContents(path.join(workspaceFolder.uri.fsPath, ".nexkit"));
+    const nexkitDir = this._nexkitDir || path.join(workspaceFolder!.uri.fsPath, ".nexkit");
+    await this.cacheDirectoryContents(nexkitDir);
   }
 
   /**
@@ -310,8 +308,8 @@ export class NexkitFileWatcherService implements vscode.Disposable {
    * Get workspace-relative path for display purposes.
    */
   private getRelativePath(filePath: string): string {
-    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? "";
-    return path.relative(workspaceRoot, filePath);
+    const basePath = this._nexkitDir || (vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? "");
+    return path.relative(basePath, filePath);
   }
 
   /**
