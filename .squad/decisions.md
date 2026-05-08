@@ -70,6 +70,18 @@ Workspace file modifications during initialization are now conditional on `nexki
 
 ---
 
+### 2026-05-08: Migration service — Issue #155 full verification
+**By:** Rusty (Extension Dev)
+
+All acceptance criteria for issue #155 verified:
+- Activation notification (`checkAndPromptMigration`) fires once, respects `"dismissed"`/`"completed"` state in `context.globalState`; "Don't Ask Again" persists dismissal permanently
+- `executeMigration()` uses backup-first + copy-first strategy: `BackupService.backupTemplates()` before any operation, files copied (not moved), workspace `.nexkit/` deleted only after user confirms
+- Manual command `nexus-nexkit-vscode.migrateToUserDirectory` registered and appears in command palette as "Nexkit: Migrate Templates to User Directory"
+
+Minor gap noted: no explicit rollback of partial user-directory copy on error — mitigated by copy-first design (workspace `.nexkit/` always intact until Step 5). Non-blocking for MVP; future enhancement suggested.
+
+---
+
 ### 2026-05-07: Workspace-to-User Migration Architecture
 **By:** Rusty (Extension Dev)
 
@@ -88,6 +100,22 @@ Migration service uses backup-first safety pattern: always calls `BackupService.
 **By:** Basher (Platform Dev) — requested by Eric — Issue #152
 
 `GitHubTemplateBackupService` now stores backups in `UserDirectoryService.getUserBackupDir()` instead of workspace root. Path: `<user-nexkit-root>/backups/<timestamp>/` (format: `YYYY-MM-DD_HH-MM-SS`). Retention: max 5 backups, count-based (was date-based). `listBackups()` and `cleanupBackups()` no longer require `workspaceRoot`. Constructor now requires `UserDirectoryService` injection.
+
+---
+
+### 2026-05-08: Panel UI — Issue #149 full verification
+**By:** Linus (UI Dev)
+
+Full review of `src/features/panel-ui/webview/` confirmed all acceptance criteria satisfied:
+- "Set Up NexKit" label correct in `ActionsSection.tsx`, `ToolsSection.tsx`, `ApmActionsSection.tsx`
+- User directory descriptions present in all three action sections
+- `TemplateSection.tsx` renders `Templates installed to: User directory + Workspace` when `workspaceOverrideActive === true`
+- `deployMode` propagated correctly via `nexkitPanelMessageHandler.ts` → `AppStateContext.tsx`
+- Install/uninstall routes to user directory via `TemplateFileOperations.ts` `isUserDeployMode()` check
+- Profile apply respects user deploy mode through same code path
+- No hardcoded `.nexkit/` path strings in webview
+
+Minor items (non-blocking): stale copy in `ProfileSection.tsx` line 16 ("other projects" should be "restore it later"); no location indicator in pure user-mode when `workspaceOverrideActive === false`. Both are UX polish only.
 
 ---
 
