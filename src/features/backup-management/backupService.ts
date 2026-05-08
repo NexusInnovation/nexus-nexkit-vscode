@@ -22,19 +22,19 @@ export class GitHubTemplateBackupService {
    * @returns Path to backup directory or null if nothing was backed up
    */
   public async backupTemplates(workspaceRoot: string): Promise<string | null> {
-    const githubPath = getNexkitUserDirectory(vscode.env.appName);
+    const nexkitPath = getNexkitUserDirectory(vscode.env.appName);
 
-    if (!(await fileExists(githubPath))) {
+    if (!(await fileExists(nexkitPath))) {
       return null;
     }
 
-    const hasTemplates = await this.hasAnyTemplateFolders(githubPath);
+    const hasTemplates = await this.hasAnyTemplateFolders(nexkitPath);
     if (!hasTemplates) {
       return null;
     }
 
     // Create backup
-    const backupPath = await this.createBackupDirectory(workspaceRoot, githubPath);
+    const backupPath = await this.createBackupDirectory(workspaceRoot, nexkitPath);
 
     // Delete template folders from original location
     await this.deleteTemplateFolders(workspaceRoot);
@@ -47,9 +47,9 @@ export class GitHubTemplateBackupService {
    * @param workspaceRoot Absolute path to workspace root
    */
   public async deleteTemplateFolders(workspaceRoot: string): Promise<void> {
-    const githubPath = getNexkitUserDirectory(vscode.env.appName);
+    const nexkitPath = getNexkitUserDirectory(vscode.env.appName);
 
-    if (!(await fileExists(githubPath))) {
+    if (!(await fileExists(nexkitPath))) {
       return;
     }
 
@@ -58,7 +58,7 @@ export class GitHubTemplateBackupService {
     try {
       // Delete only template folders
       for (const folderName of TEMPLATE_FOLDERS) {
-        const folderPath = path.join(githubPath, folderName);
+        const folderPath = path.join(nexkitPath, folderName);
         if (await fileExists(folderPath)) {
           await fs.promises.rm(folderPath, { recursive: true, force: true });
         }
@@ -99,17 +99,17 @@ export class GitHubTemplateBackupService {
       throw new Error(`Backup ${backupName} not found`);
     }
 
-    const githubPath = nexkitRoot;
+    const nexkitPath = nexkitRoot;
 
     // Create .nexkit directory if it doesn't exist
-    await fs.promises.mkdir(githubPath, { recursive: true });
+    await fs.promises.mkdir(nexkitPath, { recursive: true });
 
     // Create temp backup of current template folders
     const tempBackupPath = path.join(nexkitRoot, ".temp-backup");
-    if (await this.hasAnyTemplateFolders(githubPath)) {
+    if (await this.hasAnyTemplateFolders(nexkitPath)) {
       await fs.promises.mkdir(tempBackupPath, { recursive: true });
       for (const folderName of TEMPLATE_FOLDERS) {
-        const sourcePath = path.join(githubPath, folderName);
+        const sourcePath = path.join(nexkitPath, folderName);
         if (await fileExists(sourcePath)) {
           const destPath = path.join(tempBackupPath, folderName);
           await copyDirectory(sourcePath, destPath);
@@ -125,9 +125,9 @@ export class GitHubTemplateBackupService {
 
       // Restore template folders from backup
       for (const folderName of TEMPLATE_FOLDERS) {
-        const sourcePath = path.join(backupPath, folderName);
-        if (await fileExists(sourcePath)) {
-          const destPath = path.join(githubPath, folderName);
+          const sourcePath = path.join(backupPath, folderName);
+          if (await fileExists(sourcePath)) {
+          const destPath = path.join(nexkitPath, folderName);
           await copyDirectory(sourcePath, destPath);
         }
       }
@@ -143,7 +143,7 @@ export class GitHubTemplateBackupService {
         for (const folderName of TEMPLATE_FOLDERS) {
           const sourcePath = path.join(tempBackupPath, folderName);
           if (await fileExists(sourcePath)) {
-            const destPath = path.join(githubPath, folderName);
+            const destPath = path.join(nexkitPath, folderName);
             await copyDirectory(sourcePath, destPath);
           }
         }
@@ -182,12 +182,12 @@ export class GitHubTemplateBackupService {
 
   /**
    * Check if any template folders exist in .nexkit directory
-   * @param githubPath Absolute path to .nexkit directory
+   * @param nexkitPath Absolute path to .nexkit directory
    * @returns True if at least one template folder exists
    */
-  private async hasAnyTemplateFolders(githubPath: string): Promise<boolean> {
+  private async hasAnyTemplateFolders(nexkitPath: string): Promise<boolean> {
     for (const folderName of TEMPLATE_FOLDERS) {
-      const folderPath = path.join(githubPath, folderName);
+      const folderPath = path.join(nexkitPath, folderName);
       if (await fileExists(folderPath)) {
         return true;
       }
@@ -198,16 +198,16 @@ export class GitHubTemplateBackupService {
   /**
    * Create backup directory with template folders
    * @param _workspaceRoot kept for compatibility with existing call sites
-   * @param githubPath Absolute path to .nexkit directory
+   * @param nexkitPath Absolute path to .nexkit directory
    * @returns Path to backup directory
    */
-  private async createBackupDirectory(_workspaceRoot: string, githubPath: string): Promise<string> {
+  private async createBackupDirectory(_workspaceRoot: string, nexkitPath: string): Promise<string> {
     const timestamp = new Date().toISOString().slice(0, 19).replace(/T/g, "_").replace(/:/g, "-");
     const backupPath = path.join(getNexkitUserDirectory(vscode.env.appName), `.nexkit.backup-${timestamp}`);
     await fs.promises.mkdir(backupPath, { recursive: true });
 
     for (const folderName of TEMPLATE_FOLDERS) {
-      const sourcePath = path.join(githubPath, folderName);
+      const sourcePath = path.join(nexkitPath, folderName);
       if (await fileExists(sourcePath)) {
         const destPath = path.join(backupPath, folderName);
         await copyDirectory(sourcePath, destPath);
