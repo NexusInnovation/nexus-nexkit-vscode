@@ -24,6 +24,7 @@ const NEXKIT_FILE_PREFIX = "nexkit.";
  * Service for migrating Nexkit template files from .github to .nexkit directory.
  * During workspace initialization, this service scans .github/<type>/ subdirectories
  * for files whose names start with "nexkit." and moves them to .nexkit/<type>/.
+ * Root-level project files such as .github/copilot-instructions.md are intentionally untouched.
  */
 export class NexkitFileMigrationService {
   private readonly _logging = LoggingService.getInstance();

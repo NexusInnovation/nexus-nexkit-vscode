@@ -20,7 +20,7 @@ export function registerRestoreBackupCommand(context: vscode.ExtensionContext, s
         return;
       }
 
-      const backups = await services.backup.listBackups(workspaceFolder.uri.fsPath);
+      const backups = await services.backup.listBackups();
 
       if (backups.length === 0) {
         services.logging.info("No backups available to restore");
@@ -33,9 +33,9 @@ export function registerRestoreBackupCommand(context: vscode.ExtensionContext, s
       // Show backup selection
       const selectedBackup = await vscode.window.showQuickPick(
         backups.map((backup) => ({
-          label: backup.replace(".nexkit.backup-", ""),
-          description: backup,
-          detail: `Restore template folders from ${backup}`,
+          label: backup,
+          description: `Backup from ${backup.replace(/_/g, " ").replace(/-/g, ":")}`,
+          detail: `Restore template folders from this backup`,
         })),
         {
           placeHolder: "Select a backup to restore",
@@ -57,8 +57,8 @@ export function registerRestoreBackupCommand(context: vscode.ExtensionContext, s
         return;
       }
 
-      services.logging.info(`Restoring backup: ${selectedBackup.description}`);
-      await services.backup.restoreBackup(workspaceFolder.uri.fsPath, selectedBackup.description);
+      services.logging.info(`Restoring backup: ${selectedBackup.label}`);
+      await services.backup.restoreBackup(workspaceFolder.uri.fsPath, selectedBackup.label);
       services.logging.info("Template backup restored successfully");
 
       vscode.window.showInformationMessage("Template backup restored successfully!");
@@ -74,14 +74,7 @@ export function registerCleanupBackupCommand(context: vscode.ExtensionContext, s
     async () => {
       services.logging.info("Cleaning up template backups...");
 
-      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-      if (!workspaceFolder) {
-        services.logging.warn("Backup cleanup failed: No workspace folder open");
-        vscode.window.showErrorMessage("No workspace folder open");
-        return;
-      }
-
-      const backups = await services.backup.listBackups(workspaceFolder.uri.fsPath);
+      const backups = await services.backup.listBackups();
 
       if (backups.length === 0) {
         services.logging.info("No backups available to cleanup");
@@ -102,7 +95,7 @@ export function registerCleanupBackupCommand(context: vscode.ExtensionContext, s
       }
 
       services.logging.info(`Deleting ${backups.length} backup(s)...`);
-      await services.backup.cleanupBackups(workspaceFolder.uri.fsPath);
+      await services.backup.cleanupBackups(0);
       services.logging.info(`Successfully deleted ${backups.length} backup(s)`);
 
       vscode.window.showInformationMessage(`Successfully deleted all ${backups.length} backup${backups.length > 1 ? "s" : ""}!`);

@@ -1,0 +1,609 @@
+
+­ƒöÉ Setting up GitHub authentication for tests...
+   Environment: test
+   VS Code installations: {"stable":true,"insiders":true,"oss":false,"hasGitHubAuth":false}
+Ôä╣´©Å  No GitHub authentication found in VS Code profile.
+   Sign in to GitHub in VS Code for authenticated test requests.
+- Resolving version...
+Ô£ö Validated version: 1.119.0
+Ô£ö Found existing install in C:\git\nexkit\nexus-nexkit-vscode\.vscode-test\vscode-win32-x64-archive-1.119.0
+(node:45824) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[main 2026-05-07T17:27:13.392Z] StorageMainService: creating application shared storage
+[main 2026-05-07T17:27:13.393Z] StorageMainService: creating application shared storage with local application storage fallback
+[main 2026-05-07T17:27:13.394Z] CrossAppIPCService: connecting to peer
+[52724:0507/132713.394:ERROR:microsoft\src\shell\browser\api\electron_api_cross_app_ipc.cc:834] CrossAppIPC: Another instance of app 'Code' is already active. CrossAppIPC disabled for this instance.
+[main 2026-05-07T17:27:13.409Z] CrossAppIPCService: disconnected (instance-already-active)
+[main 2026-05-07T17:27:13.601Z] [shared storage] Creating shared storage database at ':memory:' (wasCreated: true)
+[main 2026-05-07T17:27:13.601Z] [shared storage] Initializing fallback application storage (type: local, path: in-memory)
+[main 2026-05-07T17:27:13.605Z] Error: Error mutex already exists
+    at bs.installMutex (file:///C:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/main.js:516:26194)
+[main 2026-05-07T17:27:13.687Z] [shared storage] Fallback application storage initialized with 3 items
+[main 2026-05-07T17:27:13.688Z] update#setState disabled
+[main 2026-05-07T17:27:13.688Z] update#ctor - updates are disabled by the environment
+Started initializing default profile extensions in extensions installation folder. file:///c%3A/Users/ERICDE~1/AppData/Local/Temp/nexus-nexkit-vscode-test-zVM6mU/extensions
+Started local extension host with pid 37944.
+Completed initializing default profile extensions in extensions installation folder. file:///c%3A/Users/ERICDE~1/AppData/Local/Temp/nexus-nexkit-vscode-test-zVM6mU/extensions
+Unable to read file 'c:\git\nexkit\nexus-nexkit-vscode\out\src\package.json' (Error: Unable to resolve nonexistent file 'c:\git\nexkit\nexus-nexkit-vscode\out\src\package.json')
+Unable to read file 'c:\git\nexkit\nexus-nexkit-vscode\out\test\package.json' (Error: Unable to resolve nonexistent file 'c:\git\nexkit\nexus-nexkit-vscode\out\test\package.json')
+Unable to read file 'c:\git\nexkit\nexus-nexkit-vscode\out\webview\package.json' (Error: Unable to resolve nonexistent file 'c:\git\nexkit\nexus-nexkit-vscode\out\webview\package.json')
+[AccountPolicyGate] apply: state=inactive, reason=undefined, isRestricted=false
+Settings Sync: Account status changed from uninitialized to unavailable
+[0m[0m
+[0m  Unit: UserDirectoryService[0m
+[0m    getUserNexkitRoot()[0m
+    [32m  Ô£ö[0m[90m Should return correct path on Windows[0m
+    [32m  Ô£ö[0m[90m Should return correct path on macOS[0m
+    [32m  Ô£ö[0m[90m Should return correct path on Linux[0m
+    [32m  Ô£ö[0m[90m Should cache the root path on subsequent calls[0m
+[0m    ensureUserDirectoryStructure()[0m
+    [32m  Ô£ö[0m[90m Should create all template subdirectories[0m
+    [32m  Ô£ö[0m[90m Should not throw if directories already exist[0m
+[0m    getAbsoluteTemplateLocations()[0m
+    [32m  Ô£ö[0m[90m Should return paths for all template types[0m
+    [32m  Ô£ö[0m[90m Should return consistent paths with getUserNexkitRoot()[0m
+[0m    getUserBackupDir()[0m
+    [32m  Ô£ö[0m[90m Should return backups path under nexkit root[0m
+[0m  Unit: UpdateInstalledTemplates Command[0m
+  [32m  Ô£ö[0m[90m Should have updateInstalledTemplates method[0m
+  [32m  Ô£ö[0m[90m Should return summary with skipped count[0m
+  [32m  Ô£ö[0m[90m Should sync with filesystem before updating[0m
+[0m  Integration: UpdateInstalledTemplates Workflow[0m
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+[Sync] Removed orphaned template from state: test-agent.md (nexus-nexkit-templates)
+[Update] Skipping template test-agent.md from nexus-nexkit-templates (no longer available)
+  [32m  Ô£ö[0m[90m Should handle templates that are no longer available[0m[31m (570ms)[0m
+[0m  Unit: TemplateMetadataService[0m
+[0m    Non-skill templates[0m
+    [32m  Ô£ö[0m[90m Should parse name and description from YAML frontmatter[0m
+    [32m  Ô£ö[0m[90m Should fall back to filename when frontmatter is absent[0m
+Failed to fetch metadata for python.agent.md: Error: Network error
+	at Object.downloadTemplate (c:\git\nexkit\nexus-nexkit-vscode\out\test\suite\templateMetadataService.test.js:89:23)
+	at TemplateMetadataService.getMetadata (c:\git\nexkit\nexus-nexkit-vscode\out\src\features\ai-template-files\services\templateMetadataService.js:49:42)
+	at Context.<anonymous> (c:\git\nexkit\nexus-nexkit-vscode\out\test\suite\templateMetadataService.test.js:92:44)
+	at callFn (c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runnable.js:364:21)
+	at Runnable.run (c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runnable.js:352:5)
+	at Runner.runTest (c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runner.js:677:10)
+	at c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runner.js:800:12
+	at next (c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runner.js:592:14)
+	at c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runner.js:602:7
+	at next (c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runner.js:485:14)
+	at Immediate.<anonymous> (c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runner.js:570:5)
+	at process.processImmediate (node:internal/timers:484:21)
+    [32m  Ô£ö[0m[90m Should return null when downloadTemplate throws[0m
+Failed to fetch metadata for python.agent.md: Error: Repository provider not found: Test Repo
+	at TemplateMetadataService.getMetadata (c:\git\nexkit\nexus-nexkit-vscode\out\src\features\ai-template-files\services\templateMetadataService.js:32:23)
+	at Context.<anonymous> (c:\git\nexkit\nexus-nexkit-vscode\out\test\suite\templateMetadataService.test.js:98:44)
+	at callFn (c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runnable.js:364:21)
+	at Runnable.run (c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runnable.js:352:5)
+	at Runner.runTest (c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runner.js:677:10)
+	at c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runner.js:800:12
+	at next (c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runner.js:592:14)
+	at c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runner.js:602:7
+	at next (c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runner.js:485:14)
+	at Immediate._onImmediate (c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runner.js:570:5)
+	at process.processImmediate (node:internal/timers:484:21)
+    [32m  Ô£ö[0m[90m Should return null when provider is not found[0m
+    [32m  Ô£ö[0m[90m Should cache result and not re-fetch on second call[0m
+[0m    Skill templates[0m
+    [32m  Ô£ö[0m[90m Should read metadata from SKILL.md when present[0m
+    [32m  Ô£ö[0m[90m Should NOT call downloadTemplate for skill templates[0m
+    [32m  Ô£ö[0m[90m Should return fallback metadata using folder name when SKILL.md is absent[0m
+    [32m  Ô£ö[0m[90m Should use folder name as display name when SKILL.md has no frontmatter[0m
+Failed to fetch metadata for my-skill: Error: Network error
+	at Object.downloadSkillMetadataFile (c:\git\nexkit\nexus-nexkit-vscode\out\test\suite\templateMetadataService.test.js:170:23)
+	at TemplateMetadataService.getMetadata (c:\git\nexkit\nexus-nexkit-vscode\out\src\features\ai-template-files\services\templateMetadataService.js:37:42)
+	at Context.<anonymous> (c:\git\nexkit\nexus-nexkit-vscode\out\test\suite\templateMetadataService.test.js:173:44)
+	at callFn (c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runnable.js:364:21)
+	at Runnable.run (c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runnable.js:352:5)
+	at Runner.runTest (c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runner.js:677:10)
+	at c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runner.js:800:12
+	at next (c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runner.js:592:14)
+	at c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runner.js:602:7
+	at next (c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runner.js:485:14)
+	at Immediate.<anonymous> (c:\git\nexkit\nexus-nexkit-vscode\node_modules\mocha\lib\runner.js:570:5)
+	at process.processImmediate (node:internal/timers:484:21)
+    [32m  Ô£ö[0m[90m Should return null when downloadSkillMetadataFile throws[0m
+    [32m  Ô£ö[0m[90m Should cache SKILL.md result and not re-fetch on second call[0m
+    [32m  Ô£ö[0m[90m Should cache fallback metadata (no SKILL.md) without re-fetching[0m
+    [32m  Ô£ö[0m[90m Should handle SKILL.md with only description (no name field)[0m
+[0m    Cache management[0m
+    [32m  Ô£ö[0m[90m Should re-fetch after clearCache is called[0m
+[0m  Unit: TemplateMetadataScannerService[0m
+  [32m  Ô£ö[0m[90m Should instantiate TemplateMetadataScannerService[0m
+  [32m  Ô£ö[0m[90m Should not be complete before scan starts[0m
+  [32m  Ô£ö[0m[90m Should have empty index before scan starts[0m
+  [32m  Ô£ö[0m[90m Should return initial progress before scan starts[0m
+  [32m  Ô£ö[0m[90m Should complete scan with empty templates[0m
+  [32m  Ô£ö[0m[90m Should scan all templates and build index[0m
+  [32m  Ô£ö[0m[90m Should handle metadata fetch failures gracefully[0m
+  [32m  Ô£ö[0m[90m Should fire progress events during scan[0m
+  [32m  Ô£ö[0m[90m Should have event emitters[0m
+[0m  Unit: TemplateFileOperations User Directory Mode[0m
+  [32m  Ô£ö[0m[90m getTemplateInstallPath returns user directory when in user mode[0m
+  [32m  Ô£ö[0m[90m getTemplateInstallPath returns workspace path when in workspace mode[0m
+  [32m  Ô£ö[0m[90m getTemplateInstallPath defaults to user mode[0m
+[0m  Unit: templateDiagnostics[0m
+  [32m  Ô£ö[0m[90m Should treat only APM-opted-in repos as APM visible[0m
+  [32m  Ô£ö[0m[90m Should aggregate agents across APM repositories[0m
+  [32m  Ô£ö[0m[90m Should return zero when no APM repositories exist[0m
+[0m  Unit: TelemetryService[0m
+[0m    Initialization[0m
+Nexkit telemetry initialized successfully (live mode)
+    [32m  Ô£ö[0m[90m Should initialize without errors[0m[31m (153ms)[0m
+Nexkit telemetry is disabled
+    [32m  Ô£ö[0m[90m Should respect VS Code global telemetry setting[0m
+Nexkit telemetry is disabled
+    [32m  Ô£ö[0m[90m Should respect Nexkit telemetry setting[0m
+[0m    Event Tracking[0m
+    [32m  Ô£ö[0m[90m Should track command execution[0m
+    [32m  Ô£ö[0m[90m Should track events[0m
+    [32m  Ô£ö[0m[90m Should track errors[0m
+    [32m  Ô£ö[0m[90m Should track activation[0m
+[0m    Disposal[0m
+    [32m  Ô£ö[0m[90m Should dispose without errors[0m
+[0m  Unit: StartupVerificationService[0m
+  [32m  Ô£ö[0m[90m Should instantiate StartupVerificationService[0m
+Skipping invalid path (glob patterns and absolute paths not supported): /tmp/.nexkit/agents
+Skipping invalid path (glob patterns and absolute paths not supported): /tmp/.nexkit/agents
+Skipping invalid path (glob patterns and absolute paths not supported): /tmp/.nexkit/agents
+Skipping invalid path (glob patterns and absolute paths not supported): /tmp/.nexkit/skills
+Skipping invalid path (glob patterns and absolute paths not supported): /tmp/.nexkit/hooks
+Skipping invalid path (glob patterns and absolute paths not supported): /tmp/.nexkit/agents
+  [32m  Ô£ö[0m[90m verifyWorkspaceConfiguration should deploy gitignore in workspace mode[0m[31m (577ms)[0m
+  [32m  Ô£ö[0m[90m verifyWorkspaceConfiguration should skip gitignore in user mode[0m[33m (66ms)[0m
+  [32m  Ô£ö[0m[90m verifyWorkspaceConfiguration should deploy settings to user-level[0m
+  [32m  Ô£ö[0m[90m verifyWorkspaceConfiguration should migrate nexkit files[0m[33m (62ms)[0m
+  [32m  Ô£ö[0m[90m verifyWorkspaceConfiguration should be idempotent[0m
+  [32m  Ô£ö[0m[90m verifyOnStartup should skip if no workspace folder[0m
+[0m  Unit: SettingsManager[0m
+  [32m  Ô£ö[0m[90m Should get workspace initialized status[0m
+  [32m  Ô£ö[0m[90m Should set workspace initialized status[0m
+  [32m  Ô£ö[0m[90m Should get telemetry enabled status[0m
+  [32m  Ô£ö[0m[90m Should get repositories configuration[0m
+  [32m  Ô£ö[0m[90m Should get MCP setup dismissed status[0m
+  [36m  - Should set MCP setup dismissed status[0m
+  [32m  Ô£ö[0m[90m Should get update check interval[0m
+  [32m  Ô£ö[0m[90m Should get and set last update check timestamp[0m
+  [32m  Ô£ö[0m[90m Should get user mode[0m
+  [36m  - Should set user mode[0m
+  [32m  Ô£ö[0m[90m Should get first time user status[0m
+  [32m  Ô£ö[0m[90m Should return true when templates auto update is enabled[0m
+  [32m  Ô£ö[0m[90m Should return false when templates auto update is disabled[0m
+  [32m  Ô£ö[0m[90m Should set first time user status[0m
+[0m  Unit: SettingsManager ÔÇö isWorkspaceOverrideActive[0m
+  [32m  Ô£ö[0m[90m Should return true when deployMode is workspace[0m
+  [32m  Ô£ö[0m[90m Should return true when .nexkit/ directory exists in workspace root[0m
+  [32m  Ô£ö[0m[90m Should return false when deployMode is user and no .nexkit/ exists[0m
+  [32m  Ô£ö[0m[90m Should return false when no workspace folder is open[0m
+[0m  Unit: ServiceContainer[0m
+Nexkit telemetry initialized successfully (live mode)
+  [32m  Ô£ö[0m[90m Should initialize all required services[0m
+Nexkit telemetry initialized successfully (live mode)
+  [32m  Ô£ö[0m[90m Should register disposables in context[0m
+[0m  Unit: RepositoryManager[0m
+  [32m  Ô£ö[0m[90m Should instantiate RepositoryManager[0m
+  [32m  Ô£ö[0m[90m Should initialize with default Nexus repository[0m
+  [32m  Ô£ö[0m[90m Should merge configured repositories with defaults[0m
+  [32m  Ô£ö[0m[90m Should get repository providers[0m
+  [32m  Ô£ö[0m[90m Should handle GitHub URLs with trailing slash[0m
+  [32m  Ô£ö[0m[90m Should get repository names[0m
+  [32m  Ô£ö[0m[90m Should create GitHub provider for github type[0m
+  [32m  Ô£ö[0m[90m Should handle refresh by reinitializing providers[0m
+  [32m  Ô£ö[0m[90m Should clear all providers[0m
+[0m  Unit: RecommendedSettingsConfigDeployer[0m
+  [32m  Ô£ö[0m[90m Should instantiate RecommendedSettingsConfigDeployer[0m
+  [32m  Ô£ö[0m[90m Should write all chat location settings to user-level (Global) scope[0m
+  [32m  Ô£ö[0m[90m Should merge with existing user-level settings without overwriting[0m
+  [32m  Ô£ö[0m[90m Should not update useHooks if already set to true at user-level[0m
+  [32m  Ô£ö[0m[90m Should use forward slashes in paths even on Windows[0m
+  [32m  Ô£ö[0m[90m Should clean up legacy .nexkit/ entries from workspace settings.json[0m
+  [32m  Ô£ö[0m[90m Should remove empty settings.json after cleanup[0m
+  [32m  Ô£ö[0m[90m Should handle missing workspace settings.json gracefully[0m
+  [32m  Ô£ö[0m[90m Should handle invalid workspace settings.json gracefully during cleanup[0m
+[0m  Unit: RecommendedSettingsConfigDeployer ÔÇö Workspace Override (Layering)[0m
+  [32m  Ô£ö[0m[90m Should add workspace paths alongside user paths when workspace override is active[0m
+  [32m  Ô£ö[0m[90m Should NOT add workspace paths when workspace override is not active[0m
+  [32m  Ô£ö[0m[90m Should add workspace paths for all template types when override is active[0m
+  [32m  Ô£ö[0m[90m Should merge workspace paths with existing user entries[0m
+[0m  Unit: Profile Change Detection - Template Comparison Logic[0m
+  [32m  Ô£ö[0m[90m Should return false for non-existent profile[0m
+  [32m  Ô£ö[0m[90m Should detect no changes when workspace has no templates[0m
+[0m  Integration: Last Applied Profile Tracking[0m
+  [32m  Ô£ö[0m[90m Should initialize with null last applied profile[0m
+  [32m  Ô£ö[0m[90m Should store and retrieve last applied profile[0m
+  [32m  Ô£ö[0m[90m Should clear last applied profile[0m
+  [32m  Ô£ö[0m[90m Should update last applied profile when changed[0m
+  [32m  Ô£ö[0m[90m Should get confirm before switch setting[0m
+[0m  Unit: NexkitFileWatcherService[0m
+  [32m  Ô£ö[0m[90m Should instantiate via singleton pattern[0m
+  [32m  Ô£ö[0m[90m Should have startWatching method[0m
+  [32m  Ô£ö[0m[90m Should have suppressPath method[0m
+  [32m  Ô£ö[0m[90m Should have beginBulkOperation method[0m
+  [32m  Ô£ö[0m[90m Should have endBulkOperation method[0m
+  [32m  Ô£ö[0m[90m Should have dispose method[0m
+  [32m  Ô£ö[0m[90m Should properly dispose without errors[0m
+  [32m  Ô£ö[0m[90m Should handle multiple disposals gracefully[0m
+  [32m  Ô£ö[0m[90m Should create new instance after dispose[0m
+  [32m  Ô£ö[0m[90m Should not throw when suppressPath is called before startWatching[0m
+  [32m  Ô£ö[0m[90m Should not throw when beginBulkOperation is called before startWatching[0m
+  [32m  Ô£ö[0m[90m Should not throw when endBulkOperation is called before startWatching[0m
+  [32m  Ô£ö[0m[90m Should handle nested bulk operations correctly[0m
+  [32m  Ô£ö[0m[90m Should handle extra endBulkOperation calls gracefully[0m
+  [32m  Ô£ö[0m[90m Should handle startWatching without workspace folder[0m
+[0m  Unit: NexkitFileMigrationService[0m
+  [32m  Ô£ö[0m[90m Should instantiate NexkitFileMigrationService[0m
+  [32m  Ô£ö[0m[90m Should return null when .github directory does not exist[0m
+  [32m  Ô£ö[0m[90m Should return null when .github exists but has no template subdirectories[0m
+  [32m  Ô£ö[0m[90m Should return null when template subdirectories exist but contain no nexkit.* files[0m
+  [32m  Ô£ö[0m[90m Should migrate nexkit.* files from .github/agents to .nexkit/agents[0m
+  [32m  Ô£ö[0m[90m Should migrate nexkit.* files from multiple template type directories[0m
+  [32m  Ô£ö[0m[90m Should only move files starting with nexkit. and leave other files untouched[0m
+  [32m  Ô£ö[0m[90m Should preserve file content during migration[0m
+  [32m  Ô£ö[0m[90m Should not migrate directories starting with nexkit.[0m
+  [32m  Ô£ö[0m[90m Should create .nexkit subdirectories as needed[0m
+  [32m  Ô£ö[0m[90m Should handle skills directory migration[0m
+  [32m  Ô£ö[0m[90m Should handle chatmodes directory migration[0m
+  [32m  Ô£ö[0m[90m Should keep .github/copilot-instructions.md untouched[0m
+[0m  Unit: ModeSelectionService[0m
+  [36m  - Should prompt user to select mode on first time[0m
+  [36m  - Should save selected mode to settings[0m
+  [36m  - Should mark user as no longer first-time after selection[0m
+  [32m  Ô£ö[0m[90m Should not prompt if mode is already set[0m
+  [32m  Ô£ö[0m[90m Should handle user dismissing prompt[0m
+  [32m  Ô£ö[0m[90m Should return APM when user selects APM mode[0m
+  [32m  Ô£ö[0m[90m Should return Developer when user selects Developer mode[0m
+[0m  Unit: MCPConfigService[0m
+  [32m  Ô£ö[0m[90m Should instantiate MCPConfigService[0m
+  [32m  Ô£ö[0m[90m Should have required server names as static properties[0m
+  [32m  Ô£ö[0m[90m Should have check methods[0m
+  [32m  Ô£ö[0m[90m Should have add server methods[0m
+  [32m  Ô£ö[0m[90m Should check required MCPs[0m
+[0m  Integration: MCPConfigService - Config File Operations[0m
+  [32m  Ô£ö[0m[90m Should check for required user MCPs[0m
+[0m  Unit: LoggingService[0m
+  [32m  Ô£ö[0m[90m Should be a singleton[0m
+  [32m  Ô£ö[0m[90m Should set log level[0m
+  [32m  Ô£ö[0m[90m Should handle info logging[0m
+  [32m  Ô£ö[0m[90m Should handle warning logging[0m
+  [32m  Ô£ö[0m[90m Should handle error logging[0m
+  [32m  Ô£ö[0m[90m Should handle debug logging[0m
+  [32m  Ô£ö[0m[90m Should respect log level filtering[0m
+[0m  Unit: Local Template File Watching[0m
+  [32m  Ô£ö[0m[90m Should have file watching infrastructure in place[0m
+  [32m  Ô£ö[0m[90m Should properly dispose file watchers on disposal[0m
+  [32m  Ô£ö[0m[90m Should handle multiple disposals gracefully[0m
+  [32m  Ô£ö[0m[90m Should have configuration change watcher support[0m
+  [32m  Ô£ö[0m[90m Should have refresh capability[0m
+[0m  Unit: LocalFolderTemplateProvider[0m
+  [32m  Ô£ö[0m[90m Should fetch templates from absolute local path[0m
+  [32m  Ô£ö[0m[90m Should download template content[0m
+  [32m  Ô£ö[0m[90m Should handle missing directory gracefully[0m
+  [32m  Ô£ö[0m[90m Should handle missing subdirectory gracefully[0m
+  [32m  Ô£ö[0m[90m Should validate path correctly[0m
+  [32m  Ô£ö[0m[90m Should fail validation for non-existent path[0m
+  [32m  Ô£ö[0m[90m Should handle home directory expansion[0m
+  [32m  Ô£ö[0m[90m Should return correct repository name and config[0m
+  [32m  Ô£ö[0m[90m Should throw error for disabled repository[0m
+  [32m  Ô£ö[0m[90m Should only process markdown files[0m
+  [32m  Ô£ö[0m[90m Should handle empty directory[0m
+  [32m  Ô£ö[0m[90m Should handle multiple template types[0m
+  [32m  Ô£ö[0m[90m Should fetch skills as directories instead of markdown files[0m
+  [32m  Ô£ö[0m[90m Should download directory contents for skills[0m
+  [32m  Ô£ö[0m[90m Should handle mixed file and directory content in skills directory[0m
+  [32m  Ô£ö[0m[90m Should handle empty skills directory[0m
+  [32m  Ô£ö[0m[90m Should throw error when downloading non-directory template as directory[0m
+[0m  Unit: InstalledTemplatesStateManager[0m
+  [32m  Ô£ö[0m[90m Should instantiate InstalledTemplatesStateManager[0m
+  [32m  Ô£ö[0m[90m Should return empty array for initial state[0m
+  [32m  Ô£ö[0m[90m Should add installed template to state[0m
+  [32m  Ô£ö[0m[90m Should remove installed template from state[0m
+  [32m  Ô£ö[0m[90m Should check if template is installed[0m
+  [32m  Ô£ö[0m[90m Should distinguish templates from different repositories[0m
+  [32m  Ô£ö[0m[90m Should return installed templates map organized by type[0m
+  [32m  Ô£ö[0m[90m Should clear all state[0m
+  [32m  Ô£ö[0m[90m Should update existing template record when adding same template[0m
+[0m  Unit: HooksConfigDeployer[0m
+  [32m  Ô£ö[0m[90m Should detect Node.js test:headless script[0m
+  [32m  Ô£ö[0m[90m Should detect Node.js test:unit script when no test:headless[0m
+  [32m  Ô£ö[0m[90m Should detect Node.js test script as fallback[0m
+  [32m  Ô£ö[0m[90m Should detect .NET project via .csproj[0m
+  [32m  Ô£ö[0m[90m Should detect .NET project via .sln[0m
+  [32m  Ô£ö[0m[90m Should detect Python project via pyproject.toml[0m
+  [32m  Ô£ö[0m[90m Should detect Go project via go.mod[0m
+  [32m  Ô£ö[0m[90m Should skip deployment when no test framework detected[0m
+  [32m  Ô£ö[0m[90m Should merge with existing hook configuration[0m
+  [32m  Ô£ö[0m[90m Should skip Node.js package.json with no test scripts[0m
+[0m  Unit: GitHubWorkflowRunnerService[0m
+  [32m  Ô£ö[0m[90m Should instantiate GitHubWorkflowRunnerService[0m
+  [32m  Ô£ö[0m[90m Should have listWorkflows method[0m
+  [32m  Ô£ö[0m[90m Should have runWorkflow method[0m
+  [32m  Ô£ö[0m[90m Should return empty array when no workspace is open[0m
+  [32m  Ô£ö[0m[90m Should return empty array when workspace folders is empty[0m
+  [32m  Ô£ö[0m[90m Should show error when no workspace is open for runWorkflow[0m
+  [32m  Ô£ö[0m[90m Should have isActInstalled method[0m
+  [32m  Ô£ö[0m[90m Should have findActPath method[0m
+  [32m  Ô£ö[0m[90m Should create terminal and send act command for runWorkflow[0m
+  [32m  Ô£ö[0m[90m Should not include --job flag when job is not specified[0m
+  [32m  Ô£ö[0m[90m Should use --list flag when list is true[0m
+  [32m  Ô£ö[0m[90m buildActArgs should produce correct args for a standard run[0m
+  [32m  Ô£ö[0m[90m buildActArgs should include --job when job is specified[0m
+  [32m  Ô£ö[0m[90m buildActArgs should include --dryrun when dryRun is true[0m
+  [32m  Ô£ö[0m[90m buildActArgs should produce list-only args when list is true[0m
+  [32m  Ô£ö[0m[90m buildActArgs should support workflow_dispatch event[0m
+INFO: Could not find files for the given pattern(s).
+  [32m  Ô£ö[0m[90m Should prompt to install act when not found[0m[31m (426ms)[0m
+  [32m  Ô£ö[0m[90m Should have isDockerInstalled method[0m
+  [32m  Ô£ö[0m[90m Should have isDockerRunning method[0m
+  [32m  Ô£ö[0m[90m Should show error when Docker is not installed[0m
+  [32m  Ô£ö[0m[90m Should open Docker install page when user clicks action[0m
+  [32m  Ô£ö[0m[90m Should show error when Docker is installed but not running[0m
+  [32m  Ô£ö[0m[90m Should proceed when Docker is installed and running[0m
+[0m  Unit: GitHubAuthPromptService[0m
+  [32m  Ô£ö[0m[90m Should instantiate GitHubAuthPromptService[0m
+  [32m  Ô£ö[0m[90m Should return true when running in CI environment[0m
+  [32m  Ô£ö[0m[90m Should return true when a silent session already exists[0m
+  [32m  Ô£ö[0m[90m Should return true when environment token is available[0m
+  [32m  Ô£ö[0m[90m Should prompt user and return true when user signs in[0m
+  [32m  Ô£ö[0m[90m Should return false when user defers authentication[0m
+[0m  Unit: fuzzySearch[0m
+  [32m  Ô£ö[0m[90m Should return all items when query is empty[0m
+  [32m  Ô£ö[0m[90m Should return all items when query is whitespace[0m
+  [32m  Ô£ö[0m[90m Should find exact name match with highest score[0m
+  [32m  Ô£ö[0m[90m Should find items by description keyword[0m
+  [32m  Ô£ö[0m[90m Should rank exact matches higher than partial[0m
+  [32m  Ô£ö[0m[90m Should support multi-token search[0m
+  [32m  Ô£ö[0m[90m Should return empty for non-matching query[0m
+  [32m  Ô£ö[0m[90m Should be case insensitive[0m
+  [32m  Ô£ö[0m[90m Should sort results by descending score[0m
+  [32m  Ô£ö[0m[90m Should perform fuzzy character matching[0m
+  [32m  Ô£ö[0m[90m Should handle single-field items[0m
+  [32m  Ô£ö[0m[90m Should handle items with empty fields[0m
+  [32m  Ô£ö[0m[90m Should give higher score to word boundary matches[0m
+[0m  Unit: ExtensionUpdateService[0m
+  [32m  Ô£ö[0m[90m Should instantiate ExtensionUpdateService[0m
+  [32m  Ô£ö[0m[90m Should have check update method[0m
+[0m  Integration: ExtensionUpdateService - Update Check[0m
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+  [32m  Ô£ö[0m[90m Should check for updates without errors[0m[31m (148ms)[0m
+[0m  Unit: Extension Activation[0m
+  [36m  - Extension should be present[0m
+  [36m  - Should activate extension[0m
+  [36m  - Commands should be registered[0m
+  [32m  Ô£ö[0m[90m Activation events should include onStartupFinished[0m
+[0m  Unit: DevOps URL Parser[0m
+[0m    parseDevOpsUrl[0m
+[0m      Valid URLs[0m
+      [32m  Ô£ö[0m[90m Should parse dev.azure.com URL with org and project[0m
+      [32m  Ô£ö[0m[90m Should parse dev.azure.com URL with trailing slash[0m
+      [32m  Ô£ö[0m[90m Should parse dev.azure.com URL with workitems path[0m
+      [32m  Ô£ö[0m[90m Should parse dev.azure.com URL with git path[0m
+      [32m  Ô£ö[0m[90m Should parse visualstudio.com URL[0m
+      [32m  Ô£ö[0m[90m Should parse visualstudio.com URL with DefaultCollection[0m
+      [32m  Ô£ö[0m[90m Should handle URL-encoded characters in project name[0m
+      [32m  Ô£ö[0m[90m Should accept HTTP URLs[0m
+[0m      Invalid URLs[0m
+      [32m  Ô£ö[0m[90m Should reject empty string[0m
+      [32m  Ô£ö[0m[90m Should reject null/undefined[0m
+      [32m  Ô£ö[0m[90m Should reject whitespace-only string[0m
+      [32m  Ô£ö[0m[90m Should reject non-URL string[0m
+      [32m  Ô£ö[0m[90m Should reject non-Azure DevOps URL[0m
+      [32m  Ô£ö[0m[90m Should reject dev.azure.com URL without project[0m
+      [32m  Ô£ö[0m[90m Should reject visualstudio.com URL without project[0m
+      [32m  Ô£ö[0m[90m Should reject URL with only reserved path[0m
+      [32m  Ô£ö[0m[90m Should reject FTP protocol[0m
+[0m    generateConnectionId[0m
+    [32m  Ô£ö[0m[90m Should generate connection ID from org and project[0m
+    [32m  Ô£ö[0m[90m Should lowercase the connection ID[0m
+[0m  Unit: CommitMessageService[0m
+  [32m  Ô£ö[0m[90m Should instantiate CommitMessageService[0m
+  [32m  Ô£ö[0m[90m Should have generateCommitMessage method[0m
+  [32m  Ô£ö[0m[90m Should build prompt containing the diff[0m
+  [32m  Ô£ö[0m[90m Should truncate diff longer than MAX_DIFF_LENGTH characters in prompt[0m
+  [32m  Ô£ö[0m[90m Should not truncate diff of exactly MAX_DIFF_LENGTH characters in prompt[0m
+  [32m  Ô£ö[0m[90m Should build prompt with imperative mood instruction[0m
+  [32m  Ô£ö[0m[90m Should expose MAX_DIFF_LENGTH as a positive number[0m
+  [32m  Ô£ö[0m[90m Should use a custom prompt template with {{diff}} placeholder[0m
+  [32m  Ô£ö[0m[90m Should append diff if custom prompt is missing {{diff}} placeholder[0m
+  [32m  Ô£ö[0m[90m Should export DEFAULT_SYSTEM_PROMPT containing {{diff}} placeholder[0m
+[0m  Integration: CommitMessageService ÔÇô Generate Commit Message[0m
+  [32m  Ô£ö[0m[90m Should generate commit message when changes are already staged[0m
+  [32m  Ô£ö[0m[90m Should auto-stage working tree changes and generate commit message[0m
+  [32m  Ô£ö[0m[90m Should show information message when there are no changes at all[0m
+  [32m  Ô£ö[0m[90m Should not generate when commit message feature is disabled[0m
+  [32m  Ô£ö[0m[90m Should show error when no AI model is available[0m
+  [32m  Ô£ö[0m[90m Should show error when auto-staging fails[0m
+  [32m  Ô£ö[0m[90m Should show error when git extension is not available[0m
+  [32m  Ô£ö[0m[90m Should inform user when diff is empty after auto-staging[0m
+[0m  Unit: GitHubTemplateBackupService[0m
+  [32m  Ô£ö[0m[90m Should instantiate GitHubTemplateBackupService[0m
+  [32m  Ô£ö[0m[90m Should have backup methods[0m
+  [32m  Ô£ö[0m[90m Should backup only template folders to user directory[0m
+  [32m  Ô£ö[0m[90m Should delete only template folders, preserving other .nexkit content[0m
+  [32m  Ô£ö[0m[90m Should list backups from user directory[0m
+  [32m  Ô£ö[0m[90m Should restore template folders from user directory backup[0m
+  [32m  Ô£ö[0m[90m Should return null when backing up non-existent .nexkit directory[0m
+  [32m  Ô£ö[0m[90m Should return null when backing up .nexkit with no template folders[0m
+  [32m  Ô£ö[0m[90m Should handle partial template folders[0m
+  [32m  Ô£ö[0m[90m Should cleanup old backups keeping only max specified[0m
+  [32m  Ô£ö[0m[90m Should enforce retention policy automatically on backup[0m
+[AccountPolicyGate] apply: state=inactive, reason=undefined, isRestricted=false
+  [32m  Ô£ö[0m[90m Should throw error when restoring non-existent backup[0m
+  [32m  Ô£ö[0m[90m Should delete all backups when cleanupBackups called with 0[0m
+[0m  Unit: AITemplateDataService[0m
+  [32m  Ô£ö[0m[90m Should instantiate AITemplateDataService[0m
+  [32m  Ô£ö[0m[90m Should have initialization methods[0m
+  [32m  Ô£ö[0m[90m Should have data access methods[0m
+  [32m  Ô£ö[0m[90m Should have installation methods[0m
+  [32m  Ô£ö[0m[90m Should have event emitters[0m
+  [32m  Ô£ö[0m[90m Should have updatesAvailable default to false[0m
+  [32m  Ô£ö[0m[90m Should return empty array before initialization[0m
+  [32m  Ô£ö[0m[90m Should filter templates by type[0m
+  [32m  Ô£ö[0m[90m Should filter templates by repository[0m
+[0m  Unit: AITemplateDataService - updatesAvailable state transitions[0m
+  [32m  Ô£ö[0m[90m Should fire onUpdatesAvailableChanged(false) and reset state after updateInstalledTemplates[0m
+  [32m  Ô£ö[0m[90m Should NOT fire onUpdatesAvailableChanged when updatesAvailable is already false during update[0m
+  [32m  Ô£ö[0m[90m Should set updatesAvailable to true and fire event when refresh detects new commits with auto-update disabled[0m
+  [32m  Ô£ö[0m[90m Should NOT set updatesAvailable when refresh detects new commits with auto-update enabled[0m
+  [32m  Ô£ö[0m[90m Should NOT set updatesAvailable when no new commits are detected[0m
+[0m  Integration: AITemplateDataService Initialization[0m
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+  [32m  Ô£ö[0m[90m Should initialize and fetch templates[0m[33m (68ms)[0m
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+Failed to get GitHub authentication session: Error: DialogService: refused to show dialog in tests. Contents: The extension 'Null Extension Description' wants to sign in using GitHub.
+    at Oet.prompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1766:4333)
+    at XOt.loginPrompt (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:84268)
+    at XOt.doGetSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:85870)
+    at async XOt.$getSession (vscode-file://vscode-app/c:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/vs/workbench/workbench.desktop.main.js:1070:86998)
+  [32m  Ô£ö[0m[90m Should wait for ready state[0m[31m (79ms)[0m
+[92m [0m[32m 302 passing[0m[90m (3s)[0m
+[36m [0m[36m 8 pending[0m
+[main 2026-05-07T17:27:21.279Z] Extension host with pid 37944 exited with code: 0, signal: unknown.
+Exit code:   0

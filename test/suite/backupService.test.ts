@@ -1,6 +1,7 @@
 /**
  * Tests for GitHubTemplateBackupService
  * Handles backup and restore operations for GitHub template folders only
+ * Backups are stored in user directory (simulated via UserDirectoryService)
  */
 
 import * as assert from "assert";
@@ -8,17 +9,30 @@ import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
 import { GitHubTemplateBackupService } from "../../src/features/backup-management/backupService";
+import { UserDirectoryService } from "../../src/features/ai-template-files/services/userDirectoryService";
+import * as sinon from "sinon";
 
 suite("Unit: GitHubTemplateBackupService", () => {
   let service: GitHubTemplateBackupService;
+  let userDirService: UserDirectoryService;
   let tempDir: string;
+  let userBackupDir: string;
+  let sandbox: sinon.SinonSandbox;
 
   setup(async () => {
-    service = new GitHubTemplateBackupService();
+    sandbox = sinon.createSandbox();
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "nexkit-backup-test-"));
+    userBackupDir = path.join(tempDir, "user-backups");
+    fs.mkdirSync(userBackupDir, { recursive: true });
+
+    userDirService = new UserDirectoryService();
+    sandbox.stub(userDirService, "getUserBackupDir").returns(userBackupDir);
+
+    service = new GitHubTemplateBackupService(userDirService);
   });
 
   teardown(async () => {
+    sandbox.restore();
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });
     } catch (error) {
@@ -38,9 +52,10 @@ suite("Unit: GitHubTemplateBackupService", () => {
     assert.strictEqual(typeof service.cleanupBackups, "function");
   });
 
-  test("Should backup only template folders from .nexkit directory", async () => {
-    // Create .nexkit directory with template folders and other content
-    const nexkitDir = path.join(tempDir, ".nexkit");
+  test("Should backup only template folders to user directory", async () => {
+    // Create workspace with .nexkit directory containing template folders
+    const workspaceDir = path.join(tempDir, "workspace");
+    const nexkitDir = path.join(workspaceDir, ".nexkit");
     fs.mkdirSync(nexkitDir, { recursive: true });
 
     // Create template folders
@@ -50,7 +65,7 @@ suite("Unit: GitHubTemplateBackupService", () => {
     fs.mkdirSync(path.join(nexkitDir, "instructions"), { recursive: true });
     fs.mkdirSync(path.join(nexkitDir, "chatmodes"), { recursive: true });
 
-    // Add some content to template folders
+    // Add content to template folders
     fs.writeFileSync(path.join(nexkitDir, "agents", "test.agent.md"), "agent content");
     fs.writeFileSync(path.join(nexkitDir, "prompts", "test.prompt.md"), "prompt content");
     fs.writeFileSync(path.join(nexkitDir, "skills", "test.skill.md"), "skill content");
@@ -59,12 +74,11 @@ suite("Unit: GitHubTemplateBackupService", () => {
     fs.writeFileSync(path.join(nexkitDir, "custom", "extra.md"), "extra content");
     fs.writeFileSync(path.join(nexkitDir, "README.md"), "readme content");
 
-    const backupPath = await service.backupTemplates(tempDir);
+    const backupPath = await service.backupTemplates(workspaceDir);
 
-    // Verify backup was created
+    // Verify backup was created in user directory (not workspace)
     assert.ok(backupPath);
-    assert.ok(fs.existsSync(backupPath as string));
-    assert.ok((backupPath as string).includes(".nexkit.backup-"));
+    assert.ok((backupPath as string).startsWith(userBackupDir));
 
     // Verify template folders were backed up
     assert.ok(fs.existsSync(path.join(backupPath as string, "agents", "test.agent.md")));
@@ -73,6 +87,11 @@ suite("Unit: GitHubTemplateBackupService", () => {
     // Verify non-template content was NOT backed up
     assert.ok(!fs.existsSync(path.join(backupPath as string, "custom")));
     assert.ok(!fs.existsSync(path.join(backupPath as string, "README.md")));
+
+    // Verify no .nexkit.backup-* directory created in workspace
+    const workspaceEntries = fs.readdirSync(workspaceDir);
+    const workspaceBackups = workspaceEntries.filter((e) => e.startsWith(".nexkit.backup-"));
+    assert.strictEqual(workspaceBackups.length, 0);
 
     // Verify original template folders were deleted
     assert.ok(!fs.existsSync(path.join(nexkitDir, "agents")));
@@ -85,7 +104,8 @@ suite("Unit: GitHubTemplateBackupService", () => {
   });
 
   test("Should delete only template folders, preserving other .nexkit content", async () => {
-    const nexkitDir = path.join(tempDir, ".nexkit");
+    const workspaceDir = path.join(tempDir, "workspace2");
+    const nexkitDir = path.join(workspaceDir, ".nexkit");
     fs.mkdirSync(nexkitDir, { recursive: true });
 
     // Create template folders
@@ -99,7 +119,7 @@ suite("Unit: GitHubTemplateBackupService", () => {
     fs.writeFileSync(path.join(nexkitDir, "custom", "extra.md"), "extra");
     fs.writeFileSync(path.join(nexkitDir, "README.md"), "readme");
 
-    await service.deleteTemplateFolders(tempDir);
+    await service.deleteTemplateFolders(workspaceDir);
 
     // Verify template folders were deleted
     assert.ok(!fs.existsSync(path.join(nexkitDir, "agents")));
@@ -111,25 +131,26 @@ suite("Unit: GitHubTemplateBackupService", () => {
     assert.ok(fs.existsSync(path.join(nexkitDir, "README.md")));
   });
 
-  test("Should list backups in workspace root", async () => {
-    // Create some test backup directories
-    fs.mkdirSync(path.join(tempDir, ".nexkit.backup-2024-01-01T12-00-00"));
-    fs.mkdirSync(path.join(tempDir, ".nexkit.backup-2024-01-02T12-00-00"));
+  test("Should list backups from user directory", async () => {
+    // Create some test backup directories in user backup dir
+    fs.mkdirSync(path.join(userBackupDir, "2024-01-01_12-00-00"));
+    fs.mkdirSync(path.join(userBackupDir, "2024-01-02_12-00-00"));
 
-    const backups = await service.listBackups(tempDir);
+    const backups = await service.listBackups();
 
     assert.ok(Array.isArray(backups));
     assert.strictEqual(backups.length, 2);
-    assert.ok(backups[0].startsWith(".nexkit.backup-"));
     // Should be sorted newest first
-    assert.ok(backups[0] > backups[1]);
+    assert.strictEqual(backups[0], "2024-01-02_12-00-00");
+    assert.strictEqual(backups[1], "2024-01-01_12-00-00");
   });
 
-  test("Should restore template folders from backup", async () => {
-    const nexkitDir = path.join(tempDir, ".nexkit");
+  test("Should restore template folders from user directory backup", async () => {
+    const workspaceDir = path.join(tempDir, "workspace3");
+    const nexkitDir = path.join(workspaceDir, ".nexkit");
 
-    // Create a backup directory
-    const backupDir = path.join(tempDir, ".nexkit.backup-2024-01-01T12-00-00");
+    // Create a backup directory in user backup dir
+    const backupDir = path.join(userBackupDir, "2024-01-01_12-00-00");
     fs.mkdirSync(path.join(backupDir, "agents"), { recursive: true });
     fs.writeFileSync(path.join(backupDir, "agents", "restored.agent.md"), "restored content");
 
@@ -141,7 +162,7 @@ suite("Unit: GitHubTemplateBackupService", () => {
     fs.mkdirSync(path.join(nexkitDir, "custom"), { recursive: true });
     fs.writeFileSync(path.join(nexkitDir, "custom", "extra.md"), "extra");
 
-    await service.restoreBackup(tempDir, ".nexkit.backup-2024-01-01T12-00-00");
+    await service.restoreBackup(workspaceDir, "2024-01-01_12-00-00");
 
     // Verify backup was restored
     assert.ok(fs.existsSync(path.join(nexkitDir, "agents", "restored.agent.md")));
@@ -152,31 +173,34 @@ suite("Unit: GitHubTemplateBackupService", () => {
   });
 
   test("Should return null when backing up non-existent .nexkit directory", async () => {
-    const result = await service.backupTemplates(tempDir);
+    const workspaceDir = path.join(tempDir, "empty-workspace");
+    fs.mkdirSync(workspaceDir, { recursive: true });
+    const result = await service.backupTemplates(workspaceDir);
     assert.strictEqual(result, null);
   });
 
   test("Should return null when backing up .nexkit with no template folders", async () => {
-    const nexkitDir = path.join(tempDir, ".nexkit");
+    const workspaceDir = path.join(tempDir, "workspace4");
+    const nexkitDir = path.join(workspaceDir, ".nexkit");
     fs.mkdirSync(nexkitDir, { recursive: true });
 
     // Only create non-template content
     fs.mkdirSync(path.join(nexkitDir, "custom"), { recursive: true });
     fs.writeFileSync(path.join(nexkitDir, "README.md"), "content");
 
-    const result = await service.backupTemplates(tempDir);
+    const result = await service.backupTemplates(workspaceDir);
     assert.strictEqual(result, null);
   });
 
   test("Should handle partial template folders", async () => {
-    const nexkitDir = path.join(tempDir, ".nexkit");
+    const workspaceDir = path.join(tempDir, "workspace5");
+    const nexkitDir = path.join(workspaceDir, ".nexkit");
 
     // Only create some template folders
     fs.mkdirSync(path.join(nexkitDir, "agents"), { recursive: true });
     fs.writeFileSync(path.join(nexkitDir, "agents", "test.agent.md"), "content");
-    // Don't create prompts, skills, instructions, chatmodes
 
-    const backupPath = await service.backupTemplates(tempDir);
+    const backupPath = await service.backupTemplates(workspaceDir);
 
     assert.ok(backupPath);
     assert.ok(fs.existsSync(path.join(backupPath as string, "agents")));
@@ -186,35 +210,66 @@ suite("Unit: GitHubTemplateBackupService", () => {
     assert.ok(!fs.existsSync(path.join(backupPath as string, "chatmodes")));
   });
 
-  test("Should cleanup old backups based on retention policy", async () => {
-    // Create backup directories with different ages
-    const oldBackup = path.join(tempDir, ".nexkit.backup-2020-01-01T12-00-00");
-    const recentBackup = path.join(tempDir, ".nexkit.backup-2026-01-01T12-00-00");
+  test("Should cleanup old backups keeping only max specified", async () => {
+    // Create 7 backup directories
+    for (let i = 1; i <= 7; i++) {
+      fs.mkdirSync(path.join(userBackupDir, `2024-01-0${i}_12-00-00`));
+    }
 
-    fs.mkdirSync(oldBackup);
-    fs.mkdirSync(recentBackup);
+    await service.cleanupBackups(5);
 
-    // Set old backup's mtime to be very old
-    const oldDate = new Date("2020-01-01");
-    fs.utimesSync(oldBackup, oldDate, oldDate);
+    const remaining = await service.listBackups();
+    assert.strictEqual(remaining.length, 5);
+    // Should keep the 5 most recent
+    assert.strictEqual(remaining[0], "2024-01-07_12-00-00");
+    assert.strictEqual(remaining[4], "2024-01-03_12-00-00");
+    // Oldest two should be deleted
+    assert.ok(!fs.existsSync(path.join(userBackupDir, "2024-01-01_12-00-00")));
+    assert.ok(!fs.existsSync(path.join(userBackupDir, "2024-01-02_12-00-00")));
+  });
 
-    await service.cleanupBackups(tempDir, 30); // Keep backups for 30 days
+  test("Should enforce retention policy automatically on backup", async () => {
+    // Create 5 existing backups (at max capacity)
+    for (let i = 1; i <= 5; i++) {
+      fs.mkdirSync(path.join(userBackupDir, `2024-01-0${i}_12-00-00`));
+    }
 
-    // Verify old backup was deleted
-    assert.ok(!fs.existsSync(oldBackup));
+    // Create workspace with templates to trigger a new backup
+    const workspaceDir = path.join(tempDir, "workspace6");
+    const nexkitDir = path.join(workspaceDir, ".nexkit");
+    fs.mkdirSync(path.join(nexkitDir, "agents"), { recursive: true });
+    fs.writeFileSync(path.join(nexkitDir, "agents", "test.agent.md"), "content");
 
-    // Verify recent backup still exists
-    assert.ok(fs.existsSync(recentBackup));
+    await service.backupTemplates(workspaceDir);
+
+    const remaining = await service.listBackups();
+    // Should have 5 backups (oldest deleted, new one added)
+    assert.strictEqual(remaining.length, 5);
+    // The oldest backup (01) should be gone
+    assert.ok(!fs.existsSync(path.join(userBackupDir, "2024-01-01_12-00-00")));
   });
 
   test("Should throw error when restoring non-existent backup", async () => {
+    const workspaceDir = path.join(tempDir, "workspace7");
+    fs.mkdirSync(workspaceDir, { recursive: true });
+
     await assert.rejects(
       async () => {
-        await service.restoreBackup(tempDir, ".nexkit.backup-nonexistent");
+        await service.restoreBackup(workspaceDir, "nonexistent-backup");
       },
       {
         message: /Backup .* not found/,
       }
     );
+  });
+
+  test("Should delete all backups when cleanupBackups called with 0", async () => {
+    fs.mkdirSync(path.join(userBackupDir, "2024-01-01_12-00-00"));
+    fs.mkdirSync(path.join(userBackupDir, "2024-01-02_12-00-00"));
+
+    await service.cleanupBackups(0);
+
+    const remaining = await service.listBackups();
+    assert.strictEqual(remaining.length, 0);
   });
 });

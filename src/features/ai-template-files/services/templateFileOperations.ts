@@ -6,6 +6,8 @@ import { fileExists, getWorkspaceRoot } from "../../../shared/utils/fileHelper";
 import { TemplateFetcherService } from "./templateFetcherService";
 import { InstalledTemplatesStateManager } from "./installedTemplatesStateManager";
 import { NexkitFileWatcherService } from "../../nexkit-file-watcher/nexkitFileWatcherService";
+import { UserDirectoryService } from "./userDirectoryService";
+import { SettingsManager } from "../../../core/settingsManager";
 
 /**
  * Options for installing a template
@@ -31,15 +33,31 @@ export interface BatchInstallSummary {
 export class TemplateFileOperations {
   constructor(
     private readonly fetcherService: TemplateFetcherService,
-    private readonly stateManager: InstalledTemplatesStateManager
+    private readonly stateManager: InstalledTemplatesStateManager,
+    private readonly _userDirectoryService: UserDirectoryService
   ) {}
 
   /**
-   * Get the directory path for a type of template
+   * Get the directory path for a type of template based on deploy mode
    */
   private getTemplateTypePath(templateFileType: AITemplateFileType): string {
+    if (SettingsManager.isUserDeployMode()) {
+      const locations = this._userDirectoryService.getAbsoluteTemplateLocations();
+      return locations[templateFileType] ?? path.join(this._userDirectoryService.getUserNexkitRoot(), templateFileType);
+    }
     const workspaceRoot = getWorkspaceRoot();
     return path.join(workspaceRoot, ".nexkit", templateFileType);
+  }
+
+  /**
+   * Get the install root path depending on deploy mode.
+   * Returns the user-level .nexkit root or the workspace .nexkit root.
+   */
+  public getTemplateInstallPath(): string {
+    if (SettingsManager.isUserDeployMode()) {
+      return this._userDirectoryService.getUserNexkitRoot();
+    }
+    return path.join(getWorkspaceRoot(), ".nexkit");
   }
 
   /**
@@ -168,7 +186,7 @@ export class TemplateFileOperations {
       if (!(await fileExists(targetPath))) {
         if (!silent) {
           vscode.window.showWarningMessage(
-            `${templateFile.isDirectory ? "Skill" : "File"} ${templateFile.name} not found in .github/${templateFile.type}/`
+            `${templateFile.isDirectory ? "Skill" : "File"} ${templateFile.name} not found in ${templateFile.type}/`
           );
         }
         return;
@@ -195,7 +213,7 @@ export class TemplateFileOperations {
 
       if (!silent) {
         vscode.window.showInformationMessage(
-          `Removed ${templateFile.isDirectory ? "skill" : "template"} ${templateFile.name} from .github/${templateFile.type}/`
+          `Removed ${templateFile.isDirectory ? "skill" : "template"} ${templateFile.name} from ${templateFile.type}/`
         );
       }
     } catch (error) {
