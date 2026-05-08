@@ -16,6 +16,13 @@ export interface MigrationSummary {
   migratedFiles: Record<string, string[]>;
 }
 
+interface DirectoryMigrationResult {
+  /** Relative file paths successfully moved from source to target */
+  movedFiles: string[];
+  /** Relative file paths skipped because destination already existed or an error occurred (and therefore kept at source) */
+  skippedFiles: string[];
+}
+
 /**
  * Prefix used to identify Nexkit-managed template files
  */
@@ -91,6 +98,11 @@ export class NexkitFileMigrationService {
       const targetPath = path.join(targetDir, fileName);
 
       try {
+        if (await fileExists(targetPath)) {
+          this._logging.info(`Skipped migrating ${templateType}/${fileName} from .github: destination already exists in user .nexkit`);
+          continue;
+        }
+
         await fs.promises.copyFile(sourcePath, targetPath);
         await fs.promises.unlink(sourcePath);
         movedFiles.push(fileName);
@@ -118,16 +130,34 @@ export class NexkitFileMigrationService {
     const targetDir = path.join(userNexkitDir, templateType);
     await fs.promises.mkdir(targetDir, { recursive: true });
 
-    const movedFiles = await this.copyDirectoryAndCollectFiles(sourceDir, targetDir);
-    await fs.promises.rm(sourceDir, { recursive: true, force: true });
+    const { movedFiles, skippedFiles } = await this.copyDirectoryAndCollectFiles(sourceDir, targetDir);
+    if (skippedFiles.length === 0) {
+      await fs.promises.rm(sourceDir, { recursive: true, force: true });
+    } else {
+      this._logging.info(`Preserved ${skippedFiles.length} skipped file(s) in workspace .nexkit/${templateType}: ${skippedFiles.join(", ")}`);
+    }
+
     this._logging.info(`Migrated ${movedFiles.length} file(s) from workspace .nexkit/${templateType} to user .nexkit/${templateType}`);
 
     return movedFiles;
   }
 
-  private async copyDirectoryAndCollectFiles(sourceDir: string, targetDir: string, relativeBase: string = ""): Promise<string[]> {
+  /**
+   * Copy workspace .nexkit files into user .nexkit while preserving user-existing files.
+   * Successfully copied files are removed from source; conflicting/error files are left in place.
+   * @param sourceDir Workspace source directory to read recursively
+   * @param targetDir User .nexkit destination directory
+   * @param relativeBase Relative path segment used for reporting nested files
+   * @returns Moved and skipped relative file paths
+   */
+  private async copyDirectoryAndCollectFiles(
+    sourceDir: string,
+    targetDir: string,
+    relativeBase: string = ""
+  ): Promise<DirectoryMigrationResult> {
     const entries = await fs.promises.readdir(sourceDir, { withFileTypes: true });
     const movedFiles: string[] = [];
+    const skippedFiles: string[] = [];
 
     for (const entry of entries) {
       const sourcePath = path.join(sourceDir, entry.name);
@@ -136,15 +166,35 @@ export class NexkitFileMigrationService {
 
       if (entry.isDirectory()) {
         await fs.promises.mkdir(targetPath, { recursive: true });
-        const nestedFiles = await this.copyDirectoryAndCollectFiles(sourcePath, targetPath, relativePath);
-        movedFiles.push(...nestedFiles);
+        const nestedResult = await this.copyDirectoryAndCollectFiles(sourcePath, targetPath, relativePath);
+        movedFiles.push(...nestedResult.movedFiles);
+        skippedFiles.push(...nestedResult.skippedFiles);
+
+        const remainingEntries = await fs.promises.readdir(sourcePath);
+        if (remainingEntries.length === 0) {
+          await fs.promises.rm(sourcePath, { recursive: true, force: true });
+        }
       } else if (entry.isFile()) {
-        await fs.promises.copyFile(sourcePath, targetPath);
-        movedFiles.push(relativePath);
+        if (await fileExists(targetPath)) {
+          this._logging.info(`Skipped migrating ${relativePath} from workspace .nexkit: destination already exists in user .nexkit`);
+          skippedFiles.push(relativePath);
+          continue;
+        }
+
+        try {
+          await fs.promises.copyFile(sourcePath, targetPath);
+          await fs.promises.unlink(sourcePath);
+          movedFiles.push(relativePath);
+        } catch (error) {
+          this._logging.error(
+            `Failed to migrate ${relativePath} from workspace .nexkit: ${error instanceof Error ? error.message : String(error)}`
+          );
+          skippedFiles.push(relativePath);
+        }
       }
     }
 
-    return movedFiles;
+    return { movedFiles, skippedFiles };
   }
 
   private async cleanupEmptyWorkspaceNexkit(workspaceNexkitDir: string): Promise<void> {
