@@ -133,8 +133,8 @@ export class GitHubTemplateBackupService {
 
       // Restore template folders from backup
       for (const folderName of TEMPLATE_FOLDERS) {
-          const sourcePath = path.join(backupPath, folderName);
-          if (await fileExists(sourcePath)) {
+        const sourcePath = path.join(backupPath, folderName);
+        if (await fileExists(sourcePath)) {
           const destPath = path.join(nexkitPath, folderName);
           await copyDirectory(sourcePath, destPath);
         }
@@ -198,12 +198,12 @@ export class GitHubTemplateBackupService {
   }
 
   /**
-     * Create backup directory with template folders
-     * @param workspaceRoot Workspace root used to resolve backup scope
+   * Create backup directory with template folders
+   * @param workspaceRoot Workspace root used to resolve backup scope
    * @param nexkitPath Absolute path to .nexkit directory
    * @returns Path to backup directory
    */
-    private async createBackupDirectory(workspaceRoot: string, nexkitPath: string): Promise<string> {
+  private async createBackupDirectory(workspaceRoot: string, nexkitPath: string): Promise<string> {
     const timestamp = new Date().toISOString().slice(0, 19).replace(/T/g, "_").replace(/:/g, "-");
     const backupDir = this._userDirectoryService.getUserBackupDir(workspaceRoot);
     const backupPath = path.join(backupDir, timestamp);

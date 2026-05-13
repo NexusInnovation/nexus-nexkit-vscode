@@ -100,9 +100,6 @@ suite("Unit: GitHubTemplateBackupService", () => {
   });
 
   test("Should throw when backup does not exist", async () => {
-    await assert.rejects(
-      async () => service.restoreBackup(tempDir, "missing-backup"),
-      /Backup missing-backup not found/
-    );
+    await assert.rejects(async () => service.restoreBackup(tempDir, "missing-backup"), /Backup missing-backup not found/);
   });
 });
