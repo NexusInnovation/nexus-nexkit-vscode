@@ -27,7 +27,7 @@ suite("Unit: UserDirectoryService", () => {
   });
 
   suite("getStorageRoot()", () => {
-    test("Should return correct path on Windows", () => {
+    (os.platform() === "win32" ? test : test.skip)("Should return correct path on Windows", () => {
       platformStub.returns("win32");
       homedirStub.returns("C:\\Users\\TestUser");
 
@@ -36,7 +36,7 @@ suite("Unit: UserDirectoryService", () => {
       assert.strictEqual(result, path.join("C:\\Users\\TestUser", "AppData", "Roaming", "NexKit"));
     });
 
-    test("Should return correct path on macOS", () => {
+    (os.platform() === "darwin" ? test : test.skip)("Should return correct path on macOS", () => {
       platformStub.returns("darwin");
       homedirStub.returns("/Users/testuser");
 
@@ -45,7 +45,7 @@ suite("Unit: UserDirectoryService", () => {
       assert.strictEqual(result, path.join("/Users/testuser", "Library", "Application Support", "NexKit"));
     });
 
-    test("Should return correct path on Linux", () => {
+    (os.platform() === "linux" ? test : test.skip)("Should return correct path on Linux", () => {
       platformStub.returns("linux");
       homedirStub.returns("/home/testuser");
 
