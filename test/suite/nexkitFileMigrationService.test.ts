@@ -17,18 +17,22 @@ suite("Unit: NexkitFileMigrationService", () => {
   let homeDir: string;
   let userNexkitDir: string;
   let originalHomeEnv: string | undefined;
+  let originalAppDataEnv: string | undefined;
 
   setup(async () => {
     service = new NexkitFileMigrationService();
     workspaceRoot = fs.mkdtempSync(path.join(os.tmpdir(), "nexkit-migration-workspace-test-"));
     homeDir = fs.mkdtempSync(path.join(os.tmpdir(), "nexkit-migration-home-test-"));
     originalHomeEnv = process.env.HOME;
+    originalAppDataEnv = process.env.APPDATA;
     process.env.HOME = homeDir;
+    process.env.APPDATA = path.join(homeDir, "appdata");
     userNexkitDir = getNexkitUserDirectory(vscode.env.appName);
   });
 
   teardown(async () => {
     process.env.HOME = originalHomeEnv;
+    process.env.APPDATA = originalAppDataEnv;
     try {
       fs.rmSync(workspaceRoot, { recursive: true, force: true });
       fs.rmSync(homeDir, { recursive: true, force: true });

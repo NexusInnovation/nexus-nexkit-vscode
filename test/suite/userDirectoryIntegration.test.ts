@@ -109,13 +109,8 @@ suite("Integration: User Directory Deployment Flow", () => {
 
   suite("Workspace override → both paths registered", () => {
     test("Should detect workspace override when .nexkit/ exists in workspace", () => {
-      // Create a .nexkit directory in temp to simulate workspace
-      const fakeWorkspaceNexkit = path.join(tempDir, ".nexkit");
-      fs.mkdirSync(fakeWorkspaceNexkit, { recursive: true });
-
-      // isWorkspaceOverrideActive checks workspace folders and fs
-      // We test the logic indirectly via SettingsManager
-      sandbox.stub(SettingsManager, "getTemplateDeployMode").returns("workspace");
+      // In workspace mode, override is always active regardless of filesystem checks
+      sandbox.stub(SettingsManager, "isUserDeployMode").returns(false);
       const result = SettingsManager.isWorkspaceOverrideActive();
 
       assert.strictEqual(result, true);
