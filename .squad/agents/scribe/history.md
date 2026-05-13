@@ -11,5 +11,6 @@
 <!-- Append learnings below -->
 
 ### 2026-05-13: Multi-agent decision consolidation workflow
+
 - When implementation/review cycles include rejection and re-approval, orchestration logs should capture each phase as separate append-only entries.
 - Decision inbox consolidation should preserve intent in `decisions.md`, then clear only processed inbox artifacts.

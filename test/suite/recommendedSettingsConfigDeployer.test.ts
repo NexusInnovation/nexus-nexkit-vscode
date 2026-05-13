@@ -55,7 +55,6 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
       get: sandbox.stub(),
       has: sandbox.stub(),
     };
-
     sandbox.stub(vscode.workspace, "getConfiguration").returns(fakeConfig as any);
 
     deployer = new RecommendedSettingsConfigDeployer(mockUserDirectory as any);

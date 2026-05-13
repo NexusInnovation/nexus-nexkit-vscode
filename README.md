@@ -92,12 +92,12 @@ Nexkit propose **deux modes** adaptés à différents profils d'utilisateurs :
 
 Accédez aux commandes via la palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) :
 
-- **Nexkit: Initialize Workspace** - Configure votre workspace avec :
-  - Templates IA (agents, prompts, chatmodes) installés dans `.nexkit/`
-  - Paramètres VS Code pour découverte automatique des agents, prompts et skills
-  - Extensions VS Code recommandées
-  - Configuration des serveurs MCP au niveau workspace
-  - Entrée `.gitignore` pour ignorer le dossier `.nexkit/`
+- **Nexkit: Initialize Workspace** - Configure votre environnement avec :
+  - Templates IA (agents, prompts, chatmodes) installés au niveau utilisateur (ne modifie pas vos fichiers projet)
+  - Paramètres VS Code (user-level) pour découverte automatique des agents, prompts et skills
+  - Extensions VS Code recommandées (mode workspace uniquement)
+  - Configuration des serveurs MCP (mode workspace uniquement)
+  - Aucune modification du répertoire de travail en mode utilisateur par défaut
 
 - **Nexkit: Install User MCP Servers** - Installe les serveurs MCP requis (Context7 et Sequential Thinking)
 
@@ -136,7 +136,7 @@ Les templates sont automatiquement récupérés lors de l'activation de l'extens
 - **Vérification des Mises à Jour** : Vérifie automatiquement les nouvelles versions toutes les 24 heures (configurable)
 - **Notifications MCP** : Alerte lorsque les serveurs MCP requis ne sont pas installés
 - **Invites d'Initialisation** : Suggère l'initialisation pour les nouveaux workspaces
-- **Sauvegardes Automatiques** : Sauvegarde les templates existants (`.nexkit/`) avant écrasement avec le préfixe `.nexkit.backup-`
+- **Sauvegardes Automatiques** : Sauvegarde les templates existants avant écrasement (dans le répertoire utilisateur ou workspace selon le mode)
 - **Surveillance des Configurations** : Actualise les templates lors de modifications des paramètres de dépôt
 
 ## 🚦 Démarrage Rapide
@@ -322,7 +322,7 @@ Lors de la première activation de Nexkit :
 2. Votre sélection est enregistrée dans `nexkit.userMode` et peut être modifiée à tout moment dans les paramètres
 3. Cette invite n'apparaît qu'une seule fois - lors de la première activation
 
-### Initialisation du Workspace
+### Initialisation (Mode Utilisateur — par défaut)
 
 Lorsque vous exécutez "Nexkit: Initialize Workspace" en mode utilisateur :
 
@@ -347,11 +347,11 @@ En mode workspace, Nexkit revient au comportement classique :
 1. **Création de Sauvegarde** : Le répertoire `.nexkit` existant est automatiquement sauvegardé
 2. **Déploiement de Configuration** :
    - Entrée `.gitignore` pour ignorer le dossier `.nexkit/`
-   - `.vscode/settings.json` avec paramètres recommandés (incluant les sources agents, prompts et skills)
    - `.vscode/extensions.json` avec extensions recommandées
    - `.vscode/mcp.json` pour la configuration MCP au niveau workspace
-3. **Installation de Templates** : Agents, prompts et chatmodes du dépôt Nexus Templates sont installés dans `.nexkit/`
-4. **Marquage du Workspace** : Définit `nexkit.workspace.initialized` pour éviter les invites dupliquées
+3. **Installation de Templates** : Templates installés dans `.nexkit/` à la racine du workspace
+
+> **Détection automatique** : Si un dossier `.nexkit/` existe déjà à la racine de votre workspace, Nexkit le détecte automatiquement et enregistre les deux chemins (utilisateur + workspace).
 
 ### Stratégie pour `copilot-instructions.md`
 
@@ -362,7 +362,7 @@ En mode workspace, Nexkit revient au comportement classique :
 
 ### Structure des Templates
 
-Les templates déployés dans votre workspace suivent cette structure :
+Les templates déployés suivent cette structure (dans le répertoire utilisateur ou workspace selon le mode) :
 
 ```
 NexKit/
@@ -384,7 +384,7 @@ NexKit/
 
 > (1) [Anthropic](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)
 
-Le dossier `.nexkit/` est automatiquement configuré comme source pour GitHub Copilot via les paramètres VS Code déployés :
+Les paramètres VS Code sont configurés au niveau utilisateur (Global) avec des chemins relatifs `~/` :
 
 ```json
 {

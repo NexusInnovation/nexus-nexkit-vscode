@@ -27,16 +27,16 @@ export class WorkspaceInitializationService {
     // Run shared verification checks (gitignore, settings, file migration)
     // Delegates to StartupVerificationService — same checks that run at every startup.
     // Returns migration summary for initialization reporting.
-    const migrationSummary = await services.startupVerification.verifyWorkspaceConfiguration(
-      workspaceFolder.uri.fsPath
-    );
+    const migrationSummary = await services.startupVerification.verifyWorkspaceConfiguration(workspaceFolder.uri.fsPath);
 
     // Backup and delete existing .nexkit template folders if they exist
     const backupPath = await services.backup.backupTemplates(workspaceFolder.uri.fsPath);
 
-    // Deploy init-only configuration files
-    await services.recommendedExtensionsConfigDeployer.deployVscodeExtensions(workspaceFolder.uri.fsPath);
-    await services.mcpConfigDeployer.deployWorkspaceMCPServers(workspaceFolder.uri.fsPath);
+    // Deploy init-only workspace configuration files only in workspace mode
+    if (!SettingsManager.isUserDeployMode()) {
+      await services.recommendedExtensionsConfigDeployer.deployVscodeExtensions(workspaceFolder.uri.fsPath);
+      await services.mcpConfigDeployer.deployWorkspaceMCPServers(workspaceFolder.uri.fsPath);
+    }
 
     let deploymentSummary: BatchInstallSummary | null = null;
 

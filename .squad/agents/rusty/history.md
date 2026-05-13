@@ -11,13 +11,14 @@
 <!-- Append learnings below -->
 
 ### 2026-05-13: User storage root redesign (NexKit/.global/<project>)
+
 - User storage root migrated from VS Code `Code/User/.nexkit` to platform-native `NexKit` root:
-	- Windows: `%APPDATA%/NexKit`
-	- macOS: `~/Library/Application Support/NexKit`
-	- Linux: `~/.config/NexKit`
+ 	- Windows: `%APPDATA%/NexKit`
+ 	- macOS: `~/Library/Application Support/NexKit`
+ 	- Linux: `~/.config/NexKit`
 - Introduced layered storage model in `UserDirectoryService`:
-	- `.global/` for cross-project shared assets
-	- `<project-name>/` for project-scoped assets
+ 	- `.global/` for cross-project shared assets
+ 	- `<project-name>/` for project-scoped assets
 - Kept backward compatibility via one-time best-effort copy from legacy user path (`.../Code/User/.nexkit`) into `NexKit/.global`.
 - User-mode template install path now resolves to project scope (`NexKit/<project>/...`) while settings register both global and project paths.
 - Workspace migration flow (`workspace .nexkit -> user`) now targets project scope.
@@ -25,6 +26,7 @@
 - Backup directory resolution now supports project-scoped backups when workspace context is available.
 
 ### 2026-05-07: UserDirectoryService (Issue #154)
+
 - Created `src/features/ai-template-files/services/userDirectoryService.ts` — platform-aware user directory resolution following the same pattern as `MCPConfigService.getUserMCPConfigPath()`.
 - Registered in `ServiceContainer` interface and `initializeServices()`.
 - Template subdirs: agents, prompts, skills, instructions, chatmodes, hooks.
@@ -34,6 +36,7 @@
 - Tests use sinon stubs on `os.platform()` and `os.homedir()` plus a temp directory for filesystem integration tests.
 
 ### 2026-05-07: Settings to User-Level (Issue #146)
+
 - Refactored `RecommendedSettingsConfigDeployer` to write `chat.*Locations` settings to `ConfigurationTarget.Global` (user-level) instead of `.vscode/settings.json`.
 - Uses absolute paths from `UserDirectoryService.getAbsoluteTemplateLocations()` — paths are normalized to forward slashes via `_toForwardSlashPath()`.
 - Merges with existing user-level entries using `vscode.workspace.getConfiguration('chat').inspect(key).globalValue` — never overwrites the user's custom paths.
@@ -43,6 +46,7 @@
 - Key pattern: use `chatConfig.inspect(shortKey)?.globalValue` to read user-level, then spread-merge the nexkit path in.
 
 ### 2026-05-07: Workspace-to-User Migration (Issue #155)
+
 - Created `src/features/initialization/workspaceToUserMigrationService.ts` — full migration flow from workspace `.nexkit/` to user directory.
 - Migration state tracked in `context.globalState` per workspace root (key: `nexkit.workspaceToUserMigration`). States: pending / completed / dismissed.
 - Flow: detect → prompt → backup (via BackupService) → copy files (skip existing) → clean .gitignore → clean .vscode/settings.json → optionally delete workspace .nexkit/.
@@ -53,6 +57,7 @@
 - Key pattern: `.gitignore` section removal uses regex `# BEGIN NexKit...# END NexKit`. Settings cleanup filters `.nexkit` paths from `chat.*Locations` entries.
 
 ### 2026-05-07: Template Deploy to User Directory (Issue #151)
+
 - Refactored `TemplateFileOperations` to accept `UserDirectoryService` and route install/uninstall paths via `SettingsManager.isUserDeployMode()`.
 - Added `getTemplateInstallPath()` public method that returns the correct root based on deploy mode.
 - `InstalledTemplatesStateManager.syncWithFileSystem()` now checks user directory when in user deploy mode.

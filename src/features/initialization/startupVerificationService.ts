@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { LoggingService } from "../../shared/services/loggingService";
+import { SettingsManager } from "../../core/settingsManager";
 import { GitIgnoreConfigDeployer } from "./gitIgnoreConfigDeployer";
 import { RecommendedSettingsConfigDeployer } from "./recommendedSettingsConfigDeployer";
 import { NexkitFileMigrationService, MigrationSummary } from "./nexkitFileMigrationService";
@@ -47,18 +48,27 @@ export class StartupVerificationService {
    * Verify and apply essential workspace configuration.
    * Ensures .gitignore, VS Code settings, and nexkit file locations are correct.
    * Called both at startup and during workspace initialization.
+   * In user deploy mode, workspace file modifications (.gitignore, hooks) are skipped.
    * @param workspaceRoot Absolute path to the workspace root
    * @returns Summary of migrated files, or null if nothing was migrated
    */
   public async verifyWorkspaceConfiguration(workspaceRoot: string): Promise<MigrationSummary | null> {
-    // Ensure .gitignore contains .nexkit/ exclusion
-    await this._gitIgnoreConfigDeployer.deployGitignore(workspaceRoot);
+    const isWorkspaceMode = !SettingsManager.isUserDeployMode();
+
+    // Only modify .gitignore when in workspace mode (workspace has .nexkit/)
+    if (isWorkspaceMode) {
+      await this._gitIgnoreConfigDeployer.deployGitignore(workspaceRoot);
+    }
 
     // Ensure VS Code settings contain all required chat file locations and hooks
     await this._recommendedSettingsConfigDeployer.deployVscodeSettings(workspaceRoot);
 
-    // Deploy run-tests hook based on detected test framework
-    await this._hooksConfigDeployer.deployRunTestsHook(workspaceRoot);
+    // Deploy run-tests hook — workspace mode writes to workspace, user mode writes to user dir
+    if (isWorkspaceMode) {
+      await this._hooksConfigDeployer.deployRunTestsHook(workspaceRoot);
+    } else {
+      await this._hooksConfigDeployer.deployRunTestsHookToUserDir(workspaceRoot);
+    }
 
     // Migrate any nexkit.* files still in .github/<type>/ to .nexkit/<type>/
     return await this._nexkitFileMigration.migrateNexkitFiles(workspaceRoot);

@@ -1,10 +1,9 @@
 import * as fs from "fs";
 import * as path from "path";
-import * as vscode from "vscode";
-import { fileExists, copyDirectory, getNexkitUserDirectory } from "../../shared/utils/fileHelper";
+import { fileExists, copyDirectory } from "../../shared/utils/fileHelper";
 import { AI_TEMPLATE_FILE_TYPES } from "../ai-template-files/models/aiTemplateFile";
-import { NexkitFileWatcherService } from "../nexkit-file-watcher/nexkitFileWatcherService";
 import { UserDirectoryService } from "../ai-template-files/services/userDirectoryService";
+import { NexkitFileWatcherService } from "../nexkit-file-watcher/nexkitFileWatcherService";
 
 /**
  * Template folder names in .nexkit directory
@@ -21,12 +20,16 @@ export class GitHubTemplateBackupService {
   constructor(private readonly _userDirectoryService: UserDirectoryService = new UserDirectoryService()) {}
 
   /**
-   * Backup Nexkit template folders and delete them from the workspace
+   * Backup Nexkit template folders and delete them from the workspace.
+   * Backups are stored in the user directory under backups/<timestamp>/.
+   * Automatically enforces retention policy (keeps last 5 backups).
    * @param workspaceRoot Absolute path to workspace root
    * @returns Path to backup directory or null if nothing was backed up
    */
   public async backupTemplates(workspaceRoot: string): Promise<string | null> {
-    const nexkitPath = getNexkitUserDirectory(vscode.env.appName);
+    const nexkitPath =
+      this._userDirectoryService.getProjectNexkitRoot(workspaceRoot) ??
+      this._userDirectoryService.getGlobalNexkitRoot();
 
     if (!(await fileExists(nexkitPath))) {
       return null;
@@ -48,13 +51,14 @@ export class GitHubTemplateBackupService {
 
     return backupPath;
   }
-
   /**
    * Delete template folders from .nexkit directory
    * @param workspaceRoot Absolute path to workspace root
    */
   public async deleteTemplateFolders(workspaceRoot: string): Promise<void> {
-    const nexkitPath = getNexkitUserDirectory(vscode.env.appName);
+    const nexkitPath =
+      this._userDirectoryService.getProjectNexkitRoot(workspaceRoot) ??
+      this._userDirectoryService.getGlobalNexkitRoot();
 
     if (!(await fileExists(nexkitPath))) {
       return;
@@ -63,7 +67,6 @@ export class GitHubTemplateBackupService {
     const watcher = NexkitFileWatcherService.getInstance();
     watcher.beginBulkOperation();
     try {
-      // Delete only template folders
       for (const folderName of TEMPLATE_FOLDERS) {
         const folderPath = path.join(nexkitPath, folderName);
         if (await fileExists(folderPath)) {
@@ -94,7 +97,7 @@ export class GitHubTemplateBackupService {
   }
 
   /**
-   * Restore template folders from a specific backup
+   * Restore template folders from a specific backup in user directory
    * @param workspaceRoot Absolute path to workspace root
    * @param backupName Name of the backup folder (timestamp, e.g., "2024-01-01_12-00-00")
    */
@@ -106,14 +109,15 @@ export class GitHubTemplateBackupService {
       throw new Error(`Backup ${backupName} not found`);
     }
 
-    const nexkitRoot = getNexkitUserDirectory(vscode.env.appName);
-    const nexkitPath = nexkitRoot;
+    const nexkitPath =
+      this._userDirectoryService.getProjectNexkitRoot(workspaceRoot) ??
+      this._userDirectoryService.getGlobalNexkitRoot();
 
     // Create .nexkit directory if it doesn't exist
     await fs.promises.mkdir(nexkitPath, { recursive: true });
 
     // Create temp backup of current template folders
-    const tempBackupPath = path.join(nexkitRoot, ".temp-backup");
+    const tempBackupPath = path.join(nexkitPath, ".temp-backup");
     if (await this.hasAnyTemplateFolders(nexkitPath)) {
       await fs.promises.mkdir(tempBackupPath, { recursive: true });
       for (const folderName of TEMPLATE_FOLDERS) {
@@ -140,7 +144,7 @@ export class GitHubTemplateBackupService {
         }
       }
 
-      // Clean up temp backup
+      // Clean up temp backup on success
       if (await fileExists(tempBackupPath)) {
         await fs.promises.rm(tempBackupPath, { recursive: true, force: true });
       }

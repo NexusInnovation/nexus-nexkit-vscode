@@ -31,6 +31,9 @@ export const Commands = {
 
   // Commit message generation
   GENERATE_COMMIT_MESSAGE: "nexus-nexkit-vscode.generateCommitMessage",
+
+  // Migration commands
+  MIGRATE_TO_USER_DIRECTORY: "nexus-nexkit-vscode.migrateToUserDirectory",
 } as const;
 
 // Type-safe command names

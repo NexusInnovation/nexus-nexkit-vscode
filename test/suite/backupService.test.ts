@@ -3,10 +3,8 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import * as sinon from "sinon";
-import * as vscode from "vscode";
 import { GitHubTemplateBackupService } from "../../src/features/backup-management/backupService";
 import { UserDirectoryService } from "../../src/features/ai-template-files/services/userDirectoryService";
-import { getNexkitUserDirectory } from "../../src/shared/utils/fileHelper";
 
 suite("Unit: GitHubTemplateBackupService", () => {
   let tempDir: string;
@@ -22,10 +20,11 @@ suite("Unit: GitHubTemplateBackupService", () => {
     originalHomeEnv = process.env.HOME;
     process.env.HOME = tempDir;
 
-    nexkitDir = getNexkitUserDirectory(vscode.env.appName);
+    nexkitDir = path.join(tempDir, "nexkit-project");
     userBackupDir = path.join(tempDir, "user-backups");
 
     const userDirectory = new UserDirectoryService();
+    sandbox.stub(userDirectory, "getProjectNexkitRoot").callsFake(() => nexkitDir);
     sandbox.stub(userDirectory, "getUserBackupDir").callsFake(() => userBackupDir);
 
     service = new GitHubTemplateBackupService(userDirectory);
@@ -60,7 +59,7 @@ suite("Unit: GitHubTemplateBackupService", () => {
     fs.mkdirSync(path.join(userBackupDir, "2024-01-01_12-00-00"), { recursive: true });
     fs.mkdirSync(path.join(userBackupDir, "2024-01-02_12-00-00"), { recursive: true });
 
-    const backups = await service.listBackups();
+    const backups = await service.listBackups(tempDir);
     assert.deepStrictEqual(backups, ["2024-01-02_12-00-00", "2024-01-01_12-00-00"]);
   });
 
@@ -69,9 +68,9 @@ suite("Unit: GitHubTemplateBackupService", () => {
     fs.mkdirSync(path.join(userBackupDir, "2024-01-02_12-00-00"), { recursive: true });
     fs.mkdirSync(path.join(userBackupDir, "2024-01-03_12-00-00"), { recursive: true });
 
-    await service.cleanupBackups(2);
+    await service.cleanupBackups(2, tempDir);
 
-    const backups = await service.listBackups();
+    const backups = await service.listBackups(tempDir);
     assert.deepStrictEqual(backups, ["2024-01-03_12-00-00", "2024-01-02_12-00-00"]);
   });
 
@@ -79,9 +78,9 @@ suite("Unit: GitHubTemplateBackupService", () => {
     fs.mkdirSync(path.join(userBackupDir, "2024-01-01_12-00-00"), { recursive: true });
     fs.mkdirSync(path.join(userBackupDir, "2024-01-02_12-00-00"), { recursive: true });
 
-    await service.cleanupBackups(0);
+    await service.cleanupBackups(0, tempDir);
 
-    const backups = await service.listBackups();
+    const backups = await service.listBackups(tempDir);
     assert.strictEqual(backups.length, 0);
   });
 
@@ -101,5 +100,15 @@ suite("Unit: GitHubTemplateBackupService", () => {
 
   test("Should throw when backup does not exist", async () => {
     await assert.rejects(async () => service.restoreBackup(tempDir, "missing-backup"), /Backup missing-backup not found/);
+  });
+
+  test("Should delete all backups when cleanupBackups called with 0", async () => {
+    fs.mkdirSync(path.join(userBackupDir, "2024-01-01_12-00-00"), { recursive: true });
+    fs.mkdirSync(path.join(userBackupDir, "2024-01-02_12-00-00"), { recursive: true });
+
+    await service.cleanupBackups(0, tempDir);
+
+    const remaining = await service.listBackups(tempDir);
+    assert.strictEqual(remaining.length, 0);
   });
 });

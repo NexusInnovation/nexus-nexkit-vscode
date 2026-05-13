@@ -38,7 +38,7 @@ export class TemplateFileOperations {
   ) {}
 
   /**
-   * Get the directory path for a type of template
+   * Get the directory path for a type of template based on deploy mode
    */
   private getTemplateTypePath(templateFileType: AITemplateFileType): string {
     if (SettingsManager.isUserDeployMode()) {

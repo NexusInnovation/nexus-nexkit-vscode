@@ -30,7 +30,7 @@
 - All 302 tests pass including 4 new layering tests
 
 ### 2026-05-13: Backup scope consistency fix (QA blocker)
+
 - Fixed mixed-scope behavior so backup/list/cleanup/retention all resolve to the same workspace-scoped backup root when context exists.
 - Updated backup commands to pass workspace context consistently; cleanup now requires open workspace like restore.
 - Added regression coverage to prevent `.global` / `<project>` path mixing.
-

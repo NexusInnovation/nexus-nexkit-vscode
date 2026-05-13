@@ -10,6 +10,8 @@ import { RecommendedSettingsConfigDeployer } from "../../src/features/initializa
 import { NexkitFileMigrationService } from "../../src/features/initialization/nexkitFileMigrationService";
 import { HooksConfigDeployer } from "../../src/features/initialization/hooksConfigDeployer";
 import { GitHubAuthPromptService } from "../../src/features/initialization/githubAuthPromptService";
+import { UserDirectoryService } from "../../src/features/ai-template-files/services/userDirectoryService";
+import { SettingsManager } from "../../src/core/settingsManager";
 
 suite("Unit: StartupVerificationService", () => {
   let service: StartupVerificationService;
@@ -25,6 +27,9 @@ suite("Unit: StartupVerificationService", () => {
     const hooksConfigDeployer = new HooksConfigDeployer();
     const migrationService = new NexkitFileMigrationService();
     const authPromptService = new GitHubAuthPromptService();
+
+    // Default to workspace mode for existing tests
+    sandbox.stub(SettingsManager, "isUserDeployMode").returns(false);
 
     service = new StartupVerificationService(
       gitIgnoreDeployer,

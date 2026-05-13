@@ -11,6 +11,7 @@
 <!-- Append learnings below -->
 
 ### 2026-05-08: Issue Status Analysis post-PR #158
+
 - Verified all four issues (#146, #147, #148, #150) against actual codebase state — all acceptance criteria met.
 - `RecommendedSettingsConfigDeployer` uses `ConfigurationTarget.Global` with `~/` tilde paths (VS Code requires `~/` or relative, not absolute — issue spec was imprecise but implementation is correct).
 - `GitIgnoreConfigDeployer` is still wired in `StartupVerificationService` but gated: only runs when `isWorkspaceMode` is true. Safe in user deploy mode.
@@ -25,6 +26,7 @@
 - Session log at `.squad/log/2026-05-08-pr158-review.md`.
 
 ### 2026-05-07: User Directory Tests & Documentation (Issue #147)
+
 - Created `test/suite/userDirectoryIntegration.test.ts` — 11 integration tests covering the full user directory flow: fresh install, workspace override, edge cases (idempotency, path consistency, backup dir).
 - Test count went from 302 → 323 passing (all green, 8 pending unrelated).
 - Existing unit tests (userDirectoryService, templateFileOperationsUserDir, startupVerificationService, recommendedSettingsConfigDeployer) already covered the core services well — Rusty and Basher did solid work.
@@ -34,6 +36,7 @@
 - Integration tests use temp directories (`fs.mkdtempSync`) and clean up in teardown — safe for CI.
 
 ### 2026-05-13: Storage scope review loop (reject -> approve)
+
 - Initial QA review blocked merge due to backup scope inconsistency between project and `.global` roots.
 - Required alignment of backup/list/cleanup/retention to a single scoped root when workspace context is present.
 - Final QA pass approved after Basher’s consistency fix and regression validation.

@@ -27,6 +27,8 @@ import { StartupVerificationService } from "../features/initialization/startupVe
 import { NexkitFileWatcherService } from "../features/nexkit-file-watcher/nexkitFileWatcherService";
 import { GitHubWorkflowRunnerService } from "../features/github-workflow-runner/githubWorkflowRunnerService";
 import { HooksConfigDeployer } from "../features/initialization/hooksConfigDeployer";
+import { UserDirectoryService } from "../features/ai-template-files/services/userDirectoryService";
+import { WorkspaceToUserMigrationService } from "../features/initialization/workspaceToUserMigrationService";
 
 /**
  * Service container for dependency injection
@@ -61,6 +63,8 @@ export interface ServiceContainer {
   startupVerification: StartupVerificationService;
   nexkitFileWatcher: NexkitFileWatcherService;
   githubWorkflowRunner: GitHubWorkflowRunnerService;
+  userDirectory: UserDirectoryService;
+  workspaceToUserMigration: WorkspaceToUserMigrationService;
 }
 
 /**
@@ -79,15 +83,16 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   // Initialize other services
   const extensionUpdate = new ExtensionUpdateService();
   const mcpConfig = new MCPConfigService();
-  const installedTemplatesState = new InstalledTemplatesStateManager(context);
-  const aiTemplateData = new AITemplateDataService(installedTemplatesState);
+  const userDirectory = new UserDirectoryService();
+  const installedTemplatesState = new InstalledTemplatesStateManager(context, userDirectory);
+  const aiTemplateData = new AITemplateDataService(installedTemplatesState, userDirectory);
   const templateMetadata = new TemplateMetadataService(aiTemplateData.getRepositoryManager());
-  const backup = new GitHubTemplateBackupService();
+  const backup = new GitHubTemplateBackupService(userDirectory);
   const updateStatusBar = new UpdateStatusBarService(context, extensionUpdate);
   const gitIgnoreConfigDeployer = new GitIgnoreConfigDeployer();
   const mcpConfigDeployer = new MCPConfigDeployer();
   const recommendedExtensionsConfigDeployer = new RecommendedExtensionsConfigDeployer();
-  const recommendedSettingsConfigDeployer = new RecommendedSettingsConfigDeployer();
+  const recommendedSettingsConfigDeployer = new RecommendedSettingsConfigDeployer(userDirectory);
   const aiTemplateFilesDeployer = new AITemplateFilesDeployer(aiTemplateData);
   const workspaceInitPrompt = new WorkspaceInitPromptService();
   const modeSelectionPrompt = new ModeSelectionPromptService(telemetry);
@@ -99,7 +104,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const commitMessage = new CommitMessageService();
   const templateMetadataScanner = new TemplateMetadataScannerService(templateMetadata, aiTemplateData);
   const githubAuthPrompt = new GitHubAuthPromptService();
-  const hooksConfigDeployer = new HooksConfigDeployer();
+  const hooksConfigDeployer = new HooksConfigDeployer(userDirectory);
   const startupVerification = new StartupVerificationService(
     gitIgnoreConfigDeployer,
     recommendedSettingsConfigDeployer,
@@ -109,6 +114,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   );
   const nexkitFileWatcher = NexkitFileWatcherService.getInstance();
   const githubWorkflowRunner = new GitHubWorkflowRunnerService(context.extensionUri);
+  const workspaceToUserMigration = new WorkspaceToUserMigrationService(userDirectory, backup);
 
   // Register for disposal
   context.subscriptions.push(logging);
@@ -149,5 +155,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     startupVerification,
     nexkitFileWatcher,
     githubWorkflowRunner,
+    userDirectory,
+    workspaceToUserMigration,
   };
 }
