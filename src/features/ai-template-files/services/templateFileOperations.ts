@@ -2,10 +2,12 @@ import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 import { AITemplateFile, AITemplateFileType, InstalledTemplatesMap } from "../models/aiTemplateFile";
-import { fileExists, getNexkitUserDirectory } from "../../../shared/utils/fileHelper";
+import { fileExists, getWorkspaceRoot } from "../../../shared/utils/fileHelper";
 import { TemplateFetcherService } from "./templateFetcherService";
 import { InstalledTemplatesStateManager } from "./installedTemplatesStateManager";
 import { NexkitFileWatcherService } from "../../nexkit-file-watcher/nexkitFileWatcherService";
+import { SettingsManager } from "../../../core/settingsManager";
+import { UserDirectoryService } from "./userDirectoryService";
 
 /**
  * Options for installing a template
@@ -31,14 +33,34 @@ export interface BatchInstallSummary {
 export class TemplateFileOperations {
   constructor(
     private readonly fetcherService: TemplateFetcherService,
-    private readonly stateManager: InstalledTemplatesStateManager
+    private readonly stateManager: InstalledTemplatesStateManager,
+    private readonly _userDirectoryService: UserDirectoryService = new UserDirectoryService()
   ) {}
 
   /**
    * Get the directory path for a type of template
    */
   private getTemplateTypePath(templateFileType: AITemplateFileType): string {
-    return path.join(getNexkitUserDirectory(vscode.env.appName), templateFileType);
+    if (SettingsManager.isUserDeployMode()) {
+      const workspaceRoot = getWorkspaceRoot();
+      const locations = this._userDirectoryService.getAbsoluteTemplateLocations(workspaceRoot);
+      return (
+        locations[templateFileType] ?? path.join(this._userDirectoryService.getProjectNexkitRoot(workspaceRoot), templateFileType)
+      );
+    }
+    const workspaceRoot = getWorkspaceRoot();
+    return path.join(workspaceRoot, ".nexkit", templateFileType);
+  }
+
+  /**
+   * Get the install root path depending on deploy mode.
+   * Returns the user-level .nexkit root or the workspace .nexkit root.
+   */
+  public getTemplateInstallPath(): string {
+    if (SettingsManager.isUserDeployMode()) {
+      return this._userDirectoryService.getProjectNexkitRoot(getWorkspaceRoot());
+    }
+    return path.join(getWorkspaceRoot(), ".nexkit");
   }
 
   /**

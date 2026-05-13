@@ -1,87 +1,148 @@
-/**
- * Tests for RecommendedSettingsConfigDeployer
- * Verifies that VS Code user-global settings are deployed correctly
- */
-
 import * as assert from "assert";
 import * as fs from "fs";
-import * as path from "path";
 import * as os from "os";
+import * as path from "path";
+import * as sinon from "sinon";
 import * as vscode from "vscode";
 import { RecommendedSettingsConfigDeployer } from "../../src/features/initialization/recommendedSettingsConfigDeployer";
-import { getNexkitUserDirectory } from "../../src/shared/utils/fileHelper";
+import { UserDirectoryService } from "../../src/features/ai-template-files/services/userDirectoryService";
+import { SettingsManager } from "../../src/core/settingsManager";
 
 suite("Unit: RecommendedSettingsConfigDeployer", () => {
   let deployer: RecommendedSettingsConfigDeployer;
   let tempDir: string;
-  let originalHomeEnv: string | undefined;
-  let originalGetConfiguration: typeof vscode.workspace.getConfiguration;
-  let configStore: Record<string, any>;
-  let updateCalls: Array<{ key: string; value: any; target: vscode.ConfigurationTarget }>;
+  let sandbox: sinon.SinonSandbox;
+  let mockUserDirectory: sinon.SinonStubbedInstance<UserDirectoryService>;
+  let updateStub: sinon.SinonStub;
+  let inspectStub: sinon.SinonStub;
+
+  const fakeProjectLocations: Record<string, string> = {
+    agents: "C:/Users/test/AppData/Roaming/NexKit/my-project/agents",
+    prompts: "C:/Users/test/AppData/Roaming/NexKit/my-project/prompts",
+    skills: "C:/Users/test/AppData/Roaming/NexKit/my-project/skills",
+    instructions: "C:/Users/test/AppData/Roaming/NexKit/my-project/instructions",
+    hooks: "C:/Users/test/AppData/Roaming/NexKit/my-project/hooks",
+    chatmodes: "C:/Users/test/AppData/Roaming/NexKit/my-project/chatmodes",
+  };
+
+  const fakeGlobalLocations: Record<string, string> = {
+    agents: "C:/Users/test/AppData/Roaming/NexKit/.global/agents",
+    prompts: "C:/Users/test/AppData/Roaming/NexKit/.global/prompts",
+    skills: "C:/Users/test/AppData/Roaming/NexKit/.global/skills",
+    instructions: "C:/Users/test/AppData/Roaming/NexKit/.global/instructions",
+    hooks: "C:/Users/test/AppData/Roaming/NexKit/.global/hooks",
+    chatmodes: "C:/Users/test/AppData/Roaming/NexKit/.global/chatmodes",
+  };
 
   setup(async () => {
-    deployer = new RecommendedSettingsConfigDeployer();
-    tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "nexkit-settings-test-"));
-    originalHomeEnv = process.env.HOME;
-    process.env.HOME = tempDir;
+    sandbox = sinon.createSandbox();
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "nexkit-settings-test-"));
 
-    configStore = {};
-    updateCalls = [];
-    originalGetConfiguration = vscode.workspace.getConfiguration;
-    (vscode.workspace as any).getConfiguration = () =>
-      ({
-        get: (key: string, defaultValue?: any) => (key in configStore ? configStore[key] : defaultValue),
-        inspect: (key: string) => ({ globalValue: configStore[key] }),
-        update: async (key: string, value: any, target: vscode.ConfigurationTarget) => {
-          updateCalls.push({ key, value, target });
-          configStore[key] = value;
-        },
-      }) as any;
+    sandbox.stub(os, "homedir").returns("C:\\Users\\test");
+    sandbox.stub(SettingsManager, "isWorkspaceOverrideActive").returns(false);
+
+    mockUserDirectory = sandbox.createStubInstance(UserDirectoryService);
+    mockUserDirectory.getAbsoluteTemplateLocations.returns(fakeProjectLocations);
+    mockUserDirectory.getAbsoluteGlobalTemplateLocations.returns(fakeGlobalLocations);
+    mockUserDirectory.ensureUserDirectoryStructure.resolves();
+
+    updateStub = sandbox.stub().resolves();
+    inspectStub = sandbox.stub().returns({ globalValue: undefined });
+
+    const fakeConfig = {
+      inspect: inspectStub,
+      update: updateStub,
+      get: sandbox.stub(),
+      has: sandbox.stub(),
+    };
+
+    sandbox.stub(vscode.workspace, "getConfiguration").returns(fakeConfig as any);
+
+    deployer = new RecommendedSettingsConfigDeployer(mockUserDirectory as any);
   });
 
-  teardown(async () => {
-    (vscode.workspace as any).getConfiguration = originalGetConfiguration;
-    process.env.HOME = originalHomeEnv;
-    try {
-      await fs.promises.rm(tempDir, { recursive: true, force: true });
-    } catch (error) {
-      console.error("Error cleaning up temp directory:", error);
-    }
+  teardown(() => {
+    sandbox.restore();
+    fs.rmSync(tempDir, { recursive: true, force: true });
   });
 
   test("Should instantiate RecommendedSettingsConfigDeployer", () => {
     assert.ok(deployer);
   });
 
-  test("Should write all required chat settings to user-global configuration", async () => {
+  test("Should write chat settings at global scope", async () => {
     await deployer.deployVscodeSettings(tempDir);
-    const nexkitDir = getNexkitUserDirectory(vscode.env.appName);
 
-    // Verify chat file locations
-    assert.deepStrictEqual(configStore["chat.promptFilesLocations"], { [path.join(nexkitDir, "prompts")]: true });
-    assert.deepStrictEqual(configStore["chat.instructionsFilesLocations"], { [path.join(nexkitDir, "instructions")]: true });
-    assert.deepStrictEqual(configStore["chat.agentFilesLocations"], { [path.join(nexkitDir, "agents")]: true });
-    assert.deepStrictEqual(configStore["chat.hookFilesLocations"], { [path.join(nexkitDir, "hooks")]: true });
-    assert.deepStrictEqual(configStore["chat.agentSkillsLocations"], { [path.join(nexkitDir, "skills")]: true });
+    const agentCall = updateStub.getCalls().find((c) => c.args[0] === "agentFilesLocations");
+    assert.ok(agentCall);
+    assert.deepStrictEqual(agentCall?.args[1], {
+      "~/AppData/Roaming/NexKit/.global/agents": true,
+      "~/AppData/Roaming/NexKit/my-project/agents": true,
+    });
+    assert.strictEqual(agentCall?.args[2], vscode.ConfigurationTarget.Global);
 
-    // Verify hooks enabled
-    assert.strictEqual(configStore["chat.useHooks"], true);
-    assert.ok(updateCalls.every((call) => call.target === vscode.ConfigurationTarget.Global));
+    const useHooksCall = updateStub.getCalls().find((c) => c.args[0] === "useHooks");
+    assert.ok(useHooksCall);
+    assert.strictEqual(useHooksCall?.args[1], true);
   });
 
-  test("Should merge with existing global settings without overwriting user values", async () => {
-    configStore["editor.fontSize"] = 14;
-    configStore["chat.promptFilesLocations"] = {
-      "custom/prompts": true,
-    };
+  test("Should merge existing user-level entries", async () => {
+    inspectStub.callsFake((key: string) => {
+      if (key === "promptFilesLocations") {
+        return { globalValue: { "custom/my-prompts": true } };
+      }
+      return { globalValue: undefined };
+    });
 
     await deployer.deployVscodeSettings(tempDir);
-    const nexkitDir = getNexkitUserDirectory(vscode.env.appName);
 
-    // Existing custom value should be preserved
-    assert.strictEqual(configStore["editor.fontSize"], 14);
-    assert.strictEqual(configStore["chat.promptFilesLocations"]["custom/prompts"], true);
-    // Nexkit value should be added
-    assert.strictEqual(configStore["chat.promptFilesLocations"][path.join(nexkitDir, "prompts")], true);
+    const promptCall = updateStub.getCalls().find((c) => c.args[0] === "promptFilesLocations");
+    assert.ok(promptCall);
+    assert.strictEqual(promptCall?.args[1]["custom/my-prompts"], true);
+    assert.strictEqual(promptCall?.args[1]["~/AppData/Roaming/NexKit/.global/prompts"], true);
+    assert.strictEqual(promptCall?.args[1]["~/AppData/Roaming/NexKit/my-project/prompts"], true);
+  });
+
+  test("Should cleanup legacy .nexkit entries from workspace settings", async () => {
+    const vscodeDir = path.join(tempDir, ".vscode");
+    fs.mkdirSync(vscodeDir, { recursive: true });
+
+    const settingsPath = path.join(vscodeDir, "settings.json");
+    fs.writeFileSync(
+      settingsPath,
+      JSON.stringify(
+        {
+          "editor.fontSize": 14,
+          "chat.promptFilesLocations": {
+            ".nexkit/prompts": true,
+            "custom/prompts": true,
+          },
+          "chat.useHooks": true,
+        },
+        null,
+        2
+      ),
+      "utf8"
+    );
+
+    await deployer.deployVscodeSettings(tempDir);
+
+    const cleaned = JSON.parse(fs.readFileSync(settingsPath, "utf8"));
+    assert.strictEqual(cleaned["editor.fontSize"], 14);
+    assert.strictEqual(cleaned["chat.promptFilesLocations"]["custom/prompts"], true);
+    assert.strictEqual(cleaned["chat.promptFilesLocations"][".nexkit/prompts"], undefined);
+    assert.strictEqual(cleaned["chat.useHooks"], undefined);
+  });
+
+  test("Should add workspace relative paths when workspace override is active", async () => {
+    (SettingsManager.isWorkspaceOverrideActive as sinon.SinonStub).returns(true);
+
+    await deployer.deployVscodeSettings(tempDir);
+
+    const agentCall = updateStub.getCalls().find((c) => c.args[0] === "agentFilesLocations");
+    assert.ok(agentCall);
+    assert.strictEqual(agentCall?.args[1][".nexkit/agents"], true);
+    assert.strictEqual(agentCall?.args[1]["~/AppData/Roaming/NexKit/.global/agents"], true);
+    assert.strictEqual(agentCall?.args[1]["~/AppData/Roaming/NexKit/my-project/agents"], true);
   });
 });

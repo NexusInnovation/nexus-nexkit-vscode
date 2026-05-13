@@ -4,11 +4,13 @@ import * as vscode from "vscode";
 import { fileExists, copyDirectory, getNexkitUserDirectory } from "../../shared/utils/fileHelper";
 import { AI_TEMPLATE_FILE_TYPES } from "../ai-template-files/models/aiTemplateFile";
 import { NexkitFileWatcherService } from "../nexkit-file-watcher/nexkitFileWatcherService";
+import { UserDirectoryService } from "../ai-template-files/services/userDirectoryService";
 
 /**
  * Template folder names in .nexkit directory
  */
 const TEMPLATE_FOLDERS = AI_TEMPLATE_FILE_TYPES;
+const MAX_BACKUPS = 5;
 
 /**
  * Service for managing Nexkit template folder backups
@@ -16,6 +18,8 @@ const TEMPLATE_FOLDERS = AI_TEMPLATE_FILE_TYPES;
  * from the .nexkit directory
  */
 export class GitHubTemplateBackupService {
+  constructor(private readonly _userDirectoryService: UserDirectoryService = new UserDirectoryService()) {}
+
   /**
    * Backup Nexkit template folders and delete them from the workspace
    * @param workspaceRoot Absolute path to workspace root
@@ -38,6 +42,9 @@ export class GitHubTemplateBackupService {
 
     // Delete template folders from original location
     await this.deleteTemplateFolders(workspaceRoot);
+
+    // Enforce retention policy
+    await this._enforceRetentionPolicy(workspaceRoot);
 
     return backupPath;
   }
@@ -70,15 +77,15 @@ export class GitHubTemplateBackupService {
 
   /**
    * List available backups
-   * @param _workspaceRoot kept for compatibility with existing call sites
    * @returns Array of backup folder names, sorted by date (newest first)
    */
-  public async listBackups(_workspaceRoot: string): Promise<string[]> {
+  public async listBackups(workspaceRoot?: string): Promise<string[]> {
+    const backupDir = this._userDirectoryService.getUserBackupDir(workspaceRoot);
     try {
-      const backupRoot = getNexkitUserDirectory(vscode.env.appName);
-      const entries = await fs.promises.readdir(backupRoot);
+      const entries = await fs.promises.readdir(backupDir, { withFileTypes: true });
       return entries
-        .filter((entry) => entry.startsWith(".nexkit.backup-"))
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name)
         .sort()
         .reverse(); // Most recent first
     } catch {
@@ -89,16 +96,17 @@ export class GitHubTemplateBackupService {
   /**
    * Restore template folders from a specific backup
    * @param workspaceRoot Absolute path to workspace root
-   * @param backupName Name of the backup folder (e.g., ".nexkit.backup-2024-01-01T12-00-00")
+   * @param backupName Name of the backup folder (timestamp, e.g., "2024-01-01_12-00-00")
    */
   public async restoreBackup(workspaceRoot: string, backupName: string): Promise<void> {
-    const nexkitRoot = getNexkitUserDirectory(vscode.env.appName);
-    const backupPath = path.join(nexkitRoot, backupName);
+    const backupDir = this._userDirectoryService.getUserBackupDir(workspaceRoot);
+    const backupPath = path.join(backupDir, backupName);
 
     if (!(await fileExists(backupPath))) {
       throw new Error(`Backup ${backupName} not found`);
     }
 
+    const nexkitRoot = getNexkitUserDirectory(vscode.env.appName);
     const nexkitPath = nexkitRoot;
 
     // Create .nexkit directory if it doesn't exist
@@ -156,24 +164,18 @@ export class GitHubTemplateBackupService {
   }
 
   /**
-   * Clean up old backups based on retention policy
-   * @param workspaceRoot Absolute path to workspace root
-   * @param retentionDays Number of days to keep backups
+   * Clean up old backups by count (keeps newest backups)
    */
-  public async cleanupBackups(workspaceRoot: string, retentionDays: number = 0): Promise<void> {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
-
+  public async cleanupBackups(maxToKeep: number = MAX_BACKUPS, workspaceRoot?: string): Promise<void> {
     const backups = await this.listBackups(workspaceRoot);
+    const toDelete = backups.slice(maxToKeep);
+    const backupDir = this._userDirectoryService.getUserBackupDir(workspaceRoot);
 
-    for (const backup of backups) {
-      const backupPath = path.join(getNexkitUserDirectory(vscode.env.appName), backup);
+    for (const backup of toDelete) {
+      const backupPath = path.join(backupDir, backup);
       try {
-        const stats = await fs.promises.stat(backupPath);
-        if (stats.mtime < cutoffDate) {
-          await fs.promises.rm(backupPath, { recursive: true, force: true });
-          console.log(`Cleaned up old backup: ${backup}`);
-        }
+        await fs.promises.rm(backupPath, { recursive: true, force: true });
+        console.log(`Cleaned up old backup: ${backup}`);
       } catch (error) {
         console.error(`Error cleaning up backup ${backup}:`, error);
       }
@@ -196,14 +198,15 @@ export class GitHubTemplateBackupService {
   }
 
   /**
-   * Create backup directory with template folders
-   * @param _workspaceRoot kept for compatibility with existing call sites
+     * Create backup directory with template folders
+     * @param workspaceRoot Workspace root used to resolve backup scope
    * @param nexkitPath Absolute path to .nexkit directory
    * @returns Path to backup directory
    */
-  private async createBackupDirectory(_workspaceRoot: string, nexkitPath: string): Promise<string> {
+    private async createBackupDirectory(workspaceRoot: string, nexkitPath: string): Promise<string> {
     const timestamp = new Date().toISOString().slice(0, 19).replace(/T/g, "_").replace(/:/g, "-");
-    const backupPath = path.join(getNexkitUserDirectory(vscode.env.appName), `.nexkit.backup-${timestamp}`);
+    const backupDir = this._userDirectoryService.getUserBackupDir(workspaceRoot);
+    const backupPath = path.join(backupDir, timestamp);
     await fs.promises.mkdir(backupPath, { recursive: true });
 
     for (const folderName of TEMPLATE_FOLDERS) {
@@ -215,5 +218,12 @@ export class GitHubTemplateBackupService {
     }
 
     return backupPath;
+  }
+
+  /**
+   * Enforce retention policy by removing oldest backups beyond MAX_BACKUPS
+   */
+  private async _enforceRetentionPolicy(workspaceRoot: string): Promise<void> {
+    await this.cleanupBackups(MAX_BACKUPS, workspaceRoot);
   }
 }

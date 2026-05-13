@@ -3,6 +3,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { fileExists, deepMerge, getNexkitUserDirectory } from "../../shared/utils/fileHelper";
 import { LoggingService } from "../../shared/services/loggingService";
+import { UserDirectoryService } from "../ai-template-files/services/userDirectoryService";
 
 /**
  * Test command detection result
@@ -28,18 +29,15 @@ interface HookConfig {
 
 /**
  * Service for deploying chat hooks that run tests automatically.
- * Detects the project's test framework and creates a Stop hook
- * in .nexkit/hooks/run-tests.json so tests run when an agent session ends.
- *
- * NON-DESTRUCTIVE: Merges with existing hook configuration.
+ * NON-DESTRUCTIVE: merges with existing hook configuration.
  */
 export class HooksConfigDeployer {
   private readonly _logging = LoggingService.getInstance();
 
+  constructor(private readonly _userDirectory?: UserDirectoryService) {}
+
   /**
-   * Deploy the run-tests hook to the workspace.
-   * Detects the project test command and writes .nexkit/hooks/run-tests.json.
-   * @param targetRoot Absolute path to the workspace root
+   * Deploy run-tests hook. Uses user directory when available, otherwise legacy path.
    */
   public async deployRunTestsHook(targetRoot: string): Promise<void> {
     try {
@@ -49,50 +47,81 @@ export class HooksConfigDeployer {
         return;
       }
 
-      const hooksDir = path.join(getNexkitUserDirectory(vscode.env.appName), "hooks");
-      await fs.promises.mkdir(hooksDir, { recursive: true });
+      const hooksDir = this._userDirectory
+        ? this._userDirectory.getAbsoluteTemplateLocations(targetRoot)["hooks"]
+        : path.join(getNexkitUserDirectory(vscode.env.appName), "hooks");
 
-      const hookPath = path.join(hooksDir, "run-tests.json");
-      const hookConfig: HookConfig = {
-        hooks: {
-          Stop: [
-            {
-              type: "command",
-              command: testCommand.command,
-              ...(testCommand.windows && { windows: testCommand.windows }),
-              timeout: 120,
-            },
-          ],
-        },
-      };
-
-      // Merge with existing hook file if present
-      if (await fileExists(hookPath)) {
-        const existingContent = await fs.promises.readFile(hookPath, "utf8");
-        try {
-          const existingConfig = JSON.parse(existingContent);
-          const merged = deepMerge(hookConfig, existingConfig);
-          await fs.promises.writeFile(hookPath, JSON.stringify(merged, null, 2), "utf8");
-          this._logging.info("Merged run-tests hook with existing configuration.");
-          return;
-        } catch {
-          this._logging.warn("Existing run-tests.json is invalid JSON — overwriting with detected config.");
-        }
-      }
-
-      await fs.promises.writeFile(hookPath, JSON.stringify(hookConfig, null, 2), "utf8");
-      this._logging.info(`Deployed run-tests hook: ${testCommand.command}`);
+      await this._writeHookFile(hooksDir, testCommand);
     } catch (error) {
       this._logging.error("Failed to deploy run-tests hook:", error);
     }
   }
 
   /**
-   * Detect the test command for the project by checking for known project files.
-   * Returns null if no test framework is detected.
+   * Explicit user-directory deployment path (kept for compatibility).
+   */
+  public async deployRunTestsHookToUserDir(targetRoot: string): Promise<void> {
+    if (!this._userDirectory) {
+      this._logging.warn("UserDirectoryService not available — skipping user-level hook deployment.");
+      return;
+    }
+
+    try {
+      const testCommand = await this._detectTestCommand(targetRoot);
+      if (!testCommand) {
+        this._logging.info("No test framework detected — skipping user-level run-tests hook deployment.");
+        return;
+      }
+
+      const locations = this._userDirectory.getAbsoluteTemplateLocations(targetRoot);
+      const hooksDir = locations["hooks"];
+      await this._writeHookFile(hooksDir, testCommand);
+    } catch (error) {
+      this._logging.error("Failed to deploy user-level run-tests hook:", error);
+    }
+  }
+
+  /**
+   * Write and merge hook file content.
+   */
+  private async _writeHookFile(hooksDir: string, testCommand: DetectedTestCommand): Promise<void> {
+    await fs.promises.mkdir(hooksDir, { recursive: true });
+
+    const hookPath = path.join(hooksDir, "run-tests.json");
+    const hookConfig: HookConfig = {
+      hooks: {
+        Stop: [
+          {
+            type: "command",
+            command: testCommand.command,
+            ...(testCommand.windows && { windows: testCommand.windows }),
+            timeout: 120,
+          },
+        ],
+      },
+    };
+
+    if (await fileExists(hookPath)) {
+      const existingContent = await fs.promises.readFile(hookPath, "utf8");
+      try {
+        const existingConfig = JSON.parse(existingContent);
+        const merged = deepMerge(hookConfig, existingConfig);
+        await fs.promises.writeFile(hookPath, JSON.stringify(merged, null, 2), "utf8");
+        this._logging.info("Merged run-tests hook with existing configuration.");
+        return;
+      } catch {
+        this._logging.warn("Existing run-tests.json is invalid JSON — overwriting with detected config.");
+      }
+    }
+
+    await fs.promises.writeFile(hookPath, JSON.stringify(hookConfig, null, 2), "utf8");
+    this._logging.info(`Deployed run-tests hook: ${testCommand.command}`);
+  }
+
+  /**
+   * Detect test command from project files.
    */
   private async _detectTestCommand(targetRoot: string): Promise<DetectedTestCommand | null> {
-    // Node.js — check package.json for test scripts
     const packageJsonPath = path.join(targetRoot, "package.json");
     if (await fileExists(packageJsonPath)) {
       try {
@@ -100,7 +129,6 @@ export class HooksConfigDeployer {
         const pkg = JSON.parse(content);
         const scripts = pkg.scripts || {};
 
-        // Prefer test:headless > test:unit > test
         if (scripts["test:headless"]) {
           return {
             command: "npm run test-compile && npm run test:headless",
@@ -121,7 +149,6 @@ export class HooksConfigDeployer {
       }
     }
 
-    // .NET — check for *.sln or *.csproj
     const entries = await fs.promises.readdir(targetRoot).catch(() => [] as string[]);
     const hasSolution = entries.some((e) => e.endsWith(".sln"));
     const hasCsproj = entries.some((e) => e.endsWith(".csproj"));
@@ -129,7 +156,6 @@ export class HooksConfigDeployer {
       return { command: "dotnet test" };
     }
 
-    // Python — check for pytest.ini, pyproject.toml, or setup.py
     if (
       (await fileExists(path.join(targetRoot, "pytest.ini"))) ||
       (await fileExists(path.join(targetRoot, "pyproject.toml"))) ||
@@ -138,7 +164,6 @@ export class HooksConfigDeployer {
       return { command: "python -m pytest" };
     }
 
-    // Go — check for go.mod
     if (await fileExists(path.join(targetRoot, "go.mod"))) {
       return { command: "go test ./..." };
     }

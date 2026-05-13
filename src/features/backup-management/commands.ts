@@ -102,7 +102,7 @@ export function registerCleanupBackupCommand(context: vscode.ExtensionContext, s
       }
 
       services.logging.info(`Deleting ${backups.length} backup(s)...`);
-      await services.backup.cleanupBackups(workspaceFolder.uri.fsPath);
+      await services.backup.cleanupBackups(0, workspaceFolder.uri.fsPath);
       services.logging.info(`Successfully deleted ${backups.length} backup(s)`);
 
       vscode.window.showInformationMessage(`Successfully deleted all ${backups.length} backup${backups.length > 1 ? "s" : ""}!`);

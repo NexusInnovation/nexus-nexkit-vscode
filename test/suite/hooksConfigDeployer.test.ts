@@ -15,18 +15,22 @@ suite("Unit: HooksConfigDeployer", () => {
   let deployer: HooksConfigDeployer;
   let tempDir: string;
   let originalHomeEnv: string | undefined;
+  let originalAppDataEnv: string | undefined;
   let hooksRoot: string;
 
   setup(() => {
     deployer = new HooksConfigDeployer();
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "nexkit-hooks-test-"));
     originalHomeEnv = process.env.HOME;
+    originalAppDataEnv = process.env.APPDATA;
     process.env.HOME = tempDir;
+    process.env.APPDATA = tempDir;
     hooksRoot = path.join(getNexkitUserDirectory(vscode.env.appName), "hooks");
   });
 
   teardown(() => {
     process.env.HOME = originalHomeEnv;
+    process.env.APPDATA = originalAppDataEnv;
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });
     } catch (error) {

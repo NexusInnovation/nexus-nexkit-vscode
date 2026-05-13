@@ -290,6 +290,28 @@ Utilisez des dossiers locaux pour des templates internes personnalisés, le dév
 
 ## 🔧 Fonctionnement
 
+### Comment NexKit fonctionne — Stockage au niveau utilisateur
+
+**NexKit ne modifie pas vos fichiers projet.** Par défaut, tous les templates IA sont installés dans un répertoire utilisateur-level géré par VS Code, séparé de votre espace de travail. Cela signifie :
+
+- ✅ Aucun fichier `.nexkit/` dans votre dépôt Git
+- ✅ Aucune entrée `.gitignore` nécessaire
+- ✅ Templates partagés entre tous vos projets
+- ✅ Pas de conflit avec les fichiers projet existants
+
+### Emplacement du répertoire utilisateur par plateforme
+
+| Plateforme  | Chemin                                  |
+| ----------- | --------------------------------------- |
+| **Windows** | `%APPDATA%/NexKit/`                     |
+| **macOS**   | `~/Library/Application Support/NexKit/` |
+| **Linux**   | `~/.config/NexKit/`                     |
+
+Ce répertoire est créé automatiquement lors de l'initialisation et contient :
+
+- `.global/` pour les données partagées entre tous les projets
+- `<nom-du-projet>/` pour les fichiers spécifiques au projet courant
+
 ### Configuration Initiale
 
 Lors de la première activation de Nexkit :
@@ -302,7 +324,25 @@ Lors de la première activation de Nexkit :
 
 ### Initialisation du Workspace
 
-Lorsque vous exécutez "Nexkit: Initialize Workspace" :
+Lorsque vous exécutez "Nexkit: Initialize Workspace" en mode utilisateur :
+
+1. **Création du répertoire utilisateur** : Le dossier `NexKit/` est créé avec `.global/` et un dossier `<nom-du-projet>/`
+2. **Déploiement des paramètres** : Les paramètres `chat.*` de VS Code sont configurés au niveau Global (user-level) avec les chemins absolus vers vos templates
+3. **Installation de Templates** : Agents, prompts et chatmodes sont installés dans le répertoire utilisateur
+4. **Aucune modification du workspace** : Pas de `.gitignore`, `.vscode/settings.json` ou `.vscode/mcp.json` créés
+
+### Mode Workspace (override par projet)
+
+Pour les projets nécessitant des templates spécifiques versionnés dans le dépôt, vous pouvez activer le mode workspace :
+
+```json
+// Dans vos paramètres VS Code
+{
+  "nexkit.templates.deployMode": "workspace"
+}
+```
+
+En mode workspace, Nexkit revient au comportement classique :
 
 1. **Création de Sauvegarde** : Le répertoire `.nexkit` existant est automatiquement sauvegardé
 2. **Déploiement de Configuration** :
@@ -318,18 +358,28 @@ Lorsque vous exécutez "Nexkit: Initialize Workspace" :
 - Nexkit **ne déploie pas** automatiquement `.github/copilot-instructions.md`.
 - Si votre projet contient déjà ce fichier, Nexkit le **conserve tel quel**.
 - Ce fichier reste un fichier projet (racine `.github/`) propre à votre contexte.
-- Les instructions utilisateur restent supportées via `chat.instructionsFilesLocations`, pointant vers `.nexkit/instructions`.
+- Les instructions utilisateur restent supportées via `chat.instructionsFilesLocations`, pointant vers le répertoire utilisateur `NexKit/.global/instructions` et `NexKit/<nom-du-projet>/instructions`.
 
 ### Structure des Templates
 
 Les templates déployés dans votre workspace suivent cette structure :
 
 ```
-.nexkit/
-├── agents/              # Agents GitHub Copilot personnalisés
-├── prompts/             # Prompts IA réutilisables
-├── skills/              # Définition des skills tel que défini par Anthropic (1)
-└── instructions/        # Directives de codage (non installées automatiquement)
+NexKit/
+├── .global/
+│   ├── agents/
+│   ├── prompts/
+│   ├── skills/
+│   ├── hooks/
+│   ├── chatmodes/
+│   └── instructions/
+└── <nom-du-projet>/
+  ├── agents/
+  ├── prompts/
+  ├── skills/
+  ├── hooks/
+  ├── chatmodes/
+  └── instructions/
 ```
 
 > (1) [Anthropic](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)
@@ -338,16 +388,42 @@ Le dossier `.nexkit/` est automatiquement configuré comme source pour GitHub Co
 
 ```json
 {
-  "chat.promptFilesLocations":       { ".nexkit/prompts": true },
-  "chat.instructionsFilesLocations": { ".nexkit/instructions": true },
-  "chat.agentFilesLocations":        { ".nexkit/agents": true },
-  "chat.agentSkillsLocations":       { ".nexkit/skills": true }
+  "chat.promptFilesLocations": {
+    "~/AppData/Roaming/NexKit/.global/prompts": true,
+    "~/AppData/Roaming/NexKit/<nom-du-projet>/prompts": true
+  },
+  "chat.instructionsFilesLocations": {
+    "~/AppData/Roaming/NexKit/.global/instructions": true,
+    "~/AppData/Roaming/NexKit/<nom-du-projet>/instructions": true
+  },
+  "chat.agentFilesLocations": {
+    "~/AppData/Roaming/NexKit/.global/agents": true,
+    "~/AppData/Roaming/NexKit/<nom-du-projet>/agents": true
+  },
+  "chat.agentSkillsLocations": {
+    "~/AppData/Roaming/NexKit/.global/skills": true,
+    "~/AppData/Roaming/NexKit/<nom-du-projet>/skills": true
+  }
 }
 ```
 
 Ces paramètres permettent à GitHub Copilot de découvrir automatiquement vos agents, prompts et instructions sans configuration manuelle supplémentaire.
 
-Chaque fichier template contient des instructions spécialisées pour GitHub Copilot afin d'améliorer votre workflow de développement.
+### 🔄 Guide de Migration — Utilisateurs Existants
+
+Si vous utilisez déjà Nexkit avec des templates dans `.nexkit/` à la racine de votre workspace :
+
+1. **Aucune action immédiate requise** — vos templates existants continuent de fonctionner
+2. **Pour migrer vers le mode utilisateur** :
+
+- Exécutez "Nexkit: Initialize Workspace" — les templates seront installés dans `NexKit/<nom-du-projet>/`
+- Supprimez le dossier `.nexkit/` de votre workspace (optionnel)
+- Retirez l'entrée `.nexkit/` de votre `.gitignore` (optionnel)
+- Les paramètres `chat.*` dans `.vscode/settings.json` seront automatiquement remplacés par des paramètres user-level
+
+1. **Pour garder les deux** : Si vous avez un dossier `.nexkit/` dans votre workspace, Nexkit détecte automatiquement la coexistence et enregistre les deux chemins (utilisateur + workspace)
+
+> **Note** : Le paramètre `nexkit.templates.deployMode` contrôle le mode. La valeur par défaut est `"user"` pour les nouvelles installations.
 
 ## 💡 Exemples d'Utilisation
 

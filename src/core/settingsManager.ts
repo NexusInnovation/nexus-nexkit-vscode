@@ -1,4 +1,6 @@
 import * as vscode from "vscode";
+import * as fs from "fs";
+import * as path from "path";
 import { OperationMode } from "../features/ai-template-files/models/aiTemplateFile";
 
 /**
@@ -37,6 +39,7 @@ export class SettingsManager {
 
   // Template auto-refresh settings
   private static readonly TEMPLATES_AUTO_REFRESH_INTERVAL = "templates.autoRefreshIntervalMinutes";
+  private static readonly TEMPLATES_DEPLOY_MODE = "templates.deployMode";
   /**
    * @deprecated Use TEMPLATES_AUTO_UPDATE_ENABLED instead.
    */
@@ -174,6 +177,36 @@ export class SettingsManager {
 
   static isTemplatesAutoUpdateEnabled(): boolean {
     return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<boolean>(this.TEMPLATES_AUTO_UPDATE_ON_REFRESH, true);
+  }
+
+  /**
+   * True when templates should be deployed to user storage.
+   */
+  static isUserDeployMode(): boolean {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<string>(this.TEMPLATES_DEPLOY_MODE, "user") === "user";
+  }
+
+  /**
+   * Backward-compatible deploy mode accessor.
+   */
+  static getTemplateDeployMode(): "user" | "workspace" {
+    return this.isUserDeployMode() ? "user" : "workspace";
+  }
+
+  /**
+   * True when workspace-level override should be active.
+   */
+  static isWorkspaceOverrideActive(): boolean {
+    if (!this.isUserDeployMode()) {
+      return true;
+    }
+
+    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    if (!workspaceRoot) {
+      return false;
+    }
+
+    return fs.existsSync(path.join(workspaceRoot, ".nexkit"));
   }
 
   static getLastUpdateCheck(): number {

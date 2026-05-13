@@ -2,7 +2,9 @@ import * as vscode from "vscode";
 import * as path from "path";
 import { AITemplateFile, AITemplateFileType, AI_TEMPLATE_FILE_TYPES } from "../models/aiTemplateFile";
 import { InstalledTemplateRecord, InstalledTemplatesState } from "../models/installedTemplateRecord";
-import { fileExists, getNexkitUserDirectory } from "../../../shared/utils/fileHelper";
+import { fileExists, getNexkitUserDirectory, getWorkspaceRoot } from "../../../shared/utils/fileHelper";
+import { SettingsManager } from "../../../core/settingsManager";
+import { UserDirectoryService } from "./userDirectoryService";
 
 /**
  * Service for managing installed templates state
@@ -11,7 +13,10 @@ import { fileExists, getNexkitUserDirectory } from "../../../shared/utils/fileHe
 export class InstalledTemplatesStateManager {
   private static readonly STATE_KEY = "nexkit.installedTemplates";
 
-  constructor(private readonly context: vscode.ExtensionContext) {}
+  constructor(
+    private readonly context: vscode.ExtensionContext,
+    private readonly _userDirectoryService?: UserDirectoryService
+  ) {}
 
   /**
    * Get all installed templates from workspace state
@@ -82,8 +87,16 @@ export class InstalledTemplatesStateManager {
    */
   public async syncWithFileSystem(): Promise<void> {
     const state = this.getState();
-    const nexkitRoot = getNexkitUserDirectory(vscode.env.appName);
     const templatesToKeep: InstalledTemplateRecord[] = [];
+
+    // Determine the root to check based on deploy mode
+    let nexkitRoot: string;
+    if (SettingsManager.isUserDeployMode() && this._userDirectoryService) {
+      const workspaceRoot = getWorkspaceRoot();
+      nexkitRoot = this._userDirectoryService.getProjectNexkitRoot(workspaceRoot);
+    } else {
+      nexkitRoot = getNexkitUserDirectory(vscode.env.appName);
+    }
 
     // Check each installed template if file still exists
     for (const template of state.templates) {
