@@ -1,4 +1,14 @@
-# Exclude development and tooling files; keep build output and runtime dependencies by default
+# Exclude development and tooling files; keep build output and runtime assets only
+
+# Node modules — NOT needed at runtime (extension is fully bundled via esbuild)
+node_modules/**
+
+# Squad team tooling (not needed at runtime)
+.squad/**
+
+# Individual compiled JS — NOT needed (extension is bundled into out/extension.js + out/webview.js)
+out/src/**
+out/test/**
 
 # Editor and workspace settings
 .vscode/**
@@ -13,6 +23,12 @@
 # BMAD / project tooling artifacts (not needed at runtime)
 _bmad/**
 _bmad-output/**
+
+# Documentation and project tooling (not needed at runtime)
+docs/**
+scripts/**
+presentation/**
+infrastructure/**
 
 # Source and tests (compiled output in out/** is what we ship)
 src/**
@@ -33,6 +49,12 @@ tsconfig*.json
 jest.config.*
 webpack.config.*
 rollup.config.*
+esbuild.config.js
+eslint.config.mjs
+commitlint.config.js
+lefthook.yml
+*.code-workspace
+npm-output.txt
 
 # Logs and temporary files
 npm-debug.log*
@@ -40,6 +62,5 @@ yarn-error.log*
 *.log
 *.tmp
 
-# Note: We intentionally do NOT ignore out/** or node_modules/**
-# so that all compiled extension code and its runtime dependencies
-# are included in the packaged VSIX.
+# Note: out/** and media/** are intentionally included —
+# out/ contains the bundled extension code, media/ contains runtime assets (icons, fonts).
