@@ -50,8 +50,47 @@ export class RecommendedSettingsConfigDeployer {
 
   /**
    * Write/merge user-level chat file location settings.
+   * Retries up to 3 times with progressive jittered delays when VS Code reports
+   * that user settings have unsaved changes (CodeExpectedError).
    */
   private async _deployUserLevelChatSettings(workspaceRoot: string): Promise<void> {
+    const maxAttempts = 3;
+    const baseDelaysMs = [1000, 2000];
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        await this._attemptDeployUserLevelChatSettings(workspaceRoot);
+        return;
+      } catch (error) {
+        const isUnsavedChangesError =
+          error instanceof Error && (error.name === "CodeExpectedError" || error.message.includes("unsaved changes"));
+
+        if (!isUnsavedChangesError || attempt === maxAttempts) {
+          if (isUnsavedChangesError) {
+            this._logging.warn(
+              "User settings file has unsaved changes. NexKit chat settings could not be applied this session. " +
+                "Please save your settings.json and restart VS Code to apply them."
+            );
+            return;
+          }
+          throw error;
+        }
+
+        const baseDelay = baseDelaysMs[attempt - 1];
+        const jitter = Math.floor(Math.random() * 500);
+        const delay = baseDelay + jitter;
+        this._logging.warn(
+          `User settings file has unsaved changes — retrying in ${delay}ms (attempt ${attempt}/${maxAttempts})...`
+        );
+        await new Promise<void>((resolve) => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  /**
+   * Single attempt to write/merge user-level chat file location settings.
+   */
+  private async _attemptDeployUserLevelChatSettings(workspaceRoot: string): Promise<void> {
     const projectLocations = this._userDirectory.getAbsoluteTemplateLocations(workspaceRoot);
     const globalLocations = this._userDirectory.getAbsoluteGlobalTemplateLocations();
     const chatConfig = vscode.workspace.getConfiguration("chat");
