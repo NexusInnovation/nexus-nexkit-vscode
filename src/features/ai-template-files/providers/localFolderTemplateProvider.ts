@@ -53,7 +53,7 @@ export class LocalFolderTemplateProvider {
             try {
               await vscode.workspace.fs.stat(fullPath);
             } catch (error) {
-              this._logging.warn(`[Templates] Local path not found`, {
+              this._logging.warn(`[Templates] Local path not found for '${type}': '${fullPath.fsPath}'`, {
                 repository: this.config.name,
                 type,
                 relativePath,
@@ -167,7 +167,7 @@ export class LocalFolderTemplateProvider {
     const directoryUri = vscode.Uri.parse(templateFile.rawUrl);
     const skillMdUri = vscode.Uri.joinPath(directoryUri, "SKILL.md");
 
-    this._logging.debug(`[Templates] Reading SKILL.md metadata from local filesystem`, {
+    this._logging.debug(`[Templates] Reading SKILL.md for skill '${templateFile.name}' from '${templateFile.repository}'`, {
       repository: templateFile.repository,
       skillName: templateFile.name,
       skillMdPath: skillMdUri.fsPath,
@@ -179,7 +179,7 @@ export class LocalFolderTemplateProvider {
     } catch (error) {
       if (error instanceof vscode.FileSystemError && error.code === "FileNotFound") {
         // File doesn't exist is a normal case - return null
-        this._logging.debug(`[Templates] SKILL.md not found for local skill`, {
+        this._logging.debug(`[Templates] SKILL.md not found for local skill '${templateFile.name}' at '${skillMdUri.fsPath}'`, {
           repository: templateFile.repository,
           skillName: templateFile.name,
           skillMdPath: skillMdUri.fsPath,
@@ -187,10 +187,7 @@ export class LocalFolderTemplateProvider {
         return null;
       }
 
-      console.error(
-        `Error reading SKILL.md metadata for local skill '${templateFile.name}' from '${skillMdUri.fsPath}':`,
-        error
-      );
+      console.error(`Error reading SKILL.md metadata for local skill '${templateFile.name}' from '${skillMdUri.fsPath}':`, error);
       throw error;
     }
   }

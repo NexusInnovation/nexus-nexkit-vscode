@@ -64,7 +64,7 @@ export class RepositoryTemplateProvider {
           try {
             const apiUrl = `${RepositoryTemplateProvider.GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
 
-            this._logging.debug(`[Templates] GitHub API request starting`, {
+            this._logging.debug(`[Templates] GitHub API request '${owner}/${repo}/${path}' (branch: ${branch})`, {
               repository: this.config.name,
               type,
               path,
@@ -91,7 +91,7 @@ export class RepositoryTemplateProvider {
               resetAt: rateLimitReset ? new Date(parseInt(rateLimitReset) * 1000).toISOString() : undefined,
             };
 
-            this._logging.debug(`[Templates] GitHub API response received`, {
+            this._logging.debug(`[Templates] GitHub API response for '${owner}/${repo}/${path}': ${response.status}`, {
               repository: this.config.name,
               type,
               path,
@@ -111,28 +111,33 @@ export class RepositoryTemplateProvider {
                 const isLikelyPrivate = !authInfo.available;
 
                 if (isLikelyPrivate) {
-                  this._logging.error(`[Templates] Cannot access repository - authentication required`, {
-                    repository: this.config.name,
-                    owner,
-                    repo,
-                    path,
-                    branch,
-                    apiUrl,
-                    authStatus: {
-                      source: authInfo.source,
-                      available: authInfo.available,
-                    },
-                    rateLimit: rateLimitInfo,
-                    action: "Sign in to GitHub in VS Code to access private repositories",
-                  });
+                  this._logging.error(
+                    `[Templates] Cannot access private repository '${owner}/${repo}/${path}' - authentication required`,
+                    {
+                      repository: this.config.name,
+                      owner,
+                      repo,
+                      path,
+                      branch,
+                      apiUrl,
+                      authStatus: {
+                        source: authInfo.source,
+                        available: authInfo.available,
+                      },
+                      rateLimit: rateLimitInfo,
+                      action: "Sign in to GitHub in VS Code to access private repositories",
+                    }
+                  );
 
                   // Show error message with guidance
                   vscode.window.showErrorMessage(
                     `Cannot access private repository '${this.config.name}'. Sign in to GitHub: click the profile icon (bottom-left) and select "Sign in with GitHub".`
                   );
                 } else {
-                  this._logging.warn(`[Templates] GitHub path not found (404)`, {
+                  this._logging.warn(`[Templates] GitHub path '${owner}/${repo}/${path}' not found (404)`, {
                     repository: this.config.name,
+                    owner,
+                    repo,
                     path,
                     branch,
                     apiUrl,
@@ -150,7 +155,7 @@ export class RepositoryTemplateProvider {
                 // Check if this is rate limiting specifically
                 const isRateLimit = response.status === 403 && rateLimitRemaining === "0";
 
-                this._logging.error(`[Templates] GitHub authentication/authorization failed`, {
+                this._logging.error(`[Templates] GitHub auth failed (${response.status}) for '${owner}/${repo}/${path}'`, {
                   repository: this.config.name,
                   status: response.status,
                   statusText: response.statusText,
@@ -168,7 +173,7 @@ export class RepositoryTemplateProvider {
                 throw new Error(`Authentication failed: ${response.status} ${response.statusText}`);
               }
 
-              this._logging.error(`[Templates] GitHub API request failed`, {
+              this._logging.error(`[Templates] GitHub API request failed (${response.status}) for '${owner}/${repo}/${path}'`, {
                 repository: this.config.name,
                 status: response.status,
                 statusText: response.statusText,
@@ -182,13 +187,16 @@ export class RepositoryTemplateProvider {
 
             const contents = (await response.json()) as GitHubContentItem[];
             if (!Array.isArray(contents)) {
-              this._logging.warn(`[Templates] Unexpected GitHub contents response shape`, {
-                repository: this.config.name,
-                path,
-                branch,
-                apiUrl,
-                responseType: typeof contents,
-              });
+              this._logging.warn(
+                `[Templates] Unexpected response for '${owner}/${repo}/${path}': expected array, got ${typeof contents}`,
+                {
+                  repository: this.config.name,
+                  path,
+                  branch,
+                  apiUrl,
+                  responseType: typeof contents,
+                }
+              );
               return;
             }
 
@@ -243,7 +251,7 @@ export class RepositoryTemplateProvider {
               });
             }
           } catch (error) {
-            this._logging.error(`[Templates] Error fetching '${type}' from '${this.config.name}'`, error);
+            this._logging.error(`[Templates] Error fetching '${type}' from '${this.config.name}/${path}'`, error);
             throw error; // Propagate error for better error tracking
           }
         })();
@@ -271,12 +279,15 @@ export class RepositoryTemplateProvider {
    */
   public async downloadTemplate(templateFile: AITemplateFile): Promise<string> {
     try {
-      this._logging.debug(`[Templates] Downloading template file from GitHub`, {
-        repository: templateFile.repository,
-        name: templateFile.name,
-        type: templateFile.type,
-        url: templateFile.rawUrl,
-      });
+      this._logging.debug(
+        `[Templates] Downloading '${templateFile.type}/${templateFile.name}' from '${templateFile.repository}'`,
+        {
+          repository: templateFile.repository,
+          name: templateFile.name,
+          type: templateFile.type,
+          url: templateFile.rawUrl,
+        }
+      );
 
       const headers = await this.getAuthHeaders();
       const requestStart = Date.now();
@@ -289,7 +300,7 @@ export class RepositoryTemplateProvider {
         resource: response.headers.get("x-ratelimit-resource"),
       };
 
-      this._logging.debug(`[Templates] Template file download response`, {
+      this._logging.debug(`[Templates] Download response for '${templateFile.name}': ${response.status}`, {
         repository: templateFile.repository,
         name: templateFile.name,
         status: response.status,
@@ -299,7 +310,7 @@ export class RepositoryTemplateProvider {
       });
 
       if (!response.ok) {
-        this._logging.error(`[Templates] Failed to download template file`, {
+        this._logging.error(`[Templates] Failed to download '${templateFile.name}' (${response.status} ${response.statusText})`, {
           repository: templateFile.repository,
           name: templateFile.name,
           status: response.status,
@@ -311,7 +322,7 @@ export class RepositoryTemplateProvider {
       }
 
       const content = await response.text();
-      this._logging.debug(`[Templates] Template file downloaded successfully`, {
+      this._logging.debug(`[Templates] Downloaded '${templateFile.name}' (${content.length} bytes)`, {
         repository: templateFile.repository,
         name: templateFile.name,
         contentSize: content.length,
@@ -339,7 +350,7 @@ export class RepositoryTemplateProvider {
     const skillMdPath = `${templateFile.sourcePath}/SKILL.md`;
     const apiUrl = `${RepositoryTemplateProvider.GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${skillMdPath}?ref=${branch}`;
 
-    this._logging.debug(`[Templates] Fetching SKILL.md metadata from GitHub`, {
+    this._logging.debug(`[Templates] Fetching SKILL.md for skill '${templateFile.name}' from '${templateFile.repository}'`, {
       repository: templateFile.repository,
       skillName: templateFile.name,
       skillMdPath,
@@ -348,7 +359,7 @@ export class RepositoryTemplateProvider {
     const response = await fetch(apiUrl, { headers });
 
     if (response.status === 404) {
-      this._logging.debug(`[Templates] SKILL.md not found for skill`, {
+      this._logging.debug(`[Templates] SKILL.md not found for skill '${templateFile.name}' at '${skillMdPath}'`, {
         repository: templateFile.repository,
         skillName: templateFile.name,
         skillMdPath,
@@ -357,12 +368,15 @@ export class RepositoryTemplateProvider {
     }
 
     if (!response.ok) {
-      this._logging.error(`[Templates] Failed to fetch SKILL.md`, {
-        repository: templateFile.repository,
-        skillName: templateFile.name,
-        status: response.status,
-        statusText: response.statusText,
-      });
+      this._logging.error(
+        `[Templates] Failed to fetch SKILL.md for '${templateFile.name}' (${response.status} ${response.statusText})`,
+        {
+          repository: templateFile.repository,
+          skillName: templateFile.name,
+          status: response.status,
+          statusText: response.statusText,
+        }
+      );
       throw new Error(`Failed to fetch SKILL.md: ${response.status} ${response.statusText}`);
     }
 
@@ -393,7 +407,7 @@ export class RepositoryTemplateProvider {
       throw new Error(`Template is not a directory: ${templateFile.name}`);
     }
 
-    this._logging.debug(`[Templates] Downloading directory contents from GitHub`, {
+    this._logging.debug(`[Templates] Downloading directory '${templateFile.name}' from '${templateFile.repository}'`, {
       repository: templateFile.repository,
       name: templateFile.name,
       sourcePath: templateFile.sourcePath,
@@ -409,7 +423,7 @@ export class RepositoryTemplateProvider {
     const downloadRecursive = async (path: string, basePath: string): Promise<void> => {
       const apiUrl = `${RepositoryTemplateProvider.GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
 
-      this._logging.debug(`[Templates] Fetching directory listing`, {
+      this._logging.debug(`[Templates] Fetching directory listing for '${path}'`, {
         repository: templateFile.repository,
         path,
       });
@@ -423,7 +437,7 @@ export class RepositoryTemplateProvider {
         limit: response.headers.get("x-ratelimit-limit"),
       };
 
-      this._logging.debug(`[Templates] Directory listing response`, {
+      this._logging.debug(`[Templates] Directory listing response for '${path}': ${response.status}`, {
         repository: templateFile.repository,
         path,
         status: response.status,
@@ -432,7 +446,7 @@ export class RepositoryTemplateProvider {
       });
 
       if (!response.ok) {
-        this._logging.error(`[Templates] Failed to fetch directory contents`, {
+        this._logging.error(`[Templates] Failed to fetch directory '${path}' (${response.status} ${response.statusText})`, {
           repository: templateFile.repository,
           path,
           status: response.status,
@@ -448,7 +462,7 @@ export class RepositoryTemplateProvider {
       for (const item of contents) {
         if (item.type === "file") {
           // Download file content
-          this._logging.debug(`[Templates] Downloading directory file`, {
+          this._logging.debug(`[Templates] Downloading directory file '${item.path}'`, {
             repository: templateFile.repository,
             filePath: item.path,
           });
@@ -458,7 +472,7 @@ export class RepositoryTemplateProvider {
           const fileDuration = Date.now() - fileStart;
 
           if (!fileResponse.ok) {
-            this._logging.error(`[Templates] Failed to download directory file`, {
+            this._logging.error(`[Templates] Failed to download directory file '${item.path}' (${fileResponse.status})`, {
               repository: templateFile.repository,
               filePath: item.path,
               status: fileResponse.status,
@@ -469,7 +483,7 @@ export class RepositoryTemplateProvider {
           const content = await fileResponse.text();
           filesDownloaded++;
 
-          this._logging.debug(`[Templates] Directory file downloaded`, {
+          this._logging.debug(`[Templates] Downloaded directory file '${item.path}' (${content.length} bytes)`, {
             repository: templateFile.repository,
             filePath: item.path,
             durationMs: fileDuration,
@@ -488,12 +502,15 @@ export class RepositoryTemplateProvider {
 
     await downloadRecursive(templateFile.sourcePath, templateFile.sourcePath);
 
-    this._logging.info(`[Templates] Directory contents downloaded successfully`, {
-      repository: templateFile.repository,
-      name: templateFile.name,
-      filesDownloaded,
-      directoriesProcessed,
-    });
+    this._logging.info(
+      `[Templates] Downloaded ${filesDownloaded} file(s) from directory '${templateFile.name}' (${directoriesProcessed} dirs)`,
+      {
+        repository: templateFile.repository,
+        name: templateFile.name,
+        filesDownloaded,
+        directoriesProcessed,
+      }
+    );
 
     return fileContents;
   }

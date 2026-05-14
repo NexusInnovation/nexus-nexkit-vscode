@@ -38,7 +38,7 @@ export class TemplateFetcherService {
     const provider = this.repositoryManager.getProvider(repositoryName);
 
     if (!provider) {
-      this._logging.error(`[Templates] Repository provider not found`, { repositoryName });
+      this._logging.error(`[Templates] Repository provider not found: '${repositoryName}'`, { repositoryName });
       return {
         repositoryName,
         templates: [],
@@ -50,7 +50,7 @@ export class TemplateFetcherService {
     try {
       const templates = await provider.fetchAllTemplates();
 
-      this._logging.info(`[Templates] Repository fetched`, {
+      this._logging.info(`[Templates] Repository '${repositoryName}' fetched (${templates.length} templates)`, {
         repositoryName,
         templateCount: templates.length,
       });
@@ -61,7 +61,7 @@ export class TemplateFetcherService {
         success: true,
       };
     } catch (error) {
-      this._logging.error(`[Templates] Repository fetch failed`, {
+      this._logging.error(`[Templates] Repository '${repositoryName}' fetch failed`, {
         repositoryName,
         error: error instanceof Error ? error.message : String(error),
       });
@@ -112,12 +112,15 @@ export class TemplateFetcherService {
       }
     }
 
-    this._logging.info(`[Templates] Fetch completed`, {
-      repositoryCount: providers.length,
-      successCount,
-      failureCount,
-      templateCount: allTemplates.length,
-    });
+    this._logging.info(
+      `[Templates] Fetch completed: ${successCount}/${providers.length} repos, ${allTemplates.length} templates`,
+      {
+        repositoryCount: providers.length,
+        successCount,
+        failureCount,
+        templateCount: allTemplates.length,
+      }
+    );
 
     return {
       allTemplates,
