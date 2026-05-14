@@ -144,4 +144,80 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     assert.strictEqual(agentCall?.args[1]["~/AppData/Roaming/NexKit/.global/agents"], true);
     assert.strictEqual(agentCall?.args[1]["~/AppData/Roaming/NexKit/my-project/agents"], true);
   });
+
+  test("Should remove stale ~/AppData/Roaming/ paths that are not valid NexKit paths", async () => {
+    inspectStub.callsFake((key: string) => {
+      if (key === "instructionsFilesLocations") {
+        return {
+          globalValue: {
+            "~/AppData/Roaming/Code/User/.nexkit/instructions": true, // legacy stale path
+            "~/AppData/Roaming/NexKit/.global/instructions": true, // valid — keep
+            "~/AppData/Roaming/NexKit/my-project/instructions": true, // valid — keep
+            "custom/instructions": true, // non-system path — keep
+          },
+        };
+      }
+      return { globalValue: undefined };
+    });
+
+    await deployer.deployVscodeSettings(tempDir);
+
+    const call = updateStub.getCalls().find((c) => c.args[0] === "instructionsFilesLocations");
+    assert.ok(call);
+    const result = call?.args[1] as Record<string, boolean>;
+
+    // Stale AppData path removed
+    assert.strictEqual(result["~/AppData/Roaming/Code/User/.nexkit/instructions"], undefined);
+    // Valid NexKit paths preserved
+    assert.strictEqual(result["~/AppData/Roaming/NexKit/.global/instructions"], true);
+    assert.strictEqual(result["~/AppData/Roaming/NexKit/my-project/instructions"], true);
+    // Custom non-system path preserved
+    assert.strictEqual(result["custom/instructions"], true);
+  });
+
+  test("Should remove stale ~/Library/Application Support/ paths on macOS", async () => {
+    inspectStub.callsFake((key: string) => {
+      if (key === "promptFilesLocations") {
+        return {
+          globalValue: {
+            "~/Library/Application Support/Code/User/.nexkit/prompts": true, // stale macOS path
+            "custom/prompts": true,
+          },
+        };
+      }
+      return { globalValue: undefined };
+    });
+
+    await deployer.deployVscodeSettings(tempDir);
+
+    const call = updateStub.getCalls().find((c) => c.args[0] === "promptFilesLocations");
+    assert.ok(call);
+    const result = call?.args[1] as Record<string, boolean>;
+
+    assert.strictEqual(result["~/Library/Application Support/Code/User/.nexkit/prompts"], undefined);
+    assert.strictEqual(result["custom/prompts"], true);
+  });
+
+  test("Should remove stale ~/.config/ paths on Linux", async () => {
+    inspectStub.callsFake((key: string) => {
+      if (key === "agentFilesLocations") {
+        return {
+          globalValue: {
+            "~/.config/Code/User/.nexkit/agents": true, // stale Linux path
+            "custom/agents": true,
+          },
+        };
+      }
+      return { globalValue: undefined };
+    });
+
+    await deployer.deployVscodeSettings(tempDir);
+
+    const call = updateStub.getCalls().find((c) => c.args[0] === "agentFilesLocations");
+    assert.ok(call);
+    const result = call?.args[1] as Record<string, boolean>;
+
+    assert.strictEqual(result["~/.config/Code/User/.nexkit/agents"], undefined);
+    assert.strictEqual(result["custom/agents"], true);
+  });
 });

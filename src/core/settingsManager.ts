@@ -58,6 +58,9 @@ export class SettingsManager {
   private static readonly PROFILES = "profiles";
   private static readonly PROFILES_CONFIRM_BEFORE_SWITCH = "profiles.confirmBeforeSwitch";
 
+  // Hooks settings
+  private static readonly HOOKS_RUN_TESTS_ENABLED = "hooks.runTestsEnabled";
+
   // Profile management state keys (WorkspaceState)
   private static readonly LAST_APPLIED_PROFILE_KEY = "lastAppliedProfile";
 
@@ -253,6 +256,11 @@ export class SettingsManager {
       throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
     }
     await this.context.workspaceState.update(this.LAST_APPLIED_PROFILE_KEY, profileName);
+  }
+
+  // Hooks
+  static isRunTestsHookEnabled(): boolean {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<boolean>(this.HOOKS_RUN_TESTS_ENABLED, false);
   }
 
   // User Mode

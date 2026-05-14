@@ -102,7 +102,19 @@ export class RecommendedSettingsConfigDeployer {
       const shortKey = settingKey.replace("chat.", "");
 
       const existing: Record<string, boolean> | undefined = chatConfig.inspect<Record<string, boolean>>(shortKey)?.globalValue;
-      const merged: Record<string, boolean> = { ...existing, [globalTildePath]: true, [projectTildePath]: true };
+
+      // Remove stale user-data paths, keeping only non-system paths and valid NexKit paths
+      const validNexkitPaths = new Set([globalTildePath, projectTildePath]);
+      const cleaned: Record<string, boolean> = {};
+      for (const [key, value] of Object.entries(existing ?? {})) {
+        if (this._isStaleUserDataPath(key, validNexkitPaths)) {
+          this._logging.info(`Removing stale user-data path from ${settingKey}: ${key}`);
+        } else {
+          cleaned[key] = value;
+        }
+      }
+
+      const merged: Record<string, boolean> = { ...cleaned, [globalTildePath]: true, [projectTildePath]: true };
 
       if (workspaceOverrideActive) {
         merged[`.nexkit/${subdir}`] = true;
@@ -192,6 +204,23 @@ export class RecommendedSettingsConfigDeployer {
    */
   private _isNexkitManagedPath(pathKey: string): boolean {
     return pathKey.startsWith(".nexkit/") || pathKey.includes("/.nexkit/") || pathKey.includes("\\.nexkit\\");
+  }
+
+  /**
+   * Returns true if the path is a stale system user-data path that should be cleaned up.
+   * Stale paths are paths under the system user-data directory (AppData/Roaming, Library/Application Support, .config)
+   * that are NOT one of the two valid NexKit-managed paths for this setting.
+   */
+  private _isStaleUserDataPath(pathKey: string, validPaths: Set<string>): boolean {
+    if (validPaths.has(pathKey)) {
+      return false;
+    }
+
+    return (
+      pathKey.startsWith("~/AppData/Roaming/") || // Windows
+      pathKey.startsWith("~/Library/Application Support/") || // macOS
+      pathKey.startsWith("~/.config/") // Linux
+    );
   }
 
   /**

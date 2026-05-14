@@ -63,11 +63,13 @@ export class StartupVerificationService {
     // Ensure VS Code settings contain all required chat file locations and hooks
     await this._recommendedSettingsConfigDeployer.deployVscodeSettings(workspaceRoot);
 
-    // Deploy run-tests hook — workspace mode writes to workspace, user mode writes to user dir
-    if (isWorkspaceMode) {
-      await this._hooksConfigDeployer.deployRunTestsHook(workspaceRoot);
-    } else {
-      await this._hooksConfigDeployer.deployRunTestsHookToUserDir(workspaceRoot);
+    // Deploy run-tests hook — only when explicitly enabled by the user
+    if (SettingsManager.isRunTestsHookEnabled()) {
+      if (isWorkspaceMode) {
+        await this._hooksConfigDeployer.deployRunTestsHook(workspaceRoot);
+      } else {
+        await this._hooksConfigDeployer.deployRunTestsHookToUserDir(workspaceRoot);
+      }
     }
 
     // Migrate any nexkit.* files still in .github/<type>/ to .nexkit/<type>/

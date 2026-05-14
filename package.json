@@ -2,7 +2,7 @@
   "name": "nexus-nexkit-vscode",
   "displayName": "Nexkit",
   "description": "VS Code extension for Nexkit",
-  "version": "3.10.0-beta.2",
+  "version": "4.0.0-beta.1",
   "publisher": "NexusInnovation",
   "private": true,
   "license": "MIT",
@@ -300,6 +300,12 @@
           "default": "user",
           "scope": "resource",
           "description": "Where templates are deployed. 'user' installs to the user-level .nexkit directory (default). 'workspace' installs to .nexkit/ in the current workspace for project-specific overrides."
+        },
+        "nexkit.hooks.runTestsEnabled": {
+          "type": "boolean",
+          "default": false,
+          "scope": "resource",
+          "description": "Deploy a hook that automatically runs project tests at the end of an AI agent session. Requires a supported test framework (npm test, dotnet test, pytest, etc.) to be detected in the workspace."
         },
         "nexkit.mcpSetup.dismissed": {
           "type": "boolean",
