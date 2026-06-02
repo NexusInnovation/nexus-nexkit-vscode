@@ -25,3 +25,7 @@ infrastructure/badge-service/local.settings.json
 .squad/.scratch/
 # Squad: SubSquad activation file (local to this machine)
 .squad-workstream
+
+# BEGIN NexKit
+.nexkit/
+# END NexKit
