@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { LoggingService } from "../../shared/services/loggingService";
 import { SettingsManager } from "../../core/settingsManager";
-import { GitIgnoreConfigDeployer } from "./gitIgnoreConfigDeployer";
+import { GitExcludeConfigDeployer } from "./gitExcludeConfigDeployer";
 import { RecommendedSettingsConfigDeployer } from "./recommendedSettingsConfigDeployer";
 import { NexkitFileMigrationService, MigrationSummary } from "./nexkitFileMigrationService";
 import { HooksConfigDeployer } from "./hooksConfigDeployer";
@@ -17,7 +17,7 @@ export class StartupVerificationService {
   private readonly _logging = LoggingService.getInstance();
 
   constructor(
-    private readonly _gitIgnoreConfigDeployer: GitIgnoreConfigDeployer,
+    private readonly _gitExcludeConfigDeployer: GitExcludeConfigDeployer,
     private readonly _recommendedSettingsConfigDeployer: RecommendedSettingsConfigDeployer,
     private readonly _hooksConfigDeployer: HooksConfigDeployer,
     private readonly _nexkitFileMigration: NexkitFileMigrationService,
@@ -46,18 +46,18 @@ export class StartupVerificationService {
 
   /**
    * Verify and apply essential workspace configuration.
-   * Ensures .gitignore, VS Code settings, and nexkit file locations are correct.
+   * Ensures git exclude, VS Code settings, and nexkit file locations are correct.
    * Called both at startup and during workspace initialization.
-   * In user deploy mode, workspace file modifications (.gitignore, hooks) are skipped.
+   * In user deploy mode, workspace file modifications (.git/info/exclude, hooks) are skipped.
    * @param workspaceRoot Absolute path to the workspace root
    * @returns Summary of migrated files, or null if nothing was migrated
    */
   public async verifyWorkspaceConfiguration(workspaceRoot: string): Promise<MigrationSummary | null> {
     const isWorkspaceMode = !SettingsManager.isUserDeployMode();
 
-    // Only modify .gitignore when in workspace mode (workspace has .nexkit/)
+    // Only modify .git/info/exclude when in workspace mode (workspace has .nexkit/)
     if (isWorkspaceMode) {
-      await this._gitIgnoreConfigDeployer.deployGitignore(workspaceRoot);
+      await this._gitExcludeConfigDeployer.deployGitExclude(workspaceRoot);
     }
 
     // Ensure VS Code settings contain all required chat file locations and hooks
