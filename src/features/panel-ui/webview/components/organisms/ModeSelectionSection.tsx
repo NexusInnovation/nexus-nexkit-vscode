@@ -39,7 +39,7 @@ export function ModeSelectionSection() {
             <h3>Developers Mode</h3>
             <p>Full feature set for development teams</p>
             <ul class="mode-card-features">
-              <li>Workspace initialization</li>
+              <li>NexKit setup</li>
               <li>Profile management</li>
               <li>Template management</li>
               <li>Repository configuration</li>
@@ -60,7 +60,7 @@ export function ModeSelectionSection() {
             <p>Essential features for application management</p>
             <ul class="mode-card-features">
               <li>Template management</li>
-              <li>Workspace initialization</li>
+              <li>NexKit setup</li>
               <li>Azure DevOps integration</li>
               <li>Streamlined interface</li>
             </ul>

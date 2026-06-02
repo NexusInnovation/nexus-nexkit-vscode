@@ -38,6 +38,8 @@ export type ExtensionMessage =
       hasWorkspace: boolean;
       isInitialized: boolean;
       mode: OperationMode;
+      deployMode: "user" | "workspace";
+      workspaceOverrideActive: boolean;
     }
   | {
       command: "templateDataUpdate";

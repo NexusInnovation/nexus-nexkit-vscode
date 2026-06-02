@@ -2,7 +2,7 @@
   "name": "nexus-nexkit-vscode",
   "displayName": "Nexkit",
   "description": "VS Code extension for Nexkit",
-  "version": "3.9.0",
+  "version": "3.10.0-beta.2",
   "publisher": "NexusInnovation",
   "private": true,
   "license": "MIT",
@@ -124,6 +124,11 @@
           "light": "media/Nexus_Symbole_MONOCHROME.svg",
           "dark": "media/Nexus_Symbole_MONOCHROME_light.svg"
         }
+      },
+      {
+        "command": "nexus-nexkit-vscode.migrateToUserDirectory",
+        "title": "Nexkit: Migrate Templates to User Directory",
+        "category": "Nexkit"
       }
     ],
     "menus": {
@@ -286,6 +291,16 @@
           "scope": "application",
           "description": "Automatically update installed templates when new versions are detected from repositories. When disabled, a button will appear in the sidebar to manually trigger updates."
         },
+        "nexkit.templates.deployMode": {
+          "type": "string",
+          "enum": [
+            "user",
+            "workspace"
+          ],
+          "default": "user",
+          "scope": "resource",
+          "description": "Where templates are deployed. 'user' installs to the user-level .nexkit directory (default). 'workspace' installs to .nexkit/ in the current workspace for project-specific overrides."
+        },
         "nexkit.mcpSetup.dismissed": {
           "type": "boolean",
           "default": false,
@@ -413,6 +428,7 @@
     "build": "npm run esbuild",
     "watch": "node esbuild.config.js --watch",
     "package": "npm run check:types && npm run lint && node esbuild.config.js --production",
+    "build:ci": "node esbuild.config.js --production",
     "esbuild-base": "node esbuild.config.js",
     "esbuild": "node esbuild.config.js",
     "esbuild-watch": "node esbuild.config.js --watch",

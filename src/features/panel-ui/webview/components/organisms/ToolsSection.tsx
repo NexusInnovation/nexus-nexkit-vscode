@@ -10,7 +10,7 @@ interface ToolsSectionProps {
 
 /**
  * ToolsSection Component
- * Developer tools section with workspace initialization and workflow runner
+ * Developer tools section with NexKit setup and workflow runner
  */
 export function ToolsSection({ isInitialized }: ToolsSectionProps) {
   const messenger = useVSCodeAPI();
@@ -33,9 +33,9 @@ export function ToolsSection({ isInitialized }: ToolsSectionProps) {
         <div class="actions-section">
           <div class="action-item">
             <button class="action-button" onClick={initializeWorkspace}>
-              <span>Initialize Project</span>
+              <span>Set Up NexKit</span>
             </button>
-            <p class="button-description">Set up Nexkit templates and configuration for your workspace</p>
+            <p class="button-description">Install NexKit templates and configuration to your user directory</p>
           </div>
         </div>
       )}
