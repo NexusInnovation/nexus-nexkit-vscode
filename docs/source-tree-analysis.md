@@ -126,11 +126,9 @@ nexus-nexkit-vscode/
 │   ├── workflows/
 │   │   ├── ci-cd.yml             # ★ Main CI/CD pipeline (multi-OS, semantic-release)
 │   │   └── commitlint.yml        # Commit message validation
-│   ├── agents/                   # BMAD agent definitions (.agent.md)
-│   ├── prompts/                  # BMAD prompt definitions (.prompt.md)
-│   └── copilot-instructions.md   # Copilot/BMAD instructions
-├── _bmad/                        # BMAD framework (AI workflow orchestration)
-├── _bmad-output/                 # BMAD generated artifacts
+│   ├── agents/                   # Agent definitions (.agent.md)
+│   ├── prompts/                  # Prompt definitions (.prompt.md)
+│   └── copilot-instructions.md   # Copilot instructions
 ├── package.json                  # Extension manifest + VS Code contributions
 ├── tsconfig.json                 # TypeScript configuration
 ├── esbuild.config.js             # Build configuration (extension + webview bundles)
