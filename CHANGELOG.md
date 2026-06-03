@@ -1,3 +1,8 @@
+## 3.10.0-beta.6 (2026-06-03)
+
+* feat(config): add ConfirmationService with Accept/Refuse/Refuse-Forever dialog (#168) ([4b957a3](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4b957a3)), closes [#168](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/168) [#163](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/163) [#162](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/162) [#162](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/162)
+* feat(panel-ui): show InitializationBanner on all tabs until init done or refused (#167) ([a424cf3](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a424cf3)), closes [#167](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/167) [#164](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/164)
+
 ## 3.10.0-beta.5 (2026-06-03)
 
 * feat: NexKit exclusions in .git/info/exclude (#165) ([aa59d03](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/aa59d03)), closes [#165](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/165)
