@@ -14,6 +14,7 @@ import * as sinon from "sinon";
 import * as vscode from "vscode";
 import { UserDirectoryService } from "../../src/features/ai-template-files/services/userDirectoryService";
 import { TemplateFileOperations } from "../../src/features/ai-template-files/services/templateFileOperations";
+import { ConfirmationService } from "../../src/shared/services/confirmationService";
 import { RecommendedSettingsConfigDeployer } from "../../src/features/initialization/recommendedSettingsConfigDeployer";
 import { SettingsManager } from "../../src/core/settingsManager";
 
@@ -84,7 +85,9 @@ suite("Integration: User Directory Deployment Flow", () => {
       };
       sandbox.stub(vscode.workspace, "getConfiguration").returns(fakeConfig as any);
 
-      const deployer = new RecommendedSettingsConfigDeployer(userDirectoryService);
+      const mockConf = sandbox.createStubInstance(ConfirmationService);
+      mockConf.confirm.resolves("accepted");
+      const deployer = new RecommendedSettingsConfigDeployer(userDirectoryService, mockConf as any);
       await deployer.deployVscodeSettings(tempDir);
 
       // Verify absolute paths from UserDirectoryService are used in user-level settings

@@ -72,6 +72,15 @@ export class SettingsManager {
   private static readonly DEVOPS_CONNECTIONS_KEY = "devOpsConnections";
 
   /**
+   * Workspace-state keys for "Refuse Forever" confirmation dialogs.
+   */
+  public static readonly CONFIRMATION_KEYS = {
+    CHAT_SETTINGS: "nexkit.confirm.chatSettings.refused",
+    mcpUserServer: (serverName: string) => `nexkit.confirm.mcpUser.${serverName}.refused`,
+    mcpWorkspaceServer: (serverName: string) => `nexkit.confirm.mcpWorkspace.${serverName}.refused`,
+  } as const;
+
+  /**
    * Initialize the SettingsManager with the extension context
    * Must be called during extension activation
    */
@@ -329,5 +338,45 @@ export class SettingsManager {
       throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
     }
     await this.context.workspaceState.update(this.DEVOPS_CONNECTIONS_KEY, connections);
+  }
+
+  // Confirmation "Refused Forever" state (WorkspaceState)
+
+  static isConfirmationRefusedForever(key: string): boolean {
+    if (!this.context) {
+      return false;
+    }
+    return this.context.workspaceState.get<boolean>(key, false);
+  }
+
+  static async setConfirmationRefusedForever(key: string, value: boolean): Promise<void> {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    await this.context.workspaceState.update(key, value);
+  }
+
+  static isConfirmChatSettingsRefused(): boolean {
+    return this.isConfirmationRefusedForever(this.CONFIRMATION_KEYS.CHAT_SETTINGS);
+  }
+
+  static async setConfirmChatSettingsRefused(value: boolean): Promise<void> {
+    await this.setConfirmationRefusedForever(this.CONFIRMATION_KEYS.CHAT_SETTINGS, value);
+  }
+
+  static isConfirmMcpUserServerRefused(serverName: string): boolean {
+    return this.isConfirmationRefusedForever(this.CONFIRMATION_KEYS.mcpUserServer(serverName));
+  }
+
+  static async setConfirmMcpUserServerRefused(serverName: string, value: boolean): Promise<void> {
+    await this.setConfirmationRefusedForever(this.CONFIRMATION_KEYS.mcpUserServer(serverName), value);
+  }
+
+  static isConfirmMcpWorkspaceServerRefused(serverName: string): boolean {
+    return this.isConfirmationRefusedForever(this.CONFIRMATION_KEYS.mcpWorkspaceServer(serverName));
+  }
+
+  static async setConfirmMcpWorkspaceServerRefused(serverName: string, value: boolean): Promise<void> {
+    await this.setConfirmationRefusedForever(this.CONFIRMATION_KEYS.mcpWorkspaceServer(serverName), value);
   }
 }

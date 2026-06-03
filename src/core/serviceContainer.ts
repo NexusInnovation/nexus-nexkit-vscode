@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { LoggingService } from "../shared/services/loggingService";
 import { TelemetryService } from "../shared/services/telemetryService";
+import { ConfirmationService } from "../shared/services/confirmationService";
 import { MCPConfigService } from "../features/mcp-management/mcpConfigService";
 import { AITemplateDataService } from "../features/ai-template-files/services/aiTemplateDataService";
 import { TemplateMetadataService } from "../features/ai-template-files/services/templateMetadataService";
@@ -37,6 +38,7 @@ import { WorkspaceToUserMigrationService } from "../features/initialization/work
 export interface ServiceContainer {
   logging: LoggingService;
   telemetry: TelemetryService;
+  confirmation: ConfirmationService;
   mcpConfig: MCPConfigService;
   aiTemplateData: AITemplateDataService;
   templateMetadata: TemplateMetadataService;
@@ -82,7 +84,8 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
 
   // Initialize other services
   const extensionUpdate = new ExtensionUpdateService();
-  const mcpConfig = new MCPConfigService();
+  const confirmation = new ConfirmationService();
+  const mcpConfig = new MCPConfigService(confirmation);
   const userDirectory = new UserDirectoryService();
   const installedTemplatesState = new InstalledTemplatesStateManager(context, userDirectory);
   const aiTemplateData = new AITemplateDataService(installedTemplatesState, userDirectory);
@@ -90,9 +93,9 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const backup = new GitHubTemplateBackupService(userDirectory);
   const updateStatusBar = new UpdateStatusBarService(context, extensionUpdate);
   const gitExcludeConfigDeployer = new GitExcludeConfigDeployer();
-  const mcpConfigDeployer = new MCPConfigDeployer();
+  const mcpConfigDeployer = new MCPConfigDeployer(confirmation);
   const recommendedExtensionsConfigDeployer = new RecommendedExtensionsConfigDeployer();
-  const recommendedSettingsConfigDeployer = new RecommendedSettingsConfigDeployer(userDirectory);
+  const recommendedSettingsConfigDeployer = new RecommendedSettingsConfigDeployer(userDirectory, confirmation);
   const aiTemplateFilesDeployer = new AITemplateFilesDeployer(aiTemplateData);
   const workspaceInitPrompt = new WorkspaceInitPromptService();
   const modeSelectionPrompt = new ModeSelectionPromptService(telemetry);
@@ -129,6 +132,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   return {
     logging,
     telemetry,
+    confirmation,
     mcpConfig,
     aiTemplateData,
     templateMetadata,

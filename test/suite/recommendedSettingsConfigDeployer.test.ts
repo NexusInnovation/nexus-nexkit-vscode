@@ -13,12 +13,14 @@ import * as sinon from "sinon";
 import { RecommendedSettingsConfigDeployer } from "../../src/features/initialization/recommendedSettingsConfigDeployer";
 import { UserDirectoryService } from "../../src/features/ai-template-files/services/userDirectoryService";
 import { SettingsManager } from "../../src/core/settingsManager";
+import { ConfirmationService } from "../../src/shared/services/confirmationService";
 
 suite("Unit: RecommendedSettingsConfigDeployer", () => {
   let deployer: RecommendedSettingsConfigDeployer;
   let tempDir: string;
   let sandbox: sinon.SinonSandbox;
   let mockUserDirectory: sinon.SinonStubbedInstance<UserDirectoryService>;
+  let mockConfirmation: sinon.SinonStubbedInstance<ConfirmationService>;
   let updateStub: sinon.SinonStub;
   let inspectStub: sinon.SinonStub;
 
@@ -42,6 +44,10 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     mockUserDirectory = sandbox.createStubInstance(UserDirectoryService);
     mockUserDirectory.getAbsoluteTemplateLocations.returns(fakeLocations);
 
+    // Mock ConfirmationService — default to accepted so existing tests pass unchanged
+    mockConfirmation = sandbox.createStubInstance(ConfirmationService);
+    mockConfirmation.confirm.resolves("accepted");
+
     // Mock vscode.workspace.getConfiguration
     updateStub = sandbox.stub().resolves();
     inspectStub = sandbox.stub().returns({ globalValue: undefined });
@@ -54,7 +60,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     };
     sandbox.stub(vscode.workspace, "getConfiguration").returns(fakeConfig as any);
 
-    deployer = new RecommendedSettingsConfigDeployer(mockUserDirectory as any);
+    deployer = new RecommendedSettingsConfigDeployer(mockUserDirectory as any, mockConfirmation as any);
   });
 
   teardown(async () => {
@@ -225,6 +231,7 @@ suite("Unit: RecommendedSettingsConfigDeployer — Workspace Override (Layering)
   let tempDir: string;
   let sandbox: sinon.SinonSandbox;
   let mockUserDirectory: sinon.SinonStubbedInstance<UserDirectoryService>;
+  let mockConfirmation: sinon.SinonStubbedInstance<ConfirmationService>;
   let updateStub: sinon.SinonStub;
   let inspectStub: sinon.SinonStub;
 
@@ -248,6 +255,10 @@ suite("Unit: RecommendedSettingsConfigDeployer — Workspace Override (Layering)
     mockUserDirectory = sandbox.createStubInstance(UserDirectoryService);
     mockUserDirectory.getAbsoluteTemplateLocations.returns(fakeLocations);
 
+    // Mock ConfirmationService — default to accepted
+    mockConfirmation = sandbox.createStubInstance(ConfirmationService);
+    mockConfirmation.confirm.resolves("accepted");
+
     // Mock vscode.workspace.getConfiguration
     updateStub = sandbox.stub().resolves();
     inspectStub = sandbox.stub().returns({ globalValue: undefined });
@@ -260,7 +271,7 @@ suite("Unit: RecommendedSettingsConfigDeployer — Workspace Override (Layering)
     };
     sandbox.stub(vscode.workspace, "getConfiguration").returns(fakeConfig as any);
 
-    deployer = new RecommendedSettingsConfigDeployer(mockUserDirectory as any);
+    deployer = new RecommendedSettingsConfigDeployer(mockUserDirectory as any, mockConfirmation as any);
   });
 
   teardown(async () => {
