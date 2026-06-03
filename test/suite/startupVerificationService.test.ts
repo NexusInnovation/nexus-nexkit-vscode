@@ -1,7 +1,7 @@
 /**
  * Tests for StartupVerificationService
  * Verifies that essential Nexkit checks run at every VS Code startup:
- * - .gitignore contains .nexkit/ exclusion
+ * - .git/info/exclude contains .nexkit/ exclusion
  * - VS Code settings contain all required chat file locations
  * - nexkit.* files are migrated from .github to .nexkit
  * - GitHub authentication is verified
@@ -14,7 +14,7 @@ import * as os from "os";
 import * as sinon from "sinon";
 import * as vscode from "vscode";
 import { StartupVerificationService } from "../../src/features/initialization/startupVerificationService";
-import { GitIgnoreConfigDeployer } from "../../src/features/initialization/gitIgnoreConfigDeployer";
+import { GitExcludeConfigDeployer } from "../../src/features/initialization/gitExcludeConfigDeployer";
 import { RecommendedSettingsConfigDeployer } from "../../src/features/initialization/recommendedSettingsConfigDeployer";
 import { NexkitFileMigrationService } from "../../src/features/initialization/nexkitFileMigrationService";
 import { HooksConfigDeployer } from "../../src/features/initialization/hooksConfigDeployer";
@@ -27,7 +27,7 @@ suite("Unit: StartupVerificationService", () => {
   let tempDir: string;
   let sandbox: sinon.SinonSandbox;
 
-  let gitIgnoreDeployer: GitIgnoreConfigDeployer;
+  let gitExcludeDeployer: GitExcludeConfigDeployer;
   let settingsDeployer: RecommendedSettingsConfigDeployer;
   let migrationService: NexkitFileMigrationService;
   let hooksConfigDeployer: HooksConfigDeployer;
@@ -36,8 +36,9 @@ suite("Unit: StartupVerificationService", () => {
   setup(() => {
     sandbox = sinon.createSandbox();
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "nexkit-startup-test-"));
+    fs.mkdirSync(path.join(tempDir, ".git", "info"), { recursive: true });
 
-    gitIgnoreDeployer = new GitIgnoreConfigDeployer();
+    gitExcludeDeployer = new GitExcludeConfigDeployer();
     const mockUserDirectory = sandbox.createStubInstance(UserDirectoryService);
     mockUserDirectory.getAbsoluteTemplateLocations.returns({
       agents: "/tmp/.nexkit/agents",
@@ -56,7 +57,7 @@ suite("Unit: StartupVerificationService", () => {
     sandbox.stub(SettingsManager, "isUserDeployMode").returns(false);
 
     service = new StartupVerificationService(
-      gitIgnoreDeployer,
+      gitExcludeDeployer,
       settingsDeployer,
       hooksConfigDeployer,
       migrationService,
@@ -77,22 +78,37 @@ suite("Unit: StartupVerificationService", () => {
     assert.ok(service);
   });
 
-  test("verifyWorkspaceConfiguration should deploy gitignore in workspace mode", async () => {
+  test("verifyWorkspaceConfiguration should write .nexkit/ to .git/info/exclude in workspace mode", async () => {
     await service.verifyWorkspaceConfiguration(tempDir);
 
-    const gitignorePath = path.join(tempDir, ".gitignore");
-    assert.ok(fs.existsSync(gitignorePath));
-    const content = fs.readFileSync(gitignorePath, "utf8");
+    const excludePath = path.join(tempDir, ".git", "info", "exclude");
+    assert.ok(fs.existsSync(excludePath));
+    const content = fs.readFileSync(excludePath, "utf8");
     assert.ok(content.includes(".nexkit/"));
   });
 
-  test("verifyWorkspaceConfiguration should skip gitignore in user mode", async () => {
+  test("verifyWorkspaceConfiguration should clean up legacy NexKit section from .gitignore", async () => {
+    const gitignorePath = path.join(tempDir, ".gitignore");
+    fs.writeFileSync(gitignorePath, "node_modules/\n\n# BEGIN NexKit\n.nexkit/\n# END NexKit\n");
+
+    await service.verifyWorkspaceConfiguration(tempDir);
+
+    const content = fs.readFileSync(gitignorePath, "utf8");
+    assert.ok(!content.includes("# BEGIN NexKit"), "Legacy NexKit section should be removed from .gitignore");
+    assert.ok(content.includes("node_modules/"), "Unrelated .gitignore entries should be preserved");
+  });
+
+  test("verifyWorkspaceConfiguration should skip git exclude in user mode", async () => {
     (SettingsManager.isUserDeployMode as sinon.SinonStub).returns(true);
 
     await service.verifyWorkspaceConfiguration(tempDir);
 
-    const gitignorePath = path.join(tempDir, ".gitignore");
-    assert.ok(!fs.existsSync(gitignorePath), "Should not create .gitignore in user mode");
+    const excludePath = path.join(tempDir, ".git", "info", "exclude");
+    const excludeExists = fs.existsSync(excludePath);
+    if (excludeExists) {
+      const content = fs.readFileSync(excludePath, "utf8");
+      assert.ok(!content.includes(".nexkit/"), "Should not write .nexkit/ to .git/info/exclude in user mode");
+    }
   });
 
   test("verifyWorkspaceConfiguration should deploy settings to user-level", async () => {
@@ -146,10 +162,10 @@ suite("Unit: StartupVerificationService", () => {
     await service.verifyWorkspaceConfiguration(tempDir);
     await service.verifyWorkspaceConfiguration(tempDir);
 
-    const gitignorePath = path.join(tempDir, ".gitignore");
-    const content = fs.readFileSync(gitignorePath, "utf8");
-    // Should have exactly one NexKit section, not duplicated
-    const matches = content.match(/# BEGIN NexKit/g);
+    const excludePath = path.join(tempDir, ".git", "info", "exclude");
+    const content = fs.readFileSync(excludePath, "utf8");
+    // Should have exactly one entry, not duplicated
+    const matches = content.match(/\.nexkit\//g);
     assert.strictEqual(matches?.length, 1);
 
     // User-level settings should still be deployed

@@ -7,7 +7,7 @@ import { TemplateMetadataService } from "../features/ai-template-files/services/
 import { UpdateStatusBarService } from "../features/extension-updates/updateStatusBarService";
 import { GitHubTemplateBackupService } from "../features/backup-management/backupService";
 import { ExtensionUpdateService } from "../features/extension-updates/extensionUpdateService";
-import { GitIgnoreConfigDeployer } from "../features/initialization/gitIgnoreConfigDeployer";
+import { GitExcludeConfigDeployer } from "../features/initialization/gitExcludeConfigDeployer";
 import { MCPConfigDeployer } from "../features/initialization/mcpConfigDeployer";
 import { RecommendedExtensionsConfigDeployer } from "../features/initialization/recommendedExtensionsConfigDeployer";
 import { RecommendedSettingsConfigDeployer } from "../features/initialization/recommendedSettingsConfigDeployer";
@@ -44,7 +44,7 @@ export interface ServiceContainer {
   updateStatusBar: UpdateStatusBarService;
   extensionUpdate: ExtensionUpdateService;
   backup: GitHubTemplateBackupService;
-  gitIgnoreConfigDeployer: GitIgnoreConfigDeployer;
+  gitExcludeConfigDeployer: GitExcludeConfigDeployer;
   mcpConfigDeployer: MCPConfigDeployer;
   recommendedExtensionsConfigDeployer: RecommendedExtensionsConfigDeployer;
   recommendedSettingsConfigDeployer: RecommendedSettingsConfigDeployer;
@@ -89,7 +89,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const templateMetadata = new TemplateMetadataService(aiTemplateData.getRepositoryManager());
   const backup = new GitHubTemplateBackupService(userDirectory);
   const updateStatusBar = new UpdateStatusBarService(context, extensionUpdate);
-  const gitIgnoreConfigDeployer = new GitIgnoreConfigDeployer();
+  const gitExcludeConfigDeployer = new GitExcludeConfigDeployer();
   const mcpConfigDeployer = new MCPConfigDeployer();
   const recommendedExtensionsConfigDeployer = new RecommendedExtensionsConfigDeployer();
   const recommendedSettingsConfigDeployer = new RecommendedSettingsConfigDeployer(userDirectory);
@@ -106,7 +106,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const githubAuthPrompt = new GitHubAuthPromptService();
   const hooksConfigDeployer = new HooksConfigDeployer(userDirectory);
   const startupVerification = new StartupVerificationService(
-    gitIgnoreConfigDeployer,
+    gitExcludeConfigDeployer,
     recommendedSettingsConfigDeployer,
     hooksConfigDeployer,
     nexkitFileMigration,
@@ -136,7 +136,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     updateStatusBar,
     extensionUpdate,
     backup,
-    gitIgnoreConfigDeployer,
+    gitExcludeConfigDeployer,
     mcpConfigDeployer,
     recommendedExtensionsConfigDeployer,
     recommendedSettingsConfigDeployer,
