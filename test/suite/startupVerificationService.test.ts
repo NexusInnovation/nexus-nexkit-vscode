@@ -1,7 +1,7 @@
 /**
  * Tests for StartupVerificationService
  * Verifies that essential Nexkit checks run at every VS Code startup:
- * - .gitignore contains .nexkit/ exclusion
+ * - .git/info/exclude contains .nexkit/ exclusion (invisible to repo)
  * - VS Code settings contain all required chat file locations
  * - nexkit.* files are migrated from .github to .nexkit
  * - GitHub authentication is verified
@@ -14,7 +14,7 @@ import * as os from "os";
 import * as sinon from "sinon";
 import * as vscode from "vscode";
 import { StartupVerificationService } from "../../src/features/initialization/startupVerificationService";
-import { GitIgnoreConfigDeployer } from "../../src/features/initialization/gitIgnoreConfigDeployer";
+import { GitExcludeConfigDeployer } from "../../src/features/initialization/gitExcludeConfigDeployer";
 import { RecommendedSettingsConfigDeployer } from "../../src/features/initialization/recommendedSettingsConfigDeployer";
 import { NexkitFileMigrationService } from "../../src/features/initialization/nexkitFileMigrationService";
 import { HooksConfigDeployer } from "../../src/features/initialization/hooksConfigDeployer";
@@ -25,7 +25,7 @@ suite("Unit: StartupVerificationService", () => {
   let tempDir: string;
   let sandbox: sinon.SinonSandbox;
 
-  let gitIgnoreDeployer: GitIgnoreConfigDeployer;
+  let gitExcludeDeployer: GitExcludeConfigDeployer;
   let settingsDeployer: RecommendedSettingsConfigDeployer;
   let migrationService: NexkitFileMigrationService;
   let hooksConfigDeployer: HooksConfigDeployer;
@@ -35,14 +35,17 @@ suite("Unit: StartupVerificationService", () => {
     sandbox = sinon.createSandbox();
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "nexkit-startup-test-"));
 
-    gitIgnoreDeployer = new GitIgnoreConfigDeployer();
+    // Create a fake .git directory so GitExcludeConfigDeployer can resolve the exclude path
+    fs.mkdirSync(path.join(tempDir, ".git", "info"), { recursive: true });
+
+    gitExcludeDeployer = new GitExcludeConfigDeployer();
     settingsDeployer = new RecommendedSettingsConfigDeployer();
     hooksConfigDeployer = new HooksConfigDeployer();
     migrationService = new NexkitFileMigrationService();
     authPromptService = new GitHubAuthPromptService();
 
     service = new StartupVerificationService(
-      gitIgnoreDeployer,
+      gitExcludeDeployer,
       settingsDeployer,
       hooksConfigDeployer,
       migrationService,
@@ -63,13 +66,32 @@ suite("Unit: StartupVerificationService", () => {
     assert.ok(service);
   });
 
-  test("verifyWorkspaceConfiguration should deploy gitignore", async () => {
+  test("verifyWorkspaceConfiguration should add .nexkit/ to .git/info/exclude", async () => {
+    await service.verifyWorkspaceConfiguration(tempDir);
+
+    const excludePath = path.join(tempDir, ".git", "info", "exclude");
+    assert.ok(fs.existsSync(excludePath));
+    const content = fs.readFileSync(excludePath, "utf8");
+    assert.ok(content.includes(".nexkit/"));
+  });
+
+  test("verifyWorkspaceConfiguration should not modify .gitignore", async () => {
     await service.verifyWorkspaceConfiguration(tempDir);
 
     const gitignorePath = path.join(tempDir, ".gitignore");
-    assert.ok(fs.existsSync(gitignorePath));
+    assert.ok(!fs.existsSync(gitignorePath));
+  });
+
+  test("verifyWorkspaceConfiguration should remove legacy NexKit section from .gitignore", async () => {
+    const gitignorePath = path.join(tempDir, ".gitignore");
+    fs.writeFileSync(gitignorePath, "node_modules/\n\n# BEGIN NexKit\n.nexkit/\n# END NexKit\n", "utf8");
+
+    await service.verifyWorkspaceConfiguration(tempDir);
+
     const content = fs.readFileSync(gitignorePath, "utf8");
-    assert.ok(content.includes(".nexkit/"));
+    assert.ok(!content.includes("# BEGIN NexKit"));
+    assert.ok(!content.includes("# END NexKit"));
+    assert.ok(content.includes("node_modules/"));
   });
 
   test("verifyWorkspaceConfiguration should deploy settings", async () => {
@@ -102,10 +124,10 @@ suite("Unit: StartupVerificationService", () => {
     await service.verifyWorkspaceConfiguration(tempDir);
     await service.verifyWorkspaceConfiguration(tempDir);
 
-    const gitignorePath = path.join(tempDir, ".gitignore");
-    const content = fs.readFileSync(gitignorePath, "utf8");
-    // Should have exactly one NexKit section, not duplicated
-    const matches = content.match(/# BEGIN NexKit/g);
+    const excludePath = path.join(tempDir, ".git", "info", "exclude");
+    const content = fs.readFileSync(excludePath, "utf8");
+    // Should have exactly one .nexkit/ entry, not duplicated
+    const matches = content.match(/\.nexkit\//g);
     assert.strictEqual(matches?.length, 1);
 
     const settingsPath = path.join(tempDir, ".vscode", "settings.json");
@@ -118,5 +140,16 @@ suite("Unit: StartupVerificationService", () => {
 
     // Should not throw
     await service.verifyOnStartup();
+  });
+
+  test("verifyWorkspaceConfiguration should gracefully handle missing .git directory", async () => {
+    // Create a temp dir without .git
+    const noGitDir = fs.mkdtempSync(path.join(os.tmpdir(), "nexkit-no-git-test-"));
+    try {
+      // Should not throw even without .git
+      await service.verifyWorkspaceConfiguration(noGitDir);
+    } finally {
+      fs.rmSync(noGitDir, { recursive: true, force: true });
+    }
   });
 });
