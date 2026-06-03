@@ -11,6 +11,7 @@ import { WorkflowInfo } from "../../github-workflow-runner/githubWorkflowRunnerS
 export type WebviewMessage =
   | { command: "webviewReady" }
   | { command: "initWorkspace" }
+  | { command: "dismissInitWorkspace" }
   | { command: "getTemplateData" }
   | { command: "installTemplate"; template: AITemplateFile }
   | { command: "uninstallTemplate"; template: AITemplateFile }
@@ -37,6 +38,7 @@ export type ExtensionMessage =
       command: "workspaceStateUpdate";
       hasWorkspace: boolean;
       isInitialized: boolean;
+      isInitRefused: boolean;
       mode: OperationMode;
       deployMode: "user" | "workspace";
       workspaceOverrideActive: boolean;

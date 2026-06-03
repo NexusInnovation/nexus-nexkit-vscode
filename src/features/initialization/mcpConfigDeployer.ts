@@ -1,6 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
 import { fileExists } from "../../shared/utils/fileHelper";
+import { ConfirmationService } from "../../shared/services/confirmationService";
+import { SettingsManager } from "../../core/settingsManager";
 
 /**
  * Service to deploy MCP configuration in a workspace
@@ -8,11 +10,24 @@ import { fileExists } from "../../shared/utils/fileHelper";
 export class MCPConfigDeployer {
   public static readonly AzureDevopsServerName = "azureDevOps";
 
+  constructor(private readonly _confirmation: ConfirmationService) {}
+
   /**
-   * Deploy workspace MCP configuration for project initialization
-   * NON-DESTRUCTIVE: Merges with existing configuration
+   * Deploy workspace MCP configuration for project initialization.
+   * NON-DESTRUCTIVE: Merges with existing configuration.
+   * Prompts for confirmation before writing; skips if refused.
    */
   public async deployWorkspaceMCPServers(targetRoot: string): Promise<void> {
+    const result = await this._confirmation.confirm(
+      `Nexkit wants to add the "${MCPConfigDeployer.AzureDevopsServerName}" MCP server to your workspace`,
+      `This will add the azureDevOps MCP server to .vscode/mcp.json in this workspace so it is available for Azure DevOps integration.`,
+      SettingsManager.CONFIRMATION_KEYS.mcpWorkspaceServer(MCPConfigDeployer.AzureDevopsServerName)
+    );
+
+    if (result !== "accepted") {
+      return;
+    }
+
     const mcpConfigPath = path.join(targetRoot, ".vscode", "mcp.json");
     const mcpDir = path.dirname(mcpConfigPath);
 
