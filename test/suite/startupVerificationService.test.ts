@@ -21,6 +21,7 @@ import { HooksConfigDeployer } from "../../src/features/initialization/hooksConf
 import { GitHubAuthPromptService } from "../../src/features/initialization/githubAuthPromptService";
 import { UserDirectoryService } from "../../src/features/ai-template-files/services/userDirectoryService";
 import { SettingsManager } from "../../src/core/settingsManager";
+import { ConfirmationService } from "../../src/shared/services/confirmationService";
 
 suite("Unit: StartupVerificationService", () => {
   let service: StartupVerificationService;
@@ -48,7 +49,9 @@ suite("Unit: StartupVerificationService", () => {
       hooks: "/tmp/.nexkit/hooks",
       chatmodes: "/tmp/.nexkit/chatmodes",
     });
-    settingsDeployer = new RecommendedSettingsConfigDeployer(mockUserDirectory as any);
+    const mockConfirmation = sandbox.createStubInstance(ConfirmationService);
+    mockConfirmation.confirm.resolves("accepted");
+    settingsDeployer = new RecommendedSettingsConfigDeployer(mockUserDirectory as any, mockConfirmation as any);
     hooksConfigDeployer = new HooksConfigDeployer(mockUserDirectory as any);
     migrationService = new NexkitFileMigrationService();
     authPromptService = new GitHubAuthPromptService();

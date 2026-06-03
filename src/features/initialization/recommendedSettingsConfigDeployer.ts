@@ -4,6 +4,7 @@ import * as os from "os";
 import * as path from "path";
 import { fileExists } from "../../shared/utils/fileHelper";
 import { LoggingService } from "../../shared/services/loggingService";
+import { ConfirmationService } from "../../shared/services/confirmationService";
 import { UserDirectoryService } from "../ai-template-files/services/userDirectoryService";
 import { SettingsManager } from "../../core/settingsManager";
 
@@ -38,16 +39,31 @@ const LEGACY_WORKSPACE_KEYS = [
 export class RecommendedSettingsConfigDeployer {
   private readonly _logging = LoggingService.getInstance();
 
-  constructor(private readonly _userDirectory: UserDirectoryService) {}
+  constructor(
+    private readonly _userDirectory: UserDirectoryService,
+    private readonly _confirmation: ConfirmationService
+  ) {}
 
   /**
    * Deploy chat location settings to user-level VS Code configuration.
    * NON-DESTRUCTIVE: Merges NexKit paths with existing user entries — never overwrites.
    * Also cleans up legacy workspace-level settings previously created by NexKit.
    * When workspace override is active, adds both user-level and workspace-level paths.
+   * Prompts the user for confirmation before writing any settings; skips if refused.
    * @param workspaceRoot Root directory of the workspace (used for legacy cleanup and workspace paths)
    */
   async deployVscodeSettings(workspaceRoot: string): Promise<void> {
+    const result = await this._confirmation.confirm(
+      "Nexkit wants to update your VS Code chat settings",
+      "Nexkit will update your VS Code chat settings (chat.*Locations) to point to your user-level template directory. This allows GitHub Copilot to find your agents, prompts, instructions, and hooks.",
+      SettingsManager.CONFIRMATION_KEYS.CHAT_SETTINGS
+    );
+
+    if (result !== "accepted") {
+      this._logging.info("User declined chat settings deployment.");
+      return;
+    }
+
     this._logging.info("Deploying chat settings to user-level configuration...");
 
     await this._deployUserLevelChatSettings(workspaceRoot);
