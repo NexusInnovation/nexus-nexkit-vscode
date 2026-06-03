@@ -1,3 +1,7 @@
+## 3.10.0-beta.5 (2026-06-03)
+
+* feat: NexKit exclusions in .git/info/exclude (#165) ([aa59d03](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/aa59d03)), closes [#165](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/165)
+
 ## 3.10.0-beta.4 (2026-06-03)
 
 * fix(test): use /tmp on macOS to avoid Unix socket path length limit (#166) ([6e6f87c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/6e6f87c)), closes [#166](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/166)
