@@ -181,4 +181,15 @@ suite("Unit: StartupVerificationService", () => {
     // Should not throw
     await service.verifyOnStartup();
   });
+
+  test("verifyWorkspaceConfiguration should gracefully handle missing .git directory", async () => {
+    // Create a temp dir without .git
+    const noGitDir = fs.mkdtempSync(path.join(os.tmpdir(), "nexkit-no-git-test-"));
+    try {
+      // Should not throw even without .git
+      await service.verifyWorkspaceConfiguration(noGitDir);
+    } finally {
+      fs.rmSync(noGitDir, { recursive: true, force: true });
+    }
+  });
 });

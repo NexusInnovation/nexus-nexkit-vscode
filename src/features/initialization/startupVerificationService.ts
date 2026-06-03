@@ -9,7 +9,7 @@ import { GitHubAuthPromptService } from "./githubAuthPromptService";
 
 /**
  * Service that runs essential Nexkit verification checks at every VS Code startup.
- * Ensures workspace configuration is always correct (settings, gitignore, file migration, auth).
+ * Ensures workspace configuration is always correct (settings, git exclude, file migration, auth).
  * These same checks are also part of workspace initialization (initWorkspace command),
  * and this service is the single source of truth for them to avoid duplication.
  */
