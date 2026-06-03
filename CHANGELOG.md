@@ -1,3 +1,8 @@
+## 3.10.0-beta.4 (2026-06-03)
+
+* fix(test): use /tmp on macOS to avoid Unix socket path length limit (#166) ([6e6f87c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/6e6f87c)), closes [#166](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/166)
+* chore(vscode): clean up settings by removing chat/agent configs ([6fff3f5](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/6fff3f5))
+
 ## 3.10.0-beta.3 (2026-06-02)
 
 * feat: add initial configuration for Azure DevOps and GitHub servers ([71812dc](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/71812dc))
