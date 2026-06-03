@@ -99,3 +99,29 @@ SettingsManager wraps workspaceState.update / get — the correct approach for p
 - ESC / dismiss → treated as **Accept** (non-destructive default, user didn't explicitly refuse)
 - **Refuse** → operation skipped this session
 - **Refuse Forever** → key persisted in workspaceState, dialog never shown again for that key
+
+---
+
+### ConfirmationService architecture (Issue #162)
+
+**Service structure:**
+- `ConfirmationService.requestConfirmation(key, message)` — Shows modal, returns Promise<ConfirmationAction>
+- Modal has three buttons: Accept, Refuse, Refuse Forever
+- Each operation (chat settings, MCP servers, etc.) gets a confirmation key via CONFIRMATION_KEYS factory
+
+**CONFIRMATION_KEYS pattern:**
+- Static keys for singleton operations: `CONFIRMATION_KEYS.CHAT_SETTINGS`
+- Factory functions for per-instance operations: `CONFIRMATION_KEYS.mcpUserServer(name)`, `mcpWorkspaceServer(name)`
+- Isolation: refusing forever for one MCP server does NOT affect other servers
+
+**Deployment gating:**
+- `RecommendedSettingsConfigDeployer` (chat settings) — gated by ConfirmationService
+- `MCPConfigDeployer` (user/workspace) — gated, checks if user already refused forever
+- `MCPConfigService` reads/writes — gated before config mutations
+- `workspaceToUserMigrationService` — explicitly excluded (has own multi-step consent flow)
+
+**Testing patterns in VS Code extension context:**
+- Sinon stubs for `vscode.window.showInformationMessage` to mock user responses (Accept, Refuse, Refuse Forever, undefined)
+- Mock workspaceState via sandbox.stub(context, 'workspaceState')
+- Test both accept/refuse/refuse-forever paths + undefined (modal dismissed)
+- Verify `SettingsManager.setConfirmationRefusedForever(key)` was called only on RefusForever action
