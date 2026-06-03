@@ -2,9 +2,11 @@
  * Tests for StartupVerificationService
  * Verifies that essential Nexkit checks run at every VS Code startup:
  * - .git/info/exclude contains .nexkit/ exclusion
- * - VS Code settings contain all required chat file locations
  * - nexkit.* files are migrated from .github to .nexkit
  * - GitHub authentication is verified
+ *
+ * settings.json writes are intentionally NOT part of startup verification.
+ * They only occur from workspaceInitializationService and workspaceToUserMigrationService.
  */
 
 import * as assert from "assert";
@@ -15,13 +17,11 @@ import * as sinon from "sinon";
 import * as vscode from "vscode";
 import { StartupVerificationService } from "../../src/features/initialization/startupVerificationService";
 import { GitExcludeConfigDeployer } from "../../src/features/initialization/gitExcludeConfigDeployer";
-import { RecommendedSettingsConfigDeployer } from "../../src/features/initialization/recommendedSettingsConfigDeployer";
 import { NexkitFileMigrationService } from "../../src/features/initialization/nexkitFileMigrationService";
 import { HooksConfigDeployer } from "../../src/features/initialization/hooksConfigDeployer";
 import { GitHubAuthPromptService } from "../../src/features/initialization/githubAuthPromptService";
 import { UserDirectoryService } from "../../src/features/ai-template-files/services/userDirectoryService";
 import { SettingsManager } from "../../src/core/settingsManager";
-import { ConfirmationService } from "../../src/shared/services/confirmationService";
 
 suite("Unit: StartupVerificationService", () => {
   let service: StartupVerificationService;
@@ -29,7 +29,6 @@ suite("Unit: StartupVerificationService", () => {
   let sandbox: sinon.SinonSandbox;
 
   let gitExcludeDeployer: GitExcludeConfigDeployer;
-  let settingsDeployer: RecommendedSettingsConfigDeployer;
   let migrationService: NexkitFileMigrationService;
   let hooksConfigDeployer: HooksConfigDeployer;
   let authPromptService: GitHubAuthPromptService;
@@ -49,9 +48,6 @@ suite("Unit: StartupVerificationService", () => {
       hooks: "/tmp/.nexkit/hooks",
       chatmodes: "/tmp/.nexkit/chatmodes",
     });
-    const mockConfirmation = sandbox.createStubInstance(ConfirmationService);
-    mockConfirmation.confirm.resolves("accepted");
-    settingsDeployer = new RecommendedSettingsConfigDeployer(mockUserDirectory as any, mockConfirmation as any);
     hooksConfigDeployer = new HooksConfigDeployer(mockUserDirectory as any);
     migrationService = new NexkitFileMigrationService();
     authPromptService = new GitHubAuthPromptService();
@@ -61,7 +57,6 @@ suite("Unit: StartupVerificationService", () => {
 
     service = new StartupVerificationService(
       gitExcludeDeployer,
-      settingsDeployer,
       hooksConfigDeployer,
       migrationService,
       authPromptService
@@ -114,26 +109,23 @@ suite("Unit: StartupVerificationService", () => {
     }
   });
 
-  test("verifyWorkspaceConfiguration should deploy settings to user-level", async () => {
-    // Mock vscode.workspace.getConfiguration for the settings deployer
+  test("verifyWorkspaceConfiguration should NOT write to settings.json (no settings writes on activation)", async () => {
     const updateStub = sandbox.stub().resolves();
-    const inspectStub = sandbox.stub().returns({ globalValue: undefined });
-    const fakeConfig = {
-      inspect: inspectStub,
+    sandbox.stub(vscode.workspace, "getConfiguration").returns({
+      inspect: sandbox.stub().returns({ globalValue: undefined }),
       update: updateStub,
       get: sandbox.stub(),
       has: sandbox.stub(),
-    };
-    sandbox.stub(vscode.workspace, "getConfiguration").returns(fakeConfig as any);
+    } as any);
 
     await service.verifyWorkspaceConfiguration(tempDir);
 
-    // Settings should NOT be written to .vscode/settings.json anymore
+    // No .vscode/settings.json should be created
     const settingsPath = path.join(tempDir, ".vscode", "settings.json");
-    assert.ok(!fs.existsSync(settingsPath), "Should not create .vscode/settings.json");
+    assert.ok(!fs.existsSync(settingsPath), "Should not create .vscode/settings.json during startup verification");
 
-    // Should have called update on the VS Code configuration API (user-level)
-    assert.ok(updateStub.called, "Should write settings to user-level via VS Code API");
+    // No VS Code configuration updates (no deployVscodeSettings call)
+    assert.strictEqual(updateStub.callCount, 0, "Should not write any settings via VS Code API during startup verification");
   });
 
   test("verifyWorkspaceConfiguration should migrate nexkit files", async () => {
@@ -149,18 +141,7 @@ suite("Unit: StartupVerificationService", () => {
     assert.ok(!fs.existsSync(path.join(agentsDir, "nexkit.test-agent.md")));
   });
 
-  test("verifyWorkspaceConfiguration should be idempotent", async () => {
-    // Mock vscode.workspace.getConfiguration for the settings deployer
-    const updateStub = sandbox.stub().resolves();
-    const inspectStub = sandbox.stub().returns({ globalValue: undefined });
-    const fakeConfig = {
-      inspect: inspectStub,
-      update: updateStub,
-      get: sandbox.stub(),
-      has: sandbox.stub(),
-    };
-    sandbox.stub(vscode.workspace, "getConfiguration").returns(fakeConfig as any);
-
+  test("verifyWorkspaceConfiguration should be idempotent (no settings.json writes)", async () => {
     // Run twice — second run should not break anything
     await service.verifyWorkspaceConfiguration(tempDir);
     await service.verifyWorkspaceConfiguration(tempDir);
@@ -171,8 +152,9 @@ suite("Unit: StartupVerificationService", () => {
     const matches = content.match(/\.nexkit\//g);
     assert.strictEqual(matches?.length, 1);
 
-    // User-level settings should still be deployed
-    assert.ok(updateStub.called, "Should write settings to user-level via VS Code API");
+    // No .vscode/settings.json should exist — settings are never written at startup
+    const settingsPath = path.join(tempDir, ".vscode", "settings.json");
+    assert.ok(!fs.existsSync(settingsPath), "Should never create .vscode/settings.json during startup verification");
   });
 
   test("verifyOnStartup should skip if no workspace folder", async () => {

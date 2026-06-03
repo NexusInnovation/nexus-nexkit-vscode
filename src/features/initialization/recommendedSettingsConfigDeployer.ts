@@ -50,9 +50,16 @@ export class RecommendedSettingsConfigDeployer {
    * Also cleans up legacy workspace-level settings previously created by NexKit.
    * When workspace override is active, adds both user-level and workspace-level paths.
    * Prompts the user for confirmation before writing any settings; skips if refused.
+   *
+   * **Sanctioned callers only:** this method must only be called from
+   * `workspaceInitializationService` (caller="initialization") or
+   * `workspaceToUserMigrationService` (caller="migration").
+   *
    * @param workspaceRoot Root directory of the workspace (used for legacy cleanup and workspace paths)
+   * @param caller Identifies the sanctioned entry point invoking this method — for audit logging.
    */
-  async deployVscodeSettings(workspaceRoot: string): Promise<void> {
+  async deployVscodeSettings(workspaceRoot: string, caller: "initialization" | "migration"): Promise<void> {
+    this._logging.info(`deployVscodeSettings called by: ${caller}`);
     const result = await this._confirmation.confirm(
       "Nexkit wants to update your VS Code chat settings",
       "Nexkit will update your VS Code chat settings (chat.*Locations) to point to your user-level template directory. This allows GitHub Copilot to find your agents, prompts, instructions, and hooks.",

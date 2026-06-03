@@ -77,7 +77,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
   });
 
   test("Should write all chat location settings to user-level (Global) scope", async () => {
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     // Should call update for each chat location setting + useHooks
     const updateCalls = updateStub.getCalls();
@@ -110,7 +110,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
       return { globalValue: undefined };
     });
 
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const promptCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "promptFilesLocations");
     assert.ok(promptCall, "Should update promptFilesLocations");
@@ -128,7 +128,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
       return { globalValue: undefined };
     });
 
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const useHooksCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "useHooks");
     assert.ok(!useHooksCall, "Should NOT update useHooks when already true");
@@ -145,7 +145,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
       chatmodes: "C:\\Users\\test\\AppData\\Roaming\\Code\\User\\.nexkit\\chatmodes",
     });
 
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const agentCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "agentFilesLocations");
     assert.ok(agentCall, "Should update agentFilesLocations");
@@ -173,7 +173,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     };
     fs.writeFileSync(path.join(settingsDir, "settings.json"), JSON.stringify(existingSettings, null, 2), "utf8");
 
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const content = JSON.parse(fs.readFileSync(path.join(settingsDir, "settings.json"), "utf8"));
 
@@ -199,7 +199,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     };
     fs.writeFileSync(path.join(settingsDir, "settings.json"), JSON.stringify(existingSettings, null, 2), "utf8");
 
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     // File should be removed since it's now empty
     assert.ok(!fs.existsSync(path.join(settingsDir, "settings.json")), "Empty settings.json should be removed");
@@ -207,7 +207,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
 
   test("Should handle missing workspace settings.json gracefully", async () => {
     // No .vscode/settings.json exists — should not throw
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     // Should still write user-level settings
     assert.ok(updateStub.called, "Should still write user-level settings");
@@ -219,10 +219,17 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     fs.writeFileSync(path.join(settingsDir, "settings.json"), "invalid json {{{", "utf8");
 
     // Should not throw
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     // User-level settings should still be written
     assert.ok(updateStub.called, "Should still write user-level settings despite invalid workspace file");
+  });
+
+  test("Should accept 'migration' as a valid caller", async () => {
+    // migration is also a sanctioned entry point
+    await deployer.deployVscodeSettings(tempDir, "migration");
+
+    assert.ok(updateStub.called, "Should write user-level settings when called from migration entry point");
   });
 });
 
@@ -286,7 +293,7 @@ suite("Unit: RecommendedSettingsConfigDeployer — Workspace Override (Layering)
   test("Should add relative workspace paths alongside ~/ user paths when workspace override is active", async () => {
     sandbox.stub(SettingsManager, "isWorkspaceOverrideActive").returns(true);
 
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const agentCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "agentFilesLocations");
     assert.ok(agentCall, "Should update agentFilesLocations");
@@ -300,7 +307,7 @@ suite("Unit: RecommendedSettingsConfigDeployer — Workspace Override (Layering)
   test("Should NOT add workspace paths when workspace override is not active", async () => {
     sandbox.stub(SettingsManager, "isWorkspaceOverrideActive").returns(false);
 
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const agentCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "agentFilesLocations");
     assert.ok(agentCall, "Should update agentFilesLocations");
@@ -314,7 +321,7 @@ suite("Unit: RecommendedSettingsConfigDeployer — Workspace Override (Layering)
   test("Should add relative workspace paths for all template types when override is active", async () => {
     sandbox.stub(SettingsManager, "isWorkspaceOverrideActive").returns(true);
 
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const settingKeys = [
       "agentFilesLocations",
@@ -345,7 +352,7 @@ suite("Unit: RecommendedSettingsConfigDeployer — Workspace Override (Layering)
       return { globalValue: undefined };
     });
 
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const promptCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "promptFilesLocations");
     assert.ok(promptCall, "Should update promptFilesLocations");

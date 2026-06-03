@@ -24,10 +24,14 @@ export class WorkspaceInitializationService {
     profileName: string | null,
     services: ServiceContainer
   ) {
-    // Run shared verification checks (gitignore, settings, file migration)
+    // Run shared verification checks (gitignore, hooks, file migration)
     // Delegates to StartupVerificationService — same checks that run at every startup.
     // Returns migration summary for initialization reporting.
     const migrationSummary = await services.startupVerification.verifyWorkspaceConfiguration(workspaceFolder.uri.fsPath);
+
+    // Deploy VS Code chat settings to user-level (Global) — sanctioned initialization entry point.
+    // ConfirmationService inside deployVscodeSettings handles the user prompt.
+    await services.recommendedSettingsConfigDeployer.deployVscodeSettings(workspaceFolder.uri.fsPath, "initialization");
 
     // Backup and delete existing .nexkit template folders if they exist
     const backupPath = await services.backup.backupTemplates(workspaceFolder.uri.fsPath);

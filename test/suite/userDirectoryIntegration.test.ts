@@ -88,7 +88,7 @@ suite("Integration: User Directory Deployment Flow", () => {
       const mockConf = sandbox.createStubInstance(ConfirmationService);
       mockConf.confirm.resolves("accepted");
       const deployer = new RecommendedSettingsConfigDeployer(userDirectoryService, mockConf as any);
-      await deployer.deployVscodeSettings(tempDir);
+      await deployer.deployVscodeSettings(tempDir, "initialization");
 
       // Verify absolute paths from UserDirectoryService are used in user-level settings
       const agentCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "agentFilesLocations");

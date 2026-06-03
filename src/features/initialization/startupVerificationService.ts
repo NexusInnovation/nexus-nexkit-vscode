@@ -2,23 +2,21 @@ import * as vscode from "vscode";
 import { LoggingService } from "../../shared/services/loggingService";
 import { SettingsManager } from "../../core/settingsManager";
 import { GitExcludeConfigDeployer } from "./gitExcludeConfigDeployer";
-import { RecommendedSettingsConfigDeployer } from "./recommendedSettingsConfigDeployer";
 import { NexkitFileMigrationService, MigrationSummary } from "./nexkitFileMigrationService";
 import { HooksConfigDeployer } from "./hooksConfigDeployer";
 import { GitHubAuthPromptService } from "./githubAuthPromptService";
 
 /**
  * Service that runs essential Nexkit verification checks at every VS Code startup.
- * Ensures workspace configuration is always correct (settings, gitignore, file migration, auth).
- * These same checks are also part of workspace initialization (initWorkspace command),
- * and this service is the single source of truth for them to avoid duplication.
+ * Ensures workspace configuration is always correct (gitignore, file migration, hooks, auth).
+ * settings.json writes are intentionally NOT performed here — they only happen from the
+ * two sanctioned entry points: workspaceInitializationService and workspaceToUserMigrationService.
  */
 export class StartupVerificationService {
   private readonly _logging = LoggingService.getInstance();
 
   constructor(
     private readonly _gitExcludeConfigDeployer: GitExcludeConfigDeployer,
-    private readonly _recommendedSettingsConfigDeployer: RecommendedSettingsConfigDeployer,
     private readonly _hooksConfigDeployer: HooksConfigDeployer,
     private readonly _nexkitFileMigration: NexkitFileMigrationService,
     private readonly _githubAuthPrompt: GitHubAuthPromptService
@@ -46,9 +44,15 @@ export class StartupVerificationService {
 
   /**
    * Verify and apply essential workspace configuration.
-   * Ensures git exclude, VS Code settings, and nexkit file locations are correct.
+   * Ensures git exclude, hooks, and nexkit file locations are correct.
    * Called both at startup and during workspace initialization.
    * In user deploy mode, workspace file modifications (.git/info/exclude, hooks) are skipped.
+   *
+   * NOTE: settings.json writes (deployVscodeSettings) are intentionally NOT performed here.
+   * They only occur from the two sanctioned entry points:
+   *   - workspaceInitializationService.initializeWorkspace() (caller="initialization")
+   *   - workspaceToUserMigrationService.executeMigration()   (caller="migration")
+   *
    * @param workspaceRoot Absolute path to the workspace root
    * @returns Summary of migrated files, or null if nothing was migrated
    */
@@ -59,9 +63,6 @@ export class StartupVerificationService {
     if (isWorkspaceMode) {
       await this._gitExcludeConfigDeployer.deployGitExclude(workspaceRoot);
     }
-
-    // Ensure VS Code settings contain all required chat file locations and hooks
-    await this._recommendedSettingsConfigDeployer.deployVscodeSettings(workspaceRoot);
 
     // Deploy run-tests hook — workspace mode writes to workspace, user mode writes to user dir
     if (isWorkspaceMode) {
