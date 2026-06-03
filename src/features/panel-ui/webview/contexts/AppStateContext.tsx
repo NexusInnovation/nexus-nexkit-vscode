@@ -43,6 +43,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
             workspace: {
               hasWorkspace: message.hasWorkspace,
               isInitialized: message.isInitialized,
+              isInitRefused: message.isInitRefused,
               mode: message.mode,
               deployMode: message.deployMode,
               workspaceOverrideActive: message.workspaceOverrideActive,

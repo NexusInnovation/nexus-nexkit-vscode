@@ -12,6 +12,7 @@ import { ApmTemplateSection } from "./organisms/ApmTemplateSection";
 import { ModeSelectionSection } from "./organisms/ModeSelectionSection";
 import { ToolsSection } from "./organisms/ToolsSection";
 import { TabBar, TabDefinition } from "./molecules/TabBar";
+import { InitializationBanner } from "./molecules/InitializationBanner";
 
 const TAB_DEFINITIONS: Record<string, TabDefinition> = {
   template: { id: "template", icon: "file-code", label: "Templates" },
@@ -68,9 +69,12 @@ export function App() {
   const badges = useMemo<Record<string, boolean>>(() => {
     const result: Record<string, boolean> = {};
 
-    // Tools badge: workspace needs initialization
-    if (isDevelopersMode && !workspace.isInitialized) {
+    // Show badge dot on all Developer tabs until workspace is initialized or dismissed
+    const showInitBadge = isDevelopersMode && !workspace.isInitialized && !workspace.isInitRefused;
+    if (showInitBadge) {
+      result.template = true;
       result.tools = true;
+      result.profile = true;
     }
 
     // Profile badge: new profile saved since last visit (hidden while viewing)
@@ -82,7 +86,7 @@ export function App() {
     }
 
     return result;
-  }, [isDevelopersMode, workspace.isInitialized, profiles.isReady, profiles.list.length, activeTab]);
+  }, [isDevelopersMode, workspace.isInitialized, workspace.isInitRefused, profiles.isReady, profiles.list.length, activeTab]);
 
   if (!workspace.isReady) {
     return null;
@@ -112,6 +116,7 @@ export function App() {
       <div class="tab-content">
         {isDevelopersMode && (
           <>
+            <InitializationBanner />
             {activeTab === "template" && (
               <div class="tab-panel" role="tabpanel" id="template-tabpanel">
                 <TemplateSection />
@@ -119,7 +124,7 @@ export function App() {
             )}
             {activeTab === "tools" && (
               <div class="tab-panel" role="tabpanel" id="tools-tabpanel">
-                <ToolsSection isInitialized={workspace.isInitialized} />
+                <ToolsSection />
               </div>
             )}
             {activeTab === "profile" && (

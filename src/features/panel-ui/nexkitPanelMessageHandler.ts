@@ -28,6 +28,7 @@ export class NexkitPanelMessageHandler {
     this._messageHandlers = new Map([
       ["webviewReady", this.handleWebviewReady.bind(this)],
       ["initWorkspace", this.handleInitWorkspace.bind(this)],
+      ["dismissInitWorkspace", this.handleDismissInitWorkspace.bind(this)],
       ["getTemplateData", this.handleGetTemplateData.bind(this)],
       ["installTemplate", this.handleInstallTemplate.bind(this)],
       ["uninstallTemplate", this.handleUninstallTemplate.bind(this)],
@@ -109,6 +110,12 @@ export class NexkitPanelMessageHandler {
     await vscode.commands.executeCommand(Commands.INIT_WORKSPACE);
     this.sendWorkspaceState();
     this.sendInstalledTemplates();
+  }
+
+  private async handleDismissInitWorkspace(message: WebviewMessage): Promise<void> {
+    this.trackWebviewAction("dismissInitWorkspace");
+    await SettingsManager.setWorkspaceInitPromptDismissed(true);
+    this.sendWorkspaceState();
   }
 
   private async handleGetTemplateData(message: WebviewMessage): Promise<void> {
@@ -298,6 +305,7 @@ export class NexkitPanelMessageHandler {
   private sendWorkspaceState(): void {
     const hasWorkspace = (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
     const isInitialized = SettingsManager.isWorkspaceInitialized();
+    const isInitRefused = SettingsManager.isWorkspaceInitPromptDismissed();
     const mode = SettingsManager.getMode();
     const deployMode = SettingsManager.getTemplateDeployMode();
     const workspaceOverrideActive = SettingsManager.isWorkspaceOverrideActive();
@@ -306,6 +314,7 @@ export class NexkitPanelMessageHandler {
       command: "workspaceStateUpdate",
       hasWorkspace,
       isInitialized,
+      isInitRefused,
       mode,
       deployMode,
       workspaceOverrideActive,
