@@ -1,3 +1,11 @@
+## 3.10.0-beta.7 (2026-06-04)
+
+* fix(initialization): handle git worktree `.git` file in GitExcludeConfigDeployer (#170) ([cee818e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/cee818e)), closes [#170](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/170)
+* Merge branch 'agents/exclude-nexkit-files-info-exclude' into develop ([d688955](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/d688955))
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([56885e1](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/56885e1))
+* feat(initialization): use .git/info/exclude instead of .gitignore for NexKit files ([844d570](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/844d570))
+* docs(squad): add orchestration logs for round 2 and issue #163 ([ff95e64](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ff95e64)), closes [#163](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/163) [#163](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/163)
+
 ## 3.10.0-beta.6 (2026-06-03)
 
 * feat(config): add ConfirmationService with Accept/Refuse/Refuse-Forever dialog (#168) ([4b957a3](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4b957a3)), closes [#168](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/168) [#163](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/163) [#162](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/162) [#162](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/162)
