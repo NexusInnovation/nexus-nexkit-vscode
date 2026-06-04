@@ -1,41 +1,72 @@
-# Exclude development and tooling files; keep build output and runtime dependencies by default
+# Exclude everything that is not needed at runtime.
+# esbuild bundles all source + dependencies into out/extension.js and out/webview.js,
+# so node_modules and tsc-compiled output are never needed in the VSIX.
 
-# Editor and workspace settings
+# ── Editor / workspace ────────────────────────────────────────────────────────
 .vscode/**
 .vscode-test/**
+*.code-workspace
 
-# Git and CI metadata
+# ── Version control & CI ──────────────────────────────────────────────────────
 .git/**
 .gitignore
 .gitattributes
 .github/**
 
-# Source and tests (compiled output in out/** is what we ship)
+# ── Source (bundled by esbuild — not needed in VSIX) ─────────────────────────
 src/**
 test/**
 tests/**
 coverage/**
 
-# TypeScript sources and maps (exclude if present; use compiled JS instead)
+# ── TypeScript artefacts ──────────────────────────────────────────────────────
 **/*.ts
 **/*.tsx
 **/*.map
 **/*.tsbuildinfo
-
-# Common local tooling / configuration files
-.eslintrc*
-.prettierrc*
 tsconfig*.json
-jest.config.*
-webpack.config.*
-rollup.config.*
 
-# Logs and temporary files
+# ── tsc-compiled output (superseded by esbuild bundles) ──────────────────────
+# Keep: out/extension.js, out/webview.js, out/webview/** (static assets)
+out/src/**
+out/test/**
+
+# ── Node modules (all deps are bundled by esbuild) ───────────────────────────
+node_modules/**
+
+# ── Build / release tooling ───────────────────────────────────────────────────
+esbuild.config.js
+.releaserc.json
+.commitlintrc.cjs
+commitlint.config.js
+eslint.config.mjs
+.prettierrc
+.nycrc.json
+lefthook.yml
+.env.template
+.mcp.json
+
+# ── Documentation & misc dev files ───────────────────────────────────────────
+docs/**
+presentation/**
+scripts/**
+infrastructure/**
+AGENTS.md
+CHANGELOG.md
+CUSTOM-LAYOUT-CONFIGURATION.md
+
+# ── AI team / squad files ─────────────────────────────────────────────────────
+.squad/**
+
+# ── Test runner config ────────────────────────────────────────────────────────
+.vscode-test.mjs
+
+# ── Logs and temporary files ──────────────────────────────────────────────────
 npm-debug.log*
 yarn-error.log*
 *.log
 *.tmp
+*.txt
 
-# Note: We intentionally do NOT ignore out/** or node_modules/**
-# so that all compiled extension code and its runtime dependencies
-# are included in the packaged VSIX.
+# ── Already-packaged artefacts ────────────────────────────────────────────────
+*.vsix
