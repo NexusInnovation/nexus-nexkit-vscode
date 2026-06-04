@@ -1,8 +1,76 @@
-## 3.9.0 (2026-05-07)
+## 3.10.0-beta.6 (2026-06-03)
 
-* Refactor settings structure and enhance hook configurations (#144) ([9575819](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9575819)), closes [#144](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/144) [#137](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/137)
-* feature(release): Refactor settings structure and enhance HooksConfigDeployer (#141) ([e3cd8b1](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/e3cd8b1)), closes [#141](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/141) [#137](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/137)
-* refactor(settings): Refactor settings structure and enhance hook configurations (#138) ([e42e8a3](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/e42e8a3)), closes [#138](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/138) [#137](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/137)
+* feat(config): add ConfirmationService with Accept/Refuse/Refuse-Forever dialog (#168) ([4b957a3](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4b957a3)), closes [#168](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/168) [#163](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/163) [#162](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/162) [#162](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/162)
+* feat(panel-ui): show InitializationBanner on all tabs until init done or refused (#167) ([a424cf3](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a424cf3)), closes [#167](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/167) [#164](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/164)
+
+## 3.10.0-beta.5 (2026-06-03)
+
+* feat: NexKit exclusions in .git/info/exclude (#165) ([aa59d03](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/aa59d03)), closes [#165](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/165)
+
+## 3.10.0-beta.4 (2026-06-03)
+
+* fix(test): use /tmp on macOS to avoid Unix socket path length limit (#166) ([6e6f87c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/6e6f87c)), closes [#166](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/166)
+* chore(vscode): clean up settings by removing chat/agent configs ([6fff3f5](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/6fff3f5))
+
+## 3.10.0-beta.3 (2026-06-02)
+
+* feat: add initial configuration for Azure DevOps and GitHub servers ([71812dc](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/71812dc))
+* Feat/nexkit invisible phase2 (#159) ([8655fd8](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8655fd8)), closes [#159](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/159) [#146](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/146) [#147](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/147) [#148](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/148) [#150](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/150) [#149](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/149) [#151](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/151) [#152](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/152) [#154](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/154) [#155](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/155) [#146](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/146) [#147](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/147) [#148](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/148) [#150](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/150) [#149](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/149) [#151](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/151) [#152](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/152) [#154](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/154) [#155](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/155)
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([50a3158](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/50a3158))
+* Remove obsolete workflow files for testarch-trace and update source tree documentation ([bfa5aaa](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/bfa5aaa))
+* chore: add NexKit configuration ([0491a0f](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/0491a0f))
+* chore(core): Remove all BMad and Squad references ([dcf6b8b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/dcf6b8b))
+* ci(workflows): refactor CI/CD pipeline and integrate commit message validation (#161) ([d868a7a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/d868a7a)), closes [#161](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/161)
+* docs(architecture): add architecture documentation for Nexkit extension (#136) ([8c02f4d](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8c02f4d)), closes [#136](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/136)
+
+## 3.10.0-beta.2 (2026-05-08)
+
+* feat(workspace): remove unused function task and add workspace configuration ([616e837](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/616e837))
+* feat!(core): Feature/invisible nexkit (#158) ([5fc1be4](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/5fc1be4)), closes [#158](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/158)
+* feat!(major):  Feature/invisible nexkit (#157) ([85ebc44](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/85ebc44)), closes [#157](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/157)
+
+## 3.10.0-beta.1 (2026-05-07)
+
+* Clarify and preserve project-level `copilot-instructions.md` handling during Nexkit initialization ( ([a2a8df0](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a2a8df0)), closes [#156](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/156)
+* Fix semantic-release parsing gap so `main` pushes create releases (#143) ([b8ef2bd](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/b8ef2bd)), closes [#143](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/143)
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([938f3fd](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/938f3fd))
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([ff23688](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ff23688))
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([cc7f1d4](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/cc7f1d4))
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([43e469b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/43e469b))
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([df87d83](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/df87d83))
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([c3cece9](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c3cece9))
+* Merge branch 'main' into develop ([b571b56](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/b571b56))
+* Merge branch 'main' into develop ([d596dbe](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/d596dbe))
+* Merge branch 'main' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([db619ae](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/db619ae))
+* feat(copilot-skills): add initial collaboration, error recovery, and git workflow skills ([26e5d20](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/26e5d20))
+* feat(initialization): add HooksConfigDeployer and enhance pre-commit/pre-push hooks (#137) ([d84dddb](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/d84dddb)), closes [#137](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/137)
+* feat(squad): add agent charters and histories for team roles; update casting policies and registry ([3f7a05a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3f7a05a))
+* feat(userdirectory): add user directory service for NexKit templates ([dc147eb](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/dc147eb))
+* chore(release): v3.7.0-beta.11 [skip ci] ([31aad58](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/31aad58))
+* chore(release): v3.7.0-beta.12 [skip ci] ([56bc6bd](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/56bc6bd))
+* chore(release): v3.7.0-beta.13 [skip ci] ([a9c4ca6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a9c4ca6))
+* chore(release): v3.9.0-beta.1 [skip ci] ([6ffd921](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/6ffd921))
+* chore(release): v3.9.0-beta.2 [skip ci] ([139b3d5](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/139b3d5))
+* chore(release): v3.9.0-beta.3 [skip ci] ([bb1f9e5](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/bb1f9e5))
+* chore(release): v3.9.0-beta.4 [skip ci] ([a1004ec](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a1004ec))
+* fix(ci): prevent `Comment on PR` step from running outside PR context (#140) ([e735419](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/e735419)), closes [#140](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/140)
+* fix(merge): Merge branch 'main' into develop (#139) ([f7a64bf](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/f7a64bf)), closes [#139](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/139)
+* fix(output): remove codebase exploration summary file ([9f0da06](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9f0da06))
+* fix(settings): Add newline at end of settings.json file ([d1f62fb](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/d1f62fb))
+* fix(settings): correct key name and format JSON files ([183bd40](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/183bd40))
+* docs(project-context): add project context file for AI agents ([64a4824](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/64a4824))
+* refactor(vscode-settings): update settings structure and remove artifact index ([e94cf98](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/e94cf98))
+
+## 3.9.0-beta.4 (2026-05-07)
+
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([ff23688](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ff23688))
+* feat(copilot-skills): add initial collaboration, error recovery, and git workflow skills ([26e5d20](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/26e5d20))
+
+## 3.9.0-beta.3 (2026-05-07)
+
+* Fix semantic-release parsing gap so `main` pushes create releases (#143) ([b8ef2bd](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/b8ef2bd)), closes [#143](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/143)
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([cc7f1d4](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/cc7f1d4))
+* fix(settings): Add newline at end of settings.json file ([d1f62fb](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/d1f62fb))
 
 ## 3.9.0-beta.2 (2026-05-07)
 

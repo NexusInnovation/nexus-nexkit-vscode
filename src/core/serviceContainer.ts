@@ -1,13 +1,14 @@
 import * as vscode from "vscode";
 import { LoggingService } from "../shared/services/loggingService";
 import { TelemetryService } from "../shared/services/telemetryService";
+import { ConfirmationService } from "../shared/services/confirmationService";
 import { MCPConfigService } from "../features/mcp-management/mcpConfigService";
 import { AITemplateDataService } from "../features/ai-template-files/services/aiTemplateDataService";
 import { TemplateMetadataService } from "../features/ai-template-files/services/templateMetadataService";
 import { UpdateStatusBarService } from "../features/extension-updates/updateStatusBarService";
 import { GitHubTemplateBackupService } from "../features/backup-management/backupService";
 import { ExtensionUpdateService } from "../features/extension-updates/extensionUpdateService";
-import { GitIgnoreConfigDeployer } from "../features/initialization/gitIgnoreConfigDeployer";
+import { GitExcludeConfigDeployer } from "../features/initialization/gitExcludeConfigDeployer";
 import { MCPConfigDeployer } from "../features/initialization/mcpConfigDeployer";
 import { RecommendedExtensionsConfigDeployer } from "../features/initialization/recommendedExtensionsConfigDeployer";
 import { RecommendedSettingsConfigDeployer } from "../features/initialization/recommendedSettingsConfigDeployer";
@@ -27,6 +28,8 @@ import { StartupVerificationService } from "../features/initialization/startupVe
 import { NexkitFileWatcherService } from "../features/nexkit-file-watcher/nexkitFileWatcherService";
 import { GitHubWorkflowRunnerService } from "../features/github-workflow-runner/githubWorkflowRunnerService";
 import { HooksConfigDeployer } from "../features/initialization/hooksConfigDeployer";
+import { UserDirectoryService } from "../features/ai-template-files/services/userDirectoryService";
+import { WorkspaceToUserMigrationService } from "../features/initialization/workspaceToUserMigrationService";
 
 /**
  * Service container for dependency injection
@@ -35,6 +38,7 @@ import { HooksConfigDeployer } from "../features/initialization/hooksConfigDeplo
 export interface ServiceContainer {
   logging: LoggingService;
   telemetry: TelemetryService;
+  confirmation: ConfirmationService;
   mcpConfig: MCPConfigService;
   aiTemplateData: AITemplateDataService;
   templateMetadata: TemplateMetadataService;
@@ -42,7 +46,7 @@ export interface ServiceContainer {
   updateStatusBar: UpdateStatusBarService;
   extensionUpdate: ExtensionUpdateService;
   backup: GitHubTemplateBackupService;
-  gitIgnoreConfigDeployer: GitIgnoreConfigDeployer;
+  gitExcludeConfigDeployer: GitExcludeConfigDeployer;
   mcpConfigDeployer: MCPConfigDeployer;
   recommendedExtensionsConfigDeployer: RecommendedExtensionsConfigDeployer;
   recommendedSettingsConfigDeployer: RecommendedSettingsConfigDeployer;
@@ -61,6 +65,8 @@ export interface ServiceContainer {
   startupVerification: StartupVerificationService;
   nexkitFileWatcher: NexkitFileWatcherService;
   githubWorkflowRunner: GitHubWorkflowRunnerService;
+  userDirectory: UserDirectoryService;
+  workspaceToUserMigration: WorkspaceToUserMigrationService;
 }
 
 /**
@@ -78,16 +84,18 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
 
   // Initialize other services
   const extensionUpdate = new ExtensionUpdateService();
-  const mcpConfig = new MCPConfigService();
-  const installedTemplatesState = new InstalledTemplatesStateManager(context);
-  const aiTemplateData = new AITemplateDataService(installedTemplatesState);
+  const confirmation = new ConfirmationService();
+  const mcpConfig = new MCPConfigService(confirmation);
+  const userDirectory = new UserDirectoryService();
+  const installedTemplatesState = new InstalledTemplatesStateManager(context, userDirectory);
+  const aiTemplateData = new AITemplateDataService(installedTemplatesState, userDirectory);
   const templateMetadata = new TemplateMetadataService(aiTemplateData.getRepositoryManager());
-  const backup = new GitHubTemplateBackupService();
+  const backup = new GitHubTemplateBackupService(userDirectory);
   const updateStatusBar = new UpdateStatusBarService(context, extensionUpdate);
-  const gitIgnoreConfigDeployer = new GitIgnoreConfigDeployer();
-  const mcpConfigDeployer = new MCPConfigDeployer();
+  const gitExcludeConfigDeployer = new GitExcludeConfigDeployer();
+  const mcpConfigDeployer = new MCPConfigDeployer(confirmation);
   const recommendedExtensionsConfigDeployer = new RecommendedExtensionsConfigDeployer();
-  const recommendedSettingsConfigDeployer = new RecommendedSettingsConfigDeployer();
+  const recommendedSettingsConfigDeployer = new RecommendedSettingsConfigDeployer(userDirectory, confirmation);
   const aiTemplateFilesDeployer = new AITemplateFilesDeployer(aiTemplateData);
   const workspaceInitPrompt = new WorkspaceInitPromptService();
   const modeSelectionPrompt = new ModeSelectionPromptService(telemetry);
@@ -99,9 +107,9 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const commitMessage = new CommitMessageService();
   const templateMetadataScanner = new TemplateMetadataScannerService(templateMetadata, aiTemplateData);
   const githubAuthPrompt = new GitHubAuthPromptService();
-  const hooksConfigDeployer = new HooksConfigDeployer();
+  const hooksConfigDeployer = new HooksConfigDeployer(userDirectory);
   const startupVerification = new StartupVerificationService(
-    gitIgnoreConfigDeployer,
+    gitExcludeConfigDeployer,
     recommendedSettingsConfigDeployer,
     hooksConfigDeployer,
     nexkitFileMigration,
@@ -109,6 +117,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   );
   const nexkitFileWatcher = NexkitFileWatcherService.getInstance();
   const githubWorkflowRunner = new GitHubWorkflowRunnerService(context.extensionUri);
+  const workspaceToUserMigration = new WorkspaceToUserMigrationService(userDirectory, backup);
 
   // Register for disposal
   context.subscriptions.push(logging);
@@ -123,6 +132,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   return {
     logging,
     telemetry,
+    confirmation,
     mcpConfig,
     aiTemplateData,
     templateMetadata,
@@ -130,7 +140,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     updateStatusBar,
     extensionUpdate,
     backup,
-    gitIgnoreConfigDeployer,
+    gitExcludeConfigDeployer,
     mcpConfigDeployer,
     recommendedExtensionsConfigDeployer,
     recommendedSettingsConfigDeployer,
@@ -149,5 +159,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     startupVerification,
     nexkitFileWatcher,
     githubWorkflowRunner,
+    userDirectory,
+    workspaceToUserMigration,
   };
 }

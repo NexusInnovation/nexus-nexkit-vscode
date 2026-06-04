@@ -8,6 +8,7 @@ import { ProfileService } from "../../src/features/profile-management/services/p
 import { InstalledTemplatesStateManager } from "../../src/features/ai-template-files/services/installedTemplatesStateManager";
 import { AITemplateDataService } from "../../src/features/ai-template-files/services/aiTemplateDataService";
 import { GitHubTemplateBackupService } from "../../src/features/backup-management/backupService";
+import { UserDirectoryService } from "../../src/features/ai-template-files/services/userDirectoryService";
 import { SettingsManager } from "../../src/core/settingsManager";
 import { InstalledTemplateRecord } from "../../src/features/ai-template-files/models/installedTemplateRecord";
 
@@ -41,7 +42,7 @@ suite("Unit: Profile Change Detection - Template Comparison Logic", () => {
 
     stateManager = new InstalledTemplatesStateManager(mockContext);
     aiTemplateDataService = new AITemplateDataService(stateManager);
-    backupService = new GitHubTemplateBackupService();
+    backupService = new GitHubTemplateBackupService(new UserDirectoryService());
     profileService = new ProfileService(stateManager, aiTemplateDataService, backupService);
   });
 

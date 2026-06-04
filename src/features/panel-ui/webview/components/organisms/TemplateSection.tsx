@@ -28,7 +28,7 @@ export function TemplateSection() {
   const { isReady, repositories, installedTemplates, installTemplate, uninstallTemplate, isTemplateInstalled } = useTemplateData(
     OperationMode.Developers
   );
-  const { metadataScan, templates } = useAppState();
+  const { metadataScan, templates, workspace } = useAppState();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [filterMode, setFilterMode] = useFilterMode();
@@ -280,6 +280,12 @@ export function TemplateSection() {
                 </span>
               )}
             </div>
+          )}
+          {workspace.workspaceOverrideActive && (
+            <p class="source-indicator">
+              <i class="codicon codicon-info"></i>
+              Templates installed to: <strong>User directory</strong> + <strong>Workspace</strong>
+            </p>
           )}
           <div class="search-filter-row">
             <SearchBar

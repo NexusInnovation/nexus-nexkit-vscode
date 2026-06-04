@@ -15,7 +15,11 @@ async function main() {
 
     // Use isolated directories per run to avoid VS Code mutex/profile conflicts
     // (especially on Windows where a shared user-data-dir can cause failures).
-    const baseDir = fs.mkdtempSync(path.join(os.tmpdir(), "nexus-nexkit-vscode-test-"));
+    // On macOS, os.tmpdir() returns a long path like /var/folders/…/T which causes
+    // the VS Code IPC socket path to exceed the 103-character Unix socket limit.
+    // Use /tmp directly on macOS to keep the path short enough.
+    const tmpBase = process.platform === "darwin" ? "/tmp" : os.tmpdir();
+    const baseDir = fs.mkdtempSync(path.join(tmpBase, "nexus-nexkit-vscode-test-"));
     const userDataDir = path.join(baseDir, "user-data");
     const extensionsDir = path.join(baseDir, "extensions");
     const workspaceDir = path.join(baseDir, "workspace");

@@ -10,10 +10,6 @@
 .gitattributes
 .github/**
 
-# BMAD / project tooling artifacts (not needed at runtime)
-_bmad/**
-_bmad-output/**
-
 # Source and tests (compiled output in out/** is what we ship)
 src/**
 test/**

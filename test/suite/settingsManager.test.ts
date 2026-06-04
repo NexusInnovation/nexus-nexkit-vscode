@@ -5,6 +5,10 @@
 
 import * as assert from "assert";
 import * as vscode from "vscode";
+import * as sinon from "sinon";
+import * as fs from "fs";
+import * as path from "path";
+import * as os from "os";
 import { SettingsManager } from "../../src/core/settingsManager";
 
 suite("Unit: SettingsManager", () => {
@@ -192,5 +196,58 @@ suite("Unit: SettingsManager", () => {
     await SettingsManager.setFirstTimeUser(false);
     const isFirstTime = SettingsManager.isFirstTimeUser();
     assert.strictEqual(isFirstTime, false);
+  });
+});
+
+suite("Unit: SettingsManager — isWorkspaceOverrideActive", () => {
+  let sandbox: sinon.SinonSandbox;
+  let tempDir: string;
+
+  setup(() => {
+    sandbox = sinon.createSandbox();
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "nexkit-override-test-"));
+  });
+
+  teardown(() => {
+    sandbox.restore();
+    try {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    } catch {
+      // ignore
+    }
+  });
+
+  test("Should return true when deployMode is workspace", () => {
+    sandbox.stub(SettingsManager, "getTemplateDeployMode").returns("workspace");
+
+    assert.strictEqual(SettingsManager.isWorkspaceOverrideActive(), true);
+  });
+
+  test("Should return true when .nexkit/ directory exists in workspace root", () => {
+    sandbox.stub(SettingsManager, "getTemplateDeployMode").returns("user");
+
+    // Create .nexkit directory in tempDir
+    fs.mkdirSync(path.join(tempDir, ".nexkit"), { recursive: true });
+
+    // Mock workspace folder
+    sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: vscode.Uri.file(tempDir), name: "test", index: 0 }]);
+
+    assert.strictEqual(SettingsManager.isWorkspaceOverrideActive(), true);
+  });
+
+  test("Should return false when deployMode is user and no .nexkit/ exists", () => {
+    sandbox.stub(SettingsManager, "getTemplateDeployMode").returns("user");
+
+    // Mock workspace folder pointing to tempDir (no .nexkit/)
+    sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri: vscode.Uri.file(tempDir), name: "test", index: 0 }]);
+
+    assert.strictEqual(SettingsManager.isWorkspaceOverrideActive(), false);
+  });
+
+  test("Should return false when no workspace folder is open", () => {
+    sandbox.stub(SettingsManager, "getTemplateDeployMode").returns("user");
+    sandbox.stub(vscode.workspace, "workspaceFolders").value(undefined);
+
+    assert.strictEqual(SettingsManager.isWorkspaceOverrideActive(), false);
   });
 });

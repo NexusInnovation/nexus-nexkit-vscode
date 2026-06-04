@@ -13,7 +13,7 @@ export function ProfileSection() {
       {!isReady && <p class="loading">Loading profiles...</p>}
       {isReady && profiles.length === 0 && (
         <p class="empty-message">
-          No saved profiles yet. Save your current template configuration to quickly apply it to other workspaces.
+          No saved profiles yet. Save your current template configuration to quickly apply it to other projects.
         </p>
       )}
       {isReady && profiles.length > 0 && (

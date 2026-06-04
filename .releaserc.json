@@ -35,7 +35,7 @@
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "node -e \"require('fs').mkdirSync('sbom',{recursive:true})\" && npm version ${nextRelease.version} --no-git-tag-version && npm run package && npx @vscode/vsce package --out nexkit-vscode.vsix && npx @cyclonedx/cyclonedx-npm --output-file sbom/manifest.json --spec-version 1.5"
+        "prepareCmd": "node -e \"require('fs').mkdirSync('sbom',{recursive:true})\" && npm version ${nextRelease.version} --no-git-tag-version && npm run build:ci && npx @vscode/vsce package --out nexkit-vscode.vsix && npx @cyclonedx/cyclonedx-npm --output-file sbom/manifest.json --spec-version 1.5"
       }
     ],
     [
