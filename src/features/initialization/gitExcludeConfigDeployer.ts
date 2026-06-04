@@ -14,11 +14,25 @@ export class GitExcludeConfigDeployer {
    * Safe to call repeatedly — idempotent.
    */
   public async deployGitExclude(targetRoot: string): Promise<void> {
-    const gitDir = path.join(targetRoot, ".git");
+    const gitPath = path.join(targetRoot, ".git");
 
     // Skip silently if this is not a git repository
-    if (!(await fileExists(gitDir))) {
+    if (!(await fileExists(gitPath))) {
       return;
+    }
+
+    // Resolve the actual git directory — in a worktree, .git is a file like "gitdir: /path/to/real/gitdir"
+    const gitStat = await fs.promises.stat(gitPath);
+    let gitDir: string;
+    if (gitStat.isFile()) {
+      const content = await fs.promises.readFile(gitPath, "utf8");
+      const match = content.match(/^gitdir:\s*(.+)$/m);
+      if (!match) {
+        return;
+      }
+      gitDir = match[1].trim();
+    } else {
+      gitDir = gitPath;
     }
 
     const gitInfoDir = path.join(gitDir, "info");
