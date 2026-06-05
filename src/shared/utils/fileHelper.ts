@@ -15,9 +15,23 @@ export async function fileExists(filePath: string): Promise<boolean> {
 }
 
 /**
- * Get workspace root path
+ * Get workspace root path.
+ *
+ * When a multi-root `.code-workspace` file is open, the "workspace root" is
+ * the directory that contains the `.code-workspace` file — not the first
+ * folder listed inside it. `.nexkit/` and other workspace-level artefacts
+ * must always land here so that they are adjacent to the workspace file and
+ * at the true root of the project.
+ *
+ * For a plain single-folder workspace (no `.code-workspace` file) the first
+ * workspace folder is, by definition, the workspace root.
  */
 export function getWorkspaceRoot(): string {
+  const workspaceFile = vscode.workspace.workspaceFile;
+  if (workspaceFile && workspaceFile.scheme === "file") {
+    return path.dirname(workspaceFile.fsPath);
+  }
+
   const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
   if (!workspaceFolder) {
     throw new Error("No workspace folder open");

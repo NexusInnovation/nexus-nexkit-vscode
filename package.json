@@ -297,9 +297,9 @@
             "user",
             "workspace"
           ],
-          "default": "user",
+          "default": "workspace",
           "scope": "resource",
-          "description": "Where templates are deployed. 'user' installs to the user-level .nexkit directory (default). 'workspace' installs to .nexkit/ in the current workspace for project-specific overrides."
+          "description": "Where templates are deployed. 'workspace' installs to .nexkit/ in the current workspace (default). 'user' installs to the user-level .nexkit directory for backward compatibility."
         },
         "nexkit.mcpSetup.dismissed": {
           "type": "boolean",

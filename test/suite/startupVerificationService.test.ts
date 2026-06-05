@@ -21,7 +21,6 @@ import { HooksConfigDeployer } from "../../src/features/initialization/hooksConf
 import { GitHubAuthPromptService } from "../../src/features/initialization/githubAuthPromptService";
 import { UserDirectoryService } from "../../src/features/ai-template-files/services/userDirectoryService";
 import { SettingsManager } from "../../src/core/settingsManager";
-import { ConfirmationService } from "../../src/shared/services/confirmationService";
 
 suite("Unit: StartupVerificationService", () => {
   let service: StartupVerificationService;
@@ -49,15 +48,10 @@ suite("Unit: StartupVerificationService", () => {
       hooks: "/tmp/.nexkit/hooks",
       chatmodes: "/tmp/.nexkit/chatmodes",
     });
-    const mockConfirmation = sandbox.createStubInstance(ConfirmationService);
-    mockConfirmation.confirm.resolves("accepted");
-    settingsDeployer = new RecommendedSettingsConfigDeployer(mockUserDirectory as any, mockConfirmation as any);
+    settingsDeployer = new RecommendedSettingsConfigDeployer(mockUserDirectory as any);
     hooksConfigDeployer = new HooksConfigDeployer(mockUserDirectory as any);
     migrationService = new NexkitFileMigrationService();
     authPromptService = new GitHubAuthPromptService();
-
-    // Default to workspace mode for existing tests
-    sandbox.stub(SettingsManager, "isUserDeployMode").returns(false);
 
     service = new StartupVerificationService(
       gitExcludeDeployer,
@@ -81,7 +75,7 @@ suite("Unit: StartupVerificationService", () => {
     assert.ok(service);
   });
 
-  test("verifyWorkspaceConfiguration should write .nexkit/ to .git/info/exclude in workspace mode", async () => {
+  test("verifyWorkspaceConfiguration should write .nexkit/ to .git/info/exclude", async () => {
     await service.verifyWorkspaceConfiguration(tempDir);
 
     const excludePath = path.join(tempDir, ".git", "info", "exclude");
@@ -101,17 +95,15 @@ suite("Unit: StartupVerificationService", () => {
     assert.ok(content.includes("node_modules/"), "Unrelated .gitignore entries should be preserved");
   });
 
-  test("verifyWorkspaceConfiguration should skip git exclude in user mode", async () => {
-    (SettingsManager.isUserDeployMode as sinon.SinonStub).returns(true);
+  test("verifyWorkspaceConfiguration should write git exclude even when deploy mode is user", async () => {
+    sandbox.stub(SettingsManager, "isUserDeployMode").returns(true);
 
     await service.verifyWorkspaceConfiguration(tempDir);
 
     const excludePath = path.join(tempDir, ".git", "info", "exclude");
-    const excludeExists = fs.existsSync(excludePath);
-    if (excludeExists) {
-      const content = fs.readFileSync(excludePath, "utf8");
-      assert.ok(!content.includes(".nexkit/"), "Should not write .nexkit/ to .git/info/exclude in user mode");
-    }
+    assert.ok(fs.existsSync(excludePath));
+    const content = fs.readFileSync(excludePath, "utf8");
+    assert.ok(content.includes(".nexkit/"), "Should always write .nexkit/ to .git/info/exclude");
   });
 
   test("verifyWorkspaceConfiguration should deploy settings to user-level", async () => {

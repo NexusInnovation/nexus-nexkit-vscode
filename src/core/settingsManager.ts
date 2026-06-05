@@ -189,7 +189,9 @@ export class SettingsManager {
   }
 
   static getTemplateDeployMode(): "user" | "workspace" {
-    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<"user" | "workspace">(this.TEMPLATES_DEPLOY_MODE, "user");
+    return vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .get<"user" | "workspace">(this.TEMPLATES_DEPLOY_MODE, "workspace");
   }
 
   static isUserDeployMode(): boolean {
@@ -205,15 +207,21 @@ export class SettingsManager {
     if (this.getTemplateDeployMode() === "workspace") {
       return true;
     }
-    // Auto-detect: check if a .nexkit/ directory exists in the workspace
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) {
-      return false;
-    }
+    // Auto-detect: check if a .nexkit/ directory exists at the workspace root
     try {
       const fs = require("fs");
       const path = require("path");
-      const nexkitPath = path.join(workspaceFolder.uri.fsPath, ".nexkit");
+      const workspaceFile = vscode.workspace.workspaceFile;
+      let root: string | undefined;
+      if (workspaceFile && workspaceFile.scheme === "file") {
+        root = path.dirname(workspaceFile.fsPath);
+      } else {
+        root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+      }
+      if (!root) {
+        return false;
+      }
+      const nexkitPath = path.join(root, ".nexkit");
       return fs.existsSync(nexkitPath) && fs.statSync(nexkitPath).isDirectory();
     } catch {
       return false;

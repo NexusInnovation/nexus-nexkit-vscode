@@ -61,14 +61,6 @@ export async function activate(context: vscode.ExtensionContext) {
   const nexkitPanelProvider = new NexkitPanelViewProvider();
   nexkitPanelProvider.initialize(context, services);
 
-  // Prompt for mode selection on first-time activation (before other initialization)
-  services.modeSelection.ensureModeSelected().catch((error) => {
-    services.logging.error("Failed to prompt for mode selection", error);
-    services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
-      context: "modeSelection.ensureModeSelected",
-    });
-  });
-
   // Check for extension updates on activation & cleanup old .vsix files
   services.extensionUpdate.checkForExtensionUpdatesOnActivation();
   services.extensionUpdate.cleanupOldVsixFilesOnActivation();
@@ -78,9 +70,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Check for required MCP servers on activation
   services.mcpConfig.promptInstallRequiredMCPsOnActivation();
-
-  // Prompt for workspace initialization if needed
-  services.workspaceInitPrompt.promptInitWorkspaceOnWorkspaceChange();
 
   // Run startup verification checks (settings, gitignore, file migration, auth)
   services.startupVerification.verifyOnStartup().catch((error) => {
@@ -132,12 +121,6 @@ export async function activate(context: vscode.ExtensionContext) {
   // Periodically check remote GitHub repos for new commits and auto-refresh templates
   services.aiTemplateData.setupRemoteAutoRefresh();
 
-  // Propose to initialize workspace when changed
-  context.subscriptions.push(
-    vscode.workspace.onDidChangeWorkspaceFolders(() => {
-      services.workspaceInitPrompt.promptInitWorkspaceOnWorkspaceChange();
-    })
-  );
 }
 
 /**

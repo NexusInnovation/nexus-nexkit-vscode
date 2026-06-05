@@ -14,7 +14,6 @@ import * as sinon from "sinon";
 import * as vscode from "vscode";
 import { UserDirectoryService } from "../../src/features/ai-template-files/services/userDirectoryService";
 import { TemplateFileOperations } from "../../src/features/ai-template-files/services/templateFileOperations";
-import { ConfirmationService } from "../../src/shared/services/confirmationService";
 import { RecommendedSettingsConfigDeployer } from "../../src/features/initialization/recommendedSettingsConfigDeployer";
 import { SettingsManager } from "../../src/core/settingsManager";
 
@@ -85,21 +84,18 @@ suite("Integration: User Directory Deployment Flow", () => {
       };
       sandbox.stub(vscode.workspace, "getConfiguration").returns(fakeConfig as any);
 
-      const mockConf = sandbox.createStubInstance(ConfirmationService);
-      mockConf.confirm.resolves("accepted");
-      const deployer = new RecommendedSettingsConfigDeployer(userDirectoryService, mockConf as any);
+      const deployer = new RecommendedSettingsConfigDeployer(userDirectoryService);
       await deployer.deployVscodeSettings(tempDir);
 
-      // Verify absolute paths from UserDirectoryService are used in user-level settings
+      // Verify workspace-relative paths are registered and user-level paths remain for compatibility
       const agentCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "agentFilesLocations");
       assert.ok(agentCall, "Should write agentFilesLocations setting");
 
-      const agentPaths = agentCall.args[1];
-      const expectedAgentPath = userDirectoryService.getAbsoluteTemplateLocations()["agents"];
-      // The setting value should be an object with the absolute path as key
+      const agentPaths = agentCall.args[1] as Record<string, boolean>;
+      assert.strictEqual(agentPaths[".nexkit/agents"], true, "Workspace-relative agent path should be present");
       assert.ok(
-        Object.keys(agentPaths).some((k: string) => k.includes(".nexkit") && k.includes("agents")),
-        `Agent path should contain .nexkit/agents, got: ${JSON.stringify(agentPaths)}`
+        Object.keys(agentPaths).some((k: string) => k.includes(".nexkit") && k.includes("agents") && k !== ".nexkit/agents"),
+        `Legacy user-level compatibility path should still be present, got: ${JSON.stringify(agentPaths)}`
       );
       assert.strictEqual(agentCall.args[2], vscode.ConfigurationTarget.Global, "Should target Global scope");
     });

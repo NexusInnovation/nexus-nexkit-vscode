@@ -6,6 +6,7 @@ import { GitHubTemplateBackupService } from "../../backup-management/backupServi
 import { SettingsManager } from "../../../core/settingsManager";
 import { AITemplateFile } from "../../ai-template-files/models/aiTemplateFile";
 import { InstalledTemplateRecord } from "../../ai-template-files/models/installedTemplateRecord";
+import { getWorkspaceRoot } from "../../../shared/utils/fileHelper";
 
 /**
  * Service for managing template profiles
@@ -92,7 +93,7 @@ export class ProfileService {
     }
 
     // Backup and delete existing template folders before applying profile
-    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    const workspaceRoot = getWorkspaceRoot();
     if (!workspaceRoot) {
       throw new Error("No workspace folder found");
     }

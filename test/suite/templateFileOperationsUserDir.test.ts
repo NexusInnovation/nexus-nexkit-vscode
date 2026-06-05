@@ -6,7 +6,6 @@ import * as assert from "assert";
 import * as sinon from "sinon";
 import * as path from "path";
 import { TemplateFileOperations } from "../../src/features/ai-template-files/services/templateFileOperations";
-import { InstalledTemplatesStateManager } from "../../src/features/ai-template-files/services/installedTemplatesStateManager";
 import { UserDirectoryService } from "../../src/features/ai-template-files/services/userDirectoryService";
 import { SettingsManager } from "../../src/core/settingsManager";
 
@@ -76,12 +75,14 @@ suite("Unit: TemplateFileOperations User Directory Mode", () => {
     assert.strictEqual(result, path.join("C:\\workspace\\project", ".nexkit"));
   });
 
-  test("getTemplateInstallPath defaults to user mode", () => {
-    // SettingsManager returns 'user' by default per package.json configuration
-    sandbox.stub(SettingsManager, "getTemplateDeployMode").returns("user");
-    sandbox.stub(SettingsManager, "isUserDeployMode").returns(true);
+  test("getTemplateInstallPath defaults to workspace mode", () => {
+    // SettingsManager returns 'workspace' by default per package.json configuration
+    sandbox.stub(SettingsManager, "getTemplateDeployMode").returns("workspace");
+    sandbox.stub(SettingsManager, "isUserDeployMode").returns(false);
+    const fileHelper = require("../../src/shared/utils/fileHelper");
+    sandbox.stub(fileHelper, "getWorkspaceRoot").returns("C:\\workspace\\project");
 
     const result = fileOps.getTemplateInstallPath();
-    assert.strictEqual(result, FAKE_USER_ROOT);
+    assert.strictEqual(result, path.join("C:\\workspace\\project", ".nexkit"));
   });
 });

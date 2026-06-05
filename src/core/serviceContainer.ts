@@ -95,7 +95,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const gitExcludeConfigDeployer = new GitExcludeConfigDeployer();
   const mcpConfigDeployer = new MCPConfigDeployer(confirmation);
   const recommendedExtensionsConfigDeployer = new RecommendedExtensionsConfigDeployer();
-  const recommendedSettingsConfigDeployer = new RecommendedSettingsConfigDeployer(userDirectory, confirmation);
+  const recommendedSettingsConfigDeployer = new RecommendedSettingsConfigDeployer(userDirectory);
   const aiTemplateFilesDeployer = new AITemplateFilesDeployer(aiTemplateData);
   const workspaceInitPrompt = new WorkspaceInitPromptService();
   const modeSelectionPrompt = new ModeSelectionPromptService(telemetry);

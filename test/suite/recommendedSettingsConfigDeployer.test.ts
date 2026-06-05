@@ -13,14 +13,12 @@ import * as sinon from "sinon";
 import { RecommendedSettingsConfigDeployer } from "../../src/features/initialization/recommendedSettingsConfigDeployer";
 import { UserDirectoryService } from "../../src/features/ai-template-files/services/userDirectoryService";
 import { SettingsManager } from "../../src/core/settingsManager";
-import { ConfirmationService } from "../../src/shared/services/confirmationService";
 
 suite("Unit: RecommendedSettingsConfigDeployer", () => {
   let deployer: RecommendedSettingsConfigDeployer;
   let tempDir: string;
   let sandbox: sinon.SinonSandbox;
   let mockUserDirectory: sinon.SinonStubbedInstance<UserDirectoryService>;
-  let mockConfirmation: sinon.SinonStubbedInstance<ConfirmationService>;
   let updateStub: sinon.SinonStub;
   let inspectStub: sinon.SinonStub;
 
@@ -44,10 +42,6 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     mockUserDirectory = sandbox.createStubInstance(UserDirectoryService);
     mockUserDirectory.getAbsoluteTemplateLocations.returns(fakeLocations);
 
-    // Mock ConfirmationService — default to accepted so existing tests pass unchanged
-    mockConfirmation = sandbox.createStubInstance(ConfirmationService);
-    mockConfirmation.confirm.resolves("accepted");
-
     // Mock vscode.workspace.getConfiguration
     updateStub = sandbox.stub().resolves();
     inspectStub = sandbox.stub().returns({ globalValue: undefined });
@@ -60,7 +54,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     };
     sandbox.stub(vscode.workspace, "getConfiguration").returns(fakeConfig as any);
 
-    deployer = new RecommendedSettingsConfigDeployer(mockUserDirectory as any, mockConfirmation as any);
+    deployer = new RecommendedSettingsConfigDeployer(mockUserDirectory as any);
   });
 
   teardown(async () => {
@@ -76,22 +70,28 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     assert.ok(deployer);
   });
 
-  test("Should write all chat location settings to user-level (Global) scope", async () => {
+  test("Should write workspace-relative chat location settings to user-level (Global) scope", async () => {
     await deployer.deployVscodeSettings(tempDir);
 
     // Should call update for each chat location setting + useHooks
     const updateCalls = updateStub.getCalls();
 
-    // Verify agentFilesLocations uses ~/ relative path
+    // Verify agentFilesLocations includes workspace-relative path and legacy user path
     const agentCall = updateCalls.find((c: sinon.SinonSpyCall) => c.args[0] === "agentFilesLocations");
     assert.ok(agentCall, "Should update agentFilesLocations");
-    assert.deepStrictEqual(agentCall.args[1], { "~/AppData/Roaming/Code/User/.nexkit/agents": true });
+    assert.deepStrictEqual(agentCall.args[1], {
+      "~/AppData/Roaming/Code/User/.nexkit/agents": true,
+      ".nexkit/agents": true,
+    });
     assert.strictEqual(agentCall.args[2], vscode.ConfigurationTarget.Global);
 
-    // Verify promptFilesLocations uses ~/ relative path
+    // Verify promptFilesLocations includes workspace-relative path and legacy user path
     const promptCall = updateCalls.find((c: sinon.SinonSpyCall) => c.args[0] === "promptFilesLocations");
     assert.ok(promptCall, "Should update promptFilesLocations");
-    assert.deepStrictEqual(promptCall.args[1], { "~/AppData/Roaming/Code/User/.nexkit/prompts": true });
+    assert.deepStrictEqual(promptCall.args[1], {
+      "~/AppData/Roaming/Code/User/.nexkit/prompts": true,
+      ".nexkit/prompts": true,
+    });
     assert.strictEqual(promptCall.args[2], vscode.ConfigurationTarget.Global);
 
     // Verify useHooks
@@ -115,9 +115,10 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     const promptCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "promptFilesLocations");
     assert.ok(promptCall, "Should update promptFilesLocations");
 
-    // Should contain both the existing custom entry and the nexkit ~/ entry
+    // Should contain the existing custom entry, the workspace-relative entry, and the legacy nexkit ~/ entry
     assert.strictEqual(promptCall.args[1]["custom/my-prompts"], true);
     assert.strictEqual(promptCall.args[1]["~/AppData/Roaming/Code/User/.nexkit/prompts"], true);
+    assert.strictEqual(promptCall.args[1][".nexkit/prompts"], true);
   });
 
   test("Should not update useHooks if already set to true at user-level", async () => {
@@ -226,12 +227,11 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
   });
 });
 
-suite("Unit: RecommendedSettingsConfigDeployer — Workspace Override (Layering)", () => {
+suite("Unit: RecommendedSettingsConfigDeployer — Workspace Paths", () => {
   let deployer: RecommendedSettingsConfigDeployer;
   let tempDir: string;
   let sandbox: sinon.SinonSandbox;
   let mockUserDirectory: sinon.SinonStubbedInstance<UserDirectoryService>;
-  let mockConfirmation: sinon.SinonStubbedInstance<ConfirmationService>;
   let updateStub: sinon.SinonStub;
   let inspectStub: sinon.SinonStub;
 
@@ -255,10 +255,6 @@ suite("Unit: RecommendedSettingsConfigDeployer — Workspace Override (Layering)
     mockUserDirectory = sandbox.createStubInstance(UserDirectoryService);
     mockUserDirectory.getAbsoluteTemplateLocations.returns(fakeLocations);
 
-    // Mock ConfirmationService — default to accepted
-    mockConfirmation = sandbox.createStubInstance(ConfirmationService);
-    mockConfirmation.confirm.resolves("accepted");
-
     // Mock vscode.workspace.getConfiguration
     updateStub = sandbox.stub().resolves();
     inspectStub = sandbox.stub().returns({ globalValue: undefined });
@@ -271,7 +267,7 @@ suite("Unit: RecommendedSettingsConfigDeployer — Workspace Override (Layering)
     };
     sandbox.stub(vscode.workspace, "getConfiguration").returns(fakeConfig as any);
 
-    deployer = new RecommendedSettingsConfigDeployer(mockUserDirectory as any, mockConfirmation as any);
+    deployer = new RecommendedSettingsConfigDeployer(mockUserDirectory as any);
   });
 
   teardown(async () => {
@@ -283,9 +279,7 @@ suite("Unit: RecommendedSettingsConfigDeployer — Workspace Override (Layering)
     }
   });
 
-  test("Should add relative workspace paths alongside ~/ user paths when workspace override is active", async () => {
-    sandbox.stub(SettingsManager, "isWorkspaceOverrideActive").returns(true);
-
+  test("Should add relative workspace paths alongside ~/ user paths", async () => {
     await deployer.deployVscodeSettings(tempDir);
 
     const agentCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "agentFilesLocations");
@@ -297,8 +291,8 @@ suite("Unit: RecommendedSettingsConfigDeployer — Workspace Override (Layering)
     assert.strictEqual(locations[".nexkit/agents"], true, "Relative workspace path should be present");
   });
 
-  test("Should NOT add workspace paths when workspace override is not active", async () => {
-    sandbox.stub(SettingsManager, "isWorkspaceOverrideActive").returns(false);
+  test("Should always add workspace paths even if deploy mode remains user", async () => {
+    sandbox.stub(SettingsManager, "getTemplateDeployMode").returns("user");
 
     await deployer.deployVscodeSettings(tempDir);
 
@@ -306,14 +300,11 @@ suite("Unit: RecommendedSettingsConfigDeployer — Workspace Override (Layering)
     assert.ok(agentCall, "Should update agentFilesLocations");
 
     const locations = agentCall.args[1] as Record<string, boolean>;
-    // Should only have user-level ~/ path
     assert.strictEqual(locations["~/AppData/Roaming/Code/User/.nexkit/agents"], true, "User ~/ path should be present");
-    assert.strictEqual(locations[".nexkit/agents"], undefined, "Workspace path should NOT be present");
+    assert.strictEqual(locations[".nexkit/agents"], true, "Workspace path should always be present");
   });
 
-  test("Should add relative workspace paths for all template types when override is active", async () => {
-    sandbox.stub(SettingsManager, "isWorkspaceOverrideActive").returns(true);
-
+  test("Should add relative workspace paths for all template types", async () => {
     await deployer.deployVscodeSettings(tempDir);
 
     const settingKeys = [
@@ -335,8 +326,6 @@ suite("Unit: RecommendedSettingsConfigDeployer — Workspace Override (Layering)
   });
 
   test("Should merge workspace paths with existing user entries", async () => {
-    sandbox.stub(SettingsManager, "isWorkspaceOverrideActive").returns(true);
-
     // Simulate existing user-level entries
     inspectStub.callsFake((key: string) => {
       if (key === "promptFilesLocations") {

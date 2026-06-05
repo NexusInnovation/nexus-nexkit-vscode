@@ -205,6 +205,7 @@ export class NexkitPanelMessageHandler {
     this.trackWebviewAction("setMode");
     try {
       await SettingsManager.setMode(message.mode);
+      await SettingsManager.setWorkspaceInitialized(true);
       this.sendWorkspaceState();
       this._services.telemetry.trackEvent("mode.selected", {
         mode: message.mode,
