@@ -1,13 +1,11 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
-import * as os from "os";
 import * as path from "path";
 import { fileExists } from "../../shared/utils/fileHelper";
 import { LoggingService } from "../../shared/services/loggingService";
-import { UserDirectoryService } from "../ai-template-files/services/userDirectoryService";
 
 /**
- * Mapping from VS Code chat setting keys to UserDirectoryService subdirectory names.
+ * Mapping from VS Code chat setting keys to workspace .nexkit subdirectory names.
  */
 const CHAT_LOCATION_SETTINGS: Record<string, string> = {
   "chat.agentFilesLocations": "agents",
@@ -32,18 +30,16 @@ const LEGACY_WORKSPACE_KEYS = [
 
 /**
  * Service for deploying recommended VS Code chat settings to user-level (global) scope.
- * Uses workspace-relative paths for the active workspace and preserves user-level paths for backward compatibility.
+ * Uses workspace-relative paths for the active workspace.
  */
 export class RecommendedSettingsConfigDeployer {
   private readonly _logging = LoggingService.getInstance();
-
-  constructor(private readonly _userDirectory: UserDirectoryService) {}
 
   /**
    * Deploy chat location settings to user-level VS Code configuration.
    * NON-DESTRUCTIVE: Merges NexKit paths with existing user entries — never overwrites.
    * Also cleans up legacy workspace-level settings previously created by NexKit.
-   * Always adds workspace-relative .nexkit paths for the active workspace and keeps user-level paths for backward compatibility.
+   * Always adds workspace-relative .nexkit paths for the active workspace.
    * @param workspaceRoot Root directory of the workspace (used for legacy cleanup and workspace paths)
    */
   async deployVscodeSettings(workspaceRoot: string): Promise<void> {
@@ -62,11 +58,9 @@ export class RecommendedSettingsConfigDeployer {
    * Workspace-relative .nexkit paths are always included when a workspace is open.
    */
   private async _deployUserLevelChatSettings(): Promise<void> {
-    const locations = this._userDirectory.getAbsoluteTemplateLocations();
     const chatConfig = vscode.workspace.getConfiguration("chat");
 
     for (const [settingKey, subdir] of Object.entries(CHAT_LOCATION_SETTINGS)) {
-      const tildePath = this._toTildePath(locations[subdir]);
       const workspaceRelativePath = `.nexkit/${subdir}`;
       // Suffix key removes the "chat." prefix for the update call
       const shortKey = settingKey.replace("chat.", "");
@@ -75,12 +69,11 @@ export class RecommendedSettingsConfigDeployer {
       const existing: Record<string, boolean> | undefined = chatConfig.inspect<Record<string, boolean>>(shortKey)?.globalValue;
       const merged: Record<string, boolean> = {
         ...existing,
-        [tildePath]: true,
         [workspaceRelativePath]: true,
       };
 
       await chatConfig.update(shortKey, merged, vscode.ConfigurationTarget.Global);
-      this._logging.debug(`Set user-level ${settingKey}: added ${tildePath} and ${workspaceRelativePath}`);
+      this._logging.debug(`Set user-level ${settingKey}: added ${workspaceRelativePath}`);
     }
 
     // Ensure chat.useHooks is enabled at user-level
@@ -166,19 +159,4 @@ export class RecommendedSettingsConfigDeployer {
     return pathKey.startsWith(".nexkit/") || pathKey.includes("/.nexkit/");
   }
 
-  /**
-   * Convert an absolute path to a ~/ relative path with forward slashes.
-   * VS Code chat.*Locations require paths to be relative or start with ~/.
-   */
-  private _toTildePath(absolutePath: string): string {
-    const homeDir = os.homedir().replace(/\\/g, "/");
-    const normalized = absolutePath.replace(/\\/g, "/");
-
-    if (normalized.startsWith(homeDir)) {
-      return "~" + normalized.slice(homeDir.length);
-    }
-
-    // Fallback: return forward-slashed path if not under home directory
-    return normalized;
-  }
 }

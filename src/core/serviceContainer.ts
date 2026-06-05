@@ -29,7 +29,6 @@ import { NexkitFileWatcherService } from "../features/nexkit-file-watcher/nexkit
 import { GitHubWorkflowRunnerService } from "../features/github-workflow-runner/githubWorkflowRunnerService";
 import { HooksConfigDeployer } from "../features/initialization/hooksConfigDeployer";
 import { UserDirectoryService } from "../features/ai-template-files/services/userDirectoryService";
-import { WorkspaceToUserMigrationService } from "../features/initialization/workspaceToUserMigrationService";
 
 /**
  * Service container for dependency injection
@@ -66,7 +65,6 @@ export interface ServiceContainer {
   nexkitFileWatcher: NexkitFileWatcherService;
   githubWorkflowRunner: GitHubWorkflowRunnerService;
   userDirectory: UserDirectoryService;
-  workspaceToUserMigration: WorkspaceToUserMigrationService;
 }
 
 /**
@@ -95,7 +93,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const gitExcludeConfigDeployer = new GitExcludeConfigDeployer();
   const mcpConfigDeployer = new MCPConfigDeployer(confirmation);
   const recommendedExtensionsConfigDeployer = new RecommendedExtensionsConfigDeployer();
-  const recommendedSettingsConfigDeployer = new RecommendedSettingsConfigDeployer(userDirectory);
+  const recommendedSettingsConfigDeployer = new RecommendedSettingsConfigDeployer();
   const aiTemplateFilesDeployer = new AITemplateFilesDeployer(aiTemplateData);
   const workspaceInitPrompt = new WorkspaceInitPromptService();
   const modeSelectionPrompt = new ModeSelectionPromptService(telemetry);
@@ -107,7 +105,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const commitMessage = new CommitMessageService();
   const templateMetadataScanner = new TemplateMetadataScannerService(templateMetadata, aiTemplateData);
   const githubAuthPrompt = new GitHubAuthPromptService();
-  const hooksConfigDeployer = new HooksConfigDeployer(userDirectory);
+  const hooksConfigDeployer = new HooksConfigDeployer();
   const startupVerification = new StartupVerificationService(
     gitExcludeConfigDeployer,
     recommendedSettingsConfigDeployer,
@@ -117,7 +115,6 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   );
   const nexkitFileWatcher = NexkitFileWatcherService.getInstance();
   const githubWorkflowRunner = new GitHubWorkflowRunnerService(context.extensionUri);
-  const workspaceToUserMigration = new WorkspaceToUserMigrationService(userDirectory, backup);
 
   // Register for disposal
   context.subscriptions.push(logging);
@@ -160,6 +157,5 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     nexkitFileWatcher,
     githubWorkflowRunner,
     userDirectory,
-    workspaceToUserMigration,
   };
 }

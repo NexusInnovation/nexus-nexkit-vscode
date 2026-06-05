@@ -18,7 +18,6 @@ import { registerOpenFeedbackCommand } from "./shared/commands/feedbackCommand";
 import { registerShowLogsCommand } from "./shared/commands/loggingCommand";
 import { registerAddDevOpsConnectionCommand, registerRemoveDevOpsConnectionCommand } from "./features/apm-devops/commands";
 import { registerGenerateCommitMessageCommand } from "./features/commit-management/commands";
-import { registerMigrateToUserDirectoryCommand } from "./features/initialization/migrationCommand";
 
 /**
  * Extension activation
@@ -55,7 +54,6 @@ export async function activate(context: vscode.ExtensionContext) {
   registerAddDevOpsConnectionCommand(context, services);
   registerRemoveDevOpsConnectionCommand(context, services);
   registerGenerateCommitMessageCommand(context, services);
-  registerMigrateToUserDirectoryCommand(context, services);
 
   // Register webview panel
   const nexkitPanelProvider = new NexkitPanelViewProvider();
@@ -76,14 +74,6 @@ export async function activate(context: vscode.ExtensionContext) {
     services.logging.error("Failed to run startup verification", error);
     services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
       context: "startupVerification.verifyOnStartup",
-    });
-  });
-
-  // Check for workspace-to-user migration (deferred, non-blocking)
-  services.workspaceToUserMigration.checkAndPromptMigration(context).catch((error) => {
-    services.logging.error("Failed to check workspace migration", error);
-    services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
-      context: "workspaceToUserMigration.checkAndPromptMigration",
     });
   });
 

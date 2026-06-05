@@ -3,10 +3,6 @@
 		{
 			"path": "."
 		},
-		{
-			"name": ".nexkit",
-			"path": "../../../Users/EricDecarufel/AppData/Roaming/Code/User/.nexkit"
-		}
 	],
 	"settings": {
 		"debug.internalConsoleOptions": "neverOpen",

@@ -44,7 +44,7 @@ nexus-nexkit-vscode/
 │   │   │   ├── workspaceInitPromptService.ts      # Prompt to initialize
 │   │   │   ├── modeSelectionService.ts            # Developer/APM mode
 │   │   │   ├── modeSelectionPromptService.ts      # First-time mode picker
-│   │   │   ├── startupVerificationService.ts      # Verify settings/gitignore/migration/auth on startup
+│   │   │   ├── startupVerificationService.ts      # Verify settings/gitignore/legacy-file-migration/auth on startup
 │   │   │   ├── githubAuthPromptService.ts         # GitHub authentication prompt
 │   │   │   ├── nexkitFileMigrationService.ts      # Migrate legacy .nexkit files
 │   │   │   ├── aiTemplateFilesDeployer.ts         # Deploy templates to workspace

@@ -93,11 +93,11 @@ Nexkit propose **deux modes** adaptés à différents profils d'utilisateurs :
 Accédez aux commandes via la palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) :
 
 - **Nexkit: Initialize Workspace** - Configure votre environnement avec :
-  - Templates IA (agents, prompts, chatmodes) installés au niveau utilisateur (ne modifie pas vos fichiers projet)
-  - Paramètres VS Code (user-level) pour découverte automatique des agents, prompts et skills
-  - Extensions VS Code recommandées (mode workspace uniquement)
-  - Configuration des serveurs MCP (mode workspace uniquement)
-  - Aucune modification du répertoire de travail en mode utilisateur par défaut
+  - Templates IA (agents, prompts, chatmodes) installés dans `.nexkit/` à la racine du workspace par défaut
+  - Paramètres VS Code globaux pour découverte automatique des agents, prompts et skills via des chemins relatifs au workspace
+  - Extensions VS Code recommandées
+  - Configuration des serveurs MCP au niveau workspace
+  - Possibilité d'opter explicitement pour le mode utilisateur via `nexkit.templates.deployMode`
 
 - **Nexkit: Install User MCP Servers** - Installe les serveurs MCP requis (Context7 et Sequential Thinking)
 
@@ -290,24 +290,14 @@ Utilisez des dossiers locaux pour des templates internes personnalisés, le dév
 
 ## 🔧 Fonctionnement
 
-### Comment NexKit fonctionne — Stockage au niveau utilisateur
+### Comment NexKit fonctionne — Stockage workspace-first
 
-**NexKit ne modifie pas vos fichiers projet.** Par défaut, tous les templates IA sont installés dans un répertoire utilisateur-level géré par VS Code, séparé de votre espace de travail. Cela signifie :
+**NexKit privilégie désormais le workspace.** Par défaut, les templates IA sont installés dans `.nexkit/` à la racine du projet afin que GitHub Copilot découvre les fichiers via des chemins relatifs au workspace. Cela signifie :
 
-- ✅ Aucun fichier `.nexkit/` dans votre dépôt Git
-- ✅ Aucune entrée `.gitignore` nécessaire
-- ✅ Templates partagés entre tous vos projets
-- ✅ Pas de conflit avec les fichiers projet existants
-
-### Emplacement du répertoire utilisateur par plateforme
-
-| Plateforme  | Chemin                                             |
-| ----------- | -------------------------------------------------- |
-| **Windows** | `%APPDATA%/Code/User/.nexkit/`                     |
-| **macOS**   | `~/Library/Application Support/Code/User/.nexkit/` |
-| **Linux**   | `~/.config/Code/User/.nexkit/`                     |
-
-> Ce répertoire suit la convention VS Code pour les données utilisateur et est créé automatiquement lors de l'initialisation.
+- ✅ Les templates du projet vivent dans `.nexkit/`
+- ✅ Les paramètres `chat.*` globaux pointent vers des chemins relatifs comme `.nexkit/agents`
+- ✅ Les fichiers du projet peuvent être versionnés ou ignorés selon vos besoins
+- ✅ Le comportement est cohérent entre machines pour un même repository
 
 ### Configuration Initiale
 
@@ -319,47 +309,41 @@ Lors de la première activation de Nexkit :
 2. Votre sélection est enregistrée dans `nexkit.userMode` et peut être modifiée à tout moment dans les paramètres
 3. Cette invite n'apparaît qu'une seule fois - lors de la première activation
 
-### Initialisation (Mode Utilisateur — par défaut)
+### Initialisation (Mode Workspace — par défaut)
 
-Lorsque vous exécutez "Nexkit: Initialize Workspace" en mode utilisateur :
-
-1. **Création du répertoire utilisateur** : Le dossier `.nexkit/` est créé dans le répertoire utilisateur VS Code
-2. **Déploiement des paramètres** : Les paramètres `chat.*` de VS Code sont configurés au niveau Global (user-level) avec les chemins absolus vers vos templates
-3. **Installation de Templates** : Agents, prompts et chatmodes sont installés dans le répertoire utilisateur
-4. **Aucune modification du workspace** : Pas de `.gitignore`, `.vscode/settings.json` ou `.vscode/mcp.json` créés
-
-### Mode Workspace (override par projet)
-
-Pour les projets nécessitant des templates spécifiques versionnés dans le dépôt, vous pouvez activer le mode workspace :
-
-```json
-// Dans vos paramètres VS Code
-{
-  "nexkit.templates.deployMode": "workspace"
-}
-```
-
-En mode workspace, Nexkit revient au comportement classique :
+Lorsque vous exécutez "Nexkit: Initialize Workspace" avec la configuration par défaut :
 
 1. **Création de Sauvegarde** : Le répertoire `.nexkit` existant est automatiquement sauvegardé
 2. **Déploiement de Configuration** :
    - Entrée `.gitignore` pour ignorer le dossier `.nexkit/`
    - `.vscode/extensions.json` avec extensions recommandées
    - `.vscode/mcp.json` pour la configuration MCP au niveau workspace
+   - Paramètres `chat.*` globaux pointant vers `.nexkit/agents`, `.nexkit/prompts`, etc.
 3. **Installation de Templates** : Templates installés dans `.nexkit/` à la racine du workspace
 
-> **Détection automatique** : Si un dossier `.nexkit/` existe déjà à la racine de votre workspace, Nexkit le détecte automatiquement et enregistre les deux chemins (utilisateur + workspace).
+### Mode Utilisateur (optionnel)
+
+Le mode utilisateur reste disponible pour compatibilité si vous le définissez explicitement :
+
+```json
+// Dans vos paramètres VS Code
+{
+  "nexkit.templates.deployMode": "user"
+}
+```
+
+Dans ce mode, Nexkit continue d'utiliser le répertoire utilisateur `.nexkit`, mais ce n'est plus le comportement par défaut ni un flux migré automatiquement.
 
 ### Stratégie pour `copilot-instructions.md`
 
 - Nexkit **ne déploie pas** automatiquement `.github/copilot-instructions.md`.
 - Si votre projet contient déjà ce fichier, Nexkit le **conserve tel quel**.
 - Ce fichier reste un fichier projet (racine `.github/`) propre à votre contexte.
-- Les instructions utilisateur restent supportées via `chat.instructionsFilesLocations`, pointant vers le répertoire utilisateur `.nexkit/instructions`.
+- Les instructions de projet restent accessibles via `chat.instructionsFilesLocations`, pointant vers `.nexkit/instructions`.
 
 ### Structure des Templates
 
-Les templates déployés suivent cette structure (dans le répertoire utilisateur ou workspace selon le mode) :
+Les templates déployés suivent cette structure :
 
 ```
 .nexkit/
@@ -373,32 +357,21 @@ Les templates déployés suivent cette structure (dans le répertoire utilisateu
 
 > (1) [Anthropic](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)
 
-Les paramètres VS Code sont configurés au niveau utilisateur (Global) avec des chemins relatifs `~/` :
+Les paramètres VS Code sont configurés au niveau utilisateur (Global) avec des chemins relatifs au workspace :
 
 ```json
 {
-  "chat.promptFilesLocations":       { "~/AppData/Roaming/Code/User/.nexkit/prompts": true },
-  "chat.instructionsFilesLocations": { "~/AppData/Roaming/Code/User/.nexkit/instructions": true },
-  "chat.agentFilesLocations":        { "~/AppData/Roaming/Code/User/.nexkit/agents": true },
-  "chat.agentSkillsLocations":       { "~/AppData/Roaming/Code/User/.nexkit/skills": true }
+  "chat.promptFilesLocations": { ".nexkit/prompts": true },
+  "chat.instructionsFilesLocations": { ".nexkit/instructions": true },
+  "chat.agentFilesLocations": { ".nexkit/agents": true },
+  "chat.agentSkillsLocations": { ".nexkit/skills": true },
+  "chat.hookFilesLocations": { ".nexkit/hooks": true }
 }
 ```
 
 Ces paramètres permettent à GitHub Copilot de découvrir automatiquement vos agents, prompts et instructions sans configuration manuelle supplémentaire.
 
-### 🔄 Guide de Migration — Utilisateurs Existants
-
-Si vous utilisez déjà Nexkit avec des templates dans `.nexkit/` à la racine de votre workspace :
-
-1. **Aucune action immédiate requise** — vos templates existants continuent de fonctionner
-2. **Pour migrer vers le mode utilisateur** :
-   - Exécutez "Nexkit: Initialize Workspace" — les templates seront installés au niveau utilisateur
-   - Supprimez le dossier `.nexkit/` de votre workspace (optionnel)
-   - Retirez l'entrée `.nexkit/` de votre `.gitignore` (optionnel)
-   - Les paramètres `chat.*` dans `.vscode/settings.json` seront automatiquement remplacés par des paramètres user-level
-3. **Pour garder les deux** : Si vous avez un dossier `.nexkit/` dans votre workspace, Nexkit détecte automatiquement la coexistence et enregistre les deux chemins (utilisateur + workspace)
-
-> **Note** : Le paramètre `nexkit.templates.deployMode` contrôle le mode. La valeur par défaut est `"user"` pour les nouvelles installations.
+> **Note** : Le paramètre `nexkit.templates.deployMode` contrôle le mode. La valeur par défaut est `"workspace"`.
 
 ## 💡 Exemples d'Utilisation
 

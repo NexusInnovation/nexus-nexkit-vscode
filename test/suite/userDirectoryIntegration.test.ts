@@ -73,7 +73,7 @@ suite("Integration: User Directory Deployment Flow", () => {
       assert.strictEqual(installPath, expectedRoot);
     });
 
-    test("Settings deployer should register user-level absolute paths", async () => {
+    test("Settings deployer should register workspace-relative global paths", async () => {
       const updateStub = sandbox.stub().resolves();
       const inspectStub = sandbox.stub().returns({ globalValue: undefined });
       const fakeConfig = {
@@ -84,24 +84,20 @@ suite("Integration: User Directory Deployment Flow", () => {
       };
       sandbox.stub(vscode.workspace, "getConfiguration").returns(fakeConfig as any);
 
-      const deployer = new RecommendedSettingsConfigDeployer(userDirectoryService);
+      const deployer = new RecommendedSettingsConfigDeployer();
       await deployer.deployVscodeSettings(tempDir);
 
-      // Verify workspace-relative paths are registered and user-level paths remain for compatibility
+      // Verify workspace-relative paths are registered in global settings
       const agentCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "agentFilesLocations");
       assert.ok(agentCall, "Should write agentFilesLocations setting");
 
       const agentPaths = agentCall.args[1] as Record<string, boolean>;
       assert.strictEqual(agentPaths[".nexkit/agents"], true, "Workspace-relative agent path should be present");
-      assert.ok(
-        Object.keys(agentPaths).some((k: string) => k.includes(".nexkit") && k.includes("agents") && k !== ".nexkit/agents"),
-        `Legacy user-level compatibility path should still be present, got: ${JSON.stringify(agentPaths)}`
-      );
       assert.strictEqual(agentCall.args[2], vscode.ConfigurationTarget.Global, "Should target Global scope");
     });
   });
 
-  suite("Workspace override → both paths registered", () => {
+  suite("Workspace override → workspace path registered", () => {
     test("Should detect workspace override when .nexkit/ exists in workspace", () => {
       // Create a .nexkit directory in temp to simulate workspace
       const fakeWorkspaceNexkit = path.join(tempDir, ".nexkit");

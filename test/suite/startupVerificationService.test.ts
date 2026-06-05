@@ -19,7 +19,6 @@ import { RecommendedSettingsConfigDeployer } from "../../src/features/initializa
 import { NexkitFileMigrationService } from "../../src/features/initialization/nexkitFileMigrationService";
 import { HooksConfigDeployer } from "../../src/features/initialization/hooksConfigDeployer";
 import { GitHubAuthPromptService } from "../../src/features/initialization/githubAuthPromptService";
-import { UserDirectoryService } from "../../src/features/ai-template-files/services/userDirectoryService";
 import { SettingsManager } from "../../src/core/settingsManager";
 
 suite("Unit: StartupVerificationService", () => {
@@ -39,17 +38,8 @@ suite("Unit: StartupVerificationService", () => {
     fs.mkdirSync(path.join(tempDir, ".git", "info"), { recursive: true });
 
     gitExcludeDeployer = new GitExcludeConfigDeployer();
-    const mockUserDirectory = sandbox.createStubInstance(UserDirectoryService);
-    mockUserDirectory.getAbsoluteTemplateLocations.returns({
-      agents: "/tmp/.nexkit/agents",
-      prompts: "/tmp/.nexkit/prompts",
-      skills: "/tmp/.nexkit/skills",
-      instructions: "/tmp/.nexkit/instructions",
-      hooks: "/tmp/.nexkit/hooks",
-      chatmodes: "/tmp/.nexkit/chatmodes",
-    });
-    settingsDeployer = new RecommendedSettingsConfigDeployer(mockUserDirectory as any);
-    hooksConfigDeployer = new HooksConfigDeployer(mockUserDirectory as any);
+    settingsDeployer = new RecommendedSettingsConfigDeployer();
+    hooksConfigDeployer = new HooksConfigDeployer();
     migrationService = new NexkitFileMigrationService();
     authPromptService = new GitHubAuthPromptService();
 

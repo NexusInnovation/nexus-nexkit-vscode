@@ -124,11 +124,6 @@
           "light": "media/Nexus_Symbole_MONOCHROME.svg",
           "dark": "media/Nexus_Symbole_MONOCHROME_light.svg"
         }
-      },
-      {
-        "command": "nexus-nexkit-vscode.migrateToUserDirectory",
-        "title": "Nexkit: Migrate Templates to User Directory",
-        "category": "Nexkit"
       }
     ],
     "menus": {
