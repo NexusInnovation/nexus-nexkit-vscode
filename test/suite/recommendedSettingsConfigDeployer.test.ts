@@ -99,6 +99,28 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     assert.ok(!useHooksCall, "Should NOT update useHooks when already true");
   });
 
+  test("Should not rewrite unchanged user-level chat location settings", async () => {
+    inspectStub.callsFake((key: string) => {
+      if (key === "useHooks") {
+        return { globalValue: true };
+      }
+
+      const settingMap: Record<string, Record<string, boolean>> = {
+        agentFilesLocations: { ".nexkit/agents": true },
+        agentSkillsLocations: { ".nexkit/skills": true },
+        hookFilesLocations: { ".nexkit/hooks": true },
+        instructionsFilesLocations: { ".nexkit/instructions": true },
+        promptFilesLocations: { ".nexkit/prompts": true },
+      };
+
+      return { globalValue: settingMap[key] };
+    });
+
+    await deployer.deployVscodeSettings(tempDir);
+
+    assert.strictEqual(updateStub.callCount, 0, "Should not write unchanged user-level settings");
+  });
+
   test("Should clean up legacy .nexkit/ entries from workspace settings.json", async () => {
     const settingsDir = path.join(tempDir, ".vscode");
     fs.mkdirSync(settingsDir, { recursive: true });

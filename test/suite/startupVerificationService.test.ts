@@ -1,8 +1,8 @@
 /**
  * Tests for StartupVerificationService
- * Verifies that essential Nexkit checks run at every VS Code startup:
+ * Verifies that essential Nexkit checks run at every VS Code startup without writing user-level settings:
  * - .git/info/exclude contains .nexkit/ exclusion
- * - VS Code settings contain all required chat file locations
+ * - startup avoids user-level chat settings writes
  * - nexkit.* files are migrated from .github to .nexkit
  * - GitHub authentication is verified
  */
@@ -153,8 +153,24 @@ suite("Unit: StartupVerificationService", () => {
     const matches = content.match(/\.nexkit\//g);
     assert.strictEqual(matches?.length, 1);
 
-    // User-level settings should still be deployed
+    // User-level settings should still be deployed during explicit verification
     assert.ok(updateStub.called, "Should write settings to user-level via VS Code API");
+  });
+
+  test("verifyWorkspaceConfiguration should skip user-level settings when requested", async () => {
+    const updateStub = sandbox.stub().resolves();
+    const inspectStub = sandbox.stub().returns({ globalValue: undefined });
+    const fakeConfig = {
+      inspect: inspectStub,
+      update: updateStub,
+      get: sandbox.stub(),
+      has: sandbox.stub(),
+    };
+    sandbox.stub(vscode.workspace, "getConfiguration").returns(fakeConfig as any);
+
+    await service.verifyWorkspaceConfiguration(tempDir, { deployUserLevelSettings: false });
+
+    assert.strictEqual(updateStub.callCount, 0, "Should not write user-level settings during startup-safe verification");
   });
 
   test("verifyOnStartup should skip if no workspace folder", async () => {
@@ -162,6 +178,23 @@ suite("Unit: StartupVerificationService", () => {
 
     // Should not throw
     await service.verifyOnStartup();
+  });
+
+  test("verifyOnStartup should not deploy user-level settings", async () => {
+    const settingsSpy = sandbox.spy(settingsDeployer, "deployVscodeSettings");
+    sandbox.stub(authPromptService, "ensureAuthenticated").resolves();
+    sandbox.stub(vscode.workspace, "workspaceFile").value(undefined);
+    sandbox.stub(vscode.workspace, "workspaceFolders").value([
+      {
+        uri: vscode.Uri.file(tempDir),
+        name: path.basename(tempDir),
+        index: 0,
+      } as vscode.WorkspaceFolder,
+    ]);
+
+    await service.verifyOnStartup();
+
+    assert.strictEqual(settingsSpy.callCount, 0, "Startup verification should not write user-level settings");
   });
 
   test("verifyWorkspaceConfiguration should gracefully handle missing .git directory", async () => {

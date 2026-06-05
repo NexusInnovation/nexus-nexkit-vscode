@@ -72,6 +72,10 @@ export class RecommendedSettingsConfigDeployer {
         [workspaceRelativePath]: true,
       };
 
+      if (this._areLocationSettingsEqual(existing, merged)) {
+        continue;
+      }
+
       await chatConfig.update(shortKey, merged, vscode.ConfigurationTarget.Global);
       this._logging.debug(`Set user-level ${settingKey}: added ${workspaceRelativePath}`);
     }
@@ -159,4 +163,21 @@ export class RecommendedSettingsConfigDeployer {
     return pathKey.startsWith(".nexkit/") || pathKey.includes("/.nexkit/");
   }
 
+  private _areLocationSettingsEqual(
+    existing: Record<string, boolean> | undefined,
+    next: Record<string, boolean>
+  ): boolean {
+    if (!existing) {
+      return false;
+    }
+
+    const existingKeys = Object.keys(existing).sort();
+    const nextKeys = Object.keys(next).sort();
+
+    if (existingKeys.length !== nextKeys.length) {
+      return false;
+    }
+
+    return existingKeys.every((key, index) => key === nextKeys[index] && existing[key] === next[key]);
+  }
 }

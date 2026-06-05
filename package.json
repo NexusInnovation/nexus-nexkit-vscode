@@ -84,6 +84,12 @@
         "icon": "$(save)"
       },
       {
+        "command": "nexus-nexkit-vscode.goToModeSelection",
+        "title": "Nexkit: Go to Mode Selection",
+        "category": "Nexkit",
+        "icon": "$(home)"
+      },
+      {
         "command": "nexus-nexkit-vscode.applyProfile",
         "title": "Nexkit: Apply Profile",
         "category": "Nexkit",
@@ -129,24 +135,29 @@
     "menus": {
       "view/title": [
         {
-          "command": "nexus-nexkit-vscode.saveProfile",
-          "when": "view == nexkitPanelView",
+          "command": "nexus-nexkit-vscode.goToModeSelection",
+          "when": "view == nexkitPanelView && nexkit.modeSelected",
           "group": "navigation@1"
         },
         {
-          "command": "nexus-nexkit-vscode.applyProfile",
+          "command": "nexus-nexkit-vscode.saveProfile",
           "when": "view == nexkitPanelView",
           "group": "navigation@2"
         },
         {
-          "command": "nexus-nexkit-vscode.installUserMCPs",
+          "command": "nexus-nexkit-vscode.applyProfile",
           "when": "view == nexkitPanelView",
           "group": "navigation@3"
         },
         {
-          "command": "nexus-nexkit-vscode.openSettings",
+          "command": "nexus-nexkit-vscode.installUserMCPs",
           "when": "view == nexkitPanelView",
           "group": "navigation@4"
+        },
+        {
+          "command": "nexus-nexkit-vscode.openSettings",
+          "when": "view == nexkitPanelView",
+          "group": "navigation@5"
         }
       ],
       "scm/title": [
