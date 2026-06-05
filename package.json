@@ -162,12 +162,34 @@
       ],
       "scm/title": [
         {
-          "command": "nexus-nexkit-vscode.generateCommitMessage",
+          "submenu": "nexus-nexkit-vscode.commitMenu",
           "when": "scmProvider == git",
           "group": "navigation"
         }
+      ],
+      "nexus-nexkit-vscode.commitMenu": [
+        {
+          "command": "nexus-nexkit-vscode.generateCommitMessage",
+          "when": "scmProvider == git",
+          "group": "1_generate@1"
+        },
+        {
+          "command": "nexus-nexkit-vscode.openSettings",
+          "when": "scmProvider == git",
+          "group": "2_settings@1"
+        }
       ]
     },
+    "submenus": [
+      {
+        "id": "nexus-nexkit-vscode.commitMenu",
+        "label": "Nexkit",
+        "icon": {
+          "light": "media/Nexus_Symbole_MONOCHROME.svg",
+          "dark": "media/Nexus_Symbole_MONOCHROME_light.svg"
+        }
+      }
+    ],
     "viewsContainers": {
       "activitybar": [
         {
