@@ -1,8 +1,8 @@
 /**
  * Tests for StartupVerificationService
- * Verifies that essential Nexkit checks run at every VS Code startup:
+ * Verifies that essential Nexkit checks run at every VS Code startup without writing user-level settings:
  * - .git/info/exclude contains .nexkit/ exclusion
- * - VS Code settings contain all required chat file locations
+ * - startup avoids user-level chat settings writes
  * - nexkit.* files are migrated from .github to .nexkit
  * - GitHub authentication is verified
  */
@@ -19,9 +19,7 @@ import { RecommendedSettingsConfigDeployer } from "../../src/features/initializa
 import { NexkitFileMigrationService } from "../../src/features/initialization/nexkitFileMigrationService";
 import { HooksConfigDeployer } from "../../src/features/initialization/hooksConfigDeployer";
 import { GitHubAuthPromptService } from "../../src/features/initialization/githubAuthPromptService";
-import { UserDirectoryService } from "../../src/features/ai-template-files/services/userDirectoryService";
 import { SettingsManager } from "../../src/core/settingsManager";
-import { ConfirmationService } from "../../src/shared/services/confirmationService";
 
 suite("Unit: StartupVerificationService", () => {
   let service: StartupVerificationService;
@@ -40,24 +38,10 @@ suite("Unit: StartupVerificationService", () => {
     fs.mkdirSync(path.join(tempDir, ".git", "info"), { recursive: true });
 
     gitExcludeDeployer = new GitExcludeConfigDeployer();
-    const mockUserDirectory = sandbox.createStubInstance(UserDirectoryService);
-    mockUserDirectory.getAbsoluteTemplateLocations.returns({
-      agents: "/tmp/.nexkit/agents",
-      prompts: "/tmp/.nexkit/prompts",
-      skills: "/tmp/.nexkit/skills",
-      instructions: "/tmp/.nexkit/instructions",
-      hooks: "/tmp/.nexkit/hooks",
-      chatmodes: "/tmp/.nexkit/chatmodes",
-    });
-    const mockConfirmation = sandbox.createStubInstance(ConfirmationService);
-    mockConfirmation.confirm.resolves("accepted");
-    settingsDeployer = new RecommendedSettingsConfigDeployer(mockUserDirectory as any, mockConfirmation as any);
-    hooksConfigDeployer = new HooksConfigDeployer(mockUserDirectory as any);
+    settingsDeployer = new RecommendedSettingsConfigDeployer();
+    hooksConfigDeployer = new HooksConfigDeployer();
     migrationService = new NexkitFileMigrationService();
     authPromptService = new GitHubAuthPromptService();
-
-    // Default to workspace mode for existing tests
-    sandbox.stub(SettingsManager, "isUserDeployMode").returns(false);
 
     service = new StartupVerificationService(
       gitExcludeDeployer,
@@ -81,7 +65,7 @@ suite("Unit: StartupVerificationService", () => {
     assert.ok(service);
   });
 
-  test("verifyWorkspaceConfiguration should write .nexkit/ to .git/info/exclude in workspace mode", async () => {
+  test("verifyWorkspaceConfiguration should write .nexkit/ to .git/info/exclude", async () => {
     await service.verifyWorkspaceConfiguration(tempDir);
 
     const excludePath = path.join(tempDir, ".git", "info", "exclude");
@@ -101,17 +85,15 @@ suite("Unit: StartupVerificationService", () => {
     assert.ok(content.includes("node_modules/"), "Unrelated .gitignore entries should be preserved");
   });
 
-  test("verifyWorkspaceConfiguration should skip git exclude in user mode", async () => {
-    (SettingsManager.isUserDeployMode as sinon.SinonStub).returns(true);
+  test("verifyWorkspaceConfiguration should write git exclude even when deploy mode is user", async () => {
+    sandbox.stub(SettingsManager, "isUserDeployMode").returns(true);
 
     await service.verifyWorkspaceConfiguration(tempDir);
 
     const excludePath = path.join(tempDir, ".git", "info", "exclude");
-    const excludeExists = fs.existsSync(excludePath);
-    if (excludeExists) {
-      const content = fs.readFileSync(excludePath, "utf8");
-      assert.ok(!content.includes(".nexkit/"), "Should not write .nexkit/ to .git/info/exclude in user mode");
-    }
+    assert.ok(fs.existsSync(excludePath));
+    const content = fs.readFileSync(excludePath, "utf8");
+    assert.ok(content.includes(".nexkit/"), "Should always write .nexkit/ to .git/info/exclude");
   });
 
   test("verifyWorkspaceConfiguration should deploy settings to user-level", async () => {
@@ -171,8 +153,24 @@ suite("Unit: StartupVerificationService", () => {
     const matches = content.match(/\.nexkit\//g);
     assert.strictEqual(matches?.length, 1);
 
-    // User-level settings should still be deployed
+    // User-level settings should still be deployed during explicit verification
     assert.ok(updateStub.called, "Should write settings to user-level via VS Code API");
+  });
+
+  test("verifyWorkspaceConfiguration should skip user-level settings when requested", async () => {
+    const updateStub = sandbox.stub().resolves();
+    const inspectStub = sandbox.stub().returns({ globalValue: undefined });
+    const fakeConfig = {
+      inspect: inspectStub,
+      update: updateStub,
+      get: sandbox.stub(),
+      has: sandbox.stub(),
+    };
+    sandbox.stub(vscode.workspace, "getConfiguration").returns(fakeConfig as any);
+
+    await service.verifyWorkspaceConfiguration(tempDir, { deployUserLevelSettings: false });
+
+    assert.strictEqual(updateStub.callCount, 0, "Should not write user-level settings during startup-safe verification");
   });
 
   test("verifyOnStartup should skip if no workspace folder", async () => {
@@ -180,6 +178,23 @@ suite("Unit: StartupVerificationService", () => {
 
     // Should not throw
     await service.verifyOnStartup();
+  });
+
+  test("verifyOnStartup should not deploy user-level settings", async () => {
+    const settingsSpy = sandbox.spy(settingsDeployer, "deployVscodeSettings");
+    sandbox.stub(authPromptService, "ensureAuthenticated").resolves();
+    sandbox.stub(vscode.workspace, "workspaceFile").value(undefined);
+    sandbox.stub(vscode.workspace, "workspaceFolders").value([
+      {
+        uri: vscode.Uri.file(tempDir),
+        name: path.basename(tempDir),
+        index: 0,
+      } as vscode.WorkspaceFolder,
+    ]);
+
+    await service.verifyOnStartup();
+
+    assert.strictEqual(settingsSpy.callCount, 0, "Startup verification should not write user-level settings");
   });
 
   test("verifyWorkspaceConfiguration should gracefully handle missing .git directory", async () => {

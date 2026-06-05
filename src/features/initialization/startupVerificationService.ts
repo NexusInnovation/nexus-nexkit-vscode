@@ -1,17 +1,16 @@
 import * as vscode from "vscode";
 import { LoggingService } from "../../shared/services/loggingService";
-import { SettingsManager } from "../../core/settingsManager";
 import { GitExcludeConfigDeployer } from "./gitExcludeConfigDeployer";
 import { RecommendedSettingsConfigDeployer } from "./recommendedSettingsConfigDeployer";
 import { NexkitFileMigrationService, MigrationSummary } from "./nexkitFileMigrationService";
 import { HooksConfigDeployer } from "./hooksConfigDeployer";
 import { GitHubAuthPromptService } from "./githubAuthPromptService";
+import { getWorkspaceRoot } from "../../shared/utils/fileHelper";
 
 /**
  * Service that runs essential Nexkit verification checks at every VS Code startup.
- * Ensures workspace configuration is always correct (settings, git exclude, file migration, auth).
- * These same checks are also part of workspace initialization (initWorkspace command),
- * and this service is the single source of truth for them to avoid duplication.
+ * Startup verification avoids user-level VS Code settings writes so activation stays non-intrusive.
+ * Workspace initialization (initWorkspace command) reuses the same service and performs the full configuration flow.
  */
 export class StartupVerificationService {
   private readonly _logging = LoggingService.getInstance();
@@ -26,19 +25,19 @@ export class StartupVerificationService {
 
   /**
    * Run all startup verification checks for the active workspace.
-   * All deployers are non-destructive (deep merge / section markers), safe to run repeatedly.
+   * User-level VS Code settings are intentionally not written during activation to avoid opening profile settings.json.
    * This method does not block extension activation — errors are logged but not re-thrown.
    */
   public async verifyOnStartup(): Promise<void> {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) {
+    let workspaceRoot: string;
+    try {
+      workspaceRoot = getWorkspaceRoot();
+    } catch {
       return;
     }
-
-    const workspaceRoot = workspaceFolder.uri.fsPath;
     this._logging.info("Running Nexkit startup verification...");
 
-    await this.verifyWorkspaceConfiguration(workspaceRoot);
+    await this.verifyWorkspaceConfiguration(workspaceRoot, { deployUserLevelSettings: false });
     await this._githubAuthPrompt.ensureAuthenticated();
 
     this._logging.info("Nexkit startup verification complete.");
@@ -46,29 +45,25 @@ export class StartupVerificationService {
 
   /**
    * Verify and apply essential workspace configuration.
-   * Ensures git exclude, VS Code settings, and nexkit file locations are correct.
-   * Called both at startup and during workspace initialization.
-   * In user deploy mode, workspace file modifications (.git/info/exclude, hooks) are skipped.
+   * Startup verification can skip user-level settings writes; explicit workspace initialization performs the full flow.
    * @param workspaceRoot Absolute path to the workspace root
+   * @param options Verification options
    * @returns Summary of migrated files, or null if nothing was migrated
    */
-  public async verifyWorkspaceConfiguration(workspaceRoot: string): Promise<MigrationSummary | null> {
-    const isWorkspaceMode = !SettingsManager.isUserDeployMode();
+  public async verifyWorkspaceConfiguration(
+    workspaceRoot: string,
+    options: { deployUserLevelSettings?: boolean } = {}
+  ): Promise<MigrationSummary | null> {
+    const { deployUserLevelSettings = true } = options;
 
-    // Only modify .git/info/exclude when in workspace mode (workspace has .nexkit/)
-    if (isWorkspaceMode) {
-      await this._gitExcludeConfigDeployer.deployGitExclude(workspaceRoot);
+    await this._gitExcludeConfigDeployer.deployGitExclude(workspaceRoot);
+
+    if (deployUserLevelSettings) {
+      await this._recommendedSettingsConfigDeployer.deployVscodeSettings(workspaceRoot);
     }
 
-    // Ensure VS Code settings contain all required chat file locations and hooks
-    await this._recommendedSettingsConfigDeployer.deployVscodeSettings(workspaceRoot);
-
-    // Deploy run-tests hook — workspace mode writes to workspace, user mode writes to user dir
-    if (isWorkspaceMode) {
-      await this._hooksConfigDeployer.deployRunTestsHook(workspaceRoot);
-    } else {
-      await this._hooksConfigDeployer.deployRunTestsHookToUserDir(workspaceRoot);
-    }
+    // Always deploy the run-tests hook into the workspace .nexkit directory when a workspace is open.
+    await this._hooksConfigDeployer.deployRunTestsHook(workspaceRoot);
 
     // Migrate any nexkit.* files still in .github/<type>/ to .nexkit/<type>/
     return await this._nexkitFileMigration.migrateNexkitFiles(workspaceRoot);

@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 import { LoggingService } from "../../shared/services/loggingService";
+import { getWorkspaceRoot } from "../../shared/utils/fileHelper";
 
 /**
  * Service that monitors the .nexkit/ directory for external file changes.
@@ -38,19 +39,21 @@ export class NexkitFileWatcherService implements vscode.Disposable {
    * Call this after extension activation.
    */
   public async startWatching(): Promise<void> {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) {
+    let workspaceRoot: string;
+    try {
+      workspaceRoot = getWorkspaceRoot();
+    } catch {
       this._logging.info("No workspace folder open, skipping .nexkit file watcher setup");
       return;
     }
 
-    const nexkitDir = path.join(workspaceFolder.uri.fsPath, ".nexkit");
+    const nexkitDir = path.join(workspaceRoot, ".nexkit");
 
     // Initial cache of existing files
     await this.cacheDirectoryContents(nexkitDir);
 
     // Create file system watcher for .nexkit/**/*
-    const pattern = new vscode.RelativePattern(workspaceFolder, ".nexkit/**/*");
+    const pattern = new vscode.RelativePattern(vscode.Uri.file(workspaceRoot), ".nexkit/**/*");
     this._watcher = vscode.workspace.createFileSystemWatcher(pattern);
 
     this._disposables.push(this._watcher.onDidChange((uri) => this.handleFileChange(uri)));
@@ -110,12 +113,14 @@ export class NexkitFileWatcherService implements vscode.Disposable {
    * Rebuild the file cache by scanning the .nexkit/ directory.
    */
   private async rescanCache(): Promise<void> {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) {
+    let workspaceRoot: string;
+    try {
+      workspaceRoot = getWorkspaceRoot();
+    } catch {
       return;
     }
     this._fileCache.clear();
-    await this.cacheDirectoryContents(path.join(workspaceFolder.uri.fsPath, ".nexkit"));
+    await this.cacheDirectoryContents(path.join(workspaceRoot, ".nexkit"));
   }
 
   /**
@@ -310,7 +315,12 @@ export class NexkitFileWatcherService implements vscode.Disposable {
    * Get workspace-relative path for display purposes.
    */
   private getRelativePath(filePath: string): string {
-    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? "";
+    let workspaceRoot: string;
+    try {
+      workspaceRoot = getWorkspaceRoot();
+    } catch {
+      return filePath;
+    }
     return path.relative(workspaceRoot, filePath);
   }
 

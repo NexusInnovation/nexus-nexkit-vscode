@@ -21,6 +21,7 @@ export const Commands = {
 
   // Mode management commands
   SWITCH_MODE: "nexus-nexkit-vscode.switchMode",
+  GO_TO_MODE_SELECTION: "nexus-nexkit-vscode.goToModeSelection",
 
   // APM DevOps commands
   ADD_DEVOPS_CONNECTION: "nexus-nexkit-vscode.addDevOpsConnection",
@@ -31,9 +32,6 @@ export const Commands = {
 
   // Commit message generation
   GENERATE_COMMIT_MESSAGE: "nexus-nexkit-vscode.generateCommitMessage",
-
-  // Migration commands
-  MIGRATE_TO_USER_DIRECTORY: "nexus-nexkit-vscode.migrateToUserDirectory",
 } as const;
 
 // Type-safe command names

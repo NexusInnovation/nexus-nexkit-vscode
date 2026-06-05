@@ -1,15 +1,11 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
-import * as os from "os";
 import * as path from "path";
 import { fileExists } from "../../shared/utils/fileHelper";
 import { LoggingService } from "../../shared/services/loggingService";
-import { ConfirmationService } from "../../shared/services/confirmationService";
-import { UserDirectoryService } from "../ai-template-files/services/userDirectoryService";
-import { SettingsManager } from "../../core/settingsManager";
 
 /**
- * Mapping from VS Code chat setting keys to UserDirectoryService subdirectory names.
+ * Mapping from VS Code chat setting keys to workspace .nexkit subdirectory names.
  */
 const CHAT_LOCATION_SETTINGS: Record<string, string> = {
   "chat.agentFilesLocations": "agents",
@@ -34,74 +30,54 @@ const LEGACY_WORKSPACE_KEYS = [
 
 /**
  * Service for deploying recommended VS Code chat settings to user-level (global) scope.
- * Uses ~/ relative paths from UserDirectoryService (VS Code requires relative or ~/ paths).
+ * Uses workspace-relative paths for the active workspace.
  */
 export class RecommendedSettingsConfigDeployer {
   private readonly _logging = LoggingService.getInstance();
-
-  constructor(
-    private readonly _userDirectory: UserDirectoryService,
-    private readonly _confirmation: ConfirmationService
-  ) {}
 
   /**
    * Deploy chat location settings to user-level VS Code configuration.
    * NON-DESTRUCTIVE: Merges NexKit paths with existing user entries — never overwrites.
    * Also cleans up legacy workspace-level settings previously created by NexKit.
-   * When workspace override is active, adds both user-level and workspace-level paths.
-   * Prompts the user for confirmation before writing any settings; skips if refused.
+   * Always adds workspace-relative .nexkit paths for the active workspace.
    * @param workspaceRoot Root directory of the workspace (used for legacy cleanup and workspace paths)
    */
   async deployVscodeSettings(workspaceRoot: string): Promise<void> {
-    const result = await this._confirmation.confirm(
-      "Nexkit wants to update your VS Code chat settings",
-      "Nexkit will update your VS Code chat settings (chat.*Locations) to point to your user-level template directory. This allows GitHub Copilot to find your agents, prompts, instructions, and hooks.",
-      SettingsManager.CONFIRMATION_KEYS.CHAT_SETTINGS
-    );
-
-    if (result !== "accepted") {
-      this._logging.info("User declined chat settings deployment.");
-      return;
-    }
-
     this._logging.info("Deploying chat settings to user-level configuration...");
 
-    await this._deployUserLevelChatSettings(workspaceRoot);
+    await this._deployUserLevelChatSettings();
     await this._cleanupWorkspaceSettings(workspaceRoot);
 
     this._logging.info("Chat settings deployed to user-level configuration successfully.");
   }
 
   /**
-   * Write chat.*Locations settings to ConfigurationTarget.Global using ~/relative paths
-   * from UserDirectoryService. Merges with any existing user entries.
+   * Write chat.*Locations settings to ConfigurationTarget.Global.
+   * Merges with any existing user entries.
    * VS Code requires chat.*Locations paths to be relative to the workspace or start with ~/.
-   * When workspace override is active, also includes workspace .nexkit/ paths (relative).
+   * Workspace-relative .nexkit paths are always included when a workspace is open.
    */
-  private async _deployUserLevelChatSettings(workspaceRoot: string): Promise<void> {
-    const locations = this._userDirectory.getAbsoluteTemplateLocations();
+  private async _deployUserLevelChatSettings(): Promise<void> {
     const chatConfig = vscode.workspace.getConfiguration("chat");
-    const workspaceOverrideActive = SettingsManager.isWorkspaceOverrideActive();
 
     for (const [settingKey, subdir] of Object.entries(CHAT_LOCATION_SETTINGS)) {
-      const tildePath = this._toTildePath(locations[subdir]);
+      const workspaceRelativePath = `.nexkit/${subdir}`;
       // Suffix key removes the "chat." prefix for the update call
       const shortKey = settingKey.replace("chat.", "");
 
       // Read existing user-level value (merge, don't overwrite)
       const existing: Record<string, boolean> | undefined = chatConfig.inspect<Record<string, boolean>>(shortKey)?.globalValue;
-      const merged: Record<string, boolean> = { ...existing, [tildePath]: true };
+      const merged: Record<string, boolean> = {
+        ...existing,
+        [workspaceRelativePath]: true,
+      };
 
-      // When workspace override is active, also add workspace .nexkit/ paths (relative)
-      if (workspaceOverrideActive) {
-        const workspaceRelativePath = `.nexkit/${subdir}`;
-        merged[workspaceRelativePath] = true;
+      if (this._areLocationSettingsEqual(existing, merged)) {
+        continue;
       }
 
       await chatConfig.update(shortKey, merged, vscode.ConfigurationTarget.Global);
-      this._logging.debug(
-        `Set user-level ${settingKey}: added ${tildePath}${workspaceOverrideActive ? ` + workspace path` : ""}`
-      );
+      this._logging.debug(`Set user-level ${settingKey}: added ${workspaceRelativePath}`);
     }
 
     // Ensure chat.useHooks is enabled at user-level
@@ -187,19 +163,21 @@ export class RecommendedSettingsConfigDeployer {
     return pathKey.startsWith(".nexkit/") || pathKey.includes("/.nexkit/");
   }
 
-  /**
-   * Convert an absolute path to a ~/ relative path with forward slashes.
-   * VS Code chat.*Locations require paths to be relative or start with ~/.
-   */
-  private _toTildePath(absolutePath: string): string {
-    const homeDir = os.homedir().replace(/\\/g, "/");
-    const normalized = absolutePath.replace(/\\/g, "/");
-
-    if (normalized.startsWith(homeDir)) {
-      return "~" + normalized.slice(homeDir.length);
+  private _areLocationSettingsEqual(
+    existing: Record<string, boolean> | undefined,
+    next: Record<string, boolean>
+  ): boolean {
+    if (!existing) {
+      return false;
     }
 
-    // Fallback: return forward-slashed path if not under home directory
-    return normalized;
+    const existingKeys = Object.keys(existing).sort();
+    const nextKeys = Object.keys(next).sort();
+
+    if (existingKeys.length !== nextKeys.length) {
+      return false;
+    }
+
+    return existingKeys.every((key, index) => key === nextKeys[index] && existing[key] === next[key]);
   }
 }

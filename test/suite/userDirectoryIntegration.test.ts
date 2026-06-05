@@ -14,7 +14,6 @@ import * as sinon from "sinon";
 import * as vscode from "vscode";
 import { UserDirectoryService } from "../../src/features/ai-template-files/services/userDirectoryService";
 import { TemplateFileOperations } from "../../src/features/ai-template-files/services/templateFileOperations";
-import { ConfirmationService } from "../../src/shared/services/confirmationService";
 import { RecommendedSettingsConfigDeployer } from "../../src/features/initialization/recommendedSettingsConfigDeployer";
 import { SettingsManager } from "../../src/core/settingsManager";
 
@@ -74,7 +73,7 @@ suite("Integration: User Directory Deployment Flow", () => {
       assert.strictEqual(installPath, expectedRoot);
     });
 
-    test("Settings deployer should register user-level absolute paths", async () => {
+    test("Settings deployer should register workspace-relative global paths", async () => {
       const updateStub = sandbox.stub().resolves();
       const inspectStub = sandbox.stub().returns({ globalValue: undefined });
       const fakeConfig = {
@@ -85,27 +84,20 @@ suite("Integration: User Directory Deployment Flow", () => {
       };
       sandbox.stub(vscode.workspace, "getConfiguration").returns(fakeConfig as any);
 
-      const mockConf = sandbox.createStubInstance(ConfirmationService);
-      mockConf.confirm.resolves("accepted");
-      const deployer = new RecommendedSettingsConfigDeployer(userDirectoryService, mockConf as any);
+      const deployer = new RecommendedSettingsConfigDeployer();
       await deployer.deployVscodeSettings(tempDir);
 
-      // Verify absolute paths from UserDirectoryService are used in user-level settings
+      // Verify workspace-relative paths are registered in global settings
       const agentCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "agentFilesLocations");
       assert.ok(agentCall, "Should write agentFilesLocations setting");
 
-      const agentPaths = agentCall.args[1];
-      const expectedAgentPath = userDirectoryService.getAbsoluteTemplateLocations()["agents"];
-      // The setting value should be an object with the absolute path as key
-      assert.ok(
-        Object.keys(agentPaths).some((k: string) => k.includes(".nexkit") && k.includes("agents")),
-        `Agent path should contain .nexkit/agents, got: ${JSON.stringify(agentPaths)}`
-      );
+      const agentPaths = agentCall.args[1] as Record<string, boolean>;
+      assert.strictEqual(agentPaths[".nexkit/agents"], true, "Workspace-relative agent path should be present");
       assert.strictEqual(agentCall.args[2], vscode.ConfigurationTarget.Global, "Should target Global scope");
     });
   });
 
-  suite("Workspace override → both paths registered", () => {
+  suite("Workspace override → workspace path registered", () => {
     test("Should detect workspace override when .nexkit/ exists in workspace", () => {
       // Create a .nexkit directory in temp to simulate workspace
       const fakeWorkspaceNexkit = path.join(tempDir, ".nexkit");

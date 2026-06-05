@@ -2,7 +2,6 @@ import * as fs from "fs";
 import * as path from "path";
 import { fileExists, deepMerge } from "../../shared/utils/fileHelper";
 import { LoggingService } from "../../shared/services/loggingService";
-import { UserDirectoryService } from "../ai-template-files/services/userDirectoryService";
 
 /**
  * Test command detection result
@@ -36,8 +35,6 @@ interface HookConfig {
 export class HooksConfigDeployer {
   private readonly _logging = LoggingService.getInstance();
 
-  constructor(private readonly _userDirectory?: UserDirectoryService) {}
-
   /**
    * Deploy the run-tests hook to the workspace.
    * Detects the project test command and writes .nexkit/hooks/run-tests.json.
@@ -55,31 +52,6 @@ export class HooksConfigDeployer {
       await this._writeHookFile(hooksDir, testCommand);
     } catch (error) {
       this._logging.error("Failed to deploy run-tests hook:", error);
-    }
-  }
-
-  /**
-   * Deploy the run-tests hook to the user-level directory.
-   * Detects the project test command and writes to the user .nexkit/hooks/ directory.
-   * @param targetRoot Absolute path to the workspace root (for test command detection)
-   */
-  public async deployRunTestsHookToUserDir(targetRoot: string): Promise<void> {
-    if (!this._userDirectory) {
-      this._logging.warn("UserDirectoryService not available — skipping user-level hook deployment.");
-      return;
-    }
-
-    try {
-      const testCommand = await this._detectTestCommand(targetRoot);
-      if (!testCommand) {
-        this._logging.info("No test framework detected — skipping user-level run-tests hook deployment.");
-        return;
-      }
-
-      const hooksDir = path.join(this._userDirectory.getUserNexkitRoot(), "hooks");
-      await this._writeHookFile(hooksDir, testCommand);
-    } catch (error) {
-      this._logging.error("Failed to deploy user-level run-tests hook:", error);
     }
   }
 
