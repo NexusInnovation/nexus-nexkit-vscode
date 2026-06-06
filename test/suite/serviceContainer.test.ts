@@ -60,7 +60,7 @@ suite("Unit: ServiceContainer", () => {
     assert.ok(services.updateStatusBar, "UpdateStatusBarService should be initialized");
     assert.ok(services.extensionUpdate, "ExtensionUpdateService should be initialized");
     assert.ok(services.backup, "BackupService should be initialized");
-    assert.ok(services.gitIgnoreConfigDeployer, "GitIgnoreConfigDeployer should be initialized");
+    assert.ok(services.gitExcludeConfigDeployer, "GitExcludeConfigDeployer should be initialized");
     assert.ok(services.mcpConfigDeployer, "MCPConfigDeployer should be initialized");
     assert.ok(services.recommendedExtensionsConfigDeployer, "RecommendedExtensionsConfigDeployer should be initialized");
     assert.ok(services.recommendedSettingsConfigDeployer, "RecommendedSettingsConfigDeployer should be initialized");

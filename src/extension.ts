@@ -2,7 +2,12 @@ import * as vscode from "vscode";
 import { SettingsManager } from "./core/settingsManager";
 import { initializeServices } from "./core/serviceContainer";
 import { NexkitPanelViewProvider } from "./features/panel-ui/nexkitPanelViewProvider";
-import { registerInitializeWorkspaceCommand, registerSwitchModeCommand } from "./features/initialization/commands";
+import {
+  registerGoToModeSelectionCommand,
+  registerInitializeWorkspaceCommand,
+  registerSwitchModeCommand,
+} from "./features/initialization/commands";
+import { OperationMode } from "./features/ai-template-files/models/aiTemplateFile";
 import { registerResetWorkspaceCommand } from "./features/initialization/resetCommand";
 import { registerInstallUserMCPsCommand } from "./features/mcp-management/commands";
 import { registerCleanupBackupCommand, registerRestoreBackupCommand } from "./features/backup-management/commands";
@@ -27,6 +32,14 @@ import { registerGenerateCommitMessageCommand } from "./features/commit-manageme
 export async function activate(context: vscode.ExtensionContext) {
   // Initialize core settings manager
   SettingsManager.initialize(context);
+  await updateModeSelectedContext();
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration("nexkit.mode")) {
+        void updateModeSelectedContext();
+      }
+    })
+  );
 
   // Initialize all services
   const services = await initializeServices(context);
@@ -38,6 +51,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Register all commands
   registerInitializeWorkspaceCommand(context, services);
+  registerGoToModeSelectionCommand(context, services);
   registerSwitchModeCommand(context, services);
   registerResetWorkspaceCommand(context, services);
   registerInstallUserMCPsCommand(context, services);
@@ -59,14 +73,6 @@ export async function activate(context: vscode.ExtensionContext) {
   const nexkitPanelProvider = new NexkitPanelViewProvider();
   nexkitPanelProvider.initialize(context, services);
 
-  // Prompt for mode selection on first-time activation (before other initialization)
-  services.modeSelection.ensureModeSelected().catch((error) => {
-    services.logging.error("Failed to prompt for mode selection", error);
-    services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
-      context: "modeSelection.ensureModeSelected",
-    });
-  });
-
   // Check for extension updates on activation & cleanup old .vsix files
   services.extensionUpdate.checkForExtensionUpdatesOnActivation();
   services.extensionUpdate.cleanupOldVsixFilesOnActivation();
@@ -76,9 +82,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Check for required MCP servers on activation
   services.mcpConfig.promptInstallRequiredMCPsOnActivation();
-
-  // Prompt for workspace initialization if needed
-  services.workspaceInitPrompt.promptInitWorkspaceOnWorkspaceChange();
 
   // Run startup verification checks (settings, gitignore, file migration, auth)
   services.startupVerification.verifyOnStartup().catch((error) => {
@@ -122,12 +125,10 @@ export async function activate(context: vscode.ExtensionContext) {
   // Periodically check remote GitHub repos for new commits and auto-refresh templates
   services.aiTemplateData.setupRemoteAutoRefresh();
 
-  // Propose to initialize workspace when changed
-  context.subscriptions.push(
-    vscode.workspace.onDidChangeWorkspaceFolders(() => {
-      services.workspaceInitPrompt.promptInitWorkspaceOnWorkspaceChange();
-    })
-  );
+}
+
+async function updateModeSelectedContext(): Promise<void> {
+  await vscode.commands.executeCommand("setContext", "nexkit.modeSelected", SettingsManager.getMode() !== OperationMode.None);
 }
 
 /**

@@ -1,10 +1,11 @@
-import * as vscode from "vscode";
+﻿import * as vscode from "vscode";
 import * as os from "os";
 import * as path from "path";
 import * as fs from "fs";
 import { SettingsManager } from "../../core/settingsManager";
 import { Commands } from "../../shared/constants/commands";
 import { getWorkspaceRoot } from "../../shared/utils/fileHelper";
+import { ConfirmationService } from "../../shared/services/confirmationService";
 
 export interface MCPConfig {
   servers: { [serverName: string]: MCPServerConfig };
@@ -29,6 +30,8 @@ export interface MCPServerConfig {
 export class MCPConfigService {
   public static readonly Context7ServerName = "context7";
   public static readonly SequentialThinkingServerName = "sequential-thinking";
+
+  constructor(private readonly _confirmation: ConfirmationService) {}
 
   /**
    * Check if required user-level MCP servers are configured
@@ -80,18 +83,40 @@ export class MCPConfigService {
   }
 
   /**
-   * Add a server to user-level MCP config
+   * Add a server to user-level MCP config.
+   * Prompts for confirmation before writing; skips if refused.
    */
   public async addUserMCPServer(serverName: string, serverConfig: MCPServerConfig): Promise<void> {
+    const result = await this._confirmation.confirm(
+      `Nexkit wants to add the "${serverName}" MCP server to your user configuration`,
+      `This will add the "${serverName}" MCP server to your user-level mcp.json so it is available in all your VS Code workspaces.`,
+      SettingsManager.CONFIRMATION_KEYS.mcpUserServer(serverName)
+    );
+
+    if (result !== "accepted") {
+      return;
+    }
+
     await this.updateMCPConfig(this.getUserMCPConfigPath(), {
       serversToAdd: { [serverName]: serverConfig },
     });
   }
 
   /**
-   * Add a server to workspace-level MCP config
+   * Add a server to workspace-level MCP config.
+   * Prompts for confirmation before writing; skips if refused.
    */
   public async addWorkspaceMCPServer(serverName: string, serverConfig: MCPServerConfig): Promise<void> {
+    const result = await this._confirmation.confirm(
+      `Nexkit wants to add the "${serverName}" MCP server to your workspace configuration`,
+      `This will add the "${serverName}" MCP server to .vscode/mcp.json in this workspace.`,
+      SettingsManager.CONFIRMATION_KEYS.mcpWorkspaceServer(serverName)
+    );
+
+    if (result !== "accepted") {
+      return;
+    }
+
     await this.updateMCPConfig(this.getWorkspaceMCPConfigPath(), {
       serversToAdd: { [serverName]: serverConfig },
     });

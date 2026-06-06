@@ -207,6 +207,21 @@ body {
   gap: 12px;
 }
 
+/* Source indicator for user/workspace mode */
+.source-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8em;
+  color: var(--vscode-descriptionForeground);
+  margin: 0;
+  padding: 4px 0;
+}
+
+.source-indicator .codicon {
+  font-size: 0.9em;
+}
+
 /* Search and Filter Row */
 .search-filter-row {
   display: flex;

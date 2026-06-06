@@ -60,4 +60,23 @@ suite("Unit: Extension Activation", () => {
       "Extension must activate on VS Code startup to perform background tasks."
     );
   });
+
+  test("Panel title bar should contribute a home action", () => {
+    const packageJsonPath = path.join(__dirname, "..", "..", "..", "package.json");
+    const packageJsonRaw = fs.readFileSync(packageJsonPath, "utf8");
+    const packageJson = JSON.parse(packageJsonRaw);
+
+    const command = packageJson.contributes?.commands?.find(
+      (entry: { command: string }) => entry.command === "nexus-nexkit-vscode.goToModeSelection"
+    );
+    assert.ok(command, "Expected a goToModeSelection command contribution.");
+    assert.strictEqual(command.icon, "$(home)");
+
+    const menuEntry = packageJson.contributes?.menus?.["view/title"]?.find(
+      (entry: { command: string }) => entry.command === "nexus-nexkit-vscode.goToModeSelection"
+    );
+    assert.ok(menuEntry, "Expected the home action in the panel title bar menu.");
+    assert.strictEqual(menuEntry.when, "view == nexkitPanelView && nexkit.modeSelected");
+    assert.strictEqual(menuEntry.group, "navigation@1");
+  });
 });

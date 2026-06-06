@@ -2,7 +2,7 @@
   "name": "nexus-nexkit-vscode",
   "displayName": "Nexkit",
   "description": "VS Code extension for Nexkit",
-  "version": "3.9.0",
+  "version": "3.10.0-beta.7",
   "publisher": "NexusInnovation",
   "private": true,
   "license": "MIT",
@@ -84,6 +84,12 @@
         "icon": "$(save)"
       },
       {
+        "command": "nexus-nexkit-vscode.goToModeSelection",
+        "title": "Nexkit: Go to Mode Selection",
+        "category": "Nexkit",
+        "icon": "$(home)"
+      },
+      {
         "command": "nexus-nexkit-vscode.applyProfile",
         "title": "Nexkit: Apply Profile",
         "category": "Nexkit",
@@ -129,34 +135,61 @@
     "menus": {
       "view/title": [
         {
-          "command": "nexus-nexkit-vscode.saveProfile",
-          "when": "view == nexkitPanelView",
+          "command": "nexus-nexkit-vscode.goToModeSelection",
+          "when": "view == nexkitPanelView && nexkit.modeSelected",
           "group": "navigation@1"
         },
         {
-          "command": "nexus-nexkit-vscode.applyProfile",
+          "command": "nexus-nexkit-vscode.saveProfile",
           "when": "view == nexkitPanelView",
           "group": "navigation@2"
         },
         {
-          "command": "nexus-nexkit-vscode.installUserMCPs",
+          "command": "nexus-nexkit-vscode.applyProfile",
           "when": "view == nexkitPanelView",
           "group": "navigation@3"
         },
         {
-          "command": "nexus-nexkit-vscode.openSettings",
+          "command": "nexus-nexkit-vscode.installUserMCPs",
           "when": "view == nexkitPanelView",
           "group": "navigation@4"
+        },
+        {
+          "command": "nexus-nexkit-vscode.openSettings",
+          "when": "view == nexkitPanelView",
+          "group": "navigation@5"
         }
       ],
       "scm/title": [
         {
-          "command": "nexus-nexkit-vscode.generateCommitMessage",
+          "submenu": "nexus-nexkit-vscode.commitMenu",
           "when": "scmProvider == git",
           "group": "navigation"
         }
+      ],
+      "nexus-nexkit-vscode.commitMenu": [
+        {
+          "command": "nexus-nexkit-vscode.generateCommitMessage",
+          "when": "scmProvider == git",
+          "group": "1_generate@1"
+        },
+        {
+          "command": "nexus-nexkit-vscode.openSettings",
+          "when": "scmProvider == git",
+          "group": "2_settings@1"
+        }
       ]
     },
+    "submenus": [
+      {
+        "id": "nexus-nexkit-vscode.commitMenu",
+        "label": "Nexkit",
+        "icon": {
+          "light": "media/Nexus_Symbole_MONOCHROME.svg",
+          "dark": "media/Nexus_Symbole_MONOCHROME_light.svg"
+        }
+      }
+    ],
     "viewsContainers": {
       "activitybar": [
         {
@@ -286,6 +319,16 @@
           "scope": "application",
           "description": "Automatically update installed templates when new versions are detected from repositories. When disabled, a button will appear in the sidebar to manually trigger updates."
         },
+        "nexkit.templates.deployMode": {
+          "type": "string",
+          "enum": [
+            "user",
+            "workspace"
+          ],
+          "default": "workspace",
+          "scope": "resource",
+          "description": "Where templates are deployed. 'workspace' installs to .nexkit/ in the current workspace (default). 'user' installs to the user-level .nexkit directory for backward compatibility."
+        },
         "nexkit.mcpSetup.dismissed": {
           "type": "boolean",
           "default": false,
@@ -413,6 +456,7 @@
     "build": "npm run esbuild",
     "watch": "node esbuild.config.js --watch",
     "package": "npm run check:types && npm run lint && node esbuild.config.js --production",
+    "build:ci": "node esbuild.config.js --production",
     "esbuild-base": "node esbuild.config.js",
     "esbuild": "node esbuild.config.js",
     "esbuild-watch": "node esbuild.config.js --watch",

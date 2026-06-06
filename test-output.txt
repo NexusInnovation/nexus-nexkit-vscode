@@ -1,0 +1,37 @@
+
+> nexus-nexkit-vscode@3.9.0-beta.4 test:unit
+> node ./out/test/runTest.js
+
+
+­ƒöÉ Setting up GitHub authentication for tests...
+   Environment: test
+   VS Code installations: {"stable":true,"insiders":true,"oss":false,"hasGitHubAuth":false}
+Ôä╣´©Å  No GitHub authentication found in VS Code profile.
+   Sign in to GitHub in VS Code for authenticated test requests.
+- Resolving version...
+Ô£ö Validated version: 1.119.0
+Ô£ö Found existing install in C:\git\nexkit\nexus-nexkit-vscode\.vscode-test\vscode-win32-x64-archive-1.119.0
+(node:52480) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[main 2026-05-07T17:25:39.473Z] StorageMainService: creating application shared storage
+[main 2026-05-07T17:25:39.474Z] StorageMainService: creating application shared storage with local application storage fallback
+[main 2026-05-07T17:25:39.475Z] CrossAppIPCService: connecting to peer
+[37384:0507/132539.474:ERROR:microsoft\src\shell\browser\api\electron_api_cross_app_ipc.cc:834] CrossAppIPC: Another instance of app 'Code' is already active. CrossAppIPC disabled for this instance.
+[main 2026-05-07T17:25:39.482Z] CrossAppIPCService: disconnected (instance-already-active)
+[main 2026-05-07T17:25:39.658Z] [shared storage] Creating shared storage database at ':memory:' (wasCreated: true)
+[main 2026-05-07T17:25:39.658Z] [shared storage] Initializing fallback application storage (type: local, path: in-memory)
+[main 2026-05-07T17:25:39.660Z] Error: Error mutex already exists
+    at bs.installMutex (file:///C:/git/nexkit/nexus-nexkit-vscode/.vscode-test/vscode-win32-x64-archive-1.119.0/8b640eef5a/resources/app/out/main.js:516:26194)
+[main 2026-05-07T17:25:39.741Z] [shared storage] Fallback application storage initialized with 3 items
+[main 2026-05-07T17:25:39.742Z] update#setState disabled
+[main 2026-05-07T17:25:39.742Z] update#ctor - updates are disabled by the environment
+Started local extension host with pid 67568.
+Started initializing default profile extensions in extensions installation folder. file:///c%3A/Users/ERICDE~1/AppData/Local/Temp/nexus-nexkit-vscode-test-Hj97Xd/extensions
+Completed initializing default profile extensions in extensions installation folder. file:///c%3A/Users/ERICDE~1/AppData/Local/Temp/nexus-nexkit-vscode-test-Hj97Xd/extensions
+Unable to read file 'c:\git\nexkit\nexus-nexkit-vscode\out\src\package.json' (Error: Unable to resolve nonexistent file 'c:\git\nexkit\nexus-nexkit-vscode\out\src\package.json')
+Unable to read file 'c:\git\nexkit\nexus-nexkit-vscode\out\test\package.json' (Error: Unable to resolve nonexistent file 'c:\git\nexkit\nexus-nexkit-vscode\out\test\package.json')
+Unable to read file 'c:\git\nexkit\nexus-nexkit-vscode\out\webview\package.json' (Error: Unable to resolve nonexistent file 'c:\git\nexkit\nexus-nexkit-vscode\out\webview\package.json')
+[AccountPolicyGate] apply: state=inactive, reason=undefined, isRestricted=false
+Settings Sync: Account status changed from uninitialized to unavailable
+Closing VS Code gracefully. Press Ctrl+C to force close.

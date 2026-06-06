@@ -1,0 +1,11 @@
+
+> nexus-nexkit-vscode@3.9.0-beta.4 test:unit
+> node ./out/test/runTest.js
+
+
+­ƒöÉ Setting up GitHub authentication for tests...
+   Environment: test
+   VS Code installations: {"stable":true,"insiders":true,"oss":false,"hasGitHubAuth":false}
+Ôä╣´©Å  No GitHub authentication found in VS Code profile.
+   Sign in to GitHub in VS Code for authenticated test requests.
+- Resolving version...

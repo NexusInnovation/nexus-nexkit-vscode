@@ -85,6 +85,30 @@ export function registerInitializeWorkspaceCommand(context: vscode.ExtensionCont
 }
 
 /**
+ * Register command to return to the mode selection screen
+ */
+export function registerGoToModeSelectionCommand(context: vscode.ExtensionContext, services: ServiceContainer): void {
+  registerCommand(
+    context,
+    Commands.GO_TO_MODE_SELECTION,
+    async () => {
+      const currentMode = SettingsManager.getMode();
+      if (currentMode === OperationMode.None) {
+        return;
+      }
+
+      await SettingsManager.setMode(OperationMode.None);
+
+      services.telemetry.trackEvent("mode.selectionOpened", {
+        fromMode: currentMode,
+        context: "viewTitle",
+      });
+    },
+    services.telemetry
+  );
+}
+
+/**
  * Register mode switching command
  */
 export function registerSwitchModeCommand(context: vscode.ExtensionContext, services: ServiceContainer): void {

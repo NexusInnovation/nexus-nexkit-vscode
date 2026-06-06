@@ -21,6 +21,7 @@ export const Commands = {
 
   // Mode management commands
   SWITCH_MODE: "nexus-nexkit-vscode.switchMode",
+  GO_TO_MODE_SELECTION: "nexus-nexkit-vscode.goToModeSelection",
 
   // APM DevOps commands
   ADD_DEVOPS_CONNECTION: "nexus-nexkit-vscode.addDevOpsConnection",
