@@ -28,6 +28,7 @@ export class NexkitPanelMessageHandler {
     this._messageHandlers = new Map([
       ["webviewReady", this.handleWebviewReady.bind(this)],
       ["initWorkspace", this.handleInitWorkspace.bind(this)],
+      ["dismissInitWorkspace", this.handleDismissInitWorkspace.bind(this)],
       ["getTemplateData", this.handleGetTemplateData.bind(this)],
       ["installTemplate", this.handleInstallTemplate.bind(this)],
       ["uninstallTemplate", this.handleUninstallTemplate.bind(this)],
@@ -111,6 +112,12 @@ export class NexkitPanelMessageHandler {
     this.sendInstalledTemplates();
   }
 
+  private async handleDismissInitWorkspace(message: WebviewMessage): Promise<void> {
+    this.trackWebviewAction("dismissInitWorkspace");
+    await SettingsManager.setWorkspaceInitPromptDismissed(true);
+    this.sendWorkspaceState();
+  }
+
   private async handleGetTemplateData(message: WebviewMessage): Promise<void> {
     await this.sendTemplateData();
   }
@@ -147,9 +154,7 @@ export class NexkitPanelMessageHandler {
     }
   }
 
-  private async handleUpdateInstalledTemplates(
-    message: WebviewMessage & { command: "updateInstalledTemplates" }
-  ): Promise<void> {
+  private async handleUpdateInstalledTemplates(message: WebviewMessage & { command: "updateInstalledTemplates" }): Promise<void> {
     this.trackWebviewAction("updateInstalledTemplates");
     await vscode.commands.executeCommand(Commands.UPDATE_INSTALLED_TEMPLATES, message.mode);
     this.sendInstalledTemplates();
@@ -200,6 +205,7 @@ export class NexkitPanelMessageHandler {
     this.trackWebviewAction("setMode");
     try {
       await SettingsManager.setMode(message.mode);
+      await SettingsManager.setWorkspaceInitialized(true);
       this.sendWorkspaceState();
       this._services.telemetry.trackEvent("mode.selected", {
         mode: message.mode,
@@ -300,13 +306,19 @@ export class NexkitPanelMessageHandler {
   private sendWorkspaceState(): void {
     const hasWorkspace = (vscode.workspace.workspaceFolders?.length ?? 0) > 0;
     const isInitialized = SettingsManager.isWorkspaceInitialized();
+    const isInitRefused = SettingsManager.isWorkspaceInitPromptDismissed();
     const mode = SettingsManager.getMode();
+    const deployMode = SettingsManager.getTemplateDeployMode();
+    const workspaceOverrideActive = SettingsManager.isWorkspaceOverrideActive();
 
     this.sendToWebview({
       command: "workspaceStateUpdate",
       hasWorkspace,
       isInitialized,
+      isInitRefused,
       mode,
+      deployMode,
+      workspaceOverrideActive,
     });
   }
 

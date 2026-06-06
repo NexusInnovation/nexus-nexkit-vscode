@@ -1,30 +1,5 @@
 {
-  "chat.agentFilesLocations": {
-    ".nexkit/agents": true
-  },
-  "chat.agentSkillsLocations": {
-    ".nexkit/skills": true
-  },
-  "chat.hookFilesLocations": {
-    ".nexkit/hooks": true
-  },
-  "chat.instructionsFilesLocations": {
-    ".nexkit/instructions": true
-  },
-  "chat.promptFilesLocations": {
-    ".nexkit/prompts": true
-  },
-  "chat.useHooks": true,
   "editor.formatOnSave": true,
-  "typescript.preferences.importModuleSpecifier": "relative",
-  "typescript.suggest.autoImports": true,
-  "chat.hooksFilesLocations": {
-    ".nexkit/hooks": true
-  },
   "debug.internalConsoleOptions": "neverOpen",
-  "githubPullRequests.ignoredPullRequestBranches": [
-    "develop"
-  ],
-  "chat.useCustomAgentHooks": true,
-  "chat.useClaudeHooks": true
+  "githubPullRequests.ignoredPullRequestBranches": ["develop"]
 }

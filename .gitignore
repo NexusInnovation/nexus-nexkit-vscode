@@ -16,7 +16,3 @@ node_modules
 infrastructure/badge-service/node_modules/
 infrastructure/badge-service/dist/
 infrastructure/badge-service/local.settings.json
-
-# BEGIN NexKit
-.nexkit/
-# END NexKit

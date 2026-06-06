@@ -49,41 +49,48 @@ export class HooksConfigDeployer {
       }
 
       const hooksDir = path.join(targetRoot, ".nexkit", "hooks");
-      await fs.promises.mkdir(hooksDir, { recursive: true });
-
-      const hookPath = path.join(hooksDir, "run-tests.json");
-      const hookConfig: HookConfig = {
-        hooks: {
-          Stop: [
-            {
-              type: "command",
-              command: testCommand.command,
-              ...(testCommand.windows && { windows: testCommand.windows }),
-              timeout: 120,
-            },
-          ],
-        },
-      };
-
-      // Merge with existing hook file if present
-      if (await fileExists(hookPath)) {
-        const existingContent = await fs.promises.readFile(hookPath, "utf8");
-        try {
-          const existingConfig = JSON.parse(existingContent);
-          const merged = deepMerge(hookConfig, existingConfig);
-          await fs.promises.writeFile(hookPath, JSON.stringify(merged, null, 2), "utf8");
-          this._logging.info("Merged run-tests hook with existing configuration.");
-          return;
-        } catch {
-          this._logging.warn("Existing run-tests.json is invalid JSON — overwriting with detected config.");
-        }
-      }
-
-      await fs.promises.writeFile(hookPath, JSON.stringify(hookConfig, null, 2), "utf8");
-      this._logging.info(`Deployed run-tests hook: ${testCommand.command}`);
+      await this._writeHookFile(hooksDir, testCommand);
     } catch (error) {
       this._logging.error("Failed to deploy run-tests hook:", error);
     }
+  }
+
+  /**
+   * Write the hook configuration file to the specified directory.
+   */
+  private async _writeHookFile(hooksDir: string, testCommand: DetectedTestCommand): Promise<void> {
+    await fs.promises.mkdir(hooksDir, { recursive: true });
+
+    const hookPath = path.join(hooksDir, "run-tests.json");
+    const hookConfig: HookConfig = {
+      hooks: {
+        Stop: [
+          {
+            type: "command",
+            command: testCommand.command,
+            ...(testCommand.windows && { windows: testCommand.windows }),
+            timeout: 120,
+          },
+        ],
+      },
+    };
+
+    // Merge with existing hook file if present
+    if (await fileExists(hookPath)) {
+      const existingContent = await fs.promises.readFile(hookPath, "utf8");
+      try {
+        const existingConfig = JSON.parse(existingContent);
+        const merged = deepMerge(hookConfig, existingConfig);
+        await fs.promises.writeFile(hookPath, JSON.stringify(merged, null, 2), "utf8");
+        this._logging.info("Merged run-tests hook with existing configuration.");
+        return;
+      } catch {
+        this._logging.warn("Existing run-tests.json is invalid JSON — overwriting with detected config.");
+      }
+    }
+
+    await fs.promises.writeFile(hookPath, JSON.stringify(hookConfig, null, 2), "utf8");
+    this._logging.info(`Deployed run-tests hook: ${testCommand.command}`);
   }
 
   /**

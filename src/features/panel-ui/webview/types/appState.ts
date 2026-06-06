@@ -24,8 +24,11 @@ export interface AppState {
   workspace: {
     hasWorkspace: boolean;
     isInitialized: boolean;
+    isInitRefused: boolean; // User explicitly dismissed the initialization prompt
     isReady: boolean; // Whether initial workspace state has been received from extension
     mode: OperationMode; // Operation mode
+    deployMode: "user" | "workspace"; // Where templates are installed
+    workspaceOverrideActive: boolean; // Whether per-project overrides exist
   };
 
   /**
@@ -87,8 +90,11 @@ export const initialAppState: AppState = {
   workspace: {
     hasWorkspace: false,
     isInitialized: false,
+    isInitRefused: false,
     isReady: false,
     mode: OperationMode.None,
+    deployMode: "user",
+    workspaceOverrideActive: false,
   },
   templates: {
     repositories: [],

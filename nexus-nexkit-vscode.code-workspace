@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+	],
+	"settings": {
+		"debug.internalConsoleOptions": "neverOpen",
+		"githubPullRequests.ignoredPullRequestBranches": [
+			"develop"
+		],
+		"chat.useClaudeHooks": true
+	}
+}

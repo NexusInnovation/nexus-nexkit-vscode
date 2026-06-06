@@ -5,9 +5,6 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
-    paths-ignore:
-      - "/*.md"
-      - "/docs/**/*"
 
   workflow_dispatch:
     inputs:
@@ -25,9 +22,66 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  # Job 1: Code Quality & Testing
-  quality-gate:
-    name: Quality Gate (${{ matrix.os }})
+  # Job 1: Commit Message Validation (PRs only)
+  commitlint:
+    name: Validate Commit Messages
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+      - name: Validate commits
+        run: |
+          npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+      - name: Provide guidance on failure
+        if: failure()
+        run: |
+          echo "::error::Commit messages do not follow Conventional Commits format"
+          echo ""
+          echo "Please format commit messages as: <type>(<scope>): <subject>"
+          echo ""
+          echo "Valid types: feat, fix, docs, style, refactor, perf, test, chore, ci, build"
+          echo ""
+          echo "Examples:"
+          echo "  feat(templates): add Python template support"
+          echo "  fix(mcp): resolve config path on macOS"
+          echo "  docs: update installation instructions"
+          echo ""
+          echo "See CONTRIBUTING.md for full guidelines"
+
+  # Job 2: Static Analysis (single runner)
+  static-analysis:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+      - name: Install dependencies
+        run: npm ci
+      - name: Type checking
+        run: npm run check:types
+      - name: Lint code
+        run: npm run lint
+
+  # Job 3: Tests (3-OS matrix, depends on static-analysis)
+  test:
+    name: Test (${{ matrix.os }})
+    needs: [static-analysis]
     runs-on: ${{ matrix.os }}
     if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip ci]')
     strategy:
@@ -65,21 +119,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Type checking
-        run: npm run check:types
-
-      - name: Lint code
-        run: npm run lint
-
       - name: Compile TypeScript
         run: npm run test-compile
 
       - name: Run tests
         if: runner.os != 'Linux'
-        run: npm test
+        run: node ./out/test/runTest.js
       - name: Run tests (headless)
         if: runner.os == 'Linux'
-        run: xvfb-run -a npm test
+        run: xvfb-run -a node ./out/test/runTest.js
 
       - name: Upload test results
         if: always()
@@ -89,7 +137,7 @@ jobs:
           path: test-results/
           retention-days: 30
 
-  # Job 3: Security Scanning
+  # Job 4: Security Scanning
   security:
     name: Security Audit
     runs-on: ubuntu-latest
@@ -111,34 +159,16 @@ jobs:
         run: npm audit --omit=dev --audit-level=high
         continue-on-error: false
 
-      - name: Generate SBOM
-        run: |
-          mkdir -p sbom
-          npx @cyclonedx/cyclonedx-npm --output-file sbom/manifest.json --spec-version 1.5
+  # Job 5: CodeQL Analysis
 
-      - name: Upload SBOM artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: sbom
-          path: sbom/
-          retention-days: 90
-  # Job 4: CodeQL Analysis
-
-  # Job 5: Build & Package
+  # Job 6: Build & Package (PRs only — safety gate)
   build:
     name: Build Extension
-    needs: [security]
+    needs: [static-analysis, security]
     runs-on: ubuntu-latest
     if: |
-      (
-        github.event_name == 'push' &&
-        (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') &&
-        (!contains(github.event.head_commit.message, '[skip ci]'))
-      ) || (
-        github.event_name == 'pull_request' &&
-        (github.base_ref == 'main' || github.base_ref == 'develop')
-      ) ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true')
+      github.event_name == 'pull_request' &&
+      (github.base_ref == 'main' || github.base_ref == 'develop')
     outputs:
       vsix-name: ${{ steps.package.outputs.vsix-name }}
       vsix-size: ${{ steps.size.outputs.size }}
@@ -156,7 +186,7 @@ jobs:
         run: npm ci
 
       - name: Build extension
-        run: npm run package
+        run: npm run build:ci
 
       - name: Package extension
         id: package
@@ -186,10 +216,10 @@ jobs:
           path: nexkit-vscode.vsix
           retention-days: 30
 
-  # Job 6: Release (semantic-release) - Only for push to main/develop
+  # Job 7: Release (semantic-release) - Only for push to main/develop
   release:
     name: Release (semantic-release)
-    needs: [quality-gate, security, build]
+    needs: [test, security]
     runs-on: ubuntu-latest
     # Run on push to main/develop OR on PRs targeting develop (for beta testing)
     if: |
@@ -237,10 +267,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release
 
-  # Job 7: Preview Build for PRs to develop (creates beta-preview packages)
+  # Job 8: Preview Build for PRs to develop (creates beta-preview packages)
   pr-preview:
     name: PR Preview Build
-    needs: [quality-gate, security]
+    needs: [test, security]
     runs-on: ubuntu-latest
     if: (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'develop')  ||
       (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true')
@@ -285,7 +315,7 @@ jobs:
           npm version ${{ steps.preview-version.outputs.version }} --no-git-tag-version
 
       - name: Build extension
-        run: npm run package
+        run: npm run build:ci
 
       - name: Package VSIX
         run: |

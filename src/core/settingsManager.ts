@@ -43,6 +43,9 @@ export class SettingsManager {
   private static readonly TEMPLATES_AUTO_UPDATE_ON_REFRESH = "templates.autoUpdateOnRefresh";
   private static readonly TEMPLATES_AUTO_UPDATE_ENABLED = "templates.autoUpdateOnRefresh";
 
+  // Template deploy mode
+  private static readonly TEMPLATES_DEPLOY_MODE = "templates.deployMode";
+
   // Extension update state keys (GlobalState)
   private static readonly EXTENSION_LAST_UPDATE_CHECK_STATE_KEY = "nexkit.extension.lastUpdateCheck";
 
@@ -67,6 +70,15 @@ export class SettingsManager {
   // APM DevOps state keys (WorkspaceState)
   private static readonly ACTIVE_DEVOPS_CONNECTION_KEY = "activeDevOpsConnection";
   private static readonly DEVOPS_CONNECTIONS_KEY = "devOpsConnections";
+
+  /**
+   * Workspace-state keys for "Refuse Forever" confirmation dialogs.
+   */
+  public static readonly CONFIRMATION_KEYS = {
+    CHAT_SETTINGS: "nexkit.confirm.chatSettings.refused",
+    mcpUserServer: (serverName: string) => `nexkit.confirm.mcpUser.${serverName}.refused`,
+    mcpWorkspaceServer: (serverName: string) => `nexkit.confirm.mcpWorkspace.${serverName}.refused`,
+  } as const;
 
   /**
    * Initialize the SettingsManager with the extension context
@@ -174,6 +186,46 @@ export class SettingsManager {
 
   static isTemplatesAutoUpdateEnabled(): boolean {
     return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<boolean>(this.TEMPLATES_AUTO_UPDATE_ON_REFRESH, true);
+  }
+
+  static getTemplateDeployMode(): "user" | "workspace" {
+    return vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .get<"user" | "workspace">(this.TEMPLATES_DEPLOY_MODE, "workspace");
+  }
+
+  static isUserDeployMode(): boolean {
+    return this.getTemplateDeployMode() === "user";
+  }
+
+  /**
+   * Determines whether the workspace has per-project template overrides active.
+   * True when deployMode is "workspace" OR a .nexkit/ directory exists in the workspace root.
+   * When active, both user-level and workspace-level template paths should coexist.
+   */
+  static isWorkspaceOverrideActive(): boolean {
+    if (this.getTemplateDeployMode() === "workspace") {
+      return true;
+    }
+    // Auto-detect: check if a .nexkit/ directory exists at the workspace root
+    try {
+      const fs = require("fs");
+      const path = require("path");
+      const workspaceFile = vscode.workspace.workspaceFile;
+      let root: string | undefined;
+      if (workspaceFile && workspaceFile.scheme === "file") {
+        root = path.dirname(workspaceFile.fsPath);
+      } else {
+        root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+      }
+      if (!root) {
+        return false;
+      }
+      const nexkitPath = path.join(root, ".nexkit");
+      return fs.existsSync(nexkitPath) && fs.statSync(nexkitPath).isDirectory();
+    } catch {
+      return false;
+    }
   }
 
   static getLastUpdateCheck(): number {
@@ -294,5 +346,45 @@ export class SettingsManager {
       throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
     }
     await this.context.workspaceState.update(this.DEVOPS_CONNECTIONS_KEY, connections);
+  }
+
+  // Confirmation "Refused Forever" state (WorkspaceState)
+
+  static isConfirmationRefusedForever(key: string): boolean {
+    if (!this.context) {
+      return false;
+    }
+    return this.context.workspaceState.get<boolean>(key, false);
+  }
+
+  static async setConfirmationRefusedForever(key: string, value: boolean): Promise<void> {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    await this.context.workspaceState.update(key, value);
+  }
+
+  static isConfirmChatSettingsRefused(): boolean {
+    return this.isConfirmationRefusedForever(this.CONFIRMATION_KEYS.CHAT_SETTINGS);
+  }
+
+  static async setConfirmChatSettingsRefused(value: boolean): Promise<void> {
+    await this.setConfirmationRefusedForever(this.CONFIRMATION_KEYS.CHAT_SETTINGS, value);
+  }
+
+  static isConfirmMcpUserServerRefused(serverName: string): boolean {
+    return this.isConfirmationRefusedForever(this.CONFIRMATION_KEYS.mcpUserServer(serverName));
+  }
+
+  static async setConfirmMcpUserServerRefused(serverName: string, value: boolean): Promise<void> {
+    await this.setConfirmationRefusedForever(this.CONFIRMATION_KEYS.mcpUserServer(serverName), value);
+  }
+
+  static isConfirmMcpWorkspaceServerRefused(serverName: string): boolean {
+    return this.isConfirmationRefusedForever(this.CONFIRMATION_KEYS.mcpWorkspaceServer(serverName));
+  }
+
+  static async setConfirmMcpWorkspaceServerRefused(serverName: string, value: boolean): Promise<void> {
+    await this.setConfirmationRefusedForever(this.CONFIRMATION_KEYS.mcpWorkspaceServer(serverName), value);
   }
 }
