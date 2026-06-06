@@ -1,3 +1,10 @@
+## 3.10.0-beta.8 (2026-06-06)
+
+* feat!: make Nexkit invisible in project repositories ([a357181](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a357181))
+* Make Nexkit Invisible in project repo (#171) ([bee7172](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/bee7172)), closes [#171](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/171)
+* feat: make Nexkit invisible in project repositories ([efb5864](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/efb5864))
+* chore(packaging): optimize .vscodeignore for esbuild bundling ([c61d893](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c61d893))
+
 ## 3.10.0-beta.7 (2026-06-04)
 
 * fix(initialization): handle git worktree `.git` file in GitExcludeConfigDeployer (#170) ([cee818e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/cee818e)), closes [#170](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/170)
