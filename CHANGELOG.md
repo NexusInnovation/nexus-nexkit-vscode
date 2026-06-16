@@ -1,3 +1,7 @@
+## 3.10.0-beta.9 (2026-06-16)
+
+* fix(panel-ui): add init-banner layout styles for action row ([30f95a2](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/30f95a2))
+
 ## 3.10.0-beta.8 (2026-06-06)
 
 * feat!: make Nexkit invisible in project repositories ([a357181](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a357181))
