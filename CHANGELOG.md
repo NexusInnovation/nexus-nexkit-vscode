@@ -1,3 +1,7 @@
+## <small>3.10.1 (2026-06-16)</small>
+
+* fix(panel-ui): add init-banner layout styles for action row (#173) ([ea5dbff](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ea5dbff)), closes [#173](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/173)
+
 ## 3.10.0 (2026-06-06)
 
 * Clarify and preserve project-level `copilot-instructions.md` handling during Nexkit initialization ( ([a2a8df0](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a2a8df0)), closes [#156](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/156)
