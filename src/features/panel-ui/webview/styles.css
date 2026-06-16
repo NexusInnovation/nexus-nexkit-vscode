@@ -42,6 +42,18 @@ body {
   gap: 6px;
 }
 
+.init-banner {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.init-banner .action-button {
+  flex: 0 0 auto;
+}
+
 .action-button {
   padding: 8px;
   font-size: 0.9em;
