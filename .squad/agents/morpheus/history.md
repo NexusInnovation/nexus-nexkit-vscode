@@ -2,19 +2,33 @@
 
 ## Project Context
 
-**Project:** nexus-nexkit-vscode — a TypeScript VS Code extension with a Preact-powered sidebar webview. Manages AI templates (agents, prompts, instructions, chatmodes) from GitHub repositories.
+**Project:** nexus-nexkit-vscode — a TypeScript VS Code extension that manages AI templates (agents, prompts, instructions, chatmodes) from GitHub repositories. Handles workspace initialization, MCP server configuration, and automated extension self-updates.
 
-**Owner:** Eric De Carufel
+**Stack:** TypeScript 5.x (strict), VS Code Extension API 1.105.0+, Preact (webview sidebar), esbuild (bundling), Mocha + Sinon (testing), semantic-release + Conventional Commits.
+
+**Owner:** Eric Decarufel
+
+**Architecture:** Service-oriented with dependency injection via `ServiceContainer`. All services instantiated in `src/core/serviceContainer.ts`.
+
+**Key contact for approval:** Eric De Carufel (provides clarifications, approves architecture decisions)
 
 ## Learnings
 
-### 2026-07-10 — 4 New Triage-Pending Issues in Project #5
+### GitHub Ruleset Validation Feature
 
-Oracle created 4 new issues in `NexusInnovation/nexus-nexkit-vscode`, labeled `squad`, and added them to GitHub Project #5 ("NexKit Evolution Project", ID `PVT_kwDOCHE2jM4BGWXr`). They are waiting for role assignment:
+**Key Decisions (2026-07-08):**
 
-- **#175 — JSON Formatter:** Monaco Editor + jsonc-parser panel with line/column validation, JSON5/JSONC support, copy + save-to-file buttons, no diff view.
-- **#176 — RTF to Markdown:** Turndown (HTML paste) + Mammoth.js (.docx) + possibly rtf.js (.rtf); risk: pure RTF parsers are weak; both paste and file-upload entry points required.
-- **#177 — Cron Job Schedule Builder:** cronstrue + cron-parser + react-js-cron; risk: webview UI is Preact, not React — needs a compatibility check or alternative; needs NL description, 5/6-field formats, presets.
-- **#178 — RegEx Builder:** custom panel (no iframe-embeddable tool works due to X-Frame-Options); JS + .NET regex flavor support; risk: flavor differences need a toggle; needs highlighting, replace preview, common pattern library.
+1. **Strict Pattern Matching** — When translating GitHub ruleset patterns to local Git hooks, maintain full semantic parity. Any pattern that cannot be strictly evaluated must be marked as unsupported (server-only), not approximated. This ensures local validation never silently accepts commits that GitHub would reject.
 
-**Architectural decision:** 4 separate panels/commands (not a unified tabbed "Dev Tools" webview), npm libraries bundled locally, no iframes to external hosted tools (privacy/telemetry/framing concerns). No priority ranking among the 4; Project #5 is independent of the 125-hour Nethris budget.
+2. **Dual-Hook Enforcement** — Branch-name and commit-message rules must run at both `commit-msg` AND `pre-push` Git hooks, not just one. This prevents edge cases where commits created outside VS Code bypass validation.
+
+3. **Explicit Consent UX** — First-time hook activation requires active user approval ("Activer localement" button), not passive/silent acceptance. This respects user autonomy and makes debugging easier if hooks cause issues.
+
+4. **Include Org-Level Rulesets** — Use `includes_parents=true` when reading GitHub rulesets API so organization/enterprise-level rules are captured in V1, not just repo-level rules.
+
+**Architecture Principle:**
+
+- Two-layer design: remote read layer (GitHub REST API) + local enforcement layer (rule translation)
+- Keeps GitHub API concerns isolated from hook generation
+- Makes unsupported rules explicit rather than overloading the hook deployer
+- Read-only sync pattern: user consents once per repo; subsequent refreshes run silently

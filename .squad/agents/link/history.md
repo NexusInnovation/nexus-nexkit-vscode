@@ -20,3 +20,22 @@
 **Build:** `npm run compile` | Tests: `npm test` | Lint: `npm run lint`
 
 ## Learnings
+
+### GitHub Ruleset Validation Feature (Lot 1)
+
+**Implementation Insights (2026-07-08):**
+
+1. **Repository Identity Pattern** — For caching and fingerprinting, use immutable repo identity (owner, repo, baseUrl) rather than relying on Git remotes alone. This survives remote renames and allows per-repo cache scoping.
+
+2. **Two-Layer Service Design** — Separate GitHub API read concerns (IGitRemoteProvider, ruleset client) from local enforcement logic (hook deployment, rule translation). This keeps models reusable and services independently testable.
+
+3. **Git Remote Detection** — Use `git config --get remote.origin.url` to detect hosting provider (GitHub vs GHE vs other VCS). Build a lightweight provider interface for mocking in tests, not a full Git SDK dependency.
+
+4. **Cache Under .nexkit/** — Store ruleset cache in `.nexkit/rulesets/` (workspace-local, not repository root). This keeps cache portable with the repo clone and inspectable by users, while remaining outside the VCS and CI systems.
+
+5. **Feature Flags in SettingsManager** — Centralize feature toggles (on/off, cache paths, API retry limits) through SettingsManager, not scattered config files. Makes feature rollout/experiment control straightforward.
+
+**Testing Pattern:**
+- Unit test service layers in isolation (mock GitHub API, mock file I/O)
+- Use repository identity in test fixtures for scenario reusability
+- 100% coverage target for core services (models, providers, detection)
