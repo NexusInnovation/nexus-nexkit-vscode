@@ -1,3 +1,9 @@
+## <small>3.10.2-beta.1 (2026-07-09)</small>
+
+* Merge remote-tracking branch 'origin/main' into develop ([8ce8818](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8ce8818))
+* chore(release): v3.10.0-beta.9 [skip ci] ([d295907](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/d295907))
+* fix(panel-ui): add init-banner layout styles for action row ([30f95a2](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/30f95a2))
+
 ## <small>3.10.1 (2026-06-16)</small>
 
 - fix(panel-ui): add init-banner layout styles for action row (#173) ([ea5dbff](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ea5dbff)), closes [#173](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/173)
