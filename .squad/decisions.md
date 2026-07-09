@@ -49,43 +49,59 @@ The button visibility is driven by a VS Code context key (`nexkit.modeSelected`)
 
 ---
 
-## Decision: NexKit Evolution — 4 new dev-tool panels scoped (JSON Formatter, RTF→Markdown, Cron Builder, RegEx Builder)
+## Decision: GitHub Ruleset Validation — PRD open questions resolved
 
-**Date:** 2026-07-10
-**Agent:** Oracle
-**Issues:** #175, #176, #177, #178
-**Classification:** Project-specific
+**Date:** 2026-07-08
+**Agent:** Squad (Coordinator), approved by Eric Decarufel
+**Classification:** Project-specific — `ruleset-validation` feature
 
 ### Context
 
-Eric proposed 4 new tool ideas for the Nexkit panel-ui feature. Oracle researched GitHub Project "NexKit Evolution Project" (#5, org NexusInnovation), drafted 10 clarifying questions, and got answers from Eric. Oracle then created 4 GitHub issues in NexusInnovation/nexus-nexkit-vscode, labeled `squad`, and added all 4 to Project #5 (project ID `PVT_kwDOCHE2jM4BGWXr`) for triage.
+Morpheus's PRD for the GitHub Rulesets local-validation feature (`src/features/ruleset-validation/`) listed 4 open questions blocking implementation. Eric answered them directly.
 
 ### Decisions
 
-#### Architecture: 4 separate panels/commands, not a unified tabbed webview
+1. **Initial notification requires explicit consent.** The first-time `showInformationMessage` is not merely informational — the user must actively approve ("Activer localement") before Nexkit installs any Git hooks. Silent/passive acceptance is NOT sufficient.
+2. **Enforce at both `commit-msg` AND `pre-push` hooks.** Branch-name and commit-message validation must run at both stages, not just one.
+3. **Regex/pattern matching is strict, not best-effort.** If a rule's pattern/operator cannot be evaluated with full parity to GitHub's semantics, it must be treated as unsupported (server-only) rather than approximated locally.
+4. **Include inherited/org-level rulesets in V1.** Use `includes_parents=true` when calling `GET /repos/{owner}/{repo}/rulesets` so organization/enterprise-level rules are captured, not just repo-level ones.
 
-Each tool gets its own panel and command rather than a single tabbed "Dev Tools" webview.
+### Impact on PRD
 
-#### No iframes to external hosted tools
+- §7 Étape 4 (notification): remove the "passive acceptance" alternative — consent flow is mandatory.
+- §7 Étape 5 (hooks): both `commit-msg` and `pre-push` are in scope for V1 (already primary proposal — now confirmed, no fallback to single-hook).
+- §6/§7: `RulesetPolicyCompilerService` must fail closed (mark as `unsupportedRules`) on any pattern it cannot strictly evaluate — no fuzzy/partial matching.
+- §5 API integration: `includes_parents=true` is confirmed mandatory for V1, not optional.
 
-All 4 tools bundle npm libraries locally and render in custom Preact panels. No iframe embedding of external hosted tools, due to privacy/telemetry/framing concerns (and because public tools commonly block framing via `X-Frame-Options`).
+---
 
-#### No priority ranking / no hour tracking
+## Decision: GitHub Ruleset Validation — Architecture (Lot 1 scope)
 
-The 4 items are unranked among themselves. Project #5 ("NexKit Evolution Project") is independent of the 125-hour Nethris budget — no effort/hour tracking applies to these items.
+**Date:** 2026-07-08
+**Agent:** Morpheus
+**Classification:** Project-specific — `ruleset-validation` feature
 
-#### Issue #175 — JSON Formatter
+### Context
 
-Monaco Editor + `jsonc-parser`. Needs line/column validation errors, JSON5/JSONC support, copy button, save-to-file button. No diff view.
+Nexkit must add local validations that mirror GitHub rulesets for the currently opened repository, but only when that repository is hosted on GitHub or GitHub Enterprise. The feature must remain non-blocking during activation, reuse existing GitHub authentication flows, and fit the current service-oriented architecture.
 
-#### Issue #176 — RTF to Markdown
+### Proposed decision
 
-Turndown (HTML paste from Word/Outlook) + Mammoth.js (`.docx`) + possibly `rtf.js` (true `.rtf`). **Risk flagged:** pure RTF parsers are weak. Both paste and file-upload entry points are required.
+Implement the feature as a dedicated `ruleset-validation` feature with a two-layer design:
 
-#### Issue #177 — Cron Job Schedule Builder
+1. **Remote read layer** — a mockable GitHub ruleset client/provider that only reads rulesets and applicable branch rules from the GitHub REST API.
+2. **Local enforcement layer** — a compiler/deployer that translates the supported subset of rules (`branch_name_pattern`, `commit_message_pattern`) into local Nexkit-managed hook artifacts and native Git hooks.
 
-`cronstrue` + `cron-parser` + `react-js-cron`. **Risk flagged:** the webview UI is Preact, not React — needs a compatibility check or an alternative library. Needs natural-language description, 5-field and 6-field cron formats, and presets.
+### Why
 
-#### Issue #178 — RegEx Builder
+- Keeps GitHub API concerns isolated from hook generation and local file deployment.
+- Makes unsupported rules explicit instead of overloading the hook deployer with partial API logic.
+- Preserves testability: GitHub API, git remote detection, cache persistence, and hook rendering can be unit-tested independently.
+- Supports future iterations where more ruleset types are translated without changing initialization orchestration.
 
-No iframe-embeddable public regex tool works (`X-Frame-Options` blocks framing), so a custom panel is required. JS/ECMAScript flavor plus .NET regex flavor support requested. **Risk flagged:** flavor differences need a toggle. Needs highlighting, replace preview, and a common-pattern library.
+### Initial boundaries
+
+- **Read-only** against GitHub rulesets: no create/update/delete through Nexkit.
+- **Supported V1 translations only:** branch naming and commit message rules.
+- **Cache under `.nexkit/rulesets/`** to keep workspace-local state inspectable and portable with the repo clone.
+- **User consent only on first successful sync per workspace/repository fingerprint**; subsequent refreshes run silently unless the cache becomes invalid or auth is lost.
