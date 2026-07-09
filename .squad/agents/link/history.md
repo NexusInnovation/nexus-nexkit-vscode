@@ -39,3 +39,45 @@
 - Unit test service layers in isolation (mock GitHub API, mock file I/O)
 - Use repository identity in test fixtures for scenario reusability
 - 100% coverage target for core services (models, providers, detection)
+
+### GitHub Ruleset Validation Feature (Lots 2–6 Implementation, 2026-07-08)
+
+**Completion Summary:**
+The full ruleset-validation feature (V1) is complete across all 6 implementation lots with production-quality test coverage and clean lint/build/type-check.
+
+**Key Architectural Decisions:**
+1. **Fail-Closed Regex Validation** — `RulesetPolicyCompilerService` rejects regex patterns with backreferences (`\1`–`\9`) or lookarounds (`(?=)`, `(?! )`, `(?<=)`, `(?<!)`), even if JavaScript's `new RegExp()` accepts them. This ensures parity with GitHub's RE2 engine and prevents false positives/negatives.
+
+2. **Centralized Policy Hash** — `RulesetCacheService` exports a single canonical hash function (`computeRulesetPolicyHash`) reused by both compiler and cache store to prevent divergence and enable reliable cache invalidation on rule changes.
+
+3. **Session-Scoped Consent** — `RulesetConsentService` caches in-memory dismissals as `already-declined-this-session` per repository fingerprint, respecting the product rule that dismissal ≠ approval without persisting consent across extension reloads.
+
+4. **Non-Destructive Hook Chaining** — `GitRulesetHooksDeployer` backs up and transparently wraps existing custom hooks before deploying Nexkit-managed commit-msg and pre-push hook wrappers, ensuring no user data loss during upgrade/uninstall.
+
+5. **Hook Runtime Path Resolution** — Generated hook scripts resolve the repository root via `__dirname` instead of `process.cwd()` to remain correct in git worktrees or when Git runs the hook from a different working directory.
+
+6. **Pre-Push Commit Range** — For new branches (remote SHA1 all zeros), the validated commit range is calculated with `git log <localSha> --not --remotes=<remoteName>` to target commits unknown to the remote without revalidating entire history.
+
+7. **Bootstrap Interactivity Control** — Ruleset validation bootstrap is proxied through the existing `deployUserLevelSettings` flag: silent during startup (`false`), interactive during explicit setup (`true`). Per-hook deploy flags in `deployHooks()` allow granular enforcement control.
+
+**Code Organization:**
+- `src/features/ruleset-validation/gitHubRulesetApiClient.ts` — Paginated GitHub API client
+- `src/features/ruleset-validation/rulesetCacheService.ts` — Policy caching with canonical hashing
+- `src/features/ruleset-validation/rulesetPolicyCompilerService.ts` — Rule translation with strict regex checks
+- `src/features/ruleset-validation/rulesetConsentService.ts` — Session-scoped consent state
+- `src/features/ruleset-validation/gitRulesetHooksDeployer.ts` — Hook generation and deployment
+- `src/features/ruleset-validation/rulesetValidationBootstrapService.ts` — Orchestration and startup integration
+- Full test coverage in `test/suite/features/ruleset-validation/`
+
+**Verification:**
+- `npm run compile` ✓
+- `npm test` ✓ (all unit tests green, >70% coverage on core services)
+- `npm run lint` ✓ (no errors in feature)
+- `npm run check:types` ✓
+- `npm run package` ✓ (production bundle validates)
+
+**Impact & Reusability:**
+- RE2-strict regex heuristic is reusable for any regex-based local validation (branch protections, commit policies beyond GitHub)
+- Policy hash pattern can be applied to other versioned cache schemas
+- Session-scoped consent pattern suitable for other first-time setup dialogs
+- Non-destructive hook chaining can be generalized for other VS Code extension hooks
