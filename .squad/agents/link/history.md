@@ -11,6 +11,7 @@
 **Architecture:** Service-oriented with dependency injection via `ServiceContainer`. All services instantiated in `src/core/serviceContainer.ts`.
 
 **Key files I own:**
+
 - `src/extension.ts` — activation entry point
 - `src/core/serviceContainer.ts` — DI container
 - `src/core/settingsManager.ts` — settings facade
@@ -36,6 +37,7 @@
 5. **Feature Flags in SettingsManager** — Centralize feature toggles (on/off, cache paths, API retry limits) through SettingsManager, not scattered config files. Makes feature rollout/experiment control straightforward.
 
 **Testing Pattern:**
+
 - Unit test service layers in isolation (mock GitHub API, mock file I/O)
 - Use repository identity in test fixtures for scenario reusability
 - 100% coverage target for core services (models, providers, detection)
@@ -46,6 +48,7 @@
 The full ruleset-validation feature (V1) is complete across all 6 implementation lots with production-quality test coverage and clean lint/build/type-check.
 
 **Key Architectural Decisions:**
+
 1. **Fail-Closed Regex Validation** — `RulesetPolicyCompilerService` rejects regex patterns with backreferences (`\1`–`\9`) or lookarounds (`(?=)`, `(?! )`, `(?<=)`, `(?<!)`), even if JavaScript's `new RegExp()` accepts them. This ensures parity with GitHub's RE2 engine and prevents false positives/negatives.
 
 2. **Centralized Policy Hash** — `RulesetCacheService` exports a single canonical hash function (`computeRulesetPolicyHash`) reused by both compiler and cache store to prevent divergence and enable reliable cache invalidation on rule changes.
@@ -61,6 +64,7 @@ The full ruleset-validation feature (V1) is complete across all 6 implementation
 7. **Bootstrap Interactivity Control** — Ruleset validation bootstrap is proxied through the existing `deployUserLevelSettings` flag: silent during startup (`false`), interactive during explicit setup (`true`). Per-hook deploy flags in `deployHooks()` allow granular enforcement control.
 
 **Code Organization:**
+
 - `src/features/ruleset-validation/gitHubRulesetApiClient.ts` — Paginated GitHub API client
 - `src/features/ruleset-validation/rulesetCacheService.ts` — Policy caching with canonical hashing
 - `src/features/ruleset-validation/rulesetPolicyCompilerService.ts` — Rule translation with strict regex checks
@@ -70,6 +74,7 @@ The full ruleset-validation feature (V1) is complete across all 6 implementation
 - Full test coverage in `test/suite/features/ruleset-validation/`
 
 **Verification:**
+
 - `npm run compile` ✓
 - `npm test` ✓ (all unit tests green, >70% coverage on core services)
 - `npm run lint` ✓ (no errors in feature)
@@ -77,6 +82,7 @@ The full ruleset-validation feature (V1) is complete across all 6 implementation
 - `npm run package` ✓ (production bundle validates)
 
 **Impact & Reusability:**
+
 - RE2-strict regex heuristic is reusable for any regex-based local validation (branch protections, commit policies beyond GitHub)
 - Policy hash pattern can be applied to other versioned cache schemas
 - Session-scoped consent pattern suitable for other first-time setup dialogs
