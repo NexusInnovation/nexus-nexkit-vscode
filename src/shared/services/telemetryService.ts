@@ -109,7 +109,7 @@ export class TelemetryService {
       appInsights
         .setup(connectionString)
         .setAutoCollectRequests(false)
-        .setAutoCollectPerformance(false)
+        .setAutoCollectPerformance(false, false)
         .setAutoCollectExceptions(true)
         .setAutoCollectDependencies(false)
         .setAutoCollectConsole(false)
