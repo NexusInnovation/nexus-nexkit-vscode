@@ -23,6 +23,7 @@ import { registerOpenFeedbackCommand } from "./shared/commands/feedbackCommand";
 import { registerShowLogsCommand } from "./shared/commands/loggingCommand";
 import { registerAddDevOpsConnectionCommand, registerRemoveDevOpsConnectionCommand } from "./features/apm-devops/commands";
 import { registerGenerateCommitMessageCommand } from "./features/commit-management/commands";
+import { registerAiCreditCommands } from "./features/ai-credit-usage/commands";
 
 /**
  * Extension activation
@@ -68,6 +69,7 @@ export async function activate(context: vscode.ExtensionContext) {
   registerAddDevOpsConnectionCommand(context, services);
   registerRemoveDevOpsConnectionCommand(context, services);
   registerGenerateCommitMessageCommand(context, services);
+  registerAiCreditCommands(context, services);
 
   // Register webview panel
   const nexkitPanelProvider = new NexkitPanelViewProvider();
@@ -79,6 +81,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Initialize status bar
   services.updateStatusBar.initializeUpdateStatusBar();
+
+  // Initialize AI credit usage monitoring
+  services.aiCreditUsage.initialize().catch((error) => {
+    services.logging.error("Failed to initialize AI credit usage service", error);
+  });
+  services.aiCreditStatusBar.initialize().catch((error) => {
+    services.logging.error("Failed to initialize AI credit status bar", error);
+  });
 
   // Check for required MCP servers on activation
   services.mcpConfig.promptInstallRequiredMCPsOnActivation();

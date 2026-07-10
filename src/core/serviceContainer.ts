@@ -29,6 +29,8 @@ import { NexkitFileWatcherService } from "../features/nexkit-file-watcher/nexkit
 import { GitHubWorkflowRunnerService } from "../features/github-workflow-runner/githubWorkflowRunnerService";
 import { HooksConfigDeployer } from "../features/initialization/hooksConfigDeployer";
 import { UserDirectoryService } from "../features/ai-template-files/services/userDirectoryService";
+import { AiCreditUsageService } from "../features/ai-credit-usage/services/aiCreditUsageService";
+import { AiCreditStatusBarService } from "../features/ai-credit-usage/services/aiCreditStatusBarService";
 
 /**
  * Service container for dependency injection
@@ -65,6 +67,8 @@ export interface ServiceContainer {
   nexkitFileWatcher: NexkitFileWatcherService;
   githubWorkflowRunner: GitHubWorkflowRunnerService;
   userDirectory: UserDirectoryService;
+  aiCreditUsage: AiCreditUsageService;
+  aiCreditStatusBar: AiCreditStatusBarService;
 }
 
 /**
@@ -115,6 +119,8 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   );
   const nexkitFileWatcher = NexkitFileWatcherService.getInstance();
   const githubWorkflowRunner = new GitHubWorkflowRunnerService(context.extensionUri);
+  const aiCreditUsage = new AiCreditUsageService(context);
+  const aiCreditStatusBar = new AiCreditStatusBarService(context, aiCreditUsage);
 
   // Register for disposal
   context.subscriptions.push(logging);
@@ -123,6 +129,8 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   context.subscriptions.push(devOpsConfig);
   context.subscriptions.push(templateMetadataScanner);
   context.subscriptions.push(nexkitFileWatcher);
+  context.subscriptions.push(aiCreditUsage);
+  context.subscriptions.push(aiCreditStatusBar);
 
   logging.info("All services initialized successfully");
 
@@ -157,5 +165,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     nexkitFileWatcher,
     githubWorkflowRunner,
     userDirectory,
+    aiCreditUsage,
+    aiCreditStatusBar,
   };
 }
