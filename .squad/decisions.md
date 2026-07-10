@@ -219,3 +219,62 @@ Integration of GitHub ruleset validation into the existing startup verification 
 ### Why
 
 This keeps activation non-intrusive while still allowing explicit consent during deliberate setup flows, matching the startup-verification design already present in Nexkit. Passing hook flags into the deployer is the most coherent place to honor per-hook settings because both hook types consume the same compiled policy but produce different local artifacts.
+
+---
+
+## Decision: RTF converter Markdown preview contract
+
+**Date:** 2026-07-10
+**Agents:** Ghost, approved by Trinity
+**Classification:** Project-specific - RTF converter preview
+
+### Decision
+
+The RTF converter's Markdown/Preview switch is client-only presentation state. The converted Markdown remains the single stored value used by the read-only textarea and Copy Markdown action; raw Markdown remains the default mode. Preview rendering uses `markdown-it` with `html: false`.
+
+No DOM-test dependency is added solely for this toggle. Existing validation covers types, dependency resolution, and focused renderer safety probes; manual UI verification remains the appropriate residual check until the project deliberately adopts a webview DOM test harness.
+
+### Why
+
+This preserves existing clipboard and host-webview messaging behavior while preventing raw converted HTML from being rendered in the preview. Adding a test framework only for component-local UI state would add disproportionate scope to the feature.
+
+---
+
+## Decision: RTF converter Markdown preview contract
+
+**Date:** 2026-07-10
+**Agent:** Ghost
+**Classification:** Project-specific - RTF converter preview
+
+### Context
+
+The standalone RTF converter now provides a switch between the generated Markdown and a rendered preview.
+
+### Decisions
+
+1. The Markdown string remains the single source of truth. The raw view, preview, and Copy Markdown action all use that same stored value; the switch changes presentation only.
+2. The switch is client-only state in the converter webview. No host-webview messaging or panel state changes are needed.
+3. Preview rendering uses `markdown-it` with `html: false`, so converted content cannot introduce raw HTML into the webview.
+4. Do not add a DOM test dependency solely for this component-local toggle. Manual UI verification is the appropriate residual check until the project intentionally adopts a webview DOM test harness.
+
+### Why
+
+This preserves existing clipboard behavior, keeps the feature contained in the webview, and applies a conservative rendering boundary without expanding the project's test infrastructure for one presentation toggle.
+
+---
+
+## Decision: AI credit monitor monetary consumption KPI (Issue #180)
+
+**Date:** 2026-07-10
+**Agents:** Squad (Coordinator), approved by Eric De Carufel
+**Classification:** Project-specific - AI credit monitor
+
+### Decision
+
+The AI credit monitor displays total monetary consumption split between included credits and additional credits. Monetary values use a fixed conversion of USD 0.01 per AI credit.
+
+The monitor does not display a budget cap or consumption percentage.
+
+### Context
+
+This product clarification defines the KPI for issue #180 and was published in the issue discussion after explicit approval.

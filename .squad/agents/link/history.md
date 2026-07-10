@@ -87,3 +87,10 @@ The full ruleset-validation feature (V1) is complete across all 6 implementation
 - Policy hash pattern can be applied to other versioned cache schemas
 - Session-scoped consent pattern suitable for other first-time setup dialogs
 - Non-destructive hook chaining can be generalized for other VS Code extension hooks
+
+### RTF Converter Markdown/Preview Validation (2026-07-10)
+
+- Inspected `package.json`: `lint` runs `eslint src --ext ts`; `compile` runs the extension esbuild pipeline.
+- `npm run lint` passed with exit code 0.
+- `npm run compile` passed with exit code 0; esbuild completed and copied the RTF converter webview assets.
+- No production files required repair. Scope stayed limited to validation.
