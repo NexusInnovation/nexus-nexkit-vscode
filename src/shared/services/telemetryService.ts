@@ -110,7 +110,7 @@ export class TelemetryService {
         .setup(connectionString)
         .setAutoCollectRequests(false)
         .setAutoCollectPerformance(false, false)
-        .setAutoCollectExceptions(true)
+        .setAutoCollectExceptions(false)
         .setAutoCollectDependencies(false)
         .setAutoCollectConsole(false)
         .setUseDiskRetryCaching(true)

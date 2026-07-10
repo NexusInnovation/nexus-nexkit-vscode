@@ -88,7 +88,7 @@ export class LoggingService {
           this.outputChannel.error(`  Stack: ${error.stack}`);
         }
       } else if (error) {
-        this.outputChannel.error(`  Details: ${JSON.stringify(error)}`);
+        this.outputChannel.error(`  Details: ${this.serializeData(error)}`);
       }
     }
   }
@@ -118,13 +118,43 @@ export class LoggingService {
    * Internal logging method and colorized to match log level (if supported by output channel)
    */
   private showData(data?: unknown): void {
-    // Format timestamp to match YYYY-MM-DD HH:mm:ss.SSS
     if (data !== undefined) {
+      this.outputChannel.appendLine(`  Data: ${this.serializeData(data)}`);
+    }
+  }
+
+  private serializeData(data: unknown): string {
+    if (typeof data === "string") {
+      return data;
+    }
+
+    try {
+      const seen = new WeakSet<object>();
+      return JSON.stringify(
+        data,
+        (_key: string, value: unknown) => {
+          if (typeof value === "object" && value !== null) {
+            if (seen.has(value)) {
+              return "[Circular Reference]";
+            }
+            seen.add(value);
+            if (Buffer.isBuffer(value)) {
+              return `[Buffer: ${value.length} bytes]`;
+            }
+            if (value instanceof Error) {
+              return `[Error: ${value.message}]`;
+            }
+          }
+          return value;
+        },
+        2
+      );
+    } catch {
       try {
-        const dataStr = typeof data === "string" ? data : JSON.stringify(data, null, 2);
-        this.outputChannel.appendLine(`  Data: ${dataStr}`);
-      } catch (error) {
-        this.outputChannel.appendLine(`  Data: [Unable to stringify data]`);
+        const typeName = (data as { constructor?: { name?: string } })?.constructor?.name || typeof data;
+        return `[Non-serializable Object: ${typeName}]`;
+      } catch {
+        return "[Unable to stringify data]";
       }
     }
   }
