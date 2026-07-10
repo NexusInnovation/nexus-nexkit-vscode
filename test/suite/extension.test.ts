@@ -79,4 +79,17 @@ suite("Unit: Extension Activation", () => {
     assert.strictEqual(menuEntry.when, "view == nexkitPanelView && nexkit.modeSelected");
     assert.strictEqual(menuEntry.group, "navigation@1");
   });
+
+  test("Should contribute RTF to Markdown command", () => {
+    const packageJsonPath = path.join(__dirname, "..", "..", "..", "package.json");
+    const packageJsonRaw = fs.readFileSync(packageJsonPath, "utf8");
+    const packageJson = JSON.parse(packageJsonRaw);
+
+    const command = packageJson.contributes?.commands?.find(
+      (entry: { command: string }) => entry.command === "nexus-nexkit-vscode.openRtfConverter"
+    );
+    assert.ok(command, "Expected openRtfConverter command contribution.");
+    assert.strictEqual(command.title, "Nexkit: RTF to Markdown");
+    assert.strictEqual(command.category, "Nexkit");
+  });
 });
