@@ -45,7 +45,15 @@ export class RtfConverterPanelService implements vscode.Disposable {
     const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "out", "rtfConverter.js"));
     const nonce = this.getNonce();
 
-    let html = fs.readFileSync(htmlPath.fsPath, "utf8");
+    let html: string;
+    try {
+      html = fs.readFileSync(htmlPath.fsPath, "utf8");
+    } catch {
+      void vscode.window.showErrorMessage(
+        "Unable to load the RTF converter webview. Please rebuild the extension (npm run compile) and try again."
+      );
+      return "<!DOCTYPE html><html><body><h1>Unable to load RTF converter</h1><p>Please rebuild the extension and try again.</p></body></html>";
+    }
     html = html.replace(/\{\{nonce\}\}/g, nonce);
     html = html.replace(/\{\{scriptUri\}\}/g, scriptUri.toString());
     html = html.replace(/\{\{cspSource\}\}/g, webview.cspSource);

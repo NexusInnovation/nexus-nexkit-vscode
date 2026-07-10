@@ -128,6 +128,14 @@ export class LoggingService {
       return data;
     }
 
+    if (data instanceof Error) {
+      return `[Error: ${data.message}]`;
+    }
+
+    if (Buffer.isBuffer(data)) {
+      return `[Buffer: ${data.length} bytes]`;
+    }
+
     try {
       const seen = new WeakSet<object>();
       return JSON.stringify(
