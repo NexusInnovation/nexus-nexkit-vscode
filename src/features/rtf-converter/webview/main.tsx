@@ -1,6 +1,7 @@
 import { render } from "preact";
 import { useMemo, useState } from "preact/hooks";
 import * as mammoth from "mammoth";
+import MarkdownIt = require("markdown-it");
 import TurndownService = require("turndown");
 import { gfm } from "turndown-plugin-gfm";
 import { Document as RtfDocument } from "rtf.js/dist/RTFJS.bundle.js";
@@ -14,6 +15,9 @@ function App() {
   const [markdownValue, setMarkdownValue] = useState("");
   const [statusMessage, setStatusMessage] = useState("Paste rich text or upload a .docx/.rtf file.");
   const [isConverting, setIsConverting] = useState(false);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+
+  const markdownRenderer = useMemo(() => new MarkdownIt({ html: false }), []);
 
   const turndownService = useMemo(() => {
     const service = new TurndownService({
@@ -237,24 +241,54 @@ function App() {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", minHeight: 0 }}>
-          <label style={{ marginBottom: "6px" }}>Markdown output</label>
-          <textarea
-            value={markdownValue}
-            readOnly
-            placeholder="Converted markdown appears here..."
-            style={{
-              width: "100%",
-              minHeight: "220px",
-              flex: 1,
-              resize: "vertical",
-              padding: "8px",
-              boxSizing: "border-box",
-              border: "1px solid var(--vscode-input-border)",
-              background: "var(--vscode-editor-background)",
-              color: "var(--vscode-editor-foreground)",
-              fontFamily: "var(--vscode-editor-font-family)",
-            }}
-          />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", gap: "8px" }}>
+            <label>Markdown output</label>
+            <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
+              <span>Preview</span>
+              <input
+                type="checkbox"
+                role="switch"
+                checked={isPreviewMode}
+                onChange={(event) => setIsPreviewMode((event.target as HTMLInputElement).checked)}
+                aria-label="Toggle rendered Markdown preview"
+              />
+            </label>
+          </div>
+          {isPreviewMode ? (
+            <div
+              aria-label="Rendered Markdown preview"
+              style={{
+                width: "100%",
+                minHeight: "220px",
+                flex: 1,
+                overflow: "auto",
+                padding: "8px",
+                boxSizing: "border-box",
+                border: "1px solid var(--vscode-input-border)",
+                background: "var(--vscode-editor-background)",
+                color: "var(--vscode-editor-foreground)",
+              }}
+              dangerouslySetInnerHTML={{ __html: markdownRenderer.render(markdownValue) }}
+            />
+          ) : (
+            <textarea
+              value={markdownValue}
+              readOnly
+              placeholder="Converted markdown appears here..."
+              style={{
+                width: "100%",
+                minHeight: "220px",
+                flex: 1,
+                resize: "vertical",
+                padding: "8px",
+                boxSizing: "border-box",
+                border: "1px solid var(--vscode-input-border)",
+                background: "var(--vscode-editor-background)",
+                color: "var(--vscode-editor-foreground)",
+                fontFamily: "var(--vscode-editor-font-family)",
+              }}
+            />
+          )}
         </div>
       </div>
 
