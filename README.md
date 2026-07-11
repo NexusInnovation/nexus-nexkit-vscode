@@ -451,6 +451,9 @@ Consultez les [GitHub Issues](https://github.com/NexusInnovation/nexus-nexkit-vs
 Problèmes courants :
 
 - **Limitation de l'API GitHub** : La récupération de templates peut être limitée avec des requêtes non authentifiées
+  - **Symptômes** : Erreur `403 Forbidden` ou lenteur lors de la récupération des templates
+  - **Solution** : Authentifiez-vous auprès de GitHub pour passer de 60 à 5,000 requêtes/heure
+  - **Voir** : [Configuration GitHub — Guide Complet](./docs/GITHUB-AUTHENTICATION.md)
 - **Téléchargement VSIX** : Certains réseaux d'entreprise peuvent bloquer les téléchargements directs d'assets GitHub
 
 ## 📝 Notes de Version
