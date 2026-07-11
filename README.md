@@ -107,6 +107,11 @@ Accédez aux commandes via la palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) :
 
 - **Nexkit: Restore Template Backup** - Restaure les templates depuis les sauvegardes automatiques
 
+- **Nexkit: Open AI Credit Settings** - Configure le suivi des crédits IA Copilot
+  - Ajouter ou mettre à jour votre token GitHub pour la facturation
+  - Affiche votre consommation mensuelle de crédits IA directement dans la barre d'état
+  - Voir [Configuration du Suivi des Crédits IA](./docs/AI-CREDIT-MONITORING.md) pour le guide complet
+
 ### Panneau Latéral
 
 Un panneau dédié dans la barre d'activité offre :

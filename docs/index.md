@@ -45,6 +45,7 @@
 ### Docs
 
 - [GITHUB-AUTHENTICATION.md](./GITHUB-AUTHENTICATION.md) — GitHub authentication setup and API rate limits configuration
+- [AI-CREDIT-MONITORING.md](./AI-CREDIT-MONITORING.md) — AI credit usage monitoring setup and server-side credential distribution guide
 - [Project Overview](./project-overview.md) — Executive summary, capabilities, tech stack
 - [Architecture](./architecture.md) — Architecture pattern, service container, message protocol, feature deep-dives
 - [Source Tree Analysis](./source-tree-analysis.md) — Annotated directory tree, critical folders, entry points
