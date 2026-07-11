@@ -42,6 +42,16 @@
 - [CUSTOM-LAYOUT-CONFIGURATION.md](../CUSTOM-LAYOUT-CONFIGURATION.md) — Sidebar layout customization
 - [LICENSE.md](../LICENSE.md) — MIT License
 
+### Docs
+
+- [GITHUB-AUTHENTICATION.md](./GITHUB-AUTHENTICATION.md) — GitHub authentication setup and API rate limits configuration
+- [AI-CREDIT-MONITORING.md](./AI-CREDIT-MONITORING.md) — AI credit usage monitoring setup and server-side credential distribution guide
+- [Project Overview](./project-overview.md) — Executive summary, capabilities, tech stack
+- [Architecture](./architecture.md) — Architecture pattern, service container, message protocol, feature deep-dives
+- [Source Tree Analysis](./source-tree-analysis.md) — Annotated directory tree, critical folders, entry points
+- [Component Inventory](./component-inventory.md) — Preact UI components (atoms, molecules, organisms), hooks, contexts
+- [Development Guide](./development-guide.md) — Setup, build, test, conventions, git workflow, adding features
+
 ### Source
 
 - [src/AGENTS.md](../src/AGENTS.md) — Source-level coding conventions

@@ -107,6 +107,11 @@ Accédez aux commandes via la palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) :
 
 - **Nexkit: Restore Template Backup** - Restaure les templates depuis les sauvegardes automatiques
 
+- **Nexkit: Open AI Credit Settings** - Configure le suivi des crédits IA Copilot
+  - Ajouter ou mettre à jour votre token GitHub pour la facturation
+  - Affiche votre consommation mensuelle de crédits IA directement dans la barre d'état
+  - Voir [Configuration du Suivi des Crédits IA](./docs/AI-CREDIT-MONITORING.md) pour le guide complet
+
 ### Panneau Latéral
 
 Un panneau dédié dans la barre d'activité offre :
@@ -451,6 +456,9 @@ Consultez les [GitHub Issues](https://github.com/NexusInnovation/nexus-nexkit-vs
 Problèmes courants :
 
 - **Limitation de l'API GitHub** : La récupération de templates peut être limitée avec des requêtes non authentifiées
+  - **Symptômes** : Erreur `403 Forbidden` ou lenteur lors de la récupération des templates
+  - **Solution** : Authentifiez-vous auprès de GitHub pour passer de 60 à 5,000 requêtes/heure
+  - **Voir** : [Configuration GitHub — Guide Complet](./docs/GITHUB-AUTHENTICATION.md)
 - **Téléchargement VSIX** : Certains réseaux d'entreprise peuvent bloquer les téléchargements directs d'assets GitHub
 
 ## 📝 Notes de Version
