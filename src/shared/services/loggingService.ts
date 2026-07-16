@@ -138,7 +138,7 @@ export class LoggingService {
 
     try {
       const seen = new WeakSet<object>();
-      return JSON.stringify(
+      const json = JSON.stringify(
         data,
         (_key: string, value: unknown) => {
           if (typeof value === "object" && value !== null) {
@@ -157,6 +157,17 @@ export class LoggingService {
         },
         2
       );
+      // If JSON.stringify returned a string representation of Error/Buffer, parse it back
+      // to avoid extra quotes in output (e.g., "\"[Error: ...]\"")
+      try {
+        const parsed = JSON.parse(json);
+        if (typeof parsed === "string" && (parsed.startsWith("[Error:") || parsed.startsWith("[Buffer:"))) {
+          return parsed;
+        }
+      } catch {
+        // If parse fails, just return the stringified version
+      }
+      return json;
     } catch {
       try {
         const typeName = (data as { constructor?: { name?: string } })?.constructor?.name || typeof data;
