@@ -4,6 +4,19 @@ import * as os from "os";
 import * as https from "https";
 import { SettingsManager } from "../../core/settingsManager";
 import { getExtensionVersion } from "../utils/extensionHelper";
+import { LoggingService } from "./loggingService";
+
+type TelemetryStatus = {
+  enabled: boolean;
+  reason?: "vscode_off" | "nexkit_disabled";
+  vscodeTelemetryLevel: string;
+  nexkitTelemetryEnabled: boolean;
+};
+
+type ConnectionStringValidation = {
+  valid: boolean;
+  reason?: string;
+};
 
 /**
  * Telemetry service for tracking extension usage, commands, errors, and performance metrics
@@ -20,12 +33,18 @@ export class TelemetryService {
   private activationTime: number;
   private cachedPublicIP: string | null = null;
   private username: string;
+  private readonly logging: LoggingService;
+
+  private static readonly TRANSPORT_MODE = "isolated-client-batch";
+  private static readonly MAX_BATCH_SIZE = 50;
+  private static readonly MAX_BATCH_INTERVAL_MS = 15000;
 
   constructor() {
     this.sessionId = this.generateSessionId();
     this.extensionVersion = getExtensionVersion() || "unknown";
     this.activationTime = Date.now();
     this.username = this.getUsername();
+    this.logging = LoggingService.getInstance();
   }
 
   /**
@@ -92,43 +111,39 @@ export class TelemetryService {
    */
   public async initialize(): Promise<void> {
     try {
-      // Check if telemetry is enabled
-      if (!this.isTelemetryEnabled()) {
-        console.log("Nexkit telemetry is disabled");
+      const telemetryStatus = this.getTelemetryStatus();
+
+      if (!telemetryStatus.enabled) {
+        if (telemetryStatus.reason === "vscode_off") {
+          this.logging.info(
+            `Telemetry disabled: VS Code telemetry level is '${telemetryStatus.vscodeTelemetryLevel}'.`
+          );
+        } else {
+          this.logging.info("Telemetry disabled: nexkit.telemetry.enabled is false.");
+        }
         return;
       }
 
-      // Get connection string from environment or configuration
       const connectionString = this.getConnectionString();
       if (!connectionString) {
-        console.log("Nexkit telemetry: No connection string found");
+        this.logging.warn("Telemetry disabled: no Application Insights connection string configured.");
         return;
       }
 
-      // Initialize Application Insights
-      appInsights
-        .setup(connectionString)
-        .setAutoCollectRequests(false)
-        .setAutoCollectPerformance(false, false)
-        .setAutoCollectExceptions(true)
-        .setAutoCollectDependencies(false)
-        .setAutoCollectConsole(false)
-        .setUseDiskRetryCaching(true)
-        // Enable live metrics streaming
-        // .setSendLiveMetrics(true)
-        .start();
+      const validation = this.validateConnectionString(connectionString);
+      if (!validation.valid) {
+        this.logging.error(
+          `Telemetry disabled: invalid Application Insights connection string (${validation.reason ?? "invalid format"}).`
+        );
+        return;
+      }
 
-      this.client = appInsights.defaultClient;
+      this.client = this.createTelemetryClient(connectionString);
+      this.client.config.maxBatchSize = TelemetryService.MAX_BATCH_SIZE;
+      this.client.config.maxBatchIntervalMs = TelemetryService.MAX_BATCH_INTERVAL_MS;
 
-      // Configure for immediate flushing (live telemetry)
-      // Disable batching by setting flush interval to minimum
-      this.client.config.maxBatchSize = 1; // Send events immediately, one at a time
-      this.client.config.maxBatchIntervalMs = 0; // No delay between batches
-
-      // Fetch public IP address (async, with caching and timeout)
       const publicIP = await this.fetchPublicIP();
 
-      // Set common properties for all telemetry (includes PII: username and IP)
       this.client.commonProperties = {
         extensionVersion: this.extensionVersion,
         vscodeVersion: vscode.version,
@@ -140,33 +155,135 @@ export class TelemetryService {
       };
 
       this.isEnabled = true;
-      console.log("Nexkit telemetry initialized successfully (live mode)");
+
+      this.logging.info(
+        `Telemetry initialized successfully (version=${this.extensionVersion}, mode=${TelemetryService.TRANSPORT_MODE}, batchSize=${TelemetryService.MAX_BATCH_SIZE}, batchIntervalMs=${TelemetryService.MAX_BATCH_INTERVAL_MS}).`
+      );
+
+      this.trackTelemetryHealthEvent(telemetryStatus);
     } catch (error) {
-      console.error("Failed to initialize telemetry:", error);
+      this.logging.error(
+        "Telemetry initialization failed: telemetry pipeline unavailable for this session.",
+        error
+      );
       this.isEnabled = false;
+      this.client = null;
     }
   }
 
   /**
    * Check if telemetry is enabled based on user settings
    */
-  private isTelemetryEnabled(): boolean {
-    // Check VS Code global telemetry setting
+  private getTelemetryStatus(): TelemetryStatus {
     const vscodeTelemetryLevel = SettingsManager.getVSCodeTelemetryLevel();
+    const nexkitTelemetryEnabled = SettingsManager.isNexkitTelemetryEnabled();
+
     if (vscodeTelemetryLevel === "off") {
-      return false;
+      return {
+        enabled: false,
+        reason: "vscode_off",
+        vscodeTelemetryLevel,
+        nexkitTelemetryEnabled,
+      };
     }
 
-    // Check Nexkit-specific telemetry setting
-    const nexkitTelemetryEnabled = SettingsManager.isNexkitTelemetryEnabled();
-    return nexkitTelemetryEnabled;
+    if (!nexkitTelemetryEnabled) {
+      return {
+        enabled: false,
+        reason: "nexkit_disabled",
+        vscodeTelemetryLevel,
+        nexkitTelemetryEnabled,
+      };
+    }
+
+    return {
+      enabled: true,
+      vscodeTelemetryLevel,
+      nexkitTelemetryEnabled,
+    };
   }
 
   /**
    * Get Application Insights connection string
    */
   private getConnectionString(): string | undefined {
-    return "InstrumentationKey=1d613055-855f-4238-9727-dc14c7fab92d;IngestionEndpoint=https://canadacentral-1.in.applicationinsights.azure.com/;LiveEndpoint=https://canadacentral.livediagnostics.monitor.azure.com/;ApplicationId=dbe35447-e979-43d1-99fd-166d18ca41ad";
+    const fromSettings = SettingsManager.getTelemetryConnectionString();
+    if (typeof fromSettings === "string" && fromSettings.trim().length > 0) {
+      return fromSettings.trim();
+    }
+
+    return undefined;
+  }
+
+  private createTelemetryClient(connectionString: string): appInsights.TelemetryClient {
+    return new appInsights.TelemetryClient(connectionString);
+  }
+
+  private validateConnectionString(connectionString: string): ConnectionStringValidation {
+    const entries = connectionString
+      .split(";")
+      .map((segment) => segment.trim())
+      .filter((segment) => segment.length > 0);
+
+    if (entries.length === 0) {
+      return { valid: false, reason: "empty value" };
+    }
+
+    const values = new Map<string, string>();
+    for (const entry of entries) {
+      const separatorIndex = entry.indexOf("=");
+      if (separatorIndex <= 0 || separatorIndex === entry.length - 1) {
+        return { valid: false, reason: "malformed key/value segment" };
+      }
+
+      const key = entry.slice(0, separatorIndex).trim();
+      const value = entry.slice(separatorIndex + 1).trim();
+      if (!key || !value) {
+        return { valid: false, reason: "empty key or value" };
+      }
+
+      values.set(key, value);
+    }
+
+    const instrumentationKey = values.get("InstrumentationKey");
+    if (!instrumentationKey) {
+      return { valid: false, reason: "InstrumentationKey is missing" };
+    }
+
+    const guidPattern = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
+    if (!guidPattern.test(instrumentationKey)) {
+      return { valid: false, reason: "InstrumentationKey is not a valid GUID" };
+    }
+
+    return { valid: true };
+  }
+
+  private safeFlush(context: string): void {
+    if (!this.client) {
+      return;
+    }
+
+    Promise.resolve(this.client.flush()).catch((error) => {
+      this.logging.error(`Telemetry flush failed (${context}).`, error);
+    });
+  }
+
+  private trackTelemetryHealthEvent(telemetryStatus: TelemetryStatus): void {
+    if (!this.client) {
+      return;
+    }
+
+    this.client.trackEvent({
+      name: "telemetry.health.startup",
+      properties: {
+        extensionVersion: this.extensionVersion,
+        sessionId: this.sessionId,
+        vscodeTelemetryLevel: telemetryStatus.vscodeTelemetryLevel,
+        nexkitTelemetryEnabled: String(telemetryStatus.nexkitTelemetryEnabled),
+      },
+    });
+
+    this.safeFlush("telemetry.health.startup");
   }
 
   /**
@@ -194,7 +311,7 @@ export class TelemetryService {
       },
     });
 
-    this.client.flush();
+    this.safeFlush("extension.activated");
   }
 
   /**
@@ -218,7 +335,7 @@ export class TelemetryService {
       },
     });
 
-    this.client.flush();
+    this.safeFlush("extension.deactivated");
   }
 
   /**
@@ -237,8 +354,6 @@ export class TelemetryService {
         ...properties,
       },
     });
-
-    this.client.flush();
   }
 
   /**
@@ -268,8 +383,6 @@ export class TelemetryService {
         duration: properties && typeof properties["durationMs"] === "number" ? properties["durationMs"] : 0,
       },
     });
-
-    this.client.flush();
   }
 
   /**
@@ -297,8 +410,6 @@ export class TelemetryService {
         duration: durationMs,
       },
     });
-
-    this.client.flush();
   }
 
   /**
@@ -317,7 +428,7 @@ export class TelemetryService {
       },
     });
 
-    this.client.flush();
+    this.safeFlush("trackError");
   }
 
   /**
@@ -336,8 +447,6 @@ export class TelemetryService {
       },
       measurements,
     });
-
-    this.client.flush();
   }
 
   /**
@@ -356,8 +465,6 @@ export class TelemetryService {
         ...properties,
       },
     });
-
-    this.client.flush();
   }
 
   /**
@@ -365,7 +472,7 @@ export class TelemetryService {
    */
   public flush(): void {
     if (this.client) {
-      this.client.flush();
+      this.safeFlush("manual.flush");
     }
   }
 
@@ -375,11 +482,7 @@ export class TelemetryService {
   public dispose(): void {
     this.trackDeactivation();
     if (this.client) {
-      this.client.flush();
-      // Give it a moment to flush before disposing
-      setTimeout(() => {
-        appInsights.dispose();
-      }, 1000);
+      this.safeFlush("dispose");
     }
   }
 

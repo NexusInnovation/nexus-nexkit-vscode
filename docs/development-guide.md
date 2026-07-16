@@ -53,6 +53,24 @@ npm run package
 - **Webview debugging**: In the Extension Development Host, `Help → Toggle Developer Tools`
 - Breakpoints work in both extension host and webview code
 
+### Troubleshooting: Missing App Insights Signal
+
+Use this short checklist when startup telemetry is not visible in Application Insights:
+
+1. Open Output panel → `Nexkit` and verify telemetry diagnostics at startup:
+	- enabled and initialized successfully, or
+	- disabled by VS Code telemetry level, or
+	- disabled by `nexkit.telemetry.enabled`, or
+	- missing connection string, or
+	- initialization failure with cause.
+2. Verify local settings:
+	- `telemetry.telemetryLevel` is not `off`
+	- `nexkit.telemetry.enabled` is `true`
+	- `nexkit.telemetry.connectionString` is set to the expected App Insights resource.
+3. Validate Application Insights:
+	- confirm recent `telemetry.health.startup` and `extension.activated` events,
+	- confirm the `extensionVersion` property matches the running build.
+
 ## Testing
 
 ```bash

@@ -17,7 +17,7 @@ Nexkit is a service-oriented VS Code extension built with TypeScript and Preact.
 | Bundler        | esbuild                    | 0.27.x      | Fast bundling, two entry points (extension + webview) |
 | Testing        | Mocha + Sinon              | 10.x / 19.x | VS Code recommended test framework                    |
 | Coverage       | nyc                        | 15.x        | Istanbul-based coverage (lcov + text)                 |
-| Telemetry      | Azure Application Insights | 2.9.x       | Usage analytics (opt-in, privacy-respecting)          |
+| Telemetry      | Azure Application Insights | 3.x         | Usage analytics via isolated client per extension host |
 | Formatting     | Prettier                   | 3.7.x       | Runtime dependency (used for MCP config formatting)   |
 
 ## Architecture Pattern
@@ -233,6 +233,23 @@ ci-cd.yml
       ├── main → stable vX.Y.Z
       └── develop → beta vX.Y.Z-beta.N
 ```
+
+## Observability
+
+Nexkit telemetry is implemented with an isolated `TelemetryClient` instance created by the extension itself (no global `setup()/start()` pipeline). This keeps Nexkit telemetry independent from OpenTelemetry providers registered by other extensions in the shared Extension Host process.
+
+Startup observability emits two distinct signals:
+
+- `telemetry.health.startup`: health signal emitted when telemetry initialization succeeds (includes extension version, sessionId, telemetry toggles state)
+- `extension.activated`: functional activation signal emitted after service initialization in the container
+
+For local diagnostics, the Nexkit Output channel reports explicit telemetry states:
+
+- telemetry disabled by global VS Code telemetry level
+- telemetry disabled by `nexkit.telemetry.enabled`
+- missing Application Insights connection string
+- telemetry initialized successfully (version and transport mode)
+- telemetry initialization failure with synthetic cause
 
 ## Security Considerations
 
