@@ -23,6 +23,7 @@ suite("Unit: TelemetryService", () => {
   let logInfo: sinon.SinonStub;
   let logWarn: sinon.SinonStub;
   let logError: sinon.SinonStub;
+  let logDebug: sinon.SinonStub;
 
   setup(() => {
     sandbox = sinon.createSandbox();
@@ -30,12 +31,13 @@ suite("Unit: TelemetryService", () => {
     logInfo = sandbox.stub();
     logWarn = sandbox.stub();
     logError = sandbox.stub();
+    logDebug = sandbox.stub();
 
     sandbox.stub(LoggingService, "getInstance").returns({
       info: logInfo,
       warn: logWarn,
       error: logError,
-      debug: sandbox.stub(),
+      debug: logDebug,
       setLogLevel: sandbox.stub(),
       show: sandbox.stub(),
       clear: sandbox.stub(),
@@ -75,6 +77,7 @@ suite("Unit: TelemetryService", () => {
       assert.strictEqual((telemetryService as any).isEnabled, true);
       assert.strictEqual(fakeClient.config.maxBatchSize, 50);
       assert.strictEqual(fakeClient.config.maxBatchIntervalMs, 15000);
+      assert.ok(logInfo.calledWithMatch("Telemetry SDK diagnostics enabled"));
       assert.ok(logInfo.calledWithMatch("Telemetry initialized successfully"));
     });
 

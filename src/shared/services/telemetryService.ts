@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import * as appInsights from "applicationinsights";
 import * as os from "os";
 import * as https from "https";
+import { diag, DiagLogLevel, type DiagLogger } from "@opentelemetry/api";
 import { SettingsManager } from "../../core/settingsManager";
 import { getExtensionVersion } from "../utils/extensionHelper";
 import { LoggingService } from "./loggingService";
@@ -16,6 +17,11 @@ type TelemetryStatus = {
 type ConnectionStringValidation = {
   valid: boolean;
   reason?: string;
+};
+
+type ConnectionStringParts = {
+  instrumentationKey?: string;
+  ingestionEndpoint?: string;
 };
 
 /**
@@ -38,6 +44,7 @@ export class TelemetryService {
   private static readonly TRANSPORT_MODE = "isolated-client-batch";
   private static readonly MAX_BATCH_SIZE = 50;
   private static readonly MAX_BATCH_INTERVAL_MS = 15000;
+  private static otelDiagnosticsConfigured = false;
 
   constructor() {
     this.sessionId = this.generateSessionId();
@@ -111,6 +118,8 @@ export class TelemetryService {
    */
   public async initialize(): Promise<void> {
     try {
+      this.configureSdkDiagnostics();
+
       const telemetryStatus = this.getTelemetryStatus();
 
       if (!telemetryStatus.enabled) {
@@ -138,6 +147,8 @@ export class TelemetryService {
         return;
       }
 
+      const connectionStringParts = this.parseConnectionString(connectionString);
+
       this.client = this.createTelemetryClient(connectionString);
       this.client.config.maxBatchSize = TelemetryService.MAX_BATCH_SIZE;
       this.client.config.maxBatchIntervalMs = TelemetryService.MAX_BATCH_INTERVAL_MS;
@@ -159,6 +170,8 @@ export class TelemetryService {
       this.logging.info(
         `Telemetry initialized successfully (version=${this.extensionVersion}, mode=${TelemetryService.TRANSPORT_MODE}, batchSize=${TelemetryService.MAX_BATCH_SIZE}, batchIntervalMs=${TelemetryService.MAX_BATCH_INTERVAL_MS}).`
       );
+
+      this.logTelemetryTarget(connectionStringParts);
 
       this.trackTelemetryHealthEvent(telemetryStatus);
     } catch (error) {
@@ -219,7 +232,36 @@ export class TelemetryService {
     return new appInsights.TelemetryClient(connectionString);
   }
 
+  private configureSdkDiagnostics(): void {
+    if (TelemetryService.otelDiagnosticsConfigured) {
+      return;
+    }
+
+    const logger: DiagLogger = {
+      error: (...args: unknown[]) => {
+        this.logging.error("[Telemetry SDK] Export error", args.length === 1 ? args[0] : args);
+      },
+      warn: (...args: unknown[]) => {
+        this.logging.warn("[Telemetry SDK] Warning", args.length === 1 ? args[0] : args);
+      },
+      info: (...args: unknown[]) => {
+        this.logging.debug("[Telemetry SDK] Info", args.length === 1 ? args[0] : args);
+      },
+      debug: (...args: unknown[]) => {
+        this.logging.debug("[Telemetry SDK] Debug", args.length === 1 ? args[0] : args);
+      },
+      verbose: (...args: unknown[]) => {
+        this.logging.debug("[Telemetry SDK] Verbose", args.length === 1 ? args[0] : args);
+      },
+    };
+
+    diag.setLogger(logger, DiagLogLevel.WARN);
+    TelemetryService.otelDiagnosticsConfigured = true;
+    this.logging.info("Telemetry SDK diagnostics enabled (OpenTelemetry diag level: WARN).");
+  }
+
   private validateConnectionString(connectionString: string): ConnectionStringValidation {
+    const parts = this.parseConnectionString(connectionString);
     const entries = connectionString
       .split(";")
       .map((segment) => segment.trim())
@@ -245,7 +287,7 @@ export class TelemetryService {
       values.set(key, value);
     }
 
-    const instrumentationKey = values.get("InstrumentationKey");
+    const instrumentationKey = parts.instrumentationKey;
     if (!instrumentationKey) {
       return { valid: false, reason: "InstrumentationKey is missing" };
     }
@@ -256,6 +298,45 @@ export class TelemetryService {
     }
 
     return { valid: true };
+  }
+
+  private parseConnectionString(connectionString: string): ConnectionStringParts {
+    const parts: ConnectionStringParts = {};
+    const entries = connectionString
+      .split(";")
+      .map((segment) => segment.trim())
+      .filter((segment) => segment.length > 0);
+
+    for (const entry of entries) {
+      const separatorIndex = entry.indexOf("=");
+      if (separatorIndex <= 0 || separatorIndex === entry.length - 1) {
+        continue;
+      }
+
+      const key = entry.slice(0, separatorIndex).trim();
+      const value = entry.slice(separatorIndex + 1).trim();
+      if (!value) {
+        continue;
+      }
+
+      if (key === "InstrumentationKey") {
+        parts.instrumentationKey = value;
+      }
+
+      if (key === "IngestionEndpoint") {
+        parts.ingestionEndpoint = value;
+      }
+    }
+
+    return parts;
+  }
+
+  private logTelemetryTarget(parts: ConnectionStringParts): void {
+    const endpoint = parts.ingestionEndpoint ?? "(not set)";
+    const key = parts.instrumentationKey ?? "";
+    const keyFingerprint = key.length >= 8 ? `${key.slice(0, 4)}...${key.slice(-4)}` : "(invalid)";
+
+    this.logging.info(`Telemetry target: ingestionEndpoint=${endpoint}, instrumentationKey=${keyFingerprint}`);
   }
 
   private safeFlush(context: string): void {
