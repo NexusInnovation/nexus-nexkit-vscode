@@ -10,6 +10,56 @@ const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
 type ConversionSource = "paste" | "docx" | "rtf" | "text";
 
+const CELL_BLOCK_SELECTOR = "p, div, h1, h2, h3, h4, h5, h6, li, blockquote, pre";
+
+// GFM tables require each row on a single line and a header row; Word/Outlook
+// HTML violates both (block elements inside cells, no <th>), so turndown-plugin-gfm
+// either scatters pipes across lines or keeps the table as raw HTML.
+const normalizeTablesForGfm = (html: string): string => {
+  const parsedDocument = new DOMParser().parseFromString(html, "text/html");
+  const tables = Array.from(parsedDocument.querySelectorAll("table"));
+  if (tables.length === 0) {
+    return html;
+  }
+
+  tables.forEach((table) => {
+    table.querySelectorAll("th, td").forEach((cell) => {
+      cell.querySelectorAll("br").forEach((lineBreak) => {
+        lineBreak.replaceWith(parsedDocument.createTextNode(" "));
+      });
+      cell.querySelectorAll(CELL_BLOCK_SELECTOR).forEach((block) => {
+        block.replaceWith(
+          parsedDocument.createTextNode(" "),
+          ...Array.from(block.childNodes),
+          parsedDocument.createTextNode(" "),
+        );
+      });
+    });
+
+    const firstRow = table.rows[0];
+    if (!firstRow) {
+      return;
+    }
+    const hasHeaderRow =
+      firstRow.parentElement?.tagName === "THEAD" ||
+      Array.from(firstRow.cells).every((cell) => cell.tagName === "TH");
+    if (!hasHeaderRow) {
+      const headerSection = parsedDocument.createElement("thead");
+      const headerRow = parsedDocument.createElement("tr");
+      Array.from(firstRow.cells).forEach((cell) => {
+        const headerCell = parsedDocument.createElement("th");
+        headerCell.innerHTML = cell.innerHTML;
+        headerRow.appendChild(headerCell);
+      });
+      headerSection.appendChild(headerRow);
+      table.insertBefore(headerSection, table.firstChild);
+      firstRow.remove();
+    }
+  });
+
+  return parsedDocument.body.innerHTML;
+};
+
 function App() {
   const [inputValue, setInputValue] = useState("");
   const [markdownValue, setMarkdownValue] = useState("");
@@ -33,7 +83,7 @@ function App() {
     if (!html.trim()) {
       return "";
     }
-    return turndownService.turndown(html);
+    return turndownService.turndown(normalizeTablesForGfm(html));
   };
 
   const applyMarkdownResult = (markdown: string, source: ConversionSource): void => {
