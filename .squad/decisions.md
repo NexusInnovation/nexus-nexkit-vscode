@@ -278,3 +278,28 @@ The monitor does not display a budget cap or consumption percentage.
 ### Context
 
 This product clarification defines the KPI for issue #180 and was published in the issue discussion after explicit approval.
+
+---
+
+## Decision: AI credit monitor V1 local-only architecture and data boundary (Issue #180)
+
+**Date:** 2026-07-10
+**Agent:** Scribe, approved by Eric De Carufel
+**Classification:** Project-specific - AI credit monitor
+
+### Decision
+
+1. V1 has no Azure Function or hosted backend. NexKit runs the monitor locally.
+2. GitHub Actions secrets cannot be read back by NexKit. The billing credential is supplied locally and stored only in `ExtensionContext.secrets` / VS Code SecretStorage.
+3. The active VS Code GitHub session resolves the target identity. The local billing credential is used for billing calls only for that login. V1 does not display organization, peer, budget, or percentage data.
+4. The KPI is own included credits, additional credits, and total USD at USD 0.01 per AI credit. The POC must validate GitHub response semantics before treating values as additive, to prevent double counting.
+5. VS Code exposes no public event for Copilot Chat usage originating in other extensions. Refresh while focused at most once per minute, plus activation, focus return, GitHub-session or configuration changes, and manual refresh. UI and documentation must acknowledge that GitHub attribution can lag.
+
+### Context
+
+Eric approved this refinement. Correction comments were published at:
+
+- https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/180#issuecomment-4939569108
+- https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/180#issuecomment-4939569111
+
+No source code, issue body, labels, or state changed.

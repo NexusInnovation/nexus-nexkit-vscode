@@ -1,3 +1,29 @@
+## <small>3.10.2-beta.2 (2026-07-10)</small>
+
+* docs: format markdown with blank lines after headings ([2a8ae87](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2a8ae87))
+* docs(.squad): merge ruleset-validation feature decisions and orchestration logs (lots 2-6) ([1de95dd](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/1de95dd))
+* docs(.squad): merge ruleset-validation feature decisions and orchestration logs (lots 2-6) ([632219a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/632219a))
+* docs(.squad): merge ruleset-validation feature decisions and orchestration logs (lots 2-6) ([f796a41](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/f796a41))
+* docs(orchestration-log): record issue #180 V1 refinement ([fdbc78e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/fdbc78e)), closes [#180](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/180)
+* docs(squad): log NexKit Evolution backlog triage (#175-#178) ([68ce8a1](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/68ce8a1)), closes [175-#178](https://github.com/175-/issues/178) [#5](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/5)
+* docs(squad): merge ruleset-validation decisions, logs, and history ([684d93a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/684d93a))
+* docs(squad): merge ruleset-validation decisions, logs, and history ([d8b71b0](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/d8b71b0))
+* docs(squad): merge ruleset-validation decisions, logs, and history ([6a3c8e1](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/6a3c8e1))
+* docs(squad): merge ruleset-validation decisions, logs, and history ([5044b5e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/5044b5e))
+* docs(squad): record RTF preview and AI credit monitor decisions ([2d36b45](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2d36b45)), closes [#180](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/180)
+* fix(telemetry): adapt app insights setup to v3 api ([4de197e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4de197e))
+* Copilot Squad Agent ([2da5626](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2da5626))
+* Copilot Squad Agent ([48259ae](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/48259ae))
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([309ab52](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/309ab52))
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([05811c7](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/05811c7))
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([4872215](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4872215))
+* Update develop branch with latest changes (#174) ([0c2b410](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/0c2b410)), closes [#174](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/174)
+* chore(agents): trim copilot-squad agent to minimal stub ([bdba8c4](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/bdba8c4))
+* chore(release): v3.10.0-beta.9 [skip ci] ([c589cab](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c589cab))
+* chore(release): v3.10.2-beta.1 [skip ci] ([a7d212f](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a7d212f))
+* chore(release): v3.10.2-beta.1 [skip ci] ([a4c459b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a4c459b))
+* chore(release): v3.10.2-beta.1 [skip ci] ([d50ff7c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/d50ff7c))
+
 ## <small>3.10.2-beta.1 (2026-07-09)</small>
 
 - Merge remote-tracking branch 'origin/main' into develop ([8ce8818](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8ce8818))
