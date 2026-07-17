@@ -1,3 +1,7 @@
+## 3.11.0-beta.1 (2026-07-17)
+
+* feat(rtf-converter): add standalone RTF/DOCX/paste-to-Markdown webview panel (#179) ([6c7ec06](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/6c7ec06)), closes [#179](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/179) [#180](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/180)
+
 ## <small>3.10.2-beta.2 (2026-07-10)</small>
 
 * docs: format markdown with blank lines after headings ([2a8ae87](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2a8ae87))
