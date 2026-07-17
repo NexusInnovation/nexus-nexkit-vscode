@@ -35,6 +35,7 @@ export const Commands = {
 
   // Developer tools
   OPEN_RTF_CONVERTER: "nexus-nexkit-vscode.openRtfConverter",
+  OPEN_CRON_SCHEDULE_BUILDER: "nexus-nexkit-vscode.openCronScheduleBuilder",
 } as const;
 
 // Type-safe command names
