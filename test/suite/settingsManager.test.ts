@@ -117,6 +117,26 @@ suite("Unit: SettingsManager", () => {
     assert.strictEqual(timestamp, now);
   });
 
+  test("Should get and set ruleset validation approval per repository", async () => {
+    const repoFingerprint = "github.com/NexusInnovation/nexus-nexkit-vscode";
+
+    assert.strictEqual(SettingsManager.isRulesetValidationApproved(repoFingerprint), false);
+
+    await SettingsManager.setRulesetValidationApproved(repoFingerprint, true);
+
+    assert.strictEqual(SettingsManager.isRulesetValidationApproved(repoFingerprint), true);
+  });
+
+  test("Should set ruleset validation notice state per repository", async () => {
+    const repoFingerprint = "github.com/NexusInnovation/nexus-nexkit-vscode";
+
+    await SettingsManager.setRulesetValidationNoticeShown(repoFingerprint, true);
+
+    assert.deepStrictEqual(workspaceStateData.get("nexkit.rulesetValidation.noticeShown"), {
+      [repoFingerprint]: true,
+    });
+  });
+
   test("Should get user mode", () => {
     const mode = SettingsManager.getUserMode();
     assert.strictEqual(typeof mode, "string");

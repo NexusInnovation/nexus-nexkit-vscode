@@ -26,6 +26,10 @@ export class SettingsManager {
   // Repository commit SHA state key (WorkspaceState)
   private static readonly REPOSITORY_COMMIT_SHAS_KEY = "nexkit.repositories.commitShas";
 
+  // Ruleset validation state keys (WorkspaceState)
+  private static readonly RULESET_VALIDATION_APPROVED_STATE_KEY = "nexkit.rulesetValidation.approved";
+  private static readonly RULESET_VALIDATION_NOTICE_SHOWN_STATE_KEY = "nexkit.rulesetValidation.noticeShown";
+
   // Telemetry settings
   private static readonly TELEMETRY_ENABLED = "telemetry.enabled";
   private static readonly TELEMETRY_CONNECTION_STRING = "telemetry.connectionString";
@@ -149,6 +153,41 @@ export class SettingsManager {
     const shas = this.context.workspaceState.get<Record<string, string>>(this.REPOSITORY_COMMIT_SHAS_KEY, {});
     shas[repoName] = sha;
     await this.context.workspaceState.update(this.REPOSITORY_COMMIT_SHAS_KEY, shas);
+  }
+
+  static isRulesetValidationApproved(repoFingerprint: string): boolean {
+    if (!this.context) {
+      return false;
+    }
+    const approvals = this.context.workspaceState.get<Record<string, boolean>>(
+      this.RULESET_VALIDATION_APPROVED_STATE_KEY,
+      {}
+    );
+    return approvals[repoFingerprint] ?? false;
+  }
+
+  static async setRulesetValidationApproved(repoFingerprint: string, value: boolean): Promise<void> {
+    if (!this.context) {
+      return;
+    }
+    const approvals = this.context.workspaceState.get<Record<string, boolean>>(
+      this.RULESET_VALIDATION_APPROVED_STATE_KEY,
+      {}
+    );
+    approvals[repoFingerprint] = value;
+    await this.context.workspaceState.update(this.RULESET_VALIDATION_APPROVED_STATE_KEY, approvals);
+  }
+
+  static async setRulesetValidationNoticeShown(repoFingerprint: string, value: boolean): Promise<void> {
+    if (!this.context) {
+      return;
+    }
+    const notices = this.context.workspaceState.get<Record<string, boolean>>(
+      this.RULESET_VALIDATION_NOTICE_SHOWN_STATE_KEY,
+      {}
+    );
+    notices[repoFingerprint] = value;
+    await this.context.workspaceState.update(this.RULESET_VALIDATION_NOTICE_SHOWN_STATE_KEY, notices);
   }
 
   static async setRepositories<T = any>(
