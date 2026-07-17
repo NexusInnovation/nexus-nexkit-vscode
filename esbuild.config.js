@@ -9,6 +9,7 @@ const path = require("path");
 
 const production = process.argv.includes("--production");
 const watch = process.argv.includes("--watch");
+let staticWatchersRegistered = false;
 
 /**
  * @type {import('esbuild').Plugin}
@@ -108,6 +109,9 @@ const watchStaticFilesPlugin = {
   setup(build) {
     build.onStart(() => {
       if (!watch) return;
+      if (staticWatchersRegistered) return;
+
+      staticWatchersRegistered = true;
 
       const watchConfigs = [
         {
