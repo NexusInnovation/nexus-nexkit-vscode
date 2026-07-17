@@ -1,7 +1,7 @@
 module.exports = {
   extends: ["@commitlint/config-conventional"],
   ignores: [
-    (commit) => /^Initial plan$/.test(commit),
+    (commit) => /^Initial plan/.test(commit),
   ],
   rules: {
     "type-enum": [2, "always", ["feat", "fix", "docs", "style", "refactor", "perf", "test", "chore", "ci", "build"]],
