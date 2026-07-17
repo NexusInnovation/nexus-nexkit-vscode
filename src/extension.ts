@@ -23,6 +23,7 @@ import { registerOpenFeedbackCommand } from "./shared/commands/feedbackCommand";
 import { registerShowLogsCommand } from "./shared/commands/loggingCommand";
 import { registerAddDevOpsConnectionCommand, registerRemoveDevOpsConnectionCommand } from "./features/apm-devops/commands";
 import { registerGenerateCommitMessageCommand } from "./features/commit-management/commands";
+import { registerOpenRtfConverterCommand } from "./features/rtf-converter/commands";
 
 /**
  * Extension activation
@@ -46,8 +47,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
   services.logging.info("Nexkit extension activated successfully");
 
-  // Set up global error handler to track all unhandled errors
-  setupGlobalErrorHandling(services);
+  // Set up global error handler to track Nexkit-owned unhandled errors
+  setupGlobalErrorHandling(services, context.extensionUri.fsPath);
 
   // Register all commands
   registerInitializeWorkspaceCommand(context, services);
@@ -68,6 +69,7 @@ export async function activate(context: vscode.ExtensionContext) {
   registerAddDevOpsConnectionCommand(context, services);
   registerRemoveDevOpsConnectionCommand(context, services);
   registerGenerateCommitMessageCommand(context, services);
+  registerOpenRtfConverterCommand(context, services);
 
   // Register webview panel
   const nexkitPanelProvider = new NexkitPanelViewProvider();
@@ -132,21 +134,91 @@ async function updateModeSelectedContext(): Promise<void> {
 }
 
 /**
- * Set up global error handling to track all unhandled errors
+ * Set up global error handling to track Nexkit-owned unhandled errors
  */
-function setupGlobalErrorHandling(services: ReturnType<typeof initializeServices> extends Promise<infer T> ? T : never): void {
+function setupGlobalErrorHandling(
+  services: ReturnType<typeof initializeServices> extends Promise<infer T> ? T : never,
+  extensionRoot: string
+): void {
+  const isInspectorInternalError = (error: unknown): boolean => {
+    if (!(error instanceof Error) || error.message !== "Missing dataLength in event") {
+      return false;
+    }
+
+    return error.stack?.includes("node:inspector") || error.stack?.includes("node:internal/inspector/") || false;
+  };
+
+  // Helper function to sanitize error objects before logging
+  // This prevents debugger protocol violations when errors contain non-serializable objects
+  const sanitizeError = (error: any): Error => {
+    try {
+      if (error instanceof Error) {
+        // Create a new plain Error with only message and stack (both serializable)
+        const sanitized = new Error(error.message);
+        sanitized.stack = error.stack;
+        return sanitized;
+      } else if (typeof error === "string") {
+        return new Error(error);
+      } else if (error !== null && typeof error === "object") {
+        // Try to extract a meaningful message from the object
+        const message = (error.message || error.msg || error.reason || error.toString());
+        return new Error(String(message));
+      } else {
+        return new Error(String(error));
+      }
+    } catch (sanitizeError) {
+      // If sanitization itself fails, return a generic error
+      return new Error("Unknown error occurred during error processing");
+    }
+  };
+
   // Track unhandled promise rejections
   process.on("unhandledRejection", (reason: any) => {
-    services.logging.error("Unhandled promise rejection", reason);
-    const error = reason instanceof Error ? reason : new Error(String(reason));
-    services.telemetry.trackError(error, { context: "unhandledRejection" });
+    if (isInspectorInternalError(reason)) {
+      return;
+    }
+
+    if (!isNexkitOwnedException(reason, extensionRoot)) {
+      return;
+    }
+
+    const sanitizedError = sanitizeError(reason);
+    services.logging.error("Unhandled promise rejection", sanitizedError);
+    services.telemetry.trackError(sanitizedError, { context: "unhandledRejection" });
   });
 
   // Track uncaught exceptions (less common in VS Code extensions)
   process.on("uncaughtException", (error: Error) => {
-    services.logging.error("Uncaught exception", error);
-    services.telemetry.trackError(error, { context: "uncaughtException" });
+    if (isInspectorInternalError(error)) {
+      return;
+    }
+
+    if (!isNexkitOwnedException(error, extensionRoot)) {
+      return;
+    }
+
+    const sanitizedError = sanitizeError(error);
+    services.logging.error("Uncaught exception", sanitizedError);
+    services.telemetry.trackError(sanitizedError, { context: "uncaughtException" });
   });
+}
+
+/**
+ * Returns whether an unhandled error originated in Nexkit's compiled extension code.
+ */
+export function isNexkitOwnedException(error: unknown, extensionRoot: string): boolean {
+  if (error === null || typeof error !== "object") {
+    return false;
+  }
+
+  const errorDetails = error as { stack?: unknown; nexkitOwned?: unknown };
+  if (typeof errorDetails.stack === "string") {
+    const normalizedRoot = extensionRoot.replace(/\\/g, "/").replace(/\/+$/, "");
+    const normalizedStack = errorDetails.stack.replace(/\\/g, "/");
+    return normalizedStack.includes(`${normalizedRoot}/out/`);
+  }
+
+  return errorDetails.nexkitOwned === true;
 }
 
 // This method is called when your extension is deactivated

@@ -13,6 +13,10 @@ export function ToolsSection() {
   const messenger = useVSCodeAPI();
   const { workflows } = useAppState();
 
+  const openRtfConverter = (): void => {
+    messenger.sendMessage({ command: "openRtfConverter" });
+  };
+
   // Request workflow list when the section mounts (if not already loaded)
   useEffect(() => {
     if (!workflows.isReady) {
@@ -21,8 +25,15 @@ export function ToolsSection() {
   }, []);
 
   return (
-    <CollapsibleSection id="tools-workflow-runner" title="GitHub Workflow Runner">
-      <WorkflowRunnerTool />
-    </CollapsibleSection>
+    <>
+      <CollapsibleSection id="tools-rtf-converter" title="RTF to Markdown">
+        <button class="action-button" onClick={openRtfConverter}>
+          Open RTF to Markdown
+        </button>
+      </CollapsibleSection>
+      <CollapsibleSection id="tools-workflow-runner" title="GitHub Workflow Runner">
+        <WorkflowRunnerTool />
+      </CollapsibleSection>
+    </>
   );
 }

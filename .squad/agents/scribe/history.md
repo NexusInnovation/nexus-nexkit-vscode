@@ -43,3 +43,11 @@ clean rebuild has already proven the fix.
 
 **Status:** ✅ Complete; no history summaries triggered (all < 15KB except neo 13.6KB still below threshold).
 
+### 2026-07-10 - RTF Markdown Preview Consolidation
+
+Merged Ghost's implementation contract and Trinity's QA approval into one decision record. The shared evidence confirms client-only presentation state, a single Markdown copy source, HTML-disabled rendering, and a deliberate manual-QA boundary until webview DOM testing is adopted intentionally.
+
+### 2026-07-10 - RTF preview consolidation
+
+Merged the RTF converter preview contract and its deliberate manual-QA boundary from Ghost and Trinity's inbox notes. Logged only completed Ghost and Trinity work; Link's final lint and compile validation remains in flight.
+
