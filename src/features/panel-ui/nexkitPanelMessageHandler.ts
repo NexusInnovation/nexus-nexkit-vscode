@@ -38,6 +38,7 @@ export class NexkitPanelMessageHandler {
       ["deleteProfile", this.handleDeleteProfile.bind(this)],
       ["openFeedback", this.handleOpenFeedback.bind(this)],
       ["openRtfConverter", this.handleOpenRtfConverter.bind(this)],
+      ["openJsonFormatter", this.handleOpenJsonFormatter.bind(this)],
       ["setMode", this.handleSetMode.bind(this)],
       // APM DevOps connection handlers
       ["getDevOpsConnections", this.handleGetDevOpsConnections.bind(this)],
@@ -205,6 +206,11 @@ export class NexkitPanelMessageHandler {
   private async handleOpenRtfConverter(message: WebviewMessage): Promise<void> {
     this.trackWebviewAction("openRtfConverter");
     await vscode.commands.executeCommand(Commands.OPEN_RTF_CONVERTER);
+  }
+
+  private async handleOpenJsonFormatter(message: WebviewMessage): Promise<void> {
+    this.trackWebviewAction("openJsonFormatter");
+    await vscode.commands.executeCommand(Commands.OPEN_JSON_FORMATTER);
   }
 
   private async handleSetMode(message: WebviewMessage & { command: "setMode" }): Promise<void> {

@@ -17,6 +17,10 @@ export function ToolsSection() {
     messenger.sendMessage({ command: "openRtfConverter" });
   };
 
+  const openJsonFormatter = (): void => {
+    messenger.sendMessage({ command: "openJsonFormatter" });
+  };
+
   // Request workflow list when the section mounts (if not already loaded)
   useEffect(() => {
     if (!workflows.isReady) {
@@ -29,6 +33,11 @@ export function ToolsSection() {
       <CollapsibleSection id="tools-rtf-converter" title="RTF to Markdown">
         <button class="action-button" onClick={openRtfConverter}>
           Open RTF to Markdown
+        </button>
+      </CollapsibleSection>
+      <CollapsibleSection id="tools-json-formatter" title="JSON Formatter">
+        <button class="action-button" onClick={openJsonFormatter}>
+          Open JSON Formatter
         </button>
       </CollapsibleSection>
       <CollapsibleSection id="tools-workflow-runner" title="GitHub Workflow Runner">

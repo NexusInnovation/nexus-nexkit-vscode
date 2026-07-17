@@ -130,4 +130,17 @@ suite("Unit: Extension Activation", () => {
     assert.strictEqual(command.title, "Nexkit: RTF to Markdown");
     assert.strictEqual(command.category, "Nexkit");
   });
+
+  test("Should contribute JSON Formatter command", () => {
+    const packageJsonPath = path.join(__dirname, "..", "..", "..", "package.json");
+    const packageJsonRaw = fs.readFileSync(packageJsonPath, "utf8");
+    const packageJson = JSON.parse(packageJsonRaw);
+
+    const command = packageJson.contributes?.commands?.find(
+      (entry: { command: string }) => entry.command === "nexus-nexkit-vscode.openJsonFormatter"
+    );
+    assert.ok(command, "Expected openJsonFormatter command contribution.");
+    assert.strictEqual(command.title, "Nexkit: JSON Formatter");
+    assert.strictEqual(command.category, "Nexkit");
+  });
 });
