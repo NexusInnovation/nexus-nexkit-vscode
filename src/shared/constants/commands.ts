@@ -32,6 +32,9 @@ export const Commands = {
 
   // Commit message generation
   GENERATE_COMMIT_MESSAGE: "nexus-nexkit-vscode.generateCommitMessage",
+
+  // Developer tools
+  OPEN_RTF_CONVERTER: "nexus-nexkit-vscode.openRtfConverter",
 } as const;
 
 // Type-safe command names
