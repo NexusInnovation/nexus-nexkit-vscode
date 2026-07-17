@@ -1,3 +1,7 @@
+## 3.11.0-beta.2 (2026-07-17)
+
+* fix(build): prevent duplicate static file watcher registration ([56164ee](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/56164ee))
+
 ## 3.11.0-beta.1 (2026-07-17)
 
 * feat(rtf-converter): add standalone RTF/DOCX/paste-to-Markdown webview panel (#179) ([6c7ec06](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/6c7ec06)), closes [#179](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/179) [#180](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/180)
