@@ -30,6 +30,7 @@ import { GitHubWorkflowRunnerService } from "../features/github-workflow-runner/
 import { HooksConfigDeployer } from "../features/initialization/hooksConfigDeployer";
 import { UserDirectoryService } from "../features/ai-template-files/services/userDirectoryService";
 import { RtfConverterPanelService } from "../features/rtf-converter/rtfConverterPanelService";
+import { RegexBuilderPanelService } from "../features/regex-builder/regexBuilderPanelService";
 
 /**
  * Service container for dependency injection
@@ -67,6 +68,7 @@ export interface ServiceContainer {
   githubWorkflowRunner: GitHubWorkflowRunnerService;
   userDirectory: UserDirectoryService;
   rtfConverter: RtfConverterPanelService;
+  regexBuilder: RegexBuilderPanelService;
 }
 
 /**
@@ -118,6 +120,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const nexkitFileWatcher = NexkitFileWatcherService.getInstance();
   const githubWorkflowRunner = new GitHubWorkflowRunnerService(context.extensionUri);
   const rtfConverter = new RtfConverterPanelService(context.extensionUri);
+  const regexBuilder = new RegexBuilderPanelService(context.extensionUri);
 
   // Register for disposal
   context.subscriptions.push(logging);
@@ -127,6 +130,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   context.subscriptions.push(templateMetadataScanner);
   context.subscriptions.push(nexkitFileWatcher);
   context.subscriptions.push(rtfConverter);
+  context.subscriptions.push(regexBuilder);
 
   logging.info("All services initialized successfully");
 
@@ -162,5 +166,6 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     githubWorkflowRunner,
     userDirectory,
     rtfConverter,
+    regexBuilder,
   };
 }
