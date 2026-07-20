@@ -32,3 +32,11 @@
 - Keeps GitHub API concerns isolated from hook generation
 - Makes unsupported rules explicit rather than overloading the hook deployer
 - Read-only sync pattern: user consents once per repo; subsequent refreshes run silently
+
+## Team update — 2026-07-20 (RTF converter to markitdown migration)
+
+Shared context (see decisions.md "Replace custom RTF/DOCX/HTML to Markdown conversion with microsoft/markitdown"): conversion moved host-side via microsoft/markitdown (Python child process). Message contract lives in src/features/rtf-converter/messages.ts (convert-paste-html | convert-file | recheck-availability -> conversion-result | conversion-error | availability-status). markdown-it preview retained; deps mammoth/turndown/turndown-plugin-gfm/rtf.js/@types/turndown removed; type shims rtfJsBundle.d.ts + turndownPluginGfm.d.ts deleted. Security: argv array + sandboxed temp file, shell:false, 10MB cap, two-layer timeout. Suite 382 passing / 0 failing. Open follow-up: add clean/rimraf out step before test-compile (stale out/ artifacts can abort npm test).
+
+## Team update — 2026-07-20 (Convert to Markdown — full migration complete and merged)
+
+Eric approved the full scope expansion over the prior narrow proposal: ALL formats (not just new ones) now route through markitdown, and the full internal rename (RTF-to-Markdown → Convert to Markdown, including class/command/view-type identifiers, not just user-visible text) is done. Link/Ghost/Trinity delivered implementation, webview, and 30 passing tests respectively — merged into decisions.md ("Convert to Markdown — full markitdown migration (supersedes narrow-scope architecture)" and "...implementation, webview, and test details"). The previously-flagged stale-`out/` test-compile follow-up was hit again this session (Mocha crashed on a leftover compiled artifact from a long-deleted `cron-schedule-builder` feature) — resolved by deleting `out/` and rebuilding; still worth adding a clean step to `pretest` to stop recurring.

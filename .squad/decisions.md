@@ -1,51 +1,87 @@
 # Squad Decisions
 
-## Decision: ConfirmationService UX contract (Issue #162)
+> Entries older than 30 days are periodically moved to `decisions-archive.md` by the Scribe.
 
-**Date:** 2026-06-03
-**Agent:** Neo
-**Issue:** #162
+## Decision: Convert to Markdown — full markitdown migration (supersedes narrow-scope architecture)
+
+**Date:** 2026-07-20
+**Agent:** Morpheus (approved by Eric De Carufel)
 **Classification:** Project-specific
 
 ### Context
 
-A new ConfirmationService was added to gate destructive config-write operations (chat settings, MCP servers) behind a three-choice modal dialog.
+Morpheus first proposed a narrow-scope architecture: keep `mammoth`/`rtf.js`/`turndown`/`turndown-plugin-gfm` for existing formats (paste-HTML, .docx, .rtf, .html, plain text) and route only genuinely new formats (.pptx, .pdf, .xlsx, images) through `microsoft/markitdown` via a Python child process. This was to minimize blast radius and avoid making Python a mandatory dependency for the whole feature. Internal identifiers (`RtfConverterPanelService`, `OPEN_RTF_CONVERTER`, `nexkitRtfToMarkdown`, etc.) were originally left unrenamed — only user-visible text was to change.
+
+Eric explicitly overrode this narrower recommendation to maximize consistency (one conversion engine, one code path).
 
 ### Decisions
 
-#### ESC / dismiss = Accept
+#### All formats route through markitdown
 
-When the user closes the modal without clicking a button (showInformationMessage returns undefined), we treat it as Accept. Rationale: dismissal is ambiguous; defaulting to the non-destructive proceed is safer than silently skipping the operation.
+Every input path — paste-HTML, paste-plain-text, .docx, .rtf, .html, .pptx, .pdf, .xlsx, images, .txt — is now converted host-side via a Python child process running `markitdown`. The entire client-side conversion stack (`mammoth`, `rtf.js`, `turndown`, `turndown-plugin-gfm`, their type shims) is deleted. `markdown-it` is retained — it renders the final Markdown output for the Preview toggle only (output-side concern, unrelated to input parsing).
 
-#### Refuse Forever is workspace-scoped
+#### New setting `nexkit.convertToMarkdown.pythonPath`
 
-The refused-forever flag is stored in workspaceState (not globalState). Rationale: users may want different confirmation behaviour per workspace.
+String, default `""` (auto-detect via `python3`/`python`/`py` candidates), wired through `SettingsManager.getConvertToMarkdownPythonPath()`, for non-standard Python installs.
 
-#### workspaceToUserMigrationService not gated
+#### Full internal rename (not just user-visible text)
 
-The migration flow was explicitly excluded. It already has multi-step user consent built in.
+- Folder `src/features/rtf-converter/` → `src/features/convert-to-markdown/`
+- Class `RtfConverterPanelService` → `ConvertToMarkdownPanelService`
+- Command id `nexus-nexkit-vscode.openRtfConverter` → `nexus-nexkit-vscode.openConvertToMarkdown`
+- `Commands.OPEN_RTF_CONVERTER` → `Commands.OPEN_CONVERT_TO_MARKDOWN`
+- `VIEW_TYPE` `"nexkitRtfToMarkdown"` → `"nexkitConvertToMarkdown"`
+- Sidebar message keyword `"openRtfConverter"` → `"openConvertToMarkdown"` (in `webviewMessages.ts`, `nexkitPanelMessageHandler.ts`, `ToolsSection.tsx`)
+- `CollapsibleSection` id `tools-rtf-converter` → `tools-convert-to-markdown`
 
-#### Key structure: static strings + factory functions
+#### New host-side service `MarkitdownConversionService`
 
-CONFIRMATION_KEYS.CHAT_SETTINGS is a static string. CONFIRMATION_KEYS.mcpUserServer(name) and mcpWorkspaceServer(name) are factory functions allowing per-server key isolation, so refusing forever for one MCP server does not affect others.
+Behind an interface, injected into the panel service (constructor injection, mockable) and registered in `serviceContainer.ts`. Owns: availability detection (python/markitdown presence, cached per session, user-triggerable recheck), sandboxed temp-file handling with guaranteed cleanup, `child_process.spawn` with argv array (`shell: false`, no string interpolation), 10MB size cap enforced before writing to disk, and a two-layer timeout (SIGTERM soft timeout, SIGKILL hard timeout as safety net).
+
+#### Message contract
+
+New host↔webview `postMessage`/`onDidReceiveMessage` channel (previously the feature was client-only). Shared pure-type definitions live in `src/features/convert-to-markdown/messages.ts` (no runtime code, importable from both host and webview bundles).
+
+### Why
+
+Introducing a mandatory external Python runtime dependency into a VS Code extension carries real risk (installation friction, version drift, CI/test environment gaps) and was flagged loudly to Eric before implementation. Eric accepted the full-pipeline Python dependency as a deliberate trade-off for consistency; Morpheus's availability-risk flag (single point of failure for the whole feature, not just 4 formats) stands as documented, and the decision is approved and superseding.
 
 ---
 
-## Decision: Nexkit panel home action placement
+## Decision: Convert to Markdown — implementation, webview, and test details
 
-**Date:** 2026-06-05
-**Agent:** Ghost
+**Date:** 2026-07-20
+**Agents:** Link, Ghost, Trinity
 **Classification:** Project-specific
 
 ### Context
 
-The requested home button needed to sit immediately to the left of the existing Save Current Profile action in the panel header bar.
+Implementation of the markitdown migration and full rename described in the architecture decision above, split across three agents by file ownership.
 
-### Decision
+### Decisions
 
-The home action was implemented as a contributed `view/title` command instead of a new webview DOM button. The existing save button already lives in the VS Code view title area via `package.json`, so matching that placement keeps the header actions consistent and preserves native VS Code styling and ordering.
+#### Link — `MarkitdownConversionService` / `ConvertToMarkdownPanelService`
 
-The button visibility is driven by a VS Code context key (`nexkit.modeSelected`) derived from the current mode. This keeps the action hidden while the panel is already on the mode selection screen.
+- `webview-ready` and `recheck-availability` both resolve via a shared `_postAvailabilityStatus()` helper; `recheck-availability` additionally calls `invalidateAvailabilityCache()` first so the interpreter is re-probed on demand instead of trusting a stale in-memory cache.
+- `sourceLabel` convention: `"Pasted HTML"` / `"Pasted text"` for paste flows, and the original (untrusted) `fileName` string for file conversions — safe because `sourceLabel` is only used for UI display, never as a filesystem path (the temp file uses a UUID name + validated extension only, via `_extractValidatedExtension`).
+- `MarkitdownConversionService` caches both the availability result and the concrete resolved interpreter binary (`python3`/`python`/`py`/configured path) together, so a later conversion reuses the exact interpreter that was probed (avoids a TOCTOU-style mismatch between probe and use).
+- Timeout implementation: two plain `setTimeout` timers — soft (`SIGTERM`) then hard (`SIGKILL`) scheduled only once the soft timer fires — rather than one timer with internal phase tracking. Both timers are cleared on `close`/`error` regardless of which fired.
+- Error sanitization: `_convert()`'s catch-all always logs the raw error via `LoggingService.error()` but always rethrows a fixed generic message to the caller. Exception: the availability-not-found message echoes the user's own configured `nexkit.convertToMarkdown.pythonPath` value (user's own input, not an internal path — no sanitization concern).
+
+#### Ghost — standalone webview rebuild
+
+Rebuilt `src/features/convert-to-markdown/webview/` (index.html + main.tsx) as a thin message-passing Preact UI. No client-side conversion logic remains — all `WebviewToHostMessage`/`HostToWebviewMessage` types come from Link's `messages.ts`. Kept `markdown-it` for the raw/preview toggle only, rendering host-returned Markdown — never raw pasted HTML (paste handler calls `event.preventDefault()` before reading clipboard data, so pasted HTML is never inserted into the DOM). Availability gating disables (not hides) the paste area/upload input while `available !== true`, with a persistent banner + Recheck button. `ToolsSection.tsx` renamed `openRtfConverter` → `openConvertToMarkdown`.
+
+#### Trinity — test coverage
+
+- `test/suite/markitdownConversionService.test.ts` (19 tests): stubs `child_process.spawn` via Sinon — never spawns real Python. Covers availability detection + caching + invalidation, configured-interpreter-only behavior, all-candidates-fail with non-leaking reason, argv-array/no-shell security assertion, 10MB cap (no spawn call), temp-dir cleanup on success/error/spawn-error paths, two-layer SIGTERM/SIGKILL timeout via `sinon.useFakeTimers()`, and sanitized error messages (no temp path/stack leak to caller).
+- `test/suite/convertToMarkdownPanelService.test.ts` (11 tests): fakes `IMarkitdownConversionService` and stubs `vscode.window.createWebviewPanel`. Covers panel creation/reveal-not-recreate, all 5 `WebviewToHostMessage` types, conversion-error posting on rejection, and safe dispose (including double-dispose).
+- Updated `extension.test.ts`, `nexkitPanelMessageHandler.test.ts`, `serviceContainer.test.ts` for the rename; added a `markitdownConversion` presence assertion to `serviceContainer.test.ts`.
+- Deviation: no Preact/DOM tests for `main.tsx` — no DOM test harness (jsdom/Testing Library/Preact test utils) exists in this repo yet, consistent with prior team decision to keep that a manual-verification boundary.
+
+### Why
+
+Keeps CI hermetic (no real Python/markitdown dependency in tests), locks down the security-sensitive spawn contract (argv array, `shell:false`, no path/stack leakage) as a regression guard, and matches the host-never-trusts-webview-HTML security intent.
 
 ---
 

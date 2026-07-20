@@ -94,3 +94,11 @@ The full ruleset-validation feature (V1) is complete across all 6 implementation
 - `npm run lint` passed with exit code 0.
 - `npm run compile` passed with exit code 0; esbuild completed and copied the RTF converter webview assets.
 - No production files required repair. Scope stayed limited to validation.
+
+## Team update — 2026-07-20 (RTF converter to markitdown migration)
+
+Shared context (see decisions.md "Replace custom RTF/DOCX/HTML to Markdown conversion with microsoft/markitdown"): conversion moved host-side via microsoft/markitdown (Python child process). Message contract lives in src/features/rtf-converter/messages.ts (convert-paste-html | convert-file | recheck-availability -> conversion-result | conversion-error | availability-status). markdown-it preview retained; deps mammoth/turndown/turndown-plugin-gfm/rtf.js/@types/turndown removed; type shims rtfJsBundle.d.ts + turndownPluginGfm.d.ts deleted. Security: argv array + sandboxed temp file, shell:false, 10MB cap, two-layer timeout. Suite 382 passing / 0 failing. Open follow-up: add clean/rimraf out step before test-compile (stale out/ artifacts can abort npm test).
+
+## Team update — 2026-07-20 (Convert to Markdown — full migration complete and merged)
+
+Implemented the full-scope migration approved by Eric: folder renamed `rtf-converter/` → `convert-to-markdown/`, `RtfConverterPanelService` → `ConvertToMarkdownPanelService`, `Commands.OPEN_RTF_CONVERTER` → `Commands.OPEN_CONVERT_TO_MARKDOWN`, view type and message keywords renamed throughout. New `MarkitdownConversionService` (argv-array spawn, 10MB cap, two-layer SIGTERM/SIGKILL timeout, sandboxed temp cleanup) and new `nexkit.convertToMarkdown.pythonPath` setting. `npm run check:types` clean. Trinity added 19+11 tests covering the new service and panel; all pass.
