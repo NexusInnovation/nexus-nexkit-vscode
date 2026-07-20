@@ -26,7 +26,7 @@ function App() {
       <h1>Cron Job Schedule Builder</h1>
       <p>Enter a standard 5-field cron expression or a 6-field expression with seconds.</p>
 
-      <label for="cron-expression" style={{ display: "block", fontWeight: "bold", marginBottom: "6px" }}>
+      <label htmlFor="cron-expression" style={{ display: "block", fontWeight: "bold", marginBottom: "6px" }}>
         Cron expression
       </label>
       <div style={{ display: "flex", gap: "8px" }}>
@@ -34,7 +34,7 @@ function App() {
           id="cron-expression"
           value={expression}
           onInput={(event) => setExpression((event.target as HTMLInputElement).value)}
-          spellcheck={false}
+          spellCheck={false}
           aria-describedby="cron-help cron-result"
           style={{
             flex: 1,
