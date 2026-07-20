@@ -140,6 +140,11 @@
         "command": "nexus-nexkit-vscode.openRtfConverter",
         "title": "Nexkit: RTF to Markdown",
         "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.openRegexBuilder",
+        "title": "Nexkit: RegEx Builder",
+        "category": "Nexkit"
       }
     ],
     "menus": {
