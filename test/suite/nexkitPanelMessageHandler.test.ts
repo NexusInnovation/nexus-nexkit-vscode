@@ -49,4 +49,13 @@ suite("Unit: NexkitPanelMessageHandler", () => {
 
     assert.ok(executeCommand.calledOnceWithExactly(Commands.OPEN_RTF_CONVERTER));
   });
+
+  test("opens the Cron Schedule Builder from the webview", async () => {
+    const executeCommand = sandbox.stub(vscode.commands, "executeCommand").resolves();
+    const handler = new NexkitPanelMessageHandler(() => undefined, createServices());
+
+    await handler.handleMessage({ command: "openCronScheduleBuilder" });
+
+    assert.ok(executeCommand.calledOnceWithExactly(Commands.OPEN_CRON_SCHEDULE_BUILDER));
+  });
 });
