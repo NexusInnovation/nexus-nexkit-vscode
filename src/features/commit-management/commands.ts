@@ -10,8 +10,8 @@ export function registerGenerateCommitMessageCommand(context: vscode.ExtensionCo
   registerCommand(
     context,
     Commands.GENERATE_COMMIT_MESSAGE,
-    async () => {
-      await services.commitMessage.generateCommitMessage();
+    async (sourceControl?: vscode.SourceControl) => {
+      await services.commitMessage.generateCommitMessage(sourceControl?.rootUri);
     },
     services.telemetry
   );

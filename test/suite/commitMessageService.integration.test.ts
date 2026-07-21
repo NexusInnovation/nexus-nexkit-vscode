@@ -51,6 +51,7 @@ suite("Integration: CommitMessageService – Generate Commit Message", () => {
   let mockAddSpy: sinon.SinonSpy;
   let mockWorkingTreeChanges: Array<{ uri: vscode.Uri }>;
   let mockIndexChanges: Array<{ uri: vscode.Uri }>;
+  let mockRepositories: any[];
 
   setup(() => {
     sandbox = sinon.createSandbox();
@@ -65,6 +66,7 @@ suite("Integration: CommitMessageService – Generate Commit Message", () => {
 
     // ── Git Extension mock ──────────────────────────────────────────────
     const mockRepository = {
+      rootUri: vscode.Uri.file("/repo"),
       diff: sandbox.stub().callsFake(async (_cached: boolean) => {
         return mockDiffResults.shift() ?? "";
       }),
@@ -81,11 +83,12 @@ suite("Integration: CommitMessageService – Generate Commit Message", () => {
         },
       },
     };
+    mockRepositories = [mockRepository];
 
     const mockGitExtension = {
       exports: {
         getAPI: (_version: number) => ({
-          repositories: [mockRepository],
+          repositories: mockRepositories,
         }),
       },
     };
@@ -145,6 +148,68 @@ suite("Integration: CommitMessageService – Generate Commit Message", () => {
     // Assert
     assert.strictEqual(mockInputBox.value, expectedMessage, "SCM input box should contain the generated commit message");
     assert.ok(mockAddSpy.notCalled, "repo.add() should NOT be called because changes were already staged");
+  });
+
+  test("Should generate a message for the repository selected from SCM context", async () => {
+    const firstRepository = {
+      rootUri: vscode.Uri.file("/workspace/first"),
+      diff: sandbox.stub().resolves("diff --git a/first.ts b/first.ts\n+first change"),
+      add: sandbox.stub(),
+      inputBox: { value: "" },
+      state: { indexChanges: [{ uri: vscode.Uri.file("/workspace/first/first.ts") }], workingTreeChanges: [] },
+    };
+    const secondRepository = {
+      rootUri: vscode.Uri.file("/workspace/second"),
+      diff: sandbox.stub().resolves("diff --git a/second.ts b/second.ts\n+second change"),
+      add: sandbox.stub(),
+      inputBox: { value: "" },
+      state: { indexChanges: [{ uri: vscode.Uri.file("/workspace/second/second.ts") }], workingTreeChanges: [] },
+    };
+    mockRepositories = [firstRepository, secondRepository];
+
+    selectChatModelsStub.resolves([
+      {
+        name: "test-model",
+        family: "gpt-4o",
+        sendRequest: sandbox.stub().resolves({ text: fakeAsyncIterable(["fix(second): update selected repository"]) }),
+      },
+    ]);
+
+    await service.generateCommitMessage(vscode.Uri.file("/workspace/second"));
+
+    assert.ok(firstRepository.diff.notCalled, "Should not read the diff from the first repository");
+    assert.strictEqual(secondRepository.inputBox.value, "fix(second): update selected repository");
+  });
+
+  test("Should use existing staged-change selection when SCM context does not match a repository", async () => {
+    const firstRepository = {
+      rootUri: vscode.Uri.file("/workspace/first"),
+      diff: sandbox.stub().resolves("diff --git a/first.ts b/first.ts\n+first change"),
+      add: sandbox.stub(),
+      inputBox: { value: "" },
+      state: { indexChanges: [], workingTreeChanges: [] },
+    };
+    const secondRepository = {
+      rootUri: vscode.Uri.file("/workspace/second"),
+      diff: sandbox.stub().resolves("diff --git a/second.ts b/second.ts\n+second change"),
+      add: sandbox.stub(),
+      inputBox: { value: "" },
+      state: { indexChanges: [{ uri: vscode.Uri.file("/workspace/second/second.ts") }], workingTreeChanges: [] },
+    };
+    mockRepositories = [firstRepository, secondRepository];
+
+    selectChatModelsStub.resolves([
+      {
+        name: "test-model",
+        family: "gpt-4o",
+        sendRequest: sandbox.stub().resolves({ text: fakeAsyncIterable(["fix(second): use staged repository"]) }),
+      },
+    ]);
+
+    await service.generateCommitMessage(vscode.Uri.file("/workspace/missing"));
+
+    assert.ok(firstRepository.diff.notCalled, "Should retain the existing staged-change fallback");
+    assert.strictEqual(secondRepository.inputBox.value, "fix(second): use staged repository");
   });
 
   // ─────────────────────────────────────────────────────────────────────────

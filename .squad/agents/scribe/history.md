@@ -30,6 +30,7 @@ clean rebuild has already proven the fix.
 **Execution time:** ~2 minutes
 
 **Tasks completed:**
+
 1. Archive old decision (2025-05-19T23:30:00 — 365+ days old) → `.squad/decisions/archive/`
 2. Merge oracle inbox entry (23.8 KB guide) → `decisions.md` (no duplicates)
 3. Delete inbox file post-merge
@@ -37,6 +38,7 @@ clean rebuild has already proven the fix.
 5. Create session log (`.squad/log/2026-05-20T19-40-27Z-scribe-oracle-batch.md`)
 
 **Metrics:**
+
 - decisions.md: 40,533 → 41,259 bytes (pruned 1 old, added 1 oracle decision)
 - Archive entries: 0 → 1
 - Inbox files: 1 → 0
@@ -51,3 +53,6 @@ Merged Ghost's implementation contract and Trinity's QA approval into one decisi
 
 Merged the RTF converter preview contract and its deliberate manual-QA boundary from Ghost and Trinity's inbox notes. Logged only completed Ghost and Trinity work; Link's final lint and compile validation remains in flight.
 
+### 2026-07-21 - Commit Message SCM Context Consolidation
+
+Merged Link's repository-context decision for Generate Commit Message. Recorded focused extension-host success (379 passing, 8 pending) and preserved the distinction that wider type/test compilation is blocked by pre-existing RTF-converter module-resolution and implicit-any diagnostics.
