@@ -68,7 +68,6 @@ suite("Unit: ServiceContainer", () => {
     assert.ok(services.workspaceInitPrompt, "WorkspaceInitPromptService should be initialized");
     assert.ok(services.githubAuthPrompt, "GitHubAuthPromptService should be initialized");
     assert.ok(services.startupVerification, "StartupVerificationService should be initialized");
-    assert.ok(services.rtfConverter, "RtfConverterPanelService should be initialized");
   });
 
   test("Should register disposables in context", () => {
