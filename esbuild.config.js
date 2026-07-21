@@ -41,13 +41,7 @@ function copyStaticFiles() {
       outputDir: path.join(__dirname, "out", "webview"),
       filesToCopy: ["index.html", "styles.css"],
       staticSubFolder: "static",
-    },
-    {
-      sourceDir: path.join(__dirname, "src", "features", "rtf-converter", "webview"),
-      outputDir: path.join(__dirname, "out", "rtf-converter"),
-      filesToCopy: ["index.html"],
-      staticSubFolder: null,
-    },
+    }
   ];
 
   staticConfigs.forEach((config) => {
@@ -118,12 +112,7 @@ const watchStaticFilesPlugin = {
           sourceDir: path.join(__dirname, "src", "features", "panel-ui", "webview"),
           filesToWatch: ["index.html", "styles.css"],
           staticSubFolder: "static",
-        },
-        {
-          sourceDir: path.join(__dirname, "src", "features", "rtf-converter", "webview"),
-          filesToWatch: ["index.html"],
-          staticSubFolder: null,
-        },
+        }
       ];
 
       watchConfigs.forEach((config) => {
@@ -186,21 +175,6 @@ async function main() {
     sourcemap: !production,
     platform: "browser",
     outfile: "out/webview.js",
-    logLevel: "silent",
-    jsx: "automatic",
-    jsxImportSource: "preact",
-    plugins: [esbuildProblemMatcherPlugin, copyStaticFilesPlugin, watchStaticFilesPlugin],
-  });
-
-  // RTF converter webview bundle
-  const rtfConverterCtx = await esbuild.context({
-    entryPoints: ["src/features/rtf-converter/webview/main.tsx"],
-    bundle: true,
-    format: "iife",
-    minify: production,
-    sourcemap: !production,
-    platform: "browser",
-    outfile: "out/rtfConverter.js",
     logLevel: "silent",
     jsx: "automatic",
     jsxImportSource: "preact",
