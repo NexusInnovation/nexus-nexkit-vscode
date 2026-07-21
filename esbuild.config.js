@@ -184,14 +184,11 @@ async function main() {
   if (watch) {
     await extensionCtx.watch();
     await webviewCtx.watch();
-    await rtfConverterCtx.watch();
   } else {
     await extensionCtx.rebuild();
     await webviewCtx.rebuild();
-    await rtfConverterCtx.rebuild();
     await extensionCtx.dispose();
     await webviewCtx.dispose();
-    await rtfConverterCtx.dispose();
   }
 }
 
