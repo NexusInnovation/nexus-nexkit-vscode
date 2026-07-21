@@ -29,7 +29,8 @@ import { NexkitFileWatcherService } from "../features/nexkit-file-watcher/nexkit
 import { GitHubWorkflowRunnerService } from "../features/github-workflow-runner/githubWorkflowRunnerService";
 import { HooksConfigDeployer } from "../features/initialization/hooksConfigDeployer";
 import { UserDirectoryService } from "../features/ai-template-files/services/userDirectoryService";
-import { RtfConverterPanelService } from "../features/rtf-converter/rtfConverterPanelService";
+import { ConvertToMarkdownPanelService } from "../features/convert-to-markdown/convertToMarkdownPanelService";
+import { MarkitdownConversionService } from "../features/convert-to-markdown/markitdownConversionService";
 
 /**
  * Service container for dependency injection
@@ -66,7 +67,8 @@ export interface ServiceContainer {
   nexkitFileWatcher: NexkitFileWatcherService;
   githubWorkflowRunner: GitHubWorkflowRunnerService;
   userDirectory: UserDirectoryService;
-  rtfConverter: RtfConverterPanelService;
+  convertToMarkdown: ConvertToMarkdownPanelService;
+  markitdownConversion: MarkitdownConversionService;
 }
 
 /**
@@ -117,7 +119,8 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   );
   const nexkitFileWatcher = NexkitFileWatcherService.getInstance();
   const githubWorkflowRunner = new GitHubWorkflowRunnerService(context.extensionUri);
-  const rtfConverter = new RtfConverterPanelService(context.extensionUri);
+  const markitdownConversion = new MarkitdownConversionService(logging);
+  const convertToMarkdown = new ConvertToMarkdownPanelService(context.extensionUri, markitdownConversion);
 
   // Register for disposal
   context.subscriptions.push(logging);
@@ -126,7 +129,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   context.subscriptions.push(devOpsConfig);
   context.subscriptions.push(templateMetadataScanner);
   context.subscriptions.push(nexkitFileWatcher);
-  context.subscriptions.push(rtfConverter);
+  context.subscriptions.push(convertToMarkdown);
 
   logging.info("All services initialized successfully");
 
@@ -161,6 +164,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     nexkitFileWatcher,
     githubWorkflowRunner,
     userDirectory,
-    rtfConverter,
+    convertToMarkdown,
+    markitdownConversion,
   };
 }

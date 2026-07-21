@@ -18,12 +18,8 @@
   ],
   "dependencies": {
     "applicationinsights": "^3.15.1",
-    "mammoth": "^1.12.0",
     "markdown-it": "^14.1.0",
-    "prettier": "^3.7.4",
-    "rtf.js": "^3.0.9",
-    "turndown": "^7.2.4",
-    "turndown-plugin-gfm": "^1.0.2"
+    "prettier": "^3.7.4"
   },
   "activationEvents": [
     "onStartupFinished"
@@ -137,8 +133,8 @@
         }
       },
       {
-        "command": "nexus-nexkit-vscode.openRtfConverter",
-        "title": "Nexkit: RTF to Markdown",
+        "command": "nexus-nexkit-vscode.openConvertToMarkdown",
+        "title": "Nexkit: Convert to Markdown",
         "category": "Nexkit"
       }
     ],
@@ -345,6 +341,12 @@
           "scope": "application",
           "description": "Whether the user has dismissed the MCP setup notification."
         },
+        "nexkit.convertToMarkdown.pythonPath": {
+          "type": "string",
+          "default": "",
+          "scope": "application",
+          "description": "Path to a Python interpreter used for Convert to Markdown (microsoft/markitdown). Leave empty to auto-detect python3/python/py on PATH."
+        },
         "nexkit.telemetry.enabled": {
           "type": "boolean",
           "default": true,
@@ -502,7 +504,6 @@
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
     "@types/sinon": "^17.0.3",
-    "@types/turndown": "^5.0.6",
     "@types/vscode": "^1.105.0",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0",

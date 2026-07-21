@@ -41,12 +41,12 @@ suite("Unit: NexkitPanelMessageHandler", () => {
     sandbox.restore();
   });
 
-  test("opens the RTF converter panel from the webview", async () => {
+  test("opens the Convert to Markdown panel from the webview", async () => {
     const executeCommand = sandbox.stub(vscode.commands, "executeCommand").resolves();
     const handler = new NexkitPanelMessageHandler(() => undefined, createServices());
 
-    await handler.handleMessage({ command: "openRtfConverter" });
+    await handler.handleMessage({ command: "openConvertToMarkdown" });
 
-    assert.ok(executeCommand.calledOnceWithExactly(Commands.OPEN_RTF_CONVERTER));
+    assert.ok(executeCommand.calledOnceWithExactly(Commands.OPEN_CONVERT_TO_MARKDOWN));
   });
 });

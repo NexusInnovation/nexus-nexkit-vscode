@@ -4,14 +4,14 @@ import { registerCommand } from "../../shared/commands/commandRegistry";
 import { Commands } from "../../shared/constants/commands";
 
 /**
- * Register the command that opens the standalone RTF to Markdown converter panel
+ * Register the command that opens the standalone Convert to Markdown panel
  */
-export function registerOpenRtfConverterCommand(context: vscode.ExtensionContext, services: ServiceContainer): void {
+export function registerOpenConvertToMarkdownCommand(context: vscode.ExtensionContext, services: ServiceContainer): void {
   registerCommand(
     context,
-    Commands.OPEN_RTF_CONVERTER,
+    Commands.OPEN_CONVERT_TO_MARKDOWN,
     async () => {
-      services.rtfConverter.openPanel();
+      services.convertToMarkdown.openPanel();
     },
     services.telemetry
   );

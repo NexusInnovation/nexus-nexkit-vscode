@@ -43,8 +43,8 @@ function copyStaticFiles() {
       staticSubFolder: "static",
     },
     {
-      sourceDir: path.join(__dirname, "src", "features", "rtf-converter", "webview"),
-      outputDir: path.join(__dirname, "out", "rtf-converter"),
+      sourceDir: path.join(__dirname, "src", "features", "convert-to-markdown", "webview"),
+      outputDir: path.join(__dirname, "out", "convert-to-markdown"),
       filesToCopy: ["index.html"],
       staticSubFolder: null,
     },
@@ -120,7 +120,7 @@ const watchStaticFilesPlugin = {
           staticSubFolder: "static",
         },
         {
-          sourceDir: path.join(__dirname, "src", "features", "rtf-converter", "webview"),
+          sourceDir: path.join(__dirname, "src", "features", "convert-to-markdown", "webview"),
           filesToWatch: ["index.html"],
           staticSubFolder: null,
         },
@@ -192,15 +192,15 @@ async function main() {
     plugins: [esbuildProblemMatcherPlugin, copyStaticFilesPlugin, watchStaticFilesPlugin],
   });
 
-  // RTF converter webview bundle
-  const rtfConverterCtx = await esbuild.context({
-    entryPoints: ["src/features/rtf-converter/webview/main.tsx"],
+  // Convert to Markdown webview bundle
+  const convertToMarkdownCtx = await esbuild.context({
+    entryPoints: ["src/features/convert-to-markdown/webview/main.tsx"],
     bundle: true,
     format: "iife",
     minify: production,
     sourcemap: !production,
     platform: "browser",
-    outfile: "out/rtfConverter.js",
+    outfile: "out/convertToMarkdown.js",
     logLevel: "silent",
     jsx: "automatic",
     jsxImportSource: "preact",
@@ -210,14 +210,14 @@ async function main() {
   if (watch) {
     await extensionCtx.watch();
     await webviewCtx.watch();
-    await rtfConverterCtx.watch();
+    await convertToMarkdownCtx.watch();
   } else {
     await extensionCtx.rebuild();
     await webviewCtx.rebuild();
-    await rtfConverterCtx.rebuild();
+    await convertToMarkdownCtx.rebuild();
     await extensionCtx.dispose();
     await webviewCtx.dispose();
-    await rtfConverterCtx.dispose();
+    await convertToMarkdownCtx.dispose();
   }
 }
 

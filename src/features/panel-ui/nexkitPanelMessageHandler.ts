@@ -37,7 +37,7 @@ export class NexkitPanelMessageHandler {
       ["applyProfile", this.handleApplyProfile.bind(this)],
       ["deleteProfile", this.handleDeleteProfile.bind(this)],
       ["openFeedback", this.handleOpenFeedback.bind(this)],
-      ["openRtfConverter", this.handleOpenRtfConverter.bind(this)],
+      ["openConvertToMarkdown", this.handleOpenConvertToMarkdown.bind(this)],
       ["setMode", this.handleSetMode.bind(this)],
       // APM DevOps connection handlers
       ["getDevOpsConnections", this.handleGetDevOpsConnections.bind(this)],
@@ -202,9 +202,9 @@ export class NexkitPanelMessageHandler {
     await vscode.commands.executeCommand(Commands.OPEN_FEEDBACK);
   }
 
-  private async handleOpenRtfConverter(message: WebviewMessage): Promise<void> {
-    this.trackWebviewAction("openRtfConverter");
-    await vscode.commands.executeCommand(Commands.OPEN_RTF_CONVERTER);
+  private async handleOpenConvertToMarkdown(message: WebviewMessage): Promise<void> {
+    this.trackWebviewAction("openConvertToMarkdown");
+    await vscode.commands.executeCommand(Commands.OPEN_CONVERT_TO_MARKDOWN);
   }
 
   private async handleSetMode(message: WebviewMessage & { command: "setMode" }): Promise<void> {
