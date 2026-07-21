@@ -329,3 +329,23 @@ Link added command and integration coverage. The focused extension-host suite pa
 Trinity approved the multi-root routing behavior: an exact `SourceControl.rootUri` selects its matching Git repository, while absent or unmatched context preserves the existing fallback behavior. The focused command and service coverage exercises routing and fallback selection, and the patch has no whitespace errors.
 
 The project-wide type-check and test compilation remain blocked by unrelated missing RTF-converter dependencies and types. A broad extension-host runner did not apply its grep argument and terminated with `SIGINT`; this does not change the separately reported focused-suite result.
+
+---
+
+## Decision: Align Sinon typings and load the current compiled test suite
+
+**Date:** 2026-07-21
+**Agent:** Scribe
+**Classification:** Project-specific - test infrastructure
+
+### Context
+
+`npm run test` failed during test compilation because the installed Sinon typings and fake-timers typings exposed incompatible timer interfaces. The compiled test loader also retained a stale reference that prevented the current suite from being loaded.
+
+### Decision
+
+Align the Sinon and fake-timers dependency versions in `package.json` and `package-lock.json`, and update `test/suite/index.ts` to load the current compiled test suite.
+
+### Verification
+
+`npm run test` completed successfully with 354 passing and 8 pending tests.

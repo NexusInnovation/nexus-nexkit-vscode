@@ -56,3 +56,7 @@ Merged the RTF converter preview contract and its deliberate manual-QA boundary 
 ### 2026-07-21 - Commit Message SCM Context Consolidation
 
 Merged Link's repository-context decision for Generate Commit Message. Recorded focused extension-host success (379 passing, 8 pending) and preserved the distinction that wider type/test compilation is blocked by pre-existing RTF-converter module-resolution and implicit-any diagnostics.
+
+### 2026-07-21 - Sinon Typing Repair Consolidation
+
+Recorded the completed test-infrastructure repair: aligned incompatible Sinon and fake-timers typings in dependency metadata, corrected the stale compiled-test loader, and verified `npm run test` with 354 passing and 8 pending.
