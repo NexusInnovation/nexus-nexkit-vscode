@@ -1,3 +1,10 @@
+## <small>3.11.1-beta.1 (2026-07-21)</small>
+
+* fix(squad): Fix commit-message SCM context for multi-root workspaces (#191) ([54d1cf6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/54d1cf6)), closes [#191](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/191)
+* chore(references): add word.docx reference template ([ca2544c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ca2544c))
+* chore(release): v3.11.0-beta.2 [skip ci] ([362288a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/362288a))
+* Merge branch 'main' into develop ([293700d](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/293700d))
+
 ## 3.11.0 (2026-07-17)
 
 - Copilot Squad Agent ([2da5626](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2da5626))
