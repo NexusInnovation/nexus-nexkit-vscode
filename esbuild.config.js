@@ -48,6 +48,12 @@ function copyStaticFiles() {
       filesToCopy: ["index.html"],
       staticSubFolder: null,
     },
+    {
+      sourceDir: path.join(__dirname, "src", "features", "json-formatter", "webview"),
+      outputDir: path.join(__dirname, "out", "json-formatter"),
+      filesToCopy: ["index.html"],
+      staticSubFolder: null,
+    },
   ];
 
   staticConfigs.forEach((config) => {
@@ -121,6 +127,11 @@ const watchStaticFilesPlugin = {
         },
         {
           sourceDir: path.join(__dirname, "src", "features", "rtf-converter", "webview"),
+          filesToWatch: ["index.html"],
+          staticSubFolder: null,
+        },
+        {
+          sourceDir: path.join(__dirname, "src", "features", "json-formatter", "webview"),
           filesToWatch: ["index.html"],
           staticSubFolder: null,
         },
@@ -207,17 +218,35 @@ async function main() {
     plugins: [esbuildProblemMatcherPlugin, copyStaticFilesPlugin, watchStaticFilesPlugin],
   });
 
+  // JSON Formatter webview bundle
+  const jsonFormatterCtx = await esbuild.context({
+    entryPoints: ["src/features/json-formatter/webview/main.tsx"],
+    bundle: true,
+    format: "iife",
+    minify: production,
+    sourcemap: !production,
+    platform: "browser",
+    outfile: "out/jsonFormatter.js",
+    logLevel: "silent",
+    jsx: "automatic",
+    jsxImportSource: "preact",
+    plugins: [esbuildProblemMatcherPlugin, copyStaticFilesPlugin, watchStaticFilesPlugin],
+  });
+
   if (watch) {
     await extensionCtx.watch();
     await webviewCtx.watch();
     await rtfConverterCtx.watch();
+    await jsonFormatterCtx.watch();
   } else {
     await extensionCtx.rebuild();
     await webviewCtx.rebuild();
     await rtfConverterCtx.rebuild();
+    await jsonFormatterCtx.rebuild();
     await extensionCtx.dispose();
     await webviewCtx.dispose();
     await rtfConverterCtx.dispose();
+    await jsonFormatterCtx.dispose();
   }
 }
 

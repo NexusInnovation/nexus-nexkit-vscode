@@ -35,6 +35,7 @@ export const Commands = {
 
   // Developer tools
   OPEN_RTF_CONVERTER: "nexus-nexkit-vscode.openRtfConverter",
+  OPEN_JSON_FORMATTER: "nexus-nexkit-vscode.openJsonFormatter",
 } as const;
 
 // Type-safe command names
