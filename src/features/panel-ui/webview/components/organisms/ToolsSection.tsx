@@ -26,11 +26,6 @@ export function ToolsSection() {
 
   return (
     <>
-      <CollapsibleSection id="tools-rtf-converter" title="RTF to Markdown">
-        <button class="action-button" onClick={openRtfConverter}>
-          Open RTF to Markdown
-        </button>
-      </CollapsibleSection>
       <CollapsibleSection id="tools-workflow-runner" title="GitHub Workflow Runner">
         <WorkflowRunnerTool />
       </CollapsibleSection>
