@@ -1,51 +1,115 @@
 # Squad Decisions
 
-## Decision: ConfirmationService UX contract (Issue #162)
+> Entries older than 30 days are periodically moved to `decisions-archive.md` by the Scribe.
 
-**Date:** 2026-06-03
-**Agent:** Neo
-**Issue:** #162
-**Classification:** Project-specific
+## Decision: Convert to Markdown — fix accented character (mojibake) corruption on Windows
 
-### Context
-
-A new ConfirmationService was added to gate destructive config-write operations (chat settings, MCP servers) behind a three-choice modal dialog.
-
-### Decisions
-
-#### ESC / dismiss = Accept
-
-When the user closes the modal without clicking a button (showInformationMessage returns undefined), we treat it as Accept. Rationale: dismissal is ambiguous; defaulting to the non-destructive proceed is safer than silently skipping the operation.
-
-#### Refuse Forever is workspace-scoped
-
-The refused-forever flag is stored in workspaceState (not globalState). Rationale: users may want different confirmation behaviour per workspace.
-
-#### workspaceToUserMigrationService not gated
-
-The migration flow was explicitly excluded. It already has multi-step user consent built in.
-
-#### Key structure: static strings + factory functions
-
-CONFIRMATION_KEYS.CHAT_SETTINGS is a static string. CONFIRMATION_KEYS.mcpUserServer(name) and mcpWorkspaceServer(name) are factory functions allowing per-server key isolation, so refusing forever for one MCP server does not affect others.
-
----
-
-## Decision: Nexkit panel home action placement
-
-**Date:** 2026-06-05
-**Agent:** Ghost
-**Classification:** Project-specific
+**Date:** 2026-07-23
+**Agent:** Link (approved by Eric Decarufel)
+**Classification:** Project-specific — `convert-to-markdown` feature (bug fix)
 
 ### Context
 
-The requested home button needed to sit immediately to the left of the existing Save Current Profile action in the panel header bar.
+On Windows (reported on a French install), the `markitdown` Python subprocess does not default to UTF-8 for stdout when piped rather than attached to a real console — it falls back to the OS locale codepage (e.g. cp1252 on fr-FR). Node then force-decoded the resulting single-byte accented characters as UTF-8, producing exactly one U+FFFD replacement character per accented letter, matching the reported corruption pattern.
 
 ### Decision
 
-The home action was implemented as a contributed `view/title` command instead of a new webview DOM button. The existing save button already lives in the VS Code view title area via `package.json`, so matching that placement keeps the header actions consistent and preserves native VS Code styling and ordering.
+`MarkitdownConversionService._runMarkitdown()` and `_probeInterpreter()` now spawn the Python subprocess with `PYTHONIOENCODING=utf-8` and `PYTHONUTF8=1` forced into the child's environment (spread alongside `...process.env`). The temp-file write path (`Buffer.from(text/html, "utf8")`) was already correct and untouched — the fix lives entirely at the subprocess environment layer.
 
-The button visibility is driven by a VS Code context key (`nexkit.modeSelected`) derived from the current mode. This keeps the action hidden while the panel is already on the mode selection screen.
+### Tests
+
+Added a "forced UTF-8 subprocess encoding" suite (2 tests) in `test/suite/markitdownConversionService.test.ts` asserting these env vars are present on both spawn call sites, and that the rest of `process.env` is still preserved.
+
+### Verification
+
+`npm run check:types` clean, `npm run compile` clean, `npm test` → 378 passing (2 new tests added; 2 pre-existing unrelated failures — `RtfConverterPanelService`, `commitMessageCommands` — confirmed via `git stash` to predate this change).
+
+### Why
+
+Whenever spawning a Python (or other locale-dependent runtime) child process on Windows with piped stdio expecting UTF-8 text back, force UTF-8 explicitly via env vars rather than relying on the OS default locale/codepage — CPython's UTF-8 console-encoding change only applies to a real interactive console, not to redirected pipes.
+
+---
+
+## Decision: Convert to Markdown — full markitdown migration (supersedes narrow-scope architecture)
+
+**Date:** 2026-07-20
+**Agent:** Morpheus (approved by Eric De Carufel)
+**Classification:** Project-specific
+
+### Context
+
+Morpheus first proposed a narrow-scope architecture: keep `mammoth`/`rtf.js`/`turndown`/`turndown-plugin-gfm` for existing formats (paste-HTML, .docx, .rtf, .html, plain text) and route only genuinely new formats (.pptx, .pdf, .xlsx, images) through `microsoft/markitdown` via a Python child process. This was to minimize blast radius and avoid making Python a mandatory dependency for the whole feature. Internal identifiers (`RtfConverterPanelService`, `OPEN_RTF_CONVERTER`, `nexkitRtfToMarkdown`, etc.) were originally left unrenamed — only user-visible text was to change.
+
+Eric explicitly overrode this narrower recommendation to maximize consistency (one conversion engine, one code path).
+
+### Decisions
+
+#### All formats route through markitdown
+
+Every input path — paste-HTML, paste-plain-text, .docx, .rtf, .html, .pptx, .pdf, .xlsx, images, .txt — is now converted host-side via a Python child process running `markitdown`. The entire client-side conversion stack (`mammoth`, `rtf.js`, `turndown`, `turndown-plugin-gfm`, their type shims) is deleted. `markdown-it` is retained — it renders the final Markdown output for the Preview toggle only (output-side concern, unrelated to input parsing).
+
+#### New setting `nexkit.convertToMarkdown.pythonPath`
+
+String, default `""` (auto-detect via `python3`/`python`/`py` candidates), wired through `SettingsManager.getConvertToMarkdownPythonPath()`, for non-standard Python installs.
+
+#### Full internal rename (not just user-visible text)
+
+- Folder `src/features/rtf-converter/` → `src/features/convert-to-markdown/`
+- Class `RtfConverterPanelService` → `ConvertToMarkdownPanelService`
+- Command id `nexus-nexkit-vscode.openRtfConverter` → `nexus-nexkit-vscode.openConvertToMarkdown`
+- `Commands.OPEN_RTF_CONVERTER` → `Commands.OPEN_CONVERT_TO_MARKDOWN`
+- `VIEW_TYPE` `"nexkitRtfToMarkdown"` → `"nexkitConvertToMarkdown"`
+- Sidebar message keyword `"openRtfConverter"` → `"openConvertToMarkdown"` (in `webviewMessages.ts`, `nexkitPanelMessageHandler.ts`, `ToolsSection.tsx`)
+- `CollapsibleSection` id `tools-rtf-converter` → `tools-convert-to-markdown`
+
+#### New host-side service `MarkitdownConversionService`
+
+Behind an interface, injected into the panel service (constructor injection, mockable) and registered in `serviceContainer.ts`. Owns: availability detection (python/markitdown presence, cached per session, user-triggerable recheck), sandboxed temp-file handling with guaranteed cleanup, `child_process.spawn` with argv array (`shell: false`, no string interpolation), 10MB size cap enforced before writing to disk, and a two-layer timeout (SIGTERM soft timeout, SIGKILL hard timeout as safety net).
+
+#### Message contract
+
+New host↔webview `postMessage`/`onDidReceiveMessage` channel (previously the feature was client-only). Shared pure-type definitions live in `src/features/convert-to-markdown/messages.ts` (no runtime code, importable from both host and webview bundles).
+
+### Why
+
+Introducing a mandatory external Python runtime dependency into a VS Code extension carries real risk (installation friction, version drift, CI/test environment gaps) and was flagged loudly to Eric before implementation. Eric accepted the full-pipeline Python dependency as a deliberate trade-off for consistency; Morpheus's availability-risk flag (single point of failure for the whole feature, not just 4 formats) stands as documented, and the decision is approved and superseding.
+
+---
+
+## Decision: Convert to Markdown — implementation, webview, and test details
+
+**Date:** 2026-07-20
+**Agents:** Link, Ghost, Trinity
+**Classification:** Project-specific
+
+### Context
+
+Implementation of the markitdown migration and full rename described in the architecture decision above, split across three agents by file ownership.
+
+### Decisions
+
+#### Link — `MarkitdownConversionService` / `ConvertToMarkdownPanelService`
+
+- `webview-ready` and `recheck-availability` both resolve via a shared `_postAvailabilityStatus()` helper; `recheck-availability` additionally calls `invalidateAvailabilityCache()` first so the interpreter is re-probed on demand instead of trusting a stale in-memory cache.
+- `sourceLabel` convention: `"Pasted HTML"` / `"Pasted text"` for paste flows, and the original (untrusted) `fileName` string for file conversions — safe because `sourceLabel` is only used for UI display, never as a filesystem path (the temp file uses a UUID name + validated extension only, via `_extractValidatedExtension`).
+- `MarkitdownConversionService` caches both the availability result and the concrete resolved interpreter binary (`python3`/`python`/`py`/configured path) together, so a later conversion reuses the exact interpreter that was probed (avoids a TOCTOU-style mismatch between probe and use).
+- Timeout implementation: two plain `setTimeout` timers — soft (`SIGTERM`) then hard (`SIGKILL`) scheduled only once the soft timer fires — rather than one timer with internal phase tracking. Both timers are cleared on `close`/`error` regardless of which fired.
+- Error sanitization: `_convert()`'s catch-all always logs the raw error via `LoggingService.error()` but always rethrows a fixed generic message to the caller. Exception: the availability-not-found message echoes the user's own configured `nexkit.convertToMarkdown.pythonPath` value (user's own input, not an internal path — no sanitization concern).
+
+#### Ghost — standalone webview rebuild
+
+Rebuilt `src/features/convert-to-markdown/webview/` (index.html + main.tsx) as a thin message-passing Preact UI. No client-side conversion logic remains — all `WebviewToHostMessage`/`HostToWebviewMessage` types come from Link's `messages.ts`. Kept `markdown-it` for the raw/preview toggle only, rendering host-returned Markdown — never raw pasted HTML (paste handler calls `event.preventDefault()` before reading clipboard data, so pasted HTML is never inserted into the DOM). Availability gating disables (not hides) the paste area/upload input while `available !== true`, with a persistent banner + Recheck button. `ToolsSection.tsx` renamed `openRtfConverter` → `openConvertToMarkdown`.
+
+#### Trinity — test coverage
+
+- `test/suite/markitdownConversionService.test.ts` (19 tests): stubs `child_process.spawn` via Sinon — never spawns real Python. Covers availability detection + caching + invalidation, configured-interpreter-only behavior, all-candidates-fail with non-leaking reason, argv-array/no-shell security assertion, 10MB cap (no spawn call), temp-dir cleanup on success/error/spawn-error paths, two-layer SIGTERM/SIGKILL timeout via `sinon.useFakeTimers()`, and sanitized error messages (no temp path/stack leak to caller).
+- `test/suite/convertToMarkdownPanelService.test.ts` (11 tests): fakes `IMarkitdownConversionService` and stubs `vscode.window.createWebviewPanel`. Covers panel creation/reveal-not-recreate, all 5 `WebviewToHostMessage` types, conversion-error posting on rejection, and safe dispose (including double-dispose).
+- Updated `extension.test.ts`, `nexkitPanelMessageHandler.test.ts`, `serviceContainer.test.ts` for the rename; added a `markitdownConversion` presence assertion to `serviceContainer.test.ts`.
+- Deviation: no Preact/DOM tests for `main.tsx` — no DOM test harness (jsdom/Testing Library/Preact test utils) exists in this repo yet, consistent with prior team decision to keep that a manual-verification boundary.
+
+### Why
+
+Keeps CI hermetic (no real Python/markitdown dependency in tests), locks down the security-sensitive spawn contract (argv array, `shell:false`, no path/stack leakage) as a regression guard, and matches the host-never-trusts-webview-HTML security intent.
 
 ---
 
@@ -349,3 +413,58 @@ Align the Sinon and fake-timers dependency versions in `package.json` and `packa
 ### Verification
 
 `npm run test` completed successfully with 354 passing and 8 pending tests.
+
+---
+
+## Decision: Bump `@types/sinon` to fix TS2694 compile failure (sinon/fake-timers type drift)
+
+**Date:** 2026-07-23
+**Agent:** Link
+**Classification:** Project-specific — dependency/build fix
+
+### Context
+
+`npm run test` failed at the `pretest` step (`tsc -p ./`) with `TS2694: Namespace '.../@sinonjs/fake-timers/types/fake-timers-src' has no exported member 'FakeTimerInstallOpts'`. `package.json` pinned `"@types/sinon": "^17.0.3"` (installed 17.0.4) alongside `"sinon": "^21.0.0"` (installed 21.1.2), which pulls in `@sinonjs/fake-timers@15.4.0`. That major of `@sinonjs/fake-timers` restructured its exported types and no longer exposes `FakeTimerInstallOpts` in the shape `@types/sinon@17.x` expects — a types-only version mismatch, not a runtime bug.
+
+### Decision
+
+Bumped `@types/sinon` from `^17.0.3` to `^22.0.0` in `package.json` devDependencies (matches npm's current `latest` dist-tag, compatible with the already-installed `@sinonjs/fake-timers@15.4.0`). No source code changes were required — the newer `@types/sinon` major compiled cleanly against existing test usage with zero new type errors.
+
+### Verification
+
+- `npm install` — lockfile updated cleanly.
+- `npx tsc -p ./` / `npm run test-compile` — clean, TS2694 errors gone.
+- `npm run lint` — clean, no regressions.
+- `npm test` — 381 passing, 8 pending, 1 failing. The 1 failure (`ConvertToMarkdownPanelService` → `save-to-file` → stubbing `vscode.workspace.fs.writeFile`) is a pre-existing, unrelated VS Code API immutability limitation, fixed separately (see next decision below).
+
+### Why (reusable pattern)
+
+When a project pins `sinon` and `@types/sinon` independently, a `sinon`/`@sinonjs/fake-timers` transitive major bump can silently break the build even though `@types/sinon`'s own semver range didn't change (npm installs the newest version satisfying `^17.0.3` referencing the newest installed `@sinonjs/fake-timers`). **Keep `@types/sinon` tracking the same major-version cadence as `sinon`** (check `npm view @types/sinon dist-tags` for the version compatible with the installed TypeScript version) whenever `sinon` gets bumped, to avoid this class of type-only compile break.
+
+---
+
+## Decision: Convention for stubbing non-configurable VS Code namespace objects with Sinon
+
+**Date:** 2026-07-23
+**Agent:** Link
+**Classification:** Project-specific — test infrastructure fix (`ConvertToMarkdownPanelService`)
+
+### Context
+
+`test/suite/convertToMarkdownPanelService.test.ts` → `save-to-file` failed with "The descriptor for property `writeFile` is non-configurable and non-writable" when calling `sinon.stub(vscode.workspace.fs, "writeFile")`. `FileSystem` instance members are frozen/non-configurable in the current VS Code test host, even though the `fs` getter on `vscode.workspace` itself is configurable.
+
+### Decision
+
+Stub the **parent getter property** instead of the frozen method, replacing it with a spread copy that overrides only the needed method:
+
+```ts
+sinon.stub(vscode.workspace, "fs").value({ ...vscode.workspace.fs, writeFile: sinon.stub().resolves() });
+```
+
+### Verification
+
+Full suite went from 381 passing / 1 failing to 384 passing / 0 failing.
+
+### Why (reusable pattern)
+
+Establishes a reusable, minimal pattern for future tests that need to fake `vscode.workspace.fs.*` or similarly frozen VS Code API surfaces: when Sinon cannot stub a method directly on a VS Code namespace object because its property descriptor is non-configurable, stub the parent property/getter instead and spread-override only the needed member. Avoids time lost rediscovering the Sinon property-descriptor limitation.

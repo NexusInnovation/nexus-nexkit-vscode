@@ -35,6 +35,9 @@ export class SettingsManager {
   private static readonly EXTENSION_AUTO_CHECK_UPDATES = "extension.autoCheckUpdates";
   private static readonly EXTENSION_UPDATE_CHECK_INTERVAL = "extension.updateCheckInterval";
 
+  // Convert to Markdown settings
+  private static readonly CONVERT_TO_MARKDOWN_PYTHON_PATH = "convertToMarkdown.pythonPath";
+
   // Template auto-refresh settings
   private static readonly TEMPLATES_AUTO_REFRESH_INTERVAL = "templates.autoRefreshIntervalMinutes";
   /**
@@ -169,6 +172,13 @@ export class SettingsManager {
 
   static getTelemetryConnectionString(): string | undefined {
     return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<string>(this.TELEMETRY_CONNECTION_STRING);
+  }
+
+  // Convert to Markdown
+  static getConvertToMarkdownPythonPath(): string {
+    return vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .get<string>(this.CONVERT_TO_MARKDOWN_PYTHON_PATH, "");
   }
 
   // Extension Updates

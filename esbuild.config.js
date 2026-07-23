@@ -41,7 +41,13 @@ function copyStaticFiles() {
       outputDir: path.join(__dirname, "out", "webview"),
       filesToCopy: ["index.html", "styles.css"],
       staticSubFolder: "static",
-    }
+    },
+    {
+      sourceDir: path.join(__dirname, "src", "features", "convert-to-markdown", "webview"),
+      outputDir: path.join(__dirname, "out", "convert-to-markdown"),
+      filesToCopy: ["index.html"],
+      staticSubFolder: null,
+    },
   ];
 
   staticConfigs.forEach((config) => {
@@ -112,7 +118,12 @@ const watchStaticFilesPlugin = {
           sourceDir: path.join(__dirname, "src", "features", "panel-ui", "webview"),
           filesToWatch: ["index.html", "styles.css"],
           staticSubFolder: "static",
-        }
+        },
+        {
+          sourceDir: path.join(__dirname, "src", "features", "convert-to-markdown", "webview"),
+          filesToWatch: ["index.html"],
+          staticSubFolder: null,
+        },
       ];
 
       watchConfigs.forEach((config) => {
@@ -181,14 +192,32 @@ async function main() {
     plugins: [esbuildProblemMatcherPlugin, copyStaticFilesPlugin, watchStaticFilesPlugin],
   });
 
+  // Convert to Markdown webview bundle
+  const convertToMarkdownCtx = await esbuild.context({
+    entryPoints: ["src/features/convert-to-markdown/webview/main.tsx"],
+    bundle: true,
+    format: "iife",
+    minify: production,
+    sourcemap: !production,
+    platform: "browser",
+    outfile: "out/convertToMarkdown.js",
+    logLevel: "silent",
+    jsx: "automatic",
+    jsxImportSource: "preact",
+    plugins: [esbuildProblemMatcherPlugin, copyStaticFilesPlugin, watchStaticFilesPlugin],
+  });
+
   if (watch) {
     await extensionCtx.watch();
     await webviewCtx.watch();
+    await convertToMarkdownCtx.watch();
   } else {
     await extensionCtx.rebuild();
     await webviewCtx.rebuild();
+    await convertToMarkdownCtx.rebuild();
     await extensionCtx.dispose();
     await webviewCtx.dispose();
+    await convertToMarkdownCtx.dispose();
   }
 }
 

@@ -224,3 +224,11 @@ remain blocked by unrelated missing RTF converter dependencies (`mammoth`, `turn
 `rtf.js`).
 
 **Patterns:** JavaScript behavior assertions in rendered HTML, session expiry detection via redirect/content-type.
+
+## Team update — 2026-07-20 (RTF converter to markitdown migration)
+
+Shared context (see decisions.md "Replace custom RTF/DOCX/HTML to Markdown conversion with microsoft/markitdown"): conversion moved host-side via microsoft/markitdown (Python child process). Message contract lives in src/features/rtf-converter/messages.ts (convert-paste-html | convert-file | recheck-availability -> conversion-result | conversion-error | availability-status). markdown-it preview retained; deps mammoth/turndown/turndown-plugin-gfm/rtf.js/@types/turndown removed; type shims rtfJsBundle.d.ts + turndownPluginGfm.d.ts deleted. Security: argv array + sandboxed temp file, shell:false, 10MB cap, two-layer timeout. Suite 382 passing / 0 failing. Open follow-up: add clean/rimraf out step before test-compile (stale out/ artifacts can abort npm test).
+
+## Team update — 2026-07-20 (Convert to Markdown — full migration complete and merged)
+
+Wrote `markitdownConversionService.test.ts` (19 tests) and `convertToMarkdownPanelService.test.ts` (11 tests) covering the full-scope migration; updated `extension.test.ts`, `nexkitPanelMessageHandler.test.ts`, `serviceContainer.test.ts` for the rename; deleted `rtfConverterPanelService.test.ts`. All 30 pass. Note for the team: the stale-`out/` test-compile issue flagged in the prior session recurred — Mocha crashed loading a leftover `out/test/suite/cronSchedule.test.js` from a deleted feature. Coordinator resolved it by deleting `out/` (no `cronstrue` dependency was actually needed).
