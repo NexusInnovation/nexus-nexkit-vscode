@@ -35,7 +35,7 @@ export function App() {
       return [TAB_DEFINITIONS.template, TAB_DEFINITIONS.tools, TAB_DEFINITIONS.profile];
     }
     if (isAPMMode) {
-      return [TAB_DEFINITIONS.template, TAB_DEFINITIONS.project];
+      return [TAB_DEFINITIONS.template, TAB_DEFINITIONS.tools, TAB_DEFINITIONS.project];
     }
     return [];
   }, [isDevelopersMode, isAPMMode]);
@@ -139,6 +139,11 @@ export function App() {
             {activeTab === "template" && (
               <div class="tab-panel" role="tabpanel" id="template-tabpanel">
                 <ApmTemplateSection />
+              </div>
+            )}
+            {activeTab === "tools" && (
+              <div class="tab-panel" role="tabpanel" id="tools-tabpanel">
+                <ToolsSection />
               </div>
             )}
             {activeTab === "project" && (

@@ -1,4 +1,0 @@
-
-> nexus-nexkit-vscode@3.9.0-beta.4 test-compile
-> tsc -p ./
-
