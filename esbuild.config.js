@@ -61,6 +61,8 @@ function copyStaticFiles() {
       if (fs.existsSync(source)) {
         fs.copyFileSync(source, dest);
         console.log(`[copy] ${file} -> ${path.relative(__dirname, config.outputDir)}/${file}`);
+      } else {
+        console.warn(`[copy] WARNING: source file not found, skipped: ${path.relative(__dirname, source)}`);
       }
     });
 
