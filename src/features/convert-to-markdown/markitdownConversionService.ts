@@ -27,6 +27,18 @@ const HARD_TIMEOUT_GRACE_MS = 5_000;
 const CANDIDATE_INTERPRETERS = ["python3", "python", "py"];
 
 /**
+ * Forces the spawned Python process into UTF-8 mode regardless of the host OS locale
+ * or active console code page. Without this, CPython on Windows falls back to
+ * `locale.getpreferredencoding()` (e.g. cp1252 on a French Windows install) for stdio
+ * streams whenever stdout/stderr is piped rather than attached to a real console TTY,
+ * corrupting any non-ASCII characters written by markitdown.
+ */
+const FORCE_UTF8_ENV = {
+  PYTHONIOENCODING: "utf-8",
+  PYTHONUTF8: "1",
+};
+
+/**
  * Extensions markitdown is expected to handle. Used to validate an uploaded file's
  * extension before it is reused to build a sandboxed temp file name.
  */
@@ -169,7 +181,10 @@ export class MarkitdownConversionService implements IMarkitdownConversionService
 
   private _runMarkitdown(interpreter: string, filePath: string): Promise<string> {
     return new Promise((resolve, reject) => {
-      const child = spawn(interpreter, ["-m", "markitdown", filePath], { shell: false });
+      const child = spawn(interpreter, ["-m", "markitdown", filePath], {
+        shell: false,
+        env: { ...process.env, ...FORCE_UTF8_ENV },
+      });
 
       let stdout = "";
       let stderr = "";
@@ -229,7 +244,10 @@ export class MarkitdownConversionService implements IMarkitdownConversionService
   private _probeInterpreter(interpreter: string): Promise<boolean> {
     return new Promise((resolve) => {
       try {
-        const child = spawn(interpreter, ["-m", "markitdown", "--help"], { shell: false });
+        const child = spawn(interpreter, ["-m", "markitdown", "--help"], {
+          shell: false,
+          env: { ...process.env, ...FORCE_UTF8_ENV },
+        });
         child.on("error", () => resolve(false));
         child.on("close", (code) => resolve(code === 0));
       } catch {

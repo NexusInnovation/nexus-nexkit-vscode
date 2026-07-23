@@ -179,6 +179,38 @@ suite("Unit: MarkitdownConversionService", () => {
     });
   });
 
+  suite("forced UTF-8 subprocess encoding", () => {
+    test("passes PYTHONIOENCODING and PYTHONUTF8 in the environment when probing an interpreter", async () => {
+      spawnStub.callsFake(() => createClosingChild(0));
+      await service.checkAvailability();
+
+      assert.strictEqual(spawnStub.callCount, 1);
+      const [, , options] = spawnStub.getCall(0).args as [string, unknown, { env?: NodeJS.ProcessEnv } | undefined];
+      assert.strictEqual(options?.env?.PYTHONIOENCODING, "utf-8");
+      assert.strictEqual(options?.env?.PYTHONUTF8, "1");
+    });
+
+    test("passes PYTHONIOENCODING and PYTHONUTF8 in the environment when running markitdown, while preserving the rest of process.env", async () => {
+      await warmAvailabilityCache();
+      mkdtempStub.returns("C:\\Fake\\Temp\\nexkit-convert-env");
+      spawnStub.callsFake(() => createSuccessfulChild("# converted"));
+
+      await service.convertText("hello world");
+
+      assert.strictEqual(spawnStub.callCount, 1);
+      const [, , options] = spawnStub.getCall(0).args as [string, unknown, { env?: NodeJS.ProcessEnv } | undefined];
+      assert.strictEqual(options?.env?.PYTHONIOENCODING, "utf-8");
+      assert.strictEqual(options?.env?.PYTHONUTF8, "1");
+      const envKeyCount = Object.keys(options?.env ?? {}).length;
+      const processEnvKeyCount = Object.keys(process.env).length;
+      assert.ok(
+        envKeyCount >= processEnvKeyCount,
+        "the inherited process.env must still be present alongside the forced UTF-8 overrides"
+      );
+    });
+  });
+
+
   suite("10MB input cap", () => {
     const overLimitContent = "a".repeat(10 * 1024 * 1024 + 1);
 
