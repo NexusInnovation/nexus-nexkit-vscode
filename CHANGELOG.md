@@ -1,3 +1,7 @@
+## <small>3.11.2-beta.1 (2026-07-23)</small>
+
+* fix(core): Fix RTF to Markdown conversion and enhance features (#193) ([503f8ae](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/503f8ae)), closes [#193](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/193)
+
 ## <small>3.11.1 (2026-07-21)</small>
 
 * Merge branch 'develop' ([5b89105](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/5b89105))
