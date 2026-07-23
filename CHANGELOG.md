@@ -1,3 +1,7 @@
+## <small>3.11.2-beta.2 (2026-07-23)</small>
+
+* fix(convert-to-markdown): add missing webview HTML and error logging (#194) ([2814a17](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2814a17)), closes [#194](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/194)
+
 ## <small>3.11.2-beta.1 (2026-07-23)</small>
 
 * fix(core): Fix RTF to Markdown conversion and enhance features (#193) ([503f8ae](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/503f8ae)), closes [#193](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/193)
