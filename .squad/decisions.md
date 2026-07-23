@@ -2,6 +2,34 @@
 
 > Entries older than 30 days are periodically moved to `decisions-archive.md` by the Scribe.
 
+## Decision: Convert to Markdown — fix accented character (mojibake) corruption on Windows
+
+**Date:** 2026-07-23
+**Agent:** Link (approved by Eric Decarufel)
+**Classification:** Project-specific — `convert-to-markdown` feature (bug fix)
+
+### Context
+
+On Windows (reported on a French install), the `markitdown` Python subprocess does not default to UTF-8 for stdout when piped rather than attached to a real console — it falls back to the OS locale codepage (e.g. cp1252 on fr-FR). Node then force-decoded the resulting single-byte accented characters as UTF-8, producing exactly one U+FFFD replacement character per accented letter, matching the reported corruption pattern.
+
+### Decision
+
+`MarkitdownConversionService._runMarkitdown()` and `_probeInterpreter()` now spawn the Python subprocess with `PYTHONIOENCODING=utf-8` and `PYTHONUTF8=1` forced into the child's environment (spread alongside `...process.env`). The temp-file write path (`Buffer.from(text/html, "utf8")`) was already correct and untouched — the fix lives entirely at the subprocess environment layer.
+
+### Tests
+
+Added a "forced UTF-8 subprocess encoding" suite (2 tests) in `test/suite/markitdownConversionService.test.ts` asserting these env vars are present on both spawn call sites, and that the rest of `process.env` is still preserved.
+
+### Verification
+
+`npm run check:types` clean, `npm run compile` clean, `npm test` → 378 passing (2 new tests added; 2 pre-existing unrelated failures — `RtfConverterPanelService`, `commitMessageCommands` — confirmed via `git stash` to predate this change).
+
+### Why
+
+Whenever spawning a Python (or other locale-dependent runtime) child process on Windows with piped stdio expecting UTF-8 text back, force UTF-8 explicitly via env vars rather than relying on the OS default locale/codepage — CPython's UTF-8 console-encoding change only applies to a real interactive console, not to redirected pipes.
+
+---
+
 ## Decision: Convert to Markdown — full markitdown migration (supersedes narrow-scope architecture)
 
 **Date:** 2026-07-20
