@@ -1,3 +1,7 @@
+## <small>3.11.2-beta.4 (2026-07-23)</small>
+
+* fix(panel-ui): add tools tab to APM mode ([294cd33](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/294cd33))
+
 ## <small>3.11.2-beta.3 (2026-07-23)</small>
 
 * fix(chore): Remove obsolete test output files and documentation ([3488aee](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3488aee))
