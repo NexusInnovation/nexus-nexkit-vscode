@@ -10,6 +10,7 @@ interface GitChange {
 }
 
 interface GitRepository {
+  readonly rootUri: vscode.Uri;
   diff(cached: boolean): Promise<string>;
   add(resources: string[]): Promise<void>;
   inputBox: { value: string };
@@ -71,13 +72,13 @@ export class CommitMessageService {
    * Generate a commit message for the currently staged git changes and
    * populate the SCM input box with the result.
    */
-  async generateCommitMessage(): Promise<void> {
+  async generateCommitMessage(rootUri?: vscode.Uri): Promise<void> {
     if (!SettingsManager.isCommitMessageEnabled()) {
       this._logging.info("Commit message generation is disabled via settings");
       return;
     }
 
-    const repo = await this._getActiveRepository();
+    const repo = await this._getActiveRepository(rootUri);
     if (!repo) {
       return;
     }
@@ -156,7 +157,7 @@ export class CommitMessageService {
 
   // ─── Private helpers ─────────────────────────────────────────────────────
 
-  private async _getActiveRepository(): Promise<GitRepository | undefined> {
+  private async _getActiveRepository(rootUri?: vscode.Uri): Promise<GitRepository | undefined> {
     const gitExtension = vscode.extensions.getExtension("vscode.git")?.exports as
       | { getAPI(version: 1): GitExtensionAPI }
       | undefined;
@@ -174,6 +175,13 @@ export class CommitMessageService {
       this._logging.warn("No Git repository found in the current workspace");
       vscode.window.showErrorMessage("Nexkit: No Git repository found in the current workspace.");
       return undefined;
+    }
+
+    if (rootUri) {
+      const invokedRepository = repos.find((repository) => repository.rootUri.toString(true) === rootUri.toString(true));
+      if (invokedRepository) {
+        return invokedRepository;
+      }
     }
 
     if (repos.length === 1) {

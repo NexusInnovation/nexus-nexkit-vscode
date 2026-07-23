@@ -2,7 +2,7 @@
   "name": "nexus-nexkit-vscode",
   "displayName": "Nexkit",
   "description": "VS Code extension for Nexkit",
-  "version": "3.11.0",
+  "version": "3.11.1",
   "publisher": "NexusInnovation",
   "private": true,
   "license": "MIT",
@@ -491,7 +491,7 @@
   "devDependencies": {
     "@commitlint/cli": "^19.4.0",
     "@commitlint/config-conventional": "^19.4.0",
-    "@cyclonedx/cyclonedx-npm": "^4.1.2",
+    "@cyclonedx/cyclonedx-npm": "^6.0.0",
     "@preact/preset-vite": "^2.9.2",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.1",
@@ -499,6 +499,7 @@
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/github": "^11.0.6",
     "@semantic-release/release-notes-generator": "^14.0.3",
+    "@sinonjs/fake-timers": "15.4.0",
     "@types/adm-zip": "^0.5.7",
     "@types/markdown-it": "^14.1.2",
     "@types/mocha": "^10.0.10",
@@ -515,11 +516,11 @@
     "eslint": "^9.36.0",
     "glob": "^11.0.0",
     "lefthook": "^2.1.1",
-    "mocha": "^10.0.10",
-    "nyc": "^15.1.0",
+    "mocha": "^11.3.0",
+    "nyc": "^18.0.0",
     "preact": "^10.25.4",
     "semantic-release": "^25.0.2",
-    "sinon": "^19.0.2",
+    "sinon": "^21.0.0",
     "typescript": "^5.9.3"
   }
 }

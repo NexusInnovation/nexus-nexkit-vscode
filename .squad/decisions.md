@@ -367,3 +367,49 @@ Eric approved this refinement. Correction comments were published at:
 - https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/180#issuecomment-4939569111
 
 No source code, issue body, labels, or state changed.
+
+---
+
+## Decision: SCM context selects the Generate Commit Message repository
+
+**Date:** 2026-07-21
+**Agent:** Link
+**Classification:** Project-specific - commit management
+
+### Decision
+
+`generateCommitMessage` accepts the Git SCM action's optional root URI and selects the Git repository with the same canonical `Uri.toString(true)` value before applying the existing staged-change and first-repository fallbacks.
+
+### Why
+
+Git title-menu actions must generate into the repository from which the action was invoked, while Command Palette and unmatched-context invocations retain their established behavior.
+
+### Verification
+
+Link added command and integration coverage. The focused extension-host suite passed with 379 passing and 8 pending. Full type/test compilation remains blocked by pre-existing unresolved RTF-converter modules and implicit-any diagnostics.
+
+### QA approval
+
+Trinity approved the multi-root routing behavior: an exact `SourceControl.rootUri` selects its matching Git repository, while absent or unmatched context preserves the existing fallback behavior. The focused command and service coverage exercises routing and fallback selection, and the patch has no whitespace errors.
+
+The project-wide type-check and test compilation remain blocked by unrelated missing RTF-converter dependencies and types. A broad extension-host runner did not apply its grep argument and terminated with `SIGINT`; this does not change the separately reported focused-suite result.
+
+---
+
+## Decision: Align Sinon typings and load the current compiled test suite
+
+**Date:** 2026-07-21
+**Agent:** Scribe
+**Classification:** Project-specific - test infrastructure
+
+### Context
+
+`npm run test` failed during test compilation because the installed Sinon typings and fake-timers typings exposed incompatible timer interfaces. The compiled test loader also retained a stale reference that prevented the current suite from being loaded.
+
+### Decision
+
+Align the Sinon and fake-timers dependency versions in `package.json` and `package-lock.json`, and update `test/suite/index.ts` to load the current compiled test suite.
+
+### Verification
+
+`npm run test` completed successfully with 354 passing and 8 pending tests.

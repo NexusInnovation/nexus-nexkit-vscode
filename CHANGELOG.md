@@ -1,3 +1,20 @@
+## <small>3.11.1 (2026-07-21)</small>
+
+* Merge branch 'develop' ([5b89105](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/5b89105))
+* Merge branch 'main' into develop ([293700d](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/293700d))
+* fix(squad): Fix commit-message SCM context for multi-root workspaces (#191) ([54d1cf6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/54d1cf6)), closes [#191](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/191)
+* fix(squad): Release v3.11.0-beta.2 with build fixes and dependency updates (#192) ([8e025e9](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8e025e9)), closes [#192](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/192) [#191](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/191)
+* chore(references): add word.docx reference template ([ca2544c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ca2544c))
+* chore(release): v3.11.0-beta.2 [skip ci] ([362288a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/362288a))
+* chore(release): v3.11.1-beta.1 [skip ci] ([68556fa](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/68556fa))
+
+## <small>3.11.1-beta.1 (2026-07-21)</small>
+
+* fix(squad): Fix commit-message SCM context for multi-root workspaces (#191) ([54d1cf6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/54d1cf6)), closes [#191](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/191)
+* chore(references): add word.docx reference template ([ca2544c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ca2544c))
+* chore(release): v3.11.0-beta.2 [skip ci] ([362288a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/362288a))
+* Merge branch 'main' into develop ([293700d](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/293700d))
+
 ## 3.11.0 (2026-07-17)
 
 - Copilot Squad Agent ([2da5626](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2da5626))

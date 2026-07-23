@@ -210,6 +210,19 @@ SmsFormFunctionTests. All 224 tests pass.
 Added assertions for `resp.redirected` and session expiry message detection in `SmsFormFunctionTests.cs`. Validates that
 client-side JavaScript correctly detects when Easy Auth session expires. 224 tests pass.
 
+### 2026-07-21 — Commit-message SCM context reviewer gate
+
+APPROVED: the Git-menu command forwards the optional invoking `SourceControl.rootUri`, and `CommitMessageService` selects the matching Git repository by canonical `Uri.toString(true)` before preserving the existing single-repository, uniquely-staged, then-index-zero fallback sequence. Focused integration coverage proves the selected second repository is used and unmatched context retains staged-change selection; command coverage verifies URI forwarding. `npm run check:types` and test compilation remain blocked by unrelated missing RTF converter dependencies/types in `src/features/rtf-converter/webview/main.tsx`; the extension-host test runner did not honor the supplied grep and ended with SIGINT after broad execution. `git diff --check` reported no focused whitespace errors.
+
+### 2026-07-21 — Commit-message SCM repository routing QA
+
+Approved the commit-management multi-root routing change. The Git-menu command forwards the invoking
+`SourceControl.rootUri`; `CommitMessageService` selects the exact Git API repository by URI before preserving the
+existing single-repository, uniquely staged, and first-repository fallbacks. Focused test cases cover exact selection,
+unmatched-context fallback, and command forwarding. `git diff --check` passed. Full test compilation and type-checking
+remain blocked by unrelated missing RTF converter dependencies (`mammoth`, `turndown`, `turndown-plugin-gfm`, and
+`rtf.js`).
+
 **Patterns:** JavaScript behavior assertions in rendered HTML, session expiry detection via redirect/content-type.
 
 ## Team update — 2026-07-20 (RTF converter to markitdown migration)
