@@ -1,3 +1,11 @@
+## <small>3.11.3 (2026-07-23)</small>
+
+* Merge branch 'develop' ([626181c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/626181c))
+* Merge branch 'main' of https://github.com/NexusInnovation/nexus-nexkit-vscode ([6e81339](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/6e81339))
+* fix(convert-to-markdown): add missing webview HTML and error logging (#194) ([2814a17](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2814a17)), closes [#194](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/194)
+* chore(release): v3.11.2-beta.1 [skip ci] ([245bee2](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/245bee2))
+* chore(squad): log Link's convert-to-markdown production packaging fix ([aa1ce65](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/aa1ce65))
+
 ## <small>3.11.2 (2026-07-23)</small>
 
 - fix(core): Fix RTF to Markdown conversion and enhance features (#193) ([503f8ae](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/503f8ae)), closes [#193](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/193)
