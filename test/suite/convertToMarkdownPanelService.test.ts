@@ -201,7 +201,13 @@ suite("Unit: ConvertToMarkdownPanelService", () => {
 
       setup(() => {
         showSaveDialogStub = sinon.stub(vscode.window, "showSaveDialog");
-        writeFileStub = sinon.stub(vscode.workspace.fs, "writeFile").resolves();
+        // `vscode.workspace.fs` is a FileSystem instance whose members have
+        // non-configurable, non-writable property descriptors in this VS Code
+        // test host, so Sinon cannot stub `writeFile` directly on it. Instead,
+        // stub the `fs` getter on `vscode.workspace` itself and swap in a fake
+        // object that only overrides `writeFile`.
+        writeFileStub = sinon.stub().resolves();
+        sinon.stub(vscode.workspace, "fs").value({ ...vscode.workspace.fs, writeFile: writeFileStub });
       });
 
       test("shows a save dialog defaulting to the workspace root and writes the file", async () => {
