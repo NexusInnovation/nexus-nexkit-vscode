@@ -1,3 +1,8 @@
+## <small>3.11.2-beta.3 (2026-07-23)</small>
+
+* fix(chore): Remove obsolete test output files and documentation ([3488aee](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3488aee))
+* refactor(history): archive outdated sections and streamline content ([4bb4510](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4bb4510))
+
 ## <small>3.11.2-beta.2 (2026-07-23)</small>
 
 * fix(convert-to-markdown): add missing webview HTML and error logging (#194) ([2814a17](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2814a17)), closes [#194](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/194)
