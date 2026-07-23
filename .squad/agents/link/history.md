@@ -124,6 +124,21 @@ Shared context (see decisions.md "Replace custom RTF/DOCX/HTML to Markdown conve
 
 **Pattern worth remembering:** `sinon` and `@types/sinon` are versioned independently in `package.json`. A transitive major bump in `sinon`'s own dependencies (here `@sinonjs/fake-timers`) can silently break the build with `@types/sinon` even though `@types/sinon`'s semver range in `package.json` never changed — npm just resolves a newer patch of `@types/sinon` against a newer transitive dep than what the pinned major was designed for. **Whenever `sinon` gets bumped to a new major, immediately check whether `@types/sinon` needs a matching major bump** (`npm view @types/sinon dist-tags`) rather than assuming the existing `^17.x`-style range is still safe.
 
+## Bug fix — 2026-07-23 (fixed the pre-existing `ConvertToMarkdownPanelService` "save-to-file" Sinon failure)
+
+**Root cause:** `sinon.stub(vscode.workspace.fs, "writeFile")` fails in this VS Code test host because `vscode.workspace.fs` returns a `FileSystem` instance whose own methods (`writeFile`, etc.) have non-configurable/non-writable property descriptors — Sinon requires a configurable/writable descriptor to install a stub on an object property directly.
+
+**Fix:** Instead of stubbing the method on the `fs` object instance, stub the `fs` **getter property on `vscode.workspace` itself** and swap in a plain object that spreads the real `fs` and overrides only `writeFile`:
+```ts
+writeFileStub = sinon.stub().resolves();
+sinon.stub(vscode.workspace, "fs").value({ ...vscode.workspace.fs, writeFile: writeFileStub });
+```
+`vscode.workspace.fs` (the getter on the `workspace` namespace object) *is* configurable, even though the object it returns is not. This kept `writeFileStub` a plain, freely resolvable/rejectable Sinon stub usable across all three `save-to-file` tests (success, cancel, error) without touching the other two tests' bodies.
+
+**Verification:** `npm run test-compile` clean, `npm run test` → 384 passing / 8 pending / 0 failing (no regressions).
+
+**Pattern worth remembering:** When Sinon refuses to stub a method on a VS Code namespace object (e.g. `vscode.workspace.fs.*`, likely also `vscode.env.*` or similar) with "property descriptor is non-configurable and non-writable", don't try to stub the method in place — stub the **parent getter property** instead (`sinon.stub(vscode.workspace, "fs").value({ ...original, method: fakeStub })`). This works because VS Code's proxy/namespace-level getters are typically configurable even when the objects they return are frozen/sealed.
+
 ## Team update — 2026-07-20 (Convert to Markdown — full migration complete and merged)
 
 Implemented the full-scope migration approved by Eric: folder renamed `rtf-converter/` → `convert-to-markdown/`, `RtfConverterPanelService` → `ConvertToMarkdownPanelService`, `Commands.OPEN_RTF_CONVERTER` → `Commands.OPEN_CONVERT_TO_MARKDOWN`, view type and message keywords renamed throughout. New `MarkitdownConversionService` (argv-array spawn, 10MB cap, two-layer SIGTERM/SIGKILL timeout, sandboxed temp cleanup) and new `nexkit.convertToMarkdown.pythonPath` setting. `npm run check:types` clean. Trinity added 19+11 tests covering the new service and panel; all pass.
