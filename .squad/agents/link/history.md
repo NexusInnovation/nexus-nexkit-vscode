@@ -114,6 +114,16 @@ Shared context (see decisions.md "Replace custom RTF/DOCX/HTML to Markdown conve
 
 **Verification:** `npm run check:types` clean, `npm run compile` clean, `npm test` → 378 passing (up from 376; 2 new tests added), 2 pre-existing failures (`RtfConverterPanelService`, `commitMessageCommands`) confirmed unrelated via `git stash` — they fail identically on the base branch before this change.
 
+## Bug fix — 2026-07-23 (`@types/sinon` v17 vs `sinon`/`@sinonjs/fake-timers` v21/v15 type drift)
+
+**Root cause:** `package.json` pinned `"@types/sinon": "^17.0.3"` alongside `"sinon": "^21.0.0"`. Sinon 21 depends on `@sinonjs/fake-timers@15.4.0`, whose type declarations restructured/renamed their exports and no longer expose `FakeTimerInstallOpts` in the shape `@types/sinon@17.x` expects — a pure types-level mismatch (`TS2694`), not a runtime bug. `sinon`'s own runtime behavior was completely unaffected.
+
+**Fix:** Bumped `@types/sinon` to `^22.0.0` (npm's current `latest` dist-tag) — no source changes needed, the newer major compiled cleanly against all existing test usage.
+
+**Verification:** `tsc -p ./` / `npm run test-compile` clean, `npm run lint` clean, `npm test` → 381 passing / 8 pending / 1 failing. The 1 failure (`ConvertToMarkdownPanelService` "save-to-file" — Sinon can't stub `vscode.workspace.fs.writeFile`, "property descriptor is non-configurable and non-writable") is pre-existing and unrelated: confirmed because `@types/sinon` is a types-only devDependency with zero runtime footprint, and the actual `sinon` runtime version was untouched.
+
+**Pattern worth remembering:** `sinon` and `@types/sinon` are versioned independently in `package.json`. A transitive major bump in `sinon`'s own dependencies (here `@sinonjs/fake-timers`) can silently break the build with `@types/sinon` even though `@types/sinon`'s semver range in `package.json` never changed — npm just resolves a newer patch of `@types/sinon` against a newer transitive dep than what the pinned major was designed for. **Whenever `sinon` gets bumped to a new major, immediately check whether `@types/sinon` needs a matching major bump** (`npm view @types/sinon dist-tags`) rather than assuming the existing `^17.x`-style range is still safe.
+
 ## Team update — 2026-07-20 (Convert to Markdown — full migration complete and merged)
 
 Implemented the full-scope migration approved by Eric: folder renamed `rtf-converter/` → `convert-to-markdown/`, `RtfConverterPanelService` → `ConvertToMarkdownPanelService`, `Commands.OPEN_RTF_CONVERTER` → `Commands.OPEN_CONVERT_TO_MARKDOWN`, view type and message keywords renamed throughout. New `MarkitdownConversionService` (argv-array spawn, 10MB cap, two-layer SIGTERM/SIGKILL timeout, sandboxed temp cleanup) and new `nexkit.convertToMarkdown.pythonPath` setting. `npm run check:types` clean. Trinity added 19+11 tests covering the new service and panel; all pass.
