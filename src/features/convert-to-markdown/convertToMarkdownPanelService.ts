@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as vscode from "vscode";
 import { IMarkitdownConversionService } from "./markitdownConversionService";
 import { HostToWebviewMessage, WebviewToHostMessage } from "./messages";
+import { LoggingService } from "../../shared/services/loggingService";
 
 /**
  * Manages the standalone Convert to Markdown webview panel
@@ -137,7 +138,8 @@ export class ConvertToMarkdownPanelService implements vscode.Disposable {
     let html: string;
     try {
       html = fs.readFileSync(htmlPath.fsPath, "utf8");
-    } catch {
+    } catch (error) {
+      LoggingService.getInstance().error(`Failed to read Convert to Markdown webview HTML at ${htmlPath.fsPath}`, error);
       void vscode.window.showErrorMessage(
         "Unable to load the Convert to Markdown webview. Please rebuild the extension (npm run compile) and try again."
       );
