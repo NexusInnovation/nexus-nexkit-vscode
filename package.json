@@ -21,6 +21,9 @@
     "markdown-it": "^14.1.0",
     "prettier": "^3.7.4"
   },
+  "overrides": {
+    "@opentelemetry/propagator-jaeger": "2.10.0"
+  },
   "activationEvents": [
     "onStartupFinished"
   ],
