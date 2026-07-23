@@ -194,6 +194,62 @@ suite("Unit: ConvertToMarkdownPanelService", () => {
       assert.strictEqual(posted.type, "conversion-error");
       assert.strictEqual((posted as { message: string }).message, "boom");
     });
+
+    suite("save-to-file", () => {
+      let showSaveDialogStub: sinon.SinonStub;
+      let writeFileStub: sinon.SinonStub;
+
+      setup(() => {
+        showSaveDialogStub = sinon.stub(vscode.window, "showSaveDialog");
+        writeFileStub = sinon.stub(vscode.workspace.fs, "writeFile").resolves();
+      });
+
+      test("shows a save dialog defaulting to the workspace root and writes the file", async () => {
+        const workspaceUri = vscode.Uri.file("/workspace/project");
+        sinon.stub(vscode.workspace, "workspaceFolders").value([{ uri: workspaceUri, name: "project", index: 0 }]);
+        const targetUri = vscode.Uri.joinPath(workspaceUri, "output.md");
+        showSaveDialogStub.resolves(targetUri);
+
+        fakePanel.messageListeners[0]({ type: "save-to-file", markdown: "# hello" });
+        await flushMicrotasks();
+
+        assert.ok(showSaveDialogStub.calledOnce);
+        const options = showSaveDialogStub.getCall(0).args[0] as vscode.SaveDialogOptions;
+        assert.strictEqual(options.defaultUri?.toString(), vscode.Uri.joinPath(workspaceUri, "untitled.md").toString());
+
+        assert.ok(writeFileStub.calledOnce);
+        const [writtenUri, writtenData] = writeFileStub.getCall(0).args;
+        assert.strictEqual((writtenUri as vscode.Uri).toString(), targetUri.toString());
+        assert.strictEqual(new TextDecoder().decode(writtenData as Uint8Array), "# hello");
+
+        const posted = fakePanel.postMessageStub.getCall(0).args[0] as HostToWebviewMessage;
+        assert.strictEqual(posted.type, "save-to-file-result");
+        assert.strictEqual((posted as { success: boolean }).success, true);
+      });
+
+      test("does nothing when the user cancels the save dialog", async () => {
+        showSaveDialogStub.resolves(undefined);
+
+        fakePanel.messageListeners[0]({ type: "save-to-file", markdown: "# hello" });
+        await flushMicrotasks();
+
+        assert.ok(writeFileStub.notCalled);
+        assert.ok(fakePanel.postMessageStub.notCalled);
+      });
+
+      test("posts a failure result when writing the file throws", async () => {
+        showSaveDialogStub.resolves(vscode.Uri.file("/workspace/project/output.md"));
+        writeFileStub.rejects(new Error("disk full"));
+
+        fakePanel.messageListeners[0]({ type: "save-to-file", markdown: "# hello" });
+        await flushMicrotasks();
+
+        const posted = fakePanel.postMessageStub.getCall(0).args[0] as HostToWebviewMessage;
+        assert.strictEqual(posted.type, "save-to-file-result");
+        assert.strictEqual((posted as { success: boolean }).success, false);
+        assert.strictEqual((posted as { message: string }).message, "disk full");
+      });
+    });
   });
 
   suite("dispose", () => {

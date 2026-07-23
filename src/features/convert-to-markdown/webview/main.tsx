@@ -50,6 +50,9 @@ function App() {
           setConverting(false);
           setStatusMessage(`Conversion failed: ${message.message}`);
           break;
+        case "save-to-file-result":
+          setStatusMessage(message.message);
+          break;
       }
     };
 
@@ -116,6 +119,10 @@ function App() {
     if (file) {
       void sendFile(file);
     }
+  };
+
+  const handleSaveToFile = (): void => {
+    postToHost({ type: "save-to-file", markdown: markdownValue });
   };
 
   const handleCopy = async (): Promise<void> => {
@@ -214,6 +221,9 @@ function App() {
         </button>
         <button onClick={() => void handleCopy()} disabled={!markdownValue}>
           Copy
+        </button>
+        <button onClick={handleSaveToFile} disabled={!markdownValue}>
+          Save to File
         </button>
       </div>
 

@@ -72,6 +72,37 @@ export class ConvertToMarkdownPanelService implements vscode.Disposable {
           message.fileName
         );
         break;
+      case "save-to-file":
+        await this._saveToFile(message.markdown);
+        break;
+    }
+  }
+
+  private async _saveToFile(markdown: string): Promise<void> {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    const defaultUri = workspaceFolder
+      ? vscode.Uri.joinPath(workspaceFolder.uri, "untitled.md")
+      : vscode.Uri.file("untitled.md");
+
+    const targetUri = await vscode.window.showSaveDialog({
+      defaultUri,
+      filters: { Markdown: ["md"] },
+    });
+
+    if (!targetUri) {
+      return;
+    }
+
+    try {
+      await vscode.workspace.fs.writeFile(targetUri, new TextEncoder().encode(markdown));
+      this._postMessage({
+        type: "save-to-file-result",
+        success: true,
+        message: `Saved to ${targetUri.fsPath}.`,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to save file.";
+      this._postMessage({ type: "save-to-file-result", success: false, message });
     }
   }
 

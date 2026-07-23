@@ -12,7 +12,8 @@ export type WebviewToHostMessage =
   | { type: "convert-paste-html"; html: string }
   | { type: "convert-paste-text"; text: string }
   | { type: "convert-file"; fileName: string; data: Uint8Array }
-  | { type: "recheck-availability" };
+  | { type: "recheck-availability" }
+  | { type: "save-to-file"; markdown: string };
 
 /**
  * Messages sent FROM the extension host TO the webview
@@ -20,4 +21,5 @@ export type WebviewToHostMessage =
 export type HostToWebviewMessage =
   | { type: "availability-status"; available: boolean; reason?: string }
   | { type: "conversion-result"; markdown: string; sourceLabel: string }
-  | { type: "conversion-error"; message: string };
+  | { type: "conversion-error"; message: string }
+  | { type: "save-to-file-result"; success: boolean; message: string };
