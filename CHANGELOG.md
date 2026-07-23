@@ -1,36 +1,31 @@
-## <small>3.11.2-beta.4 (2026-07-23)</small>
+## <small>3.11.3 (2026-07-23)</small>
 
-* fix(panel-ui): add tools tab to APM mode ([294cd33](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/294cd33))
-
-## <small>3.11.2-beta.3 (2026-07-23)</small>
-
-* fix(chore): Remove obsolete test output files and documentation ([3488aee](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3488aee))
-* refactor(history): archive outdated sections and streamline content ([4bb4510](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4bb4510))
-
-## <small>3.11.2-beta.2 (2026-07-23)</small>
-
+* Merge branch 'develop' ([626181c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/626181c))
+* Merge branch 'main' of https://github.com/NexusInnovation/nexus-nexkit-vscode ([6e81339](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/6e81339))
 * fix(convert-to-markdown): add missing webview HTML and error logging (#194) ([2814a17](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2814a17)), closes [#194](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/194)
+* chore(release): v3.11.2-beta.1 [skip ci] ([245bee2](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/245bee2))
+* chore(squad): log Link's convert-to-markdown production packaging fix ([aa1ce65](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/aa1ce65))
 
-## <small>3.11.2-beta.1 (2026-07-23)</small>
+## <small>3.11.2 (2026-07-23)</small>
 
-* fix(core): Fix RTF to Markdown conversion and enhance features (#193) ([503f8ae](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/503f8ae)), closes [#193](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/193)
+- fix(core): Fix RTF to Markdown conversion and enhance features (#193) ([503f8ae](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/503f8ae)), closes [#193](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/193)
 
 ## <small>3.11.1 (2026-07-21)</small>
 
-* Merge branch 'develop' ([5b89105](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/5b89105))
-* Merge branch 'main' into develop ([293700d](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/293700d))
-* fix(squad): Fix commit-message SCM context for multi-root workspaces (#191) ([54d1cf6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/54d1cf6)), closes [#191](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/191)
-* fix(squad): Release v3.11.0-beta.2 with build fixes and dependency updates (#192) ([8e025e9](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8e025e9)), closes [#192](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/192) [#191](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/191)
-* chore(references): add word.docx reference template ([ca2544c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ca2544c))
-* chore(release): v3.11.0-beta.2 [skip ci] ([362288a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/362288a))
-* chore(release): v3.11.1-beta.1 [skip ci] ([68556fa](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/68556fa))
+- Merge branch 'develop' ([5b89105](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/5b89105))
+- Merge branch 'main' into develop ([293700d](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/293700d))
+- fix(squad): Fix commit-message SCM context for multi-root workspaces (#191) ([54d1cf6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/54d1cf6)), closes [#191](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/191)
+- fix(squad): Release v3.11.0-beta.2 with build fixes and dependency updates (#192) ([8e025e9](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8e025e9)), closes [#192](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/192) [#191](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/191)
+- chore(references): add word.docx reference template ([ca2544c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ca2544c))
+- chore(release): v3.11.0-beta.2 [skip ci] ([362288a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/362288a))
+- chore(release): v3.11.1-beta.1 [skip ci] ([68556fa](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/68556fa))
 
 ## <small>3.11.1-beta.1 (2026-07-21)</small>
 
-* fix(squad): Fix commit-message SCM context for multi-root workspaces (#191) ([54d1cf6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/54d1cf6)), closes [#191](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/191)
-* chore(references): add word.docx reference template ([ca2544c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ca2544c))
-* chore(release): v3.11.0-beta.2 [skip ci] ([362288a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/362288a))
-* Merge branch 'main' into develop ([293700d](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/293700d))
+- fix(squad): Fix commit-message SCM context for multi-root workspaces (#191) ([54d1cf6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/54d1cf6)), closes [#191](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/191)
+- chore(references): add word.docx reference template ([ca2544c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ca2544c))
+- chore(release): v3.11.0-beta.2 [skip ci] ([362288a](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/362288a))
+- Merge branch 'main' into develop ([293700d](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/293700d))
 
 ## 3.11.0 (2026-07-17)
 
