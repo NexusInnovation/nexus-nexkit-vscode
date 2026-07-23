@@ -2,6 +2,32 @@
 
 > Entries older than 30 days are periodically moved to `decisions-archive.md` by the Scribe.
 
+## Decision: Convert to Markdown — production packaging bug (missing webview index.html)
+
+**Date:** 2026-07-23
+**Agent:** Link
+**Classification:** Project-specific — `convert-to-markdown` feature (production bug fix)
+
+### Context
+
+Installed/production builds of the extension showed a fallback error in the "Convert to Markdown" webview ("Unable to load Convert to Markdown / Please rebuild the extension and try again.") while the feature worked in local dev. Root-caused to `src/features/convert-to-markdown/webview/index.html` never being recreated during the `rtf-converter` → `convert-to-markdown` rename (2026-07-20/23) — the old `src/features/rtf-converter/webview/index.html` was deleted in an earlier cleanup commit (195f716) and never re-added under the new path (`git log --all` shows zero history for the new-path file). `esbuild.config.js`'s `copyStaticFiles()` silently no-ops via `fs.existsSync(source)` when the source is missing (no error, no log), so every clean/CI build since the rename shipped `out/convert-to-markdown/index.html` missing, and `ConvertToMarkdownPanelService.buildWebviewHtml()` fell back to the generic error page for every user. Locally, `npx vsce ls` looked fine only because a stale, never-committed copy of `out/convert-to-markdown/index.html` (gitignored, never cleaned between builds) survived in the working tree from an earlier, uncommitted local edit — this masked the bug in dev.
+
+### Fix
+
+1. Re-created `src/features/convert-to-markdown/webview/index.html` (title/CSP/placeholders matching `buildWebviewHtml()`'s `{{nonce}}`/`{{scriptUri}}`/`{{cspSource}}` substitutions and `main.tsx`'s `#root` mount point).
+2. `copyStaticFiles()` in `esbuild.config.js` now `console.warn`s when a configured source file is missing instead of silently skipping, so this class of bug fails loud in CI logs next time.
+3. `ConvertToMarkdownPanelService.buildWebviewHtml()`'s catch block now logs the real `fs.readFileSync` error via `LoggingService.getInstance().error(...)` (visible in the "Nexkit" output channel) before showing the generic fallback message.
+
+### Verification
+
+Deleted `out/` to simulate a clean CI checkout, ran `npm run build:ci` — `out/convert-to-markdown/index.html` is produced with no missing-source warning. `npm run check:types` clean. `npm run test-compile && npm run test:unit` → 384 passing, 8 pending, exit code 0.
+
+### Follow-up risk
+
+None expected — the missing file is now committed to git, so it will exist on every future clean checkout. Recommend a lightweight CI/package-time assertion (e.g., a `postbuild` check that critical `out/**` files exist) if this class of "silent missing static asset" bug is a recurring concern across features, but that's out of scope for this fix.
+
+---
+
 ## Decision: Convert to Markdown — fix accented character (mojibake) corruption on Windows
 
 **Date:** 2026-07-23
