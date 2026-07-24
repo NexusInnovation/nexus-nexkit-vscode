@@ -130,4 +130,24 @@ suite("Unit: Extension Activation", () => {
     assert.strictEqual(command.title, "Nexkit: Convert to Markdown");
     assert.strictEqual(command.category, "Nexkit");
   });
+
+  test("Should contribute Repository Sync commands", () => {
+    const packageJsonPath = path.join(__dirname, "..", "..", "..", "package.json");
+    const packageJsonRaw = fs.readFileSync(packageJsonPath, "utf8");
+    const packageJson = JSON.parse(packageJsonRaw);
+
+    const runSyncCommand = packageJson.contributes?.commands?.find(
+      (entry: { command: string }) => entry.command === "nexus-nexkit-vscode.repositorySync.runOnce"
+    );
+    assert.ok(runSyncCommand, "Expected repositorySync.runOnce command contribution.");
+    assert.strictEqual(runSyncCommand.title, "Nexkit: Run Repository Sync");
+    assert.strictEqual(runSyncCommand.category, "Nexkit");
+
+    const toggleSyncCommand = packageJson.contributes?.commands?.find(
+      (entry: { command: string }) => entry.command === "nexus-nexkit-vscode.repositorySync.toggle"
+    );
+    assert.ok(toggleSyncCommand, "Expected repositorySync.toggle command contribution.");
+    assert.strictEqual(toggleSyncCommand.title, "Nexkit: Toggle Repository Sync");
+    assert.strictEqual(toggleSyncCommand.category, "Nexkit");
+  });
 });

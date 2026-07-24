@@ -139,6 +139,16 @@
         "command": "nexus-nexkit-vscode.openConvertToMarkdown",
         "title": "Nexkit: Convert to Markdown",
         "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.repositorySync.runOnce",
+        "title": "Nexkit: Run Repository Sync",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.repositorySync.toggle",
+        "title": "Nexkit: Toggle Repository Sync",
+        "category": "Nexkit"
       }
     ],
     "menus": {
@@ -349,6 +359,48 @@
           "default": "",
           "scope": "application",
           "description": "Path to a Python interpreter used for Convert to Markdown (microsoft/markitdown). Leave empty to auto-detect python3/python/py on PATH."
+        },
+        "nexkit.repoSync.enabled": {
+          "type": "boolean",
+          "default": false,
+          "scope": "application",
+          "description": "Enable Nexkit repository sync scaffolding features."
+        },
+        "nexkit.repoSync.autoSyncOnStartup": {
+          "type": "boolean",
+          "default": false,
+          "scope": "application",
+          "description": "Automatically start repository sync scheduling when VS Code starts."
+        },
+        "nexkit.repoSync.intervalMinutes": {
+          "type": "number",
+          "default": 60,
+          "minimum": 1,
+          "scope": "application",
+          "description": "Repository sync interval in minutes."
+        },
+        "nexkit.repoSync.statusBarEnabled": {
+          "type": "boolean",
+          "default": true,
+          "scope": "application",
+          "description": "Show the Nexkit repository sync status bar item."
+        },
+        "nexkit.repoSync.allowExternalRepositories": {
+          "type": "boolean",
+          "default": false,
+          "scope": "application",
+          "description": "Allow repository sync for external repositories after trust consent."
+        },
+        "nexkit.repoSync.pullStrategy": {
+          "type": "string",
+          "enum": [
+            "ff-only",
+            "rebase",
+            "merge"
+          ],
+          "default": "ff-only",
+          "scope": "application",
+          "description": "Preferred pull strategy for repository sync operations."
         },
         "nexkit.telemetry.enabled": {
           "type": "boolean",

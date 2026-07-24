@@ -24,6 +24,10 @@ import { registerShowLogsCommand } from "./shared/commands/loggingCommand";
 import { registerAddDevOpsConnectionCommand, registerRemoveDevOpsConnectionCommand } from "./features/apm-devops/commands";
 import { registerGenerateCommitMessageCommand } from "./features/commit-management/commands";
 import { registerOpenConvertToMarkdownCommand } from "./features/convert-to-markdown/commands";
+import {
+  registerRunRepositorySyncCommand,
+  registerToggleRepositorySyncCommand,
+} from "./features/repository-sync/commands";
 
 /**
  * Extension activation
@@ -70,6 +74,8 @@ export async function activate(context: vscode.ExtensionContext) {
   registerRemoveDevOpsConnectionCommand(context, services);
   registerGenerateCommitMessageCommand(context, services);
   registerOpenConvertToMarkdownCommand(context, services);
+  registerRunRepositorySyncCommand(context, services);
+  registerToggleRepositorySyncCommand(context, services);
 
   // Register webview panel
   const nexkitPanelProvider = new NexkitPanelViewProvider();
@@ -81,6 +87,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Initialize status bar
   services.updateStatusBar.initializeUpdateStatusBar();
+
+  if (SettingsManager.isRepoSyncStatusBarEnabled()) {
+    services.repositorySyncStatusBar.show();
+  }
+
+  if (SettingsManager.isRepoSyncAutoSyncOnStartupEnabled()) {
+    services.repositorySyncScheduler.start();
+  }
 
   // Check for required MCP servers on activation
   services.mcpConfig.promptInstallRequiredMCPsOnActivation();

@@ -35,6 +35,10 @@ export const Commands = {
 
   // Developer tools
   OPEN_CONVERT_TO_MARKDOWN: "nexus-nexkit-vscode.openConvertToMarkdown",
+
+  // Repository sync
+  REPOSITORY_SYNC_RUN_ONCE: "nexus-nexkit-vscode.repositorySync.runOnce",
+  REPOSITORY_SYNC_TOGGLE: "nexus-nexkit-vscode.repositorySync.toggle",
 } as const;
 
 // Type-safe command names

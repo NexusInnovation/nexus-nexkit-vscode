@@ -60,3 +60,7 @@ Merged Link's repository-context decision for Generate Commit Message. Recorded 
 ### 2026-07-21 - Sinon Typing Repair Consolidation
 
 Recorded the completed test-infrastructure repair: aligned incompatible Sinon and fake-timers typings in dependency metadata, corrected the stale compiled-test loader, and verified `npm run test` with 354 passing and 8 pending.
+
+### 2026-07-24 - Discovery Directive Consolidation
+
+Merged the inbox directive confirming that discovery should be conducted with `askQuestions` using quick-pick options plus freeform input. Logged the multi-agent design-pass session state as specification work only (no product code changes) and mirrored the generic preference into consult-mode extract staging.

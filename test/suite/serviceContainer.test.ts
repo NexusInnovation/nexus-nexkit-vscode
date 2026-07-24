@@ -70,6 +70,11 @@ suite("Unit: ServiceContainer", () => {
     assert.ok(services.startupVerification, "StartupVerificationService should be initialized");
     assert.ok(services.convertToMarkdown, "ConvertToMarkdownPanelService should be initialized");
     assert.ok(services.markitdownConversion, "MarkitdownConversionService should be initialized");
+    assert.ok(services.repositoryDiscovery, "RepositoryDiscoveryService should be initialized");
+    assert.ok(services.repositoryPull, "RepositoryPullService should be initialized");
+    assert.ok(services.repositorySyncScheduler, "RepositorySyncSchedulerService should be initialized");
+    assert.ok(services.repositorySyncStatusBar, "RepositorySyncStatusBarService should be initialized");
+    assert.ok(services.externalRepoTrust, "ExternalRepoTrustService should be initialized");
   });
 
   test("Should register disposables in context", () => {

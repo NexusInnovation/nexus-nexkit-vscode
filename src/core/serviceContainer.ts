@@ -31,6 +31,11 @@ import { HooksConfigDeployer } from "../features/initialization/hooksConfigDeplo
 import { UserDirectoryService } from "../features/ai-template-files/services/userDirectoryService";
 import { ConvertToMarkdownPanelService } from "../features/convert-to-markdown/convertToMarkdownPanelService";
 import { MarkitdownConversionService } from "../features/convert-to-markdown/markitdownConversionService";
+import { RepositoryDiscoveryService } from "../features/repository-sync/services/repositoryDiscoveryService";
+import { RepositoryPullService } from "../features/repository-sync/services/repositoryPullService";
+import { RepositorySyncSchedulerService } from "../features/repository-sync/services/repositorySyncSchedulerService";
+import { RepositorySyncStatusBarService } from "../features/repository-sync/services/repositorySyncStatusBarService";
+import { ExternalRepoTrustService } from "../features/repository-sync/services/externalRepoTrustService";
 
 /**
  * Service container for dependency injection
@@ -69,6 +74,11 @@ export interface ServiceContainer {
   userDirectory: UserDirectoryService;
   convertToMarkdown: ConvertToMarkdownPanelService;
   markitdownConversion: MarkitdownConversionService;
+  repositoryDiscovery: RepositoryDiscoveryService;
+  repositoryPull: RepositoryPullService;
+  repositorySyncScheduler: RepositorySyncSchedulerService;
+  repositorySyncStatusBar: RepositorySyncStatusBarService;
+  externalRepoTrust: ExternalRepoTrustService;
 }
 
 /**
@@ -121,6 +131,17 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const githubWorkflowRunner = new GitHubWorkflowRunnerService(context.extensionUri);
   const markitdownConversion = new MarkitdownConversionService(logging);
   const convertToMarkdown = new ConvertToMarkdownPanelService(context.extensionUri, markitdownConversion);
+  const repositoryDiscovery = new RepositoryDiscoveryService();
+  const repositoryPull = new RepositoryPullService(logging);
+  const externalRepoTrust = new ExternalRepoTrustService();
+  const repositorySyncScheduler = new RepositorySyncSchedulerService(
+    logging,
+    telemetry,
+    repositoryDiscovery,
+    repositoryPull,
+    externalRepoTrust
+  );
+  const repositorySyncStatusBar = new RepositorySyncStatusBarService();
 
   // Register for disposal
   context.subscriptions.push(logging);
@@ -130,6 +151,8 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   context.subscriptions.push(templateMetadataScanner);
   context.subscriptions.push(nexkitFileWatcher);
   context.subscriptions.push(convertToMarkdown);
+  context.subscriptions.push(repositorySyncScheduler);
+  context.subscriptions.push(repositorySyncStatusBar);
 
   logging.info("All services initialized successfully");
 
@@ -166,5 +189,10 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     userDirectory,
     convertToMarkdown,
     markitdownConversion,
+    repositoryDiscovery,
+    repositoryPull,
+    repositorySyncScheduler,
+    repositorySyncStatusBar,
+    externalRepoTrust,
   };
 }
