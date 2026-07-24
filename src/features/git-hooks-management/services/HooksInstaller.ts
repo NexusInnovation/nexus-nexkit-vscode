@@ -101,6 +101,12 @@ RULESET_FILE="$REPO_ROOT/githooks-rulesets.json"
 CHECK_SCRIPT="$HOOK_DIR/lib/check_pattern.py"
 SCOPE_FILE="$HOOK_DIR/scope.txt"
 SCOPE_SCRIPT="$HOOK_DIR/lib/path_in_scope.py"
+DISABLE_FLAG="$HOOK_DIR/.nexkit-hooks-disabled"
+
+# Check if hooks are disabled via flag file
+if [ -f "$DISABLE_FLAG" ]; then
+  exit 0
+fi
 
 branch="$(git symbolic-ref --short -q HEAD || true)"
 
@@ -199,7 +205,13 @@ RULESET_FILE="$REPO_ROOT/githooks-rulesets.json"
 CHECK_SCRIPT="$HOOK_DIR/lib/check_pattern.py"
 SCOPE_FILE="$HOOK_DIR/scope.txt"
 SCOPE_SCRIPT="$HOOK_DIR/lib/path_in_scope.py"
+DISABLE_FLAG="$HOOK_DIR/.nexkit-hooks-disabled"
 MSG_FILE="$1"
+
+# Check if hooks are disabled via flag file
+if [ -f "$DISABLE_FLAG" ]; then
+  exit 0
+fi
 
 subject="$(head -n1 "$MSG_FILE")"
 

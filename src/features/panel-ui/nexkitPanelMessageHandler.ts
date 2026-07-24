@@ -47,6 +47,12 @@ export class NexkitPanelMessageHandler {
       // GitHub workflow runner handlers
       ["listWorkflows", this.handleListWorkflows.bind(this)],
       ["runWorkflow", this.handleRunWorkflow.bind(this)],
+      // Git hooks handlers
+      ["getGitHooksStatus", this.handleGetGitHooksStatus.bind(this)],
+      ["setupGitHooks", this.handleSetupGitHooks.bind(this)],
+      ["syncGitHooksFromGithub", this.handleSyncGitHooksFromGithub.bind(this)],
+      ["enableGitHooks", this.handleEnableGitHooks.bind(this)],
+      ["disableGitHooks", this.handleDisableGitHooks.bind(this)],
     ]);
 
     // Auto-refresh template data when it changes (e.g., after config update)
@@ -303,6 +309,125 @@ export class NexkitPanelMessageHandler {
       dryRun: message.dryRun,
       list: message.list,
     });
+  }
+
+  // ============================================================================
+  // GIT HOOKS HANDLERS
+  // ============================================================================
+
+  private async handleGetGitHooksStatus(message: WebviewMessage): Promise<void> {
+    try {
+      const status = await this._services.gitHooks.getStatus();
+      this.sendToWebview({
+        command: "gitHooksStatusUpdate",
+        status,
+      });
+    } catch (error) {
+      console.error("Failed to get git hooks status:", error);
+      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+        context: "webview.getGitHooksStatus",
+      });
+      this.sendToWebview({
+        command: "gitHooksError",
+        error: error instanceof Error ? error.message : "Failed to get git hooks status",
+      });
+    }
+  }
+
+  private async handleSetupGitHooks(message: WebviewMessage): Promise<void> {
+    this.trackWebviewAction("setupGitHooks");
+    try {
+      await this._services.gitHooks.setup();
+      this.sendToWebview({
+        command: "gitHooksOperationComplete",
+        operation: "setup",
+        success: true,
+        message: "Git hooks setup completed successfully",
+      });
+    } catch (error) {
+      console.error("Failed to setup git hooks:", error);
+      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+        context: "webview.setupGitHooks",
+      });
+      this.sendToWebview({
+        command: "gitHooksOperationComplete",
+        operation: "setup",
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to setup git hooks",
+      });
+    }
+  }
+
+  private async handleSyncGitHooksFromGithub(message: WebviewMessage): Promise<void> {
+    this.trackWebviewAction("syncGitHooksFromGithub");
+    try {
+      await this._services.gitHooks.syncWithGitHub();
+      this.sendToWebview({
+        command: "gitHooksOperationComplete",
+        operation: "sync",
+        success: true,
+        message: "Git hooks synced from GitHub successfully",
+      });
+    } catch (error) {
+      console.error("Failed to sync git hooks from GitHub:", error);
+      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+        context: "webview.syncGitHooksFromGithub",
+      });
+      this.sendToWebview({
+        command: "gitHooksOperationComplete",
+        operation: "sync",
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to sync git hooks from GitHub",
+      });
+    }
+  }
+
+  private async handleEnableGitHooks(message: WebviewMessage): Promise<void> {
+    this.trackWebviewAction("enableGitHooks");
+    try {
+      await this._services.gitHooks.enable();
+      this.sendToWebview({
+        command: "gitHooksOperationComplete",
+        operation: "enable",
+        success: true,
+        message: "Git hooks enabled",
+      });
+    } catch (error) {
+      console.error("Failed to enable git hooks:", error);
+      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+        context: "webview.enableGitHooks",
+      });
+      this.sendToWebview({
+        command: "gitHooksOperationComplete",
+        operation: "enable",
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to enable git hooks",
+      });
+    }
+  }
+
+  private async handleDisableGitHooks(message: WebviewMessage): Promise<void> {
+    this.trackWebviewAction("disableGitHooks");
+    try {
+      await this._services.gitHooks.disable();
+      this.sendToWebview({
+        command: "gitHooksOperationComplete",
+        operation: "disable",
+        success: true,
+        message: "Git hooks disabled",
+      });
+    } catch (error) {
+      console.error("Failed to disable git hooks:", error);
+      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+        context: "webview.disableGitHooks",
+      });
+      this.sendToWebview({
+        command: "gitHooksOperationComplete",
+        operation: "disable",
+        success: false,
+        message: error instanceof Error ? error.message : "Failed to disable git hooks",
+      });
+    }
   }
 
   // ============================================================================

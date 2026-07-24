@@ -96,6 +96,7 @@ export class GitHooksService {
     public async enable(): Promise<void> {
         try {
             await SettingsManager.setGitHooksEnabled(true);
+            await this._removeDisableFlag();
             this._logger.info('Git hooks enabled');
         } catch (error) {
             this._logger.error('Error enabling git hooks:', error);
@@ -109,6 +110,7 @@ export class GitHooksService {
     public async disable(): Promise<void> {
         try {
             await SettingsManager.setGitHooksEnabled(false);
+            await this._createDisableFlag();
             this._logger.info('Git hooks disabled');
         } catch (error) {
             this._logger.error('Error disabling git hooks:', error);
@@ -491,6 +493,55 @@ export class GitHooksService {
         } catch (error) {
             this._logger.warn('Failed to resolve workspace root for git command; running without cwd.', error);
             return undefined;
+        }
+    }
+
+    /**
+     * Get path to .githooks/.nexkit-hooks-disabled flag file
+     */
+    private _getDisableFlagPath(): string {
+        const workspaceRoot = getWorkspaceRoot();
+        if (!workspaceRoot) {
+            throw new Error('No workspace root found');
+        }
+        return path.join(workspaceRoot, '.githooks', '.nexkit-hooks-disabled');
+    }
+
+    /**
+     * Create .nexkit-hooks-disabled flag file to disable hooks at runtime
+     */
+    private async _createDisableFlag(): Promise<void> {
+        try {
+            const flagPath = this._getDisableFlagPath();
+            const dir = path.dirname(flagPath);
+
+            // Ensure .githooks directory exists
+            if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+            }
+
+            // Create the flag file
+            fs.writeFileSync(flagPath, '', 'utf8');
+            this._logger.debug('Disable flag created at:', flagPath);
+        } catch (error) {
+            this._logger.warn('Failed to create disable flag file:', error);
+            // Don't throw - graceful degradation
+        }
+    }
+
+    /**
+     * Remove .nexkit-hooks-disabled flag file to enable hooks at runtime
+     */
+    private async _removeDisableFlag(): Promise<void> {
+        try {
+            const flagPath = this._getDisableFlagPath();
+            if (fs.existsSync(flagPath)) {
+                fs.unlinkSync(flagPath);
+                this._logger.debug('Disable flag removed from:', flagPath);
+            }
+        } catch (error) {
+            this._logger.warn('Failed to remove disable flag file:', error);
+            // Don't throw - graceful degradation
         }
     }
 }
