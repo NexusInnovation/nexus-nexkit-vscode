@@ -1,0 +1,16 @@
+*** Begin Patch
+*** Update File: quality/test_regression.js
+@@
+   {
++    id: "BUG-004",
++    description: "Workflow command args should be escaped instead of direct interpolation",
++    run: () => {
++      const runner = read("src/features/github-workflow-runner/githubWorkflowRunnerService.ts");
++      const pwshInterpolated = runner.includes('args.push(`-Event "${params.event}"`)');
++      const shInterpolated = runner.includes('args.push(`--event "${params.event}"`)');
++      if (pwshInterpolated || shInterpolated) {
++        throw new Error("Found direct interpolation for event/job command args");
++      }
++    },
++  },
+*** End Patch

@@ -1,0 +1,6 @@
+RED
+BUG-003
+Command: node quality/test_regression.js
+Result: FAIL (expected)
+Message: Found utf8 string restore path instead of byte-safe restore
+Timestamp: 2026-07-24T02:23:33.274Z

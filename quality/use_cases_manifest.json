@@ -1,0 +1,48 @@
+{
+    "schema_version": "1.5.6",
+    "generated_at": "2026-07-24T02:12:00Z",
+    "records": [
+        {
+            "id": "UC-01",
+            "title": "Workspace Bootstrap Stability",
+            "actor": "Developer",
+            "outcome": "Initialize workspace without duplicate side effects.",
+            "formal_doc_refs": []
+        },
+        {
+            "id": "UC-02",
+            "title": "Managed File Safety",
+            "actor": "Developer",
+            "outcome": "Edit managed files without silent corruption.",
+            "formal_doc_refs": []
+        },
+        {
+            "id": "UC-03",
+            "title": "MCP Configuration Preservation",
+            "actor": "Developer",
+            "outcome": "Add MCP servers while preserving existing config.",
+            "formal_doc_refs": []
+        },
+        {
+            "id": "UC-04",
+            "title": "Local Workflow Execution Integrity",
+            "actor": "Developer",
+            "outcome": "Run local workflows with exact event/job targeting.",
+            "formal_doc_refs": []
+        },
+        {
+            "id": "UC-05",
+            "title": "Non-Disruptive Startup",
+            "actor": "Developer",
+            "outcome": "Open VS Code without unsolicited auth interruption.",
+            "formal_doc_refs": []
+        },
+        {
+            "id": "UC-06",
+            "title": "Contract Regression Detection",
+            "actor": "Maintainer",
+            "outcome": "CI catches activation command contract drift.",
+            "formal_doc_refs": []
+        }
+    ]
+}
