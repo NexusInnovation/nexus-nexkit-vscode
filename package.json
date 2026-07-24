@@ -139,6 +139,16 @@
         "command": "nexus-nexkit-vscode.openConvertToMarkdown",
         "title": "Nexkit: Convert to Markdown",
         "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.setupGitHooks",
+        "title": "Nexkit: Setup Git Hooks",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.syncGitHooks",
+        "title": "Nexkit: Sync Git Hooks Rules",
+        "category": "Nexkit"
       }
     ],
     "menus": {
@@ -461,6 +471,24 @@
           "scope": "application",
           "editPresentation": "multilineText",
           "markdownDescription": "System prompt template used to generate commit messages. Use `{{diff}}` as a placeholder for the staged git diff. Customise this to enforce your team's commit message conventions."
+        },
+        "nexkit.gitHooks.enabled": {
+          "type": "boolean",
+          "default": false,
+          "scope": "resource",
+          "description": "Enable Git Hooks for this workspace. When enabled, commits and pushes are validated against GitHub ruleset-like rules defined in githooks-rulesets.json."
+        },
+        "nexkit.gitHooks.autoSync": {
+          "type": "boolean",
+          "default": false,
+          "scope": "resource",
+          "description": "Automatically sync Git Hooks rules from GitHub during workspace initialization."
+        },
+        "nexkit.gitHooks.scope": {
+          "type": "string",
+          "default": "",
+          "scope": "resource",
+          "description": "Optional directory scope for Git Hooks validation. If set, rules apply only to files in this directory. Leave empty to apply to all files."
         }
       }
     }
