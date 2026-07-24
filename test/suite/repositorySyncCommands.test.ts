@@ -12,9 +12,20 @@ suite("Unit: Repository Sync Commands", () => {
       startedAt: 1,
       completedAt: 2,
       repositoryCount: 1,
+      plannedCount: 1,
+      processedCount: 1,
       results: [],
+      summary: {
+        total: 1,
+        successReady: 1,
+        skipped: 0,
+        conflictRisk: 0,
+        failed: 0,
+        changed: 0,
+      },
     });
     const updateLastRun = sinon.stub();
+    const setRunning = sinon.stub();
 
     const telemetry = {
       trackCommandExecution: async (_commandId: string, callback: () => Promise<void>): Promise<void> => callback(),
@@ -22,18 +33,33 @@ suite("Unit: Repository Sync Commands", () => {
     const context = { subscriptions: [] as vscode.Disposable[] } as vscode.ExtensionContext;
     const services = {
       repositorySyncScheduler: { runSync },
-      repositorySyncStatusBar: { updateLastRun },
+      repositorySyncStatusBar: { setRunning, updateLastRun },
       telemetry,
     } as unknown as ServiceContainer;
 
+    function fakeShowQuickPick(
+      items: readonly string[] | Thenable<readonly string[]>,
+      options?: vscode.QuickPickOptions
+    ): Thenable<string | undefined>;
+    function fakeShowQuickPick<T extends vscode.QuickPickItem>(
+      items: readonly T[] | Thenable<readonly T[]>,
+      options?: vscode.QuickPickOptions
+    ): Thenable<T | undefined>;
+    function fakeShowQuickPick(): Thenable<unknown> {
+      return Promise.resolve("Run Full Sync");
+    }
+
+    const quickPickStub = sinon.stub(vscode.window, "showQuickPick").callsFake(fakeShowQuickPick);
     const infoStub = sinon.stub(vscode.window, "showInformationMessage").resolves(undefined);
 
     registerRunRepositorySyncCommand(context, services);
     await vscode.commands.executeCommand(Commands.REPOSITORY_SYNC_RUN_ONCE);
 
-    assert.ok(runSync.calledOnce);
+    assert.ok(setRunning.calledOnce);
+    assert.ok(runSync.calledOnceWith({ retryFailedOnly: false, interactiveTrust: true }));
     assert.ok(updateLastRun.calledOnce);
 
+    quickPickStub.restore();
     infoStub.restore();
     context.subscriptions.forEach((disposable) => disposable.dispose());
   });

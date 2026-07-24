@@ -197,6 +197,15 @@ suite("Unit: SettingsManager", () => {
     const isFirstTime = SettingsManager.isFirstTimeUser();
     assert.strictEqual(isFirstTime, false);
   });
+
+  test("Should persist external repo denied state and clear trusted state", async () => {
+    await SettingsManager.setRepoSyncExternalRepoTrusted("C:/repos/sample", true);
+    assert.strictEqual(SettingsManager.isRepoSyncExternalRepoTrusted("C:/repos/sample"), true);
+
+    await SettingsManager.setRepoSyncExternalRepoDenied("C:/repos/sample", true);
+    assert.strictEqual(SettingsManager.isRepoSyncExternalRepoDenied("C:/repos/sample"), true);
+    assert.strictEqual(SettingsManager.isRepoSyncExternalRepoTrusted("C:/repos/sample"), false);
+  });
 });
 
 suite("Unit: SettingsManager — isWorkspaceOverrideActive", () => {

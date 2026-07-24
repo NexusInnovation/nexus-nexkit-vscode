@@ -151,6 +151,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   context.subscriptions.push(templateMetadataScanner);
   context.subscriptions.push(nexkitFileWatcher);
   context.subscriptions.push(convertToMarkdown);
+  context.subscriptions.push(repositoryDiscovery);
   context.subscriptions.push(repositorySyncScheduler);
   context.subscriptions.push(repositorySyncStatusBar);
 

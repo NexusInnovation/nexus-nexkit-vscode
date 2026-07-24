@@ -9,10 +9,29 @@ export function registerRunRepositorySyncCommand(context: vscode.ExtensionContex
     context,
     Commands.REPOSITORY_SYNC_RUN_ONCE,
     async () => {
-      const result = await services.repositorySyncScheduler.runSync();
+      const retryFailedOnlyChoice = "Retry Failed Only";
+      const fullRunChoice = "Run Full Sync";
+
+      const selection = await vscode.window.showQuickPick([fullRunChoice, retryFailedOnlyChoice], {
+        placeHolder: "Choose repository sync mode",
+        ignoreFocusOut: true,
+      });
+
+      if (!selection) {
+        return;
+      }
+
+      services.repositorySyncStatusBar.setRunning();
+      const result = await services.repositorySyncScheduler.runSync({
+        retryFailedOnly: selection === retryFailedOnlyChoice,
+        interactiveTrust: true,
+      });
       services.repositorySyncStatusBar.updateLastRun(result);
+
+      const summary = result.summary;
       vscode.window.showInformationMessage(
-        `Nexkit repository sync completed for ${result.results.length} repositories.`
+        `Repository sync finished: ${summary.successReady} ready, ${summary.skipped} skipped, ` +
+          `${summary.conflictRisk} warnings, ${summary.failed} failed.`
       );
     },
     services.telemetry
