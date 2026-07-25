@@ -46,6 +46,7 @@ export class SettingsManager {
   private static readonly REPO_SYNC_ALLOW_EXTERNAL_REPOSITORIES = "repoSync.allowExternalRepositories";
   private static readonly REPO_SYNC_PULL_STRATEGY = "repoSync.pullStrategy";
   private static readonly REPO_SYNC_EXTERNAL_REPOSITORIES = "repoSync.externalRepositories";
+  private static readonly REPO_SYNC_HIDDEN_REPOSITORIES = "repoSync.hiddenRepositories";
   private static readonly REPO_SYNC_SCAN_ROOT_PATHS = "repoSync.scanRootPaths";
   private static readonly REPO_SYNC_SCAN_MAX_DEPTH = "repoSync.scanMaxDepth";
   private static readonly REPO_SYNC_SCAN_MAX_REPOSITORIES = "repoSync.scanMaxRepositories";
@@ -246,8 +247,32 @@ export class SettingsManager {
       .get<string[]>(this.REPO_SYNC_EXTERNAL_REPOSITORIES, []);
   }
 
+  static async setRepoSyncExternalRepositories(paths: string[]): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .update(this.REPO_SYNC_EXTERNAL_REPOSITORIES, paths, vscode.ConfigurationTarget.Global);
+  }
+
+  static getRepoSyncHiddenRepositories(): string[] {
+    return vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .get<string[]>(this.REPO_SYNC_HIDDEN_REPOSITORIES, []);
+  }
+
+  static async setRepoSyncHiddenRepositories(paths: string[]): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .update(this.REPO_SYNC_HIDDEN_REPOSITORIES, paths, vscode.ConfigurationTarget.Global);
+  }
+
   static getRepoSyncScanRootPaths(): string[] {
     return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<string[]>(this.REPO_SYNC_SCAN_ROOT_PATHS, []);
+  }
+
+  static async setRepoSyncScanRootPaths(paths: string[]): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .update(this.REPO_SYNC_SCAN_ROOT_PATHS, paths, vscode.ConfigurationTarget.Global);
   }
 
   static getRepoSyncScanMaxDepth(): number {

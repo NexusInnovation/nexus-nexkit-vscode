@@ -21,11 +21,20 @@ export class RepositoryDiscoveryService implements vscode.Disposable {
       this._disposeWatchers();
     }
 
+    const hiddenPaths = SettingsManager.getRepoSyncHiddenRepositories()
+      .map((candidate) => this._normalizeAbsolutePath(candidate))
+      .filter((candidate): candidate is string => Boolean(candidate));
+    const hiddenSet = new Set(hiddenPaths);
+
     const descriptors: RepositorySyncRepository[] = [];
 
     for (const folder of vscode.workspace.workspaceFolders ?? []) {
       const repositoryPath = this._normalizeAbsolutePath(folder.uri.fsPath);
       if (!repositoryPath) {
+        continue;
+      }
+
+      if (hiddenSet.has(repositoryPath)) {
         continue;
       }
 
@@ -44,6 +53,10 @@ export class RepositoryDiscoveryService implements vscode.Disposable {
         continue;
       }
 
+      if (hiddenSet.has(repositoryPath)) {
+        continue;
+      }
+
       descriptors.push({
         key: this._toRepositoryKey(repositoryPath),
         name: path.basename(repositoryPath) || repositoryPath,
@@ -54,7 +67,7 @@ export class RepositoryDiscoveryService implements vscode.Disposable {
     }
 
     const rootScanRepositories = await this._scanConfiguredRootsForRepositories();
-    descriptors.push(...rootScanRepositories);
+    descriptors.push(...rootScanRepositories.filter((repository) => !hiddenSet.has(repository.path)));
 
     return this._dedupeRepositories(descriptors);
   }

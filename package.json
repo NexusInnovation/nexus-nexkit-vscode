@@ -432,6 +432,15 @@
             "type": "string"
           }
         },
+        "nexkit.repoSync.hiddenRepositories": {
+          "type": "array",
+          "default": [],
+          "scope": "application",
+          "description": "Repository paths hidden from the Nexkit repository sync panel and discovery list.",
+          "items": {
+            "type": "string"
+          }
+        },
         "nexkit.repoSync.scanRootPaths": {
           "type": "array",
           "default": [],

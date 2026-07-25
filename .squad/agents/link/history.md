@@ -22,6 +22,18 @@
 
 ## Learnings
 
+- 2026-07-25: Added hidden repository support to repository sync by introducing a dedicated setting (`nexkit.repoSync.hiddenRepositories`) and keeping all path normalization host-side (`path.resolve` + `path.normalize`) before comparing/storing values. This keeps cross-platform comparisons deterministic and avoids UI-side path drift.
+
+- 2026-07-25: For repository list visibility controls, safest pattern is to expose both visible and hidden lists through the same host configuration snapshot (`repositorySyncConfigurationUpdate`) and drive hide/show actions with explicit host commands (`repositorySyncHideRepository`, `repositorySyncUnhideRepository`) plus feedback events. This keeps `AppStateContext` centralized and avoids ad-hoc local state mutations.
+
+- 2026-07-25: Low-risk runtime filtering can be done in discovery by building a normalized hidden-path set once per call and applying it across workspace, external, and root-scan sources before deduplication. This prevents hidden repositories from reappearing as syncable candidates from alternate discovery sources.
+
+- 2026-07-25: Repository Sync panel configuration now uses a dedicated host snapshot message (`repositorySyncConfigurationUpdate`) carrying normalized paths for `workspaceRepositories`, `watchedRepositories`, and `scanRootPaths`, plus explicit webview commands for browse/add/remove flows. Keeping browse and settings writes host-side (with `showOpenDialog` + `SettingsManager` setters) preserves centralized state handling in `AppStateContext` and avoids duplicating path logic in UI components.
+
+- 2026-07-25: When extending `AppState` nested objects, reducer updates must spread the previous nested state (`...prev.repositorySync`) or TypeScript catches missing properties at compile time (here, `config` on `repositorySyncActionFeedback`). This pattern is critical to prevent regressions when adding new sub-state while preserving existing message handlers.
+
+- 2026-07-24: For panel-triggered host commands that can fail asynchronously, a stable UX pattern is to emit an explicit extension→webview feedback contract (actionType/level/message/timestamp) from the message handler itself after each command call. Keep all message handling centralized in `AppStateContext` and cap client-side feedback history (10) so components remain presentational and can safely prefer host-acknowledged status over optimistic local status text.
+
 - 2026-07-24: Repository Sync Lot 3 works best when conflict outcomes carry explicit action metadata (`conflictActionGroup` + `actions`) from pull/precheck services and command handlers execute those actions centrally (`workbench.view.scm`, `vscode.openFolder`, retry-specific via `repositoryPath`, retry-failed-only). Pairing this with a dedicated output channel summary block (including command IDs) and status-bar tooltip context (`Last run` + `Trigger`) gives deterministic silent-success flow plus explicit intervention guidance.
 
 - 2026-07-24: Async unit timeout root cause in repository-sync tests was non-deterministic fake process lifecycle plus stale `out/test` artifacts. Stabilizing approach: make child-process stubs return fresh fake emitters per spawn call and trigger overlap assertions only after the first run is confirmed in-flight (`setImmediate` gate + explicit `releaseFirstRun` assertion). Also rerun `npm run test-compile` before `test:unit` when TypeScript tests changed so `out/test` matches source.

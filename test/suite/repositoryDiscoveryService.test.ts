@@ -38,6 +38,7 @@ suite("Unit: RepositoryDiscoveryService", () => {
       externalRepo,
       workspaceRepo,
     ]);
+    sandbox.stub(SettingsManager, "getRepoSyncHiddenRepositories").returns([]);
     sandbox.stub(SettingsManager, "getRepoSyncScanRootPaths").returns([rootScanRoot]);
     sandbox.stub(SettingsManager, "getRepoSyncScanMaxDepth").returns(2);
     sandbox.stub(SettingsManager, "getRepoSyncScanMaxRepositories").returns(100);
@@ -66,6 +67,7 @@ suite("Unit: RepositoryDiscoveryService", () => {
 
     sandbox.stub(vscode.workspace, "workspaceFolders").value(undefined);
     sandbox.stub(SettingsManager, "getRepoSyncExternalRepositories").returns([]);
+    sandbox.stub(SettingsManager, "getRepoSyncHiddenRepositories").returns([]);
     sandbox.stub(SettingsManager, "getRepoSyncScanRootPaths").returns([rootScanRoot]);
     sandbox.stub(SettingsManager, "getRepoSyncScanMaxDepth").returns(2);
     sandbox.stub(SettingsManager, "getRepoSyncScanMaxRepositories").returns(100);
@@ -76,6 +78,36 @@ suite("Unit: RepositoryDiscoveryService", () => {
 
     assert.strictEqual(result.some((repo) => repo.path === path.normalize(depthOneRepo).toLowerCase()), true);
     assert.strictEqual(result.some((repo) => repo.path === path.normalize(depthThreeRepo).toLowerCase()), false);
+
+    service.dispose();
+  });
+
+  test("excludes hidden repositories from workspace, external and root-scan sources", async () => {
+    const workspaceRepo = path.join(tempRoot, "workspace-repo");
+    const externalRepo = path.join(tempRoot, "external-repo");
+    const scanRoot = path.join(tempRoot, "scan-root");
+    const scannedRepo = path.join(scanRoot, "nested-repo");
+
+    fs.mkdirSync(path.join(workspaceRepo, ".git"), { recursive: true });
+    fs.mkdirSync(path.join(externalRepo, ".git"), { recursive: true });
+    fs.mkdirSync(path.join(scannedRepo, ".git"), { recursive: true });
+
+    sandbox.stub(vscode.workspace, "workspaceFolders").value([
+      { uri: vscode.Uri.file(workspaceRepo), name: "Workspace Repo", index: 0 },
+    ]);
+    sandbox.stub(SettingsManager, "getRepoSyncExternalRepositories").returns([externalRepo]);
+    sandbox
+      .stub(SettingsManager, "getRepoSyncHiddenRepositories")
+      .returns([workspaceRepo, externalRepo, scannedRepo]);
+    sandbox.stub(SettingsManager, "getRepoSyncScanRootPaths").returns([scanRoot]);
+    sandbox.stub(SettingsManager, "getRepoSyncScanMaxDepth").returns(2);
+    sandbox.stub(SettingsManager, "getRepoSyncScanMaxRepositories").returns(100);
+    sandbox.stub(SettingsManager, "isRepoSyncScanWatchEnabled").returns(false);
+
+    const service = new RepositoryDiscoveryService();
+    const result = await service.getSyncableRepositories();
+
+    assert.strictEqual(result.length, 0);
 
     service.dispose();
   });

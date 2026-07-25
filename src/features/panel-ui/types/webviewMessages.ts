@@ -6,6 +6,40 @@ import { DevOpsConnection } from "../../apm-devops/models/devOpsConnection";
 import { WorkflowInfo } from "../../github-workflow-runner/githubWorkflowRunnerService";
 import { RepositorySyncActionType, RepositorySyncConflictActionGroup } from "../../repository-sync/models/repositorySyncModels";
 
+export type RepositorySyncFeedbackLevel = "info" | "warning" | "error";
+
+export type RepositorySyncPanelActionType =
+  | "run-once"
+  | "retry-failed-only"
+  | "retry-specific"
+  | "apply-batch-conflict-action"
+  | "show-output"
+  | "get-configuration"
+  | "browse-add-watched-repository"
+  | "remove-watched-repository"
+  | "browse-add-scan-root"
+  | "remove-scan-root"
+  | "hide-repository"
+  | "unhide-repository";
+
+export interface RepositorySyncWorkspaceRepository {
+  name: string;
+  path: string;
+}
+
+export interface RepositorySyncConfigurationSnapshot {
+  workspaceRepositories: RepositorySyncWorkspaceRepository[];
+  watchedRepositories: string[];
+  scanRootPaths: string[];
+  hiddenRepositories: string[];
+}
+export interface RepositorySyncActionFeedback {
+  message: string;
+  level: RepositorySyncFeedbackLevel;
+  timestamp: string;
+  actionType: RepositorySyncPanelActionType;
+}
+
 /**
  * Messages sent FROM the webview TO the extension
  */
@@ -32,6 +66,7 @@ export type WebviewMessage =
   | { command: "listWorkflows" }
   | { command: "runWorkflow"; workflowFile: string; job?: string; event: string; dryRun: boolean; list: boolean }
   // Repository sync messages
+  | { command: "repositorySyncRunOnce" }
   | { command: "repositorySyncRetryFailedOnly" }
   | { command: "repositorySyncRetrySpecific"; repositoryPath?: string; repositoryName?: string }
   | {
@@ -39,7 +74,14 @@ export type WebviewMessage =
       conflictGroup?: RepositorySyncConflictActionGroup;
       action?: RepositorySyncActionType;
     }
-  | { command: "repositorySyncShowOutput" };
+  | { command: "repositorySyncShowOutput" }
+  | { command: "repositorySyncGetConfiguration" }
+  | { command: "repositorySyncBrowseAddWatchedRepository" }
+  | { command: "repositorySyncRemoveWatchedRepository"; path: string }
+  | { command: "repositorySyncBrowseAddScanRoot" }
+  | { command: "repositorySyncRemoveScanRoot"; path: string }
+  | { command: "repositorySyncHideRepository"; path: string }
+  | { command: "repositorySyncUnhideRepository"; path: string };
 
 /**
  * Messages sent FROM the extension TO the webview
@@ -105,4 +147,12 @@ export type ExtensionMessage =
   | {
       command: "workflowListUpdate";
       workflows: WorkflowInfo[];
+    }
+  | {
+      command: "repositorySyncConfigurationUpdate";
+      configuration: RepositorySyncConfigurationSnapshot;
+    }
+  | {
+      command: "repositorySyncActionFeedback";
+      feedback: RepositorySyncActionFeedback;
     };

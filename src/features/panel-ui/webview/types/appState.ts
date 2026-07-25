@@ -13,6 +13,10 @@ import { TemplateMetadataEntry } from "../../../ai-template-files/services/templ
 import { Profile } from "../../../profile-management/models/profile";
 import { DevOpsConnection } from "../../../apm-devops/models/devOpsConnection";
 import { WorkflowInfo } from "../../../github-workflow-runner/githubWorkflowRunnerService";
+import {
+  RepositorySyncActionFeedback,
+  RepositorySyncWorkspaceRepository,
+} from "../../types/webviewMessages";
 
 /**
  * Complete application state
@@ -81,6 +85,21 @@ export interface AppState {
     /** The metadata index built by the scan, for fuzzy search */
     index: TemplateMetadataEntry[];
   };
+
+  /**
+   * Repository sync panel feedback state
+   */
+  repositorySync: {
+    lastFeedback: RepositorySyncActionFeedback | null;
+    history: RepositorySyncActionFeedback[];
+    config: {
+      workspaceRepositories: RepositorySyncWorkspaceRepository[];
+      watchedRepositories: string[];
+      scanRootPaths: string[];
+      hiddenRepositories: string[];
+      isReady: boolean;
+    };
+  };
 }
 
 /**
@@ -127,5 +146,16 @@ export const initialAppState: AppState = {
     totalCount: 0,
     isComplete: false,
     index: [],
+  },
+  repositorySync: {
+    lastFeedback: null,
+    history: [],
+    config: {
+      workspaceRepositories: [],
+      watchedRepositories: [],
+      scanRootPaths: [],
+      hiddenRepositories: [],
+      isReady: false,
+    },
   },
 };
