@@ -149,6 +149,17 @@
         "command": "nexus-nexkit-vscode.repositorySync.toggle",
         "title": "Nexkit: Toggle Repository Sync",
         "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.repositorySync.retryFailedOnly",
+        "title": "Nexkit: Retry Failed Repository Sync",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.repositorySync.showOutput",
+        "title": "Nexkit: Show Repository Sync Output",
+        "category": "Nexkit",
+        "icon": "$(output)"
       }
     ],
     "menus": {

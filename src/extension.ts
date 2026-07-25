@@ -26,6 +26,8 @@ import { registerGenerateCommitMessageCommand } from "./features/commit-manageme
 import { registerOpenConvertToMarkdownCommand } from "./features/convert-to-markdown/commands";
 import {
   registerRunRepositorySyncCommand,
+  registerRetryFailedRepositorySyncCommand,
+  registerShowRepositorySyncOutputCommand,
   registerToggleRepositorySyncCommand,
 } from "./features/repository-sync/commands";
 
@@ -75,6 +77,8 @@ export async function activate(context: vscode.ExtensionContext) {
   registerGenerateCommitMessageCommand(context, services);
   registerOpenConvertToMarkdownCommand(context, services);
   registerRunRepositorySyncCommand(context, services);
+  registerRetryFailedRepositorySyncCommand(context, services);
+  registerShowRepositorySyncOutputCommand(context, services);
   registerToggleRepositorySyncCommand(context, services);
 
   // Register webview panel

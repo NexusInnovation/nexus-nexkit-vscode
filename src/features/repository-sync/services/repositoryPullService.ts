@@ -72,6 +72,10 @@ export class RepositoryPullService {
           kind: "conflict-risk",
           reason: "Local and remote branches diverged.",
           suggestedAction: "Reconcile branch manually before syncing.",
+          conflictActionGroup: repository.isExternal ? "external-conflict" : "workspace-conflict",
+          actions: repository.isExternal
+            ? ["open-external-repo", "ignore", "retry", "retry-failed-only"]
+            : ["open-workspace-scm", "retry"],
         },
         false
       );
@@ -84,6 +88,10 @@ export class RepositoryPullService {
           kind: "conflict-risk",
           reason: "Local branch is ahead of upstream.",
           suggestedAction: "Push or rebase manually before automated sync.",
+          conflictActionGroup: repository.isExternal ? "external-conflict" : "workspace-conflict",
+          actions: repository.isExternal
+            ? ["open-external-repo", "ignore", "retry", "retry-failed-only"]
+            : ["open-workspace-scm", "retry"],
         },
         false
       );
@@ -137,6 +145,10 @@ export class RepositoryPullService {
         kind: "conflict-risk",
         reason: "Working tree has uncommitted changes.",
         suggestedAction: "Commit or stash changes before syncing.",
+        conflictActionGroup: repository.isExternal ? "external-conflict" : "workspace-conflict",
+        actions: repository.isExternal
+          ? ["open-external-repo", "ignore", "retry", "retry-failed-only"]
+          : ["open-workspace-scm", "retry"],
       };
     }
 

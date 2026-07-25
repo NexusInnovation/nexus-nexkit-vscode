@@ -130,6 +130,51 @@ suite("Unit: RepositorySyncSchedulerService", () => {
     scheduler.dispose();
   });
 
+  test("supports retry for a specific repository path", async () => {
+    const repositories = [makeRepo(1), makeRepo(2)];
+    const discovery = {
+      getSyncableRepositories: sandbox.stub().resolves(repositories),
+      onDidRefreshSuggested: () => ({ dispose: () => {} }),
+      dispose: sandbox.stub(),
+    } as unknown as RepositoryDiscoveryService;
+
+    const trust = {
+      isRepositoryTrusted: sandbox.stub().resolves(true),
+    } as unknown as ExternalRepoTrustService;
+
+    const pullStub = sandbox.stub().resolves({
+      repository: repositories[1],
+      outcome: { kind: "success-ready" as const },
+      success: true,
+      changed: true,
+      skipped: false,
+    });
+
+    const pull = {
+      pullRepository: pullStub,
+    } as unknown as RepositoryPullService;
+
+    const scheduler = new RepositorySyncSchedulerService(
+      sandbox.createStubInstance(LoggingService) as unknown as LoggingService,
+      { trackEvent: sandbox.stub() } as unknown as TelemetryService,
+      discovery,
+      pull,
+      trust
+    );
+
+    const result = await scheduler.runSync({
+      repositoryPath: repositories[1].path,
+      interactiveTrust: true,
+      triggerReason: "manual-retry-specific",
+    });
+
+    assert.strictEqual(result.processedCount, 1);
+    assert.strictEqual(pullStub.callCount, 1);
+    assert.strictEqual(pullStub.firstCall.args[0].path, repositories[1].path);
+
+    scheduler.dispose();
+  });
+
   test("queues one pending run when overlap occurs", async () => {
     const repositories = [makeRepo(1)];
     const discovery = {

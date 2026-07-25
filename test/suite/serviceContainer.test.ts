@@ -74,6 +74,7 @@ suite("Unit: ServiceContainer", () => {
     assert.ok(services.repositoryPull, "RepositoryPullService should be initialized");
     assert.ok(services.repositorySyncScheduler, "RepositorySyncSchedulerService should be initialized");
     assert.ok(services.repositorySyncStatusBar, "RepositorySyncStatusBarService should be initialized");
+    assert.ok(services.repositorySyncOutput, "RepositorySyncOutputService should be initialized");
     assert.ok(services.externalRepoTrust, "ExternalRepoTrustService should be initialized");
   });
 

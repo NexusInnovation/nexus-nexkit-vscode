@@ -87,14 +87,21 @@ export class RepositorySyncSchedulerService implements vscode.Disposable {
       const repositories = await this._discovery.getSyncableRepositories();
       const planned = repositories.slice(0, 10);
       const trustAllowed = await this._applyTrustFilter(planned, options?.interactiveTrust ?? true);
-      const runPlan = this._buildRunPlan(trustAllowed, options?.retryFailedOnly ?? false);
+      const runPlan = this._buildRunPlan(
+        trustAllowed,
+        options?.retryFailedOnly ?? false,
+        options?.repositoryPath
+      );
       const maxConcurrency = Math.min(3, Math.max(2, SettingsManager.getRepoSyncMaxConcurrency()));
+      const triggerReason = options?.triggerReason ?? "unspecified";
 
       this._logging.info("Repository sync run started", {
         discovered: repositories.length,
         planned: planned.length,
         executing: runPlan.length,
         retryFailedOnly: options?.retryFailedOnly ?? false,
+        repositoryPath: options?.repositoryPath,
+        triggerReason,
         maxConcurrency,
       });
 
@@ -129,6 +136,7 @@ export class RepositorySyncSchedulerService implements vscode.Disposable {
         skippedCount: String(runResult.summary.skipped),
         conflictRiskCount: String(runResult.summary.conflictRisk),
         failedCount: String(runResult.summary.failed),
+        triggerReason,
       });
 
       this._logging.info("Repository sync run completed", {
@@ -180,15 +188,26 @@ export class RepositorySyncSchedulerService implements vscode.Disposable {
     return allowed;
   }
 
-  private _buildRunPlan(repositories: RepositorySyncRepository[], retryFailedOnly: boolean): RepositorySyncRepository[] {
-    if (!retryFailedOnly) {
-      return repositories;
+  private _buildRunPlan(
+    repositories: RepositorySyncRepository[],
+    retryFailedOnly: boolean,
+    repositoryPath?: string
+  ): RepositorySyncRepository[] {
+    let runPlan = repositories;
+
+    if (retryFailedOnly) {
+      runPlan = runPlan.filter((repository) => {
+        const previous = this._lastResultsByRepositoryPath.get(repository.path);
+        return previous ? previous.outcome.kind === "failed" : false;
+      });
     }
 
-    return repositories.filter((repository) => {
-      const previous = this._lastResultsByRepositoryPath.get(repository.path);
-      return previous ? previous.outcome.kind === "failed" : false;
-    });
+    const requestedRepositoryPath = repositoryPath;
+    if (!requestedRepositoryPath) {
+      return runPlan;
+    }
+
+    return runPlan.filter((repository) => repository.path === requestedRepositoryPath);
   }
 
   private async _runWithConcurrency(

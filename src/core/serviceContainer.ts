@@ -36,6 +36,7 @@ import { RepositoryPullService } from "../features/repository-sync/services/repo
 import { RepositorySyncSchedulerService } from "../features/repository-sync/services/repositorySyncSchedulerService";
 import { RepositorySyncStatusBarService } from "../features/repository-sync/services/repositorySyncStatusBarService";
 import { ExternalRepoTrustService } from "../features/repository-sync/services/externalRepoTrustService";
+import { RepositorySyncOutputService } from "../features/repository-sync/services/repositorySyncOutputService";
 
 /**
  * Service container for dependency injection
@@ -78,6 +79,7 @@ export interface ServiceContainer {
   repositoryPull: RepositoryPullService;
   repositorySyncScheduler: RepositorySyncSchedulerService;
   repositorySyncStatusBar: RepositorySyncStatusBarService;
+  repositorySyncOutput: RepositorySyncOutputService;
   externalRepoTrust: ExternalRepoTrustService;
 }
 
@@ -142,6 +144,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     externalRepoTrust
   );
   const repositorySyncStatusBar = new RepositorySyncStatusBarService();
+  const repositorySyncOutput = new RepositorySyncOutputService();
 
   // Register for disposal
   context.subscriptions.push(logging);
@@ -154,6 +157,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   context.subscriptions.push(repositoryDiscovery);
   context.subscriptions.push(repositorySyncScheduler);
   context.subscriptions.push(repositorySyncStatusBar);
+  context.subscriptions.push(repositorySyncOutput);
 
   logging.info("All services initialized successfully");
 
@@ -194,6 +198,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     repositoryPull,
     repositorySyncScheduler,
     repositorySyncStatusBar,
+    repositorySyncOutput,
     externalRepoTrust,
   };
 }

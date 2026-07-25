@@ -22,6 +22,8 @@
 
 ## Learnings
 
+- 2026-07-24: Repository Sync Lot 3 works best when conflict outcomes carry explicit action metadata (`conflictActionGroup` + `actions`) from pull/precheck services and command handlers execute those actions centrally (`workbench.view.scm`, `vscode.openFolder`, retry-specific via `repositoryPath`, retry-failed-only). Pairing this with a dedicated output channel summary block (including command IDs) and status-bar tooltip context (`Last run` + `Trigger`) gives deterministic silent-success flow plus explicit intervention guidance.
+
 - 2026-07-24: Async unit timeout root cause in repository-sync tests was non-deterministic fake process lifecycle plus stale `out/test` artifacts. Stabilizing approach: make child-process stubs return fresh fake emitters per spawn call and trigger overlap assertions only after the first run is confirmed in-flight (`setImmediate` gate + explicit `releaseFirstRun` assertion). Also rerun `npm run test-compile` before `test:unit` when TypeScript tests changed so `out/test` matches source.
 
 - 2026-07-24: When stubbing `vscode.window.showQuickPick` in strict TypeScript tests, `sinon.stub(...).resolves("...")` can bind to the `QuickPickItem` overload and cause `TS2345`. A minimal safe pattern is `callsFake` with explicit overload signatures (string[] and `QuickPickItem[]`) so the stub stays aligned with the real API typing.

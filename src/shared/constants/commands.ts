@@ -39,6 +39,8 @@ export const Commands = {
   // Repository sync
   REPOSITORY_SYNC_RUN_ONCE: "nexus-nexkit-vscode.repositorySync.runOnce",
   REPOSITORY_SYNC_TOGGLE: "nexus-nexkit-vscode.repositorySync.toggle",
+  REPOSITORY_SYNC_RETRY_FAILED_ONLY: "nexus-nexkit-vscode.repositorySync.retryFailedOnly",
+  REPOSITORY_SYNC_SHOW_OUTPUT: "nexus-nexkit-vscode.repositorySync.showOutput",
 } as const;
 
 // Type-safe command names

@@ -4,6 +4,15 @@ export type RepositorySyncSource = "workspace" | "external" | "root-scan";
 
 export type RepositorySyncOutcomeKind = "success-ready" | "skipped" | "conflict-risk" | "failed";
 
+export type RepositorySyncConflictActionGroup = "workspace-conflict" | "external-conflict";
+
+export type RepositorySyncActionType =
+  | "open-workspace-scm"
+  | "open-external-repo"
+  | "ignore"
+  | "retry"
+  | "retry-failed-only";
+
 export type RepositorySyncTrustDecision = "allow" | "allow-once" | "deny";
 
 export interface RepositorySyncRepository {
@@ -19,6 +28,8 @@ export interface RepositorySyncOutcome {
   reason?: string;
   suggestedAction?: string;
   branch?: string;
+  conflictActionGroup?: RepositorySyncConflictActionGroup;
+  actions?: RepositorySyncActionType[];
 }
 
 export interface RepositorySyncPullResult {
@@ -52,6 +63,8 @@ export interface RepositorySyncRunResult {
 export interface RepositorySyncRunOptions {
   retryFailedOnly?: boolean;
   interactiveTrust?: boolean;
+  repositoryPath?: string;
+  triggerReason?: string;
 }
 
 export interface RepositorySyncSettings {
