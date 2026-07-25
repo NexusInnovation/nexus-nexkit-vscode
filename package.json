@@ -156,6 +156,16 @@
         "category": "Nexkit"
       },
       {
+        "command": "nexus-nexkit-vscode.repositorySync.retrySpecific",
+        "title": "Nexkit: Retry Specific Repository Sync",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.repositorySync.applyBatchConflictAction",
+        "title": "Nexkit: Apply Batch Conflict Action",
+        "category": "Nexkit"
+      },
+      {
         "command": "nexus-nexkit-vscode.repositorySync.showOutput",
         "title": "Nexkit: Show Repository Sync Output",
         "category": "Nexkit",

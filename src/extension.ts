@@ -25,6 +25,8 @@ import { registerAddDevOpsConnectionCommand, registerRemoveDevOpsConnectionComma
 import { registerGenerateCommitMessageCommand } from "./features/commit-management/commands";
 import { registerOpenConvertToMarkdownCommand } from "./features/convert-to-markdown/commands";
 import {
+  registerApplyBatchConflictActionCommand,
+  registerRetrySpecificRepositorySyncCommand,
   registerRunRepositorySyncCommand,
   registerRetryFailedRepositorySyncCommand,
   registerShowRepositorySyncOutputCommand,
@@ -78,6 +80,8 @@ export async function activate(context: vscode.ExtensionContext) {
   registerOpenConvertToMarkdownCommand(context, services);
   registerRunRepositorySyncCommand(context, services);
   registerRetryFailedRepositorySyncCommand(context, services);
+  registerRetrySpecificRepositorySyncCommand(context, services);
+  registerApplyBatchConflictActionCommand(context, services);
   registerShowRepositorySyncOutputCommand(context, services);
   registerToggleRepositorySyncCommand(context, services);
 

@@ -47,6 +47,11 @@ export class NexkitPanelMessageHandler {
       // GitHub workflow runner handlers
       ["listWorkflows", this.handleListWorkflows.bind(this)],
       ["runWorkflow", this.handleRunWorkflow.bind(this)],
+      // Repository sync handlers
+      ["repositorySyncRetryFailedOnly", this.handleRepositorySyncRetryFailedOnly.bind(this)],
+      ["repositorySyncRetrySpecific", this.handleRepositorySyncRetrySpecific.bind(this)],
+      ["repositorySyncApplyBatchConflictAction", this.handleRepositorySyncApplyBatchConflictAction.bind(this)],
+      ["repositorySyncShowOutput", this.handleRepositorySyncShowOutput.bind(this)],
     ]);
 
     // Auto-refresh template data when it changes (e.g., after config update)
@@ -303,6 +308,48 @@ export class NexkitPanelMessageHandler {
       dryRun: message.dryRun,
       list: message.list,
     });
+  }
+
+  private async handleRepositorySyncRetryFailedOnly(message: WebviewMessage): Promise<void> {
+    this.trackWebviewAction("repositorySyncRetryFailedOnly");
+    this._services.repositorySyncOutput.appendLine(
+      `[Repository Sync] Host request from panel: ${Commands.REPOSITORY_SYNC_RETRY_FAILED_ONLY}`
+    );
+    await vscode.commands.executeCommand(Commands.REPOSITORY_SYNC_RETRY_FAILED_ONLY);
+  }
+
+  private async handleRepositorySyncRetrySpecific(
+    message: WebviewMessage & { command: "repositorySyncRetrySpecific" }
+  ): Promise<void> {
+    this.trackWebviewAction("repositorySyncRetrySpecific");
+    this._services.repositorySyncOutput.appendLine(
+      `[Repository Sync] Host request from panel: ${Commands.REPOSITORY_SYNC_RETRY_SPECIFIC}`
+    );
+    await vscode.commands.executeCommand(Commands.REPOSITORY_SYNC_RETRY_SPECIFIC, {
+      repositoryPath: message.repositoryPath,
+      repositoryName: message.repositoryName,
+    });
+  }
+
+  private async handleRepositorySyncApplyBatchConflictAction(
+    message: WebviewMessage & { command: "repositorySyncApplyBatchConflictAction" }
+  ): Promise<void> {
+    this.trackWebviewAction("repositorySyncApplyBatchConflictAction");
+    this._services.repositorySyncOutput.appendLine(
+      `[Repository Sync] Host request from panel: ${Commands.REPOSITORY_SYNC_APPLY_BATCH_CONFLICT_ACTION}`
+    );
+    await vscode.commands.executeCommand(Commands.REPOSITORY_SYNC_APPLY_BATCH_CONFLICT_ACTION, {
+      conflictGroup: message.conflictGroup,
+      action: message.action,
+    });
+  }
+
+  private async handleRepositorySyncShowOutput(message: WebviewMessage): Promise<void> {
+    this.trackWebviewAction("repositorySyncShowOutput");
+    this._services.repositorySyncOutput.appendLine(
+      `[Repository Sync] Host request from panel: ${Commands.REPOSITORY_SYNC_SHOW_OUTPUT}`
+    );
+    await vscode.commands.executeCommand(Commands.REPOSITORY_SYNC_SHOW_OUTPUT);
   }
 
   // ============================================================================

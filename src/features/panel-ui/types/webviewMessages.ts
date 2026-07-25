@@ -4,6 +4,7 @@ import { TemplateMetadataEntry, MetadataScanProgress } from "../../ai-template-f
 import { Profile } from "../../profile-management/models/profile";
 import { DevOpsConnection } from "../../apm-devops/models/devOpsConnection";
 import { WorkflowInfo } from "../../github-workflow-runner/githubWorkflowRunnerService";
+import { RepositorySyncActionType, RepositorySyncConflictActionGroup } from "../../repository-sync/models/repositorySyncModels";
 
 /**
  * Messages sent FROM the webview TO the extension
@@ -29,7 +30,16 @@ export type WebviewMessage =
   | { command: "setActiveDevOpsConnection"; connectionId: string }
   // GitHub workflow runner messages
   | { command: "listWorkflows" }
-  | { command: "runWorkflow"; workflowFile: string; job?: string; event: string; dryRun: boolean; list: boolean };
+  | { command: "runWorkflow"; workflowFile: string; job?: string; event: string; dryRun: boolean; list: boolean }
+  // Repository sync messages
+  | { command: "repositorySyncRetryFailedOnly" }
+  | { command: "repositorySyncRetrySpecific"; repositoryPath?: string; repositoryName?: string }
+  | {
+      command: "repositorySyncApplyBatchConflictAction";
+      conflictGroup?: RepositorySyncConflictActionGroup;
+      action?: RepositorySyncActionType;
+    }
+  | { command: "repositorySyncShowOutput" };
 
 /**
  * Messages sent FROM the extension TO the webview

@@ -149,5 +149,19 @@ suite("Unit: Extension Activation", () => {
     assert.ok(toggleSyncCommand, "Expected repositorySync.toggle command contribution.");
     assert.strictEqual(toggleSyncCommand.title, "Nexkit: Toggle Repository Sync");
     assert.strictEqual(toggleSyncCommand.category, "Nexkit");
+
+    const retrySpecificCommand = packageJson.contributes?.commands?.find(
+      (entry: { command: string }) => entry.command === "nexus-nexkit-vscode.repositorySync.retrySpecific"
+    );
+    assert.ok(retrySpecificCommand, "Expected repositorySync.retrySpecific command contribution.");
+    assert.strictEqual(retrySpecificCommand.title, "Nexkit: Retry Specific Repository Sync");
+    assert.strictEqual(retrySpecificCommand.category, "Nexkit");
+
+    const batchConflictCommand = packageJson.contributes?.commands?.find(
+      (entry: { command: string }) => entry.command === "nexus-nexkit-vscode.repositorySync.applyBatchConflictAction"
+    );
+    assert.ok(batchConflictCommand, "Expected repositorySync.applyBatchConflictAction command contribution.");
+    assert.strictEqual(batchConflictCommand.title, "Nexkit: Apply Batch Conflict Action");
+    assert.strictEqual(batchConflictCommand.category, "Nexkit");
   });
 });

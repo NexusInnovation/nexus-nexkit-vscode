@@ -40,6 +40,8 @@ export const Commands = {
   REPOSITORY_SYNC_RUN_ONCE: "nexus-nexkit-vscode.repositorySync.runOnce",
   REPOSITORY_SYNC_TOGGLE: "nexus-nexkit-vscode.repositorySync.toggle",
   REPOSITORY_SYNC_RETRY_FAILED_ONLY: "nexus-nexkit-vscode.repositorySync.retryFailedOnly",
+  REPOSITORY_SYNC_RETRY_SPECIFIC: "nexus-nexkit-vscode.repositorySync.retrySpecific",
+  REPOSITORY_SYNC_APPLY_BATCH_CONFLICT_ACTION: "nexus-nexkit-vscode.repositorySync.applyBatchConflictAction",
   REPOSITORY_SYNC_SHOW_OUTPUT: "nexus-nexkit-vscode.repositorySync.showOutput",
 } as const;
 
