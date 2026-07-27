@@ -38,6 +38,27 @@ export class SettingsManager {
   // Convert to Markdown settings
   private static readonly CONVERT_TO_MARKDOWN_PYTHON_PATH = "convertToMarkdown.pythonPath";
 
+  // Repository sync settings
+  private static readonly REPO_SYNC_ENABLED = "repoSync.enabled";
+  private static readonly REPO_SYNC_AUTO_SYNC_ON_STARTUP = "repoSync.autoSyncOnStartup";
+  private static readonly REPO_SYNC_INTERVAL_MINUTES = "repoSync.intervalMinutes";
+  private static readonly REPO_SYNC_STATUS_BAR_ENABLED = "repoSync.statusBarEnabled";
+  private static readonly REPO_SYNC_ALLOW_EXTERNAL_REPOSITORIES = "repoSync.allowExternalRepositories";
+  private static readonly REPO_SYNC_PULL_STRATEGY = "repoSync.pullStrategy";
+  private static readonly REPO_SYNC_EXTERNAL_REPOSITORIES = "repoSync.externalRepositories";
+  private static readonly REPO_SYNC_HIDDEN_REPOSITORIES = "repoSync.hiddenRepositories";
+  private static readonly REPO_SYNC_SCAN_ROOT_PATHS = "repoSync.scanRootPaths";
+  private static readonly REPO_SYNC_SCAN_MAX_DEPTH = "repoSync.scanMaxDepth";
+  private static readonly REPO_SYNC_SCAN_MAX_REPOSITORIES = "repoSync.scanMaxRepositories";
+  private static readonly REPO_SYNC_SCAN_WATCH_ENABLED = "repoSync.scanWatchEnabled";
+  private static readonly REPO_SYNC_ALLOWED_BRANCHES = "repoSync.allowedBranches";
+  private static readonly REPO_SYNC_MAX_CONCURRENCY = "repoSync.maxConcurrency";
+
+  // Repository sync consent state keys
+  private static readonly REPO_SYNC_EXTERNAL_TRUSTED_KEY = "nexkit.repoSync.externalTrusted";
+  private static readonly REPO_SYNC_EXTERNAL_TRUST_DENIED_KEY = "nexkit.repoSync.externalDenied";
+  private static readonly REPO_SYNC_GLOBAL_CONSENT_KEY = "nexkit.repoSync.globalConsentGiven";
+
   // Template auto-refresh settings
   private static readonly TEMPLATES_AUTO_REFRESH_INTERVAL = "templates.autoRefreshIntervalMinutes";
   /**
@@ -179,6 +200,169 @@ export class SettingsManager {
     return vscode.workspace
       .getConfiguration(this.NEXKIT_SECTION)
       .get<string>(this.CONVERT_TO_MARKDOWN_PYTHON_PATH, "");
+  }
+
+  // Repository sync
+  static isRepoSyncEnabled(): boolean {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<boolean>(this.REPO_SYNC_ENABLED, false);
+  }
+
+  static async setRepoSyncEnabled(value: boolean): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .update(this.REPO_SYNC_ENABLED, value, vscode.ConfigurationTarget.Global);
+  }
+
+  static isRepoSyncAutoSyncOnStartupEnabled(): boolean {
+    return vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .get<boolean>(this.REPO_SYNC_AUTO_SYNC_ON_STARTUP, false);
+  }
+
+  static getRepoSyncIntervalMinutes(): number {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<number>(this.REPO_SYNC_INTERVAL_MINUTES, 60);
+  }
+
+  static isRepoSyncStatusBarEnabled(): boolean {
+    return vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .get<boolean>(this.REPO_SYNC_STATUS_BAR_ENABLED, true);
+  }
+
+  static isRepoSyncAllowExternalRepositories(): boolean {
+    return vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .get<boolean>(this.REPO_SYNC_ALLOW_EXTERNAL_REPOSITORIES, false);
+  }
+
+  static getRepoSyncPullStrategy(): "ff-only" | "rebase" | "merge" {
+    return vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .get<"ff-only" | "rebase" | "merge">(this.REPO_SYNC_PULL_STRATEGY, "ff-only");
+  }
+
+  static getRepoSyncExternalRepositories(): string[] {
+    return vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .get<string[]>(this.REPO_SYNC_EXTERNAL_REPOSITORIES, []);
+  }
+
+  static async setRepoSyncExternalRepositories(paths: string[]): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .update(this.REPO_SYNC_EXTERNAL_REPOSITORIES, paths, vscode.ConfigurationTarget.Global);
+  }
+
+  static getRepoSyncHiddenRepositories(): string[] {
+    return vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .get<string[]>(this.REPO_SYNC_HIDDEN_REPOSITORIES, []);
+  }
+
+  static async setRepoSyncHiddenRepositories(paths: string[]): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .update(this.REPO_SYNC_HIDDEN_REPOSITORIES, paths, vscode.ConfigurationTarget.Global);
+  }
+
+  static getRepoSyncScanRootPaths(): string[] {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<string[]>(this.REPO_SYNC_SCAN_ROOT_PATHS, []);
+  }
+
+  static async setRepoSyncScanRootPaths(paths: string[]): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .update(this.REPO_SYNC_SCAN_ROOT_PATHS, paths, vscode.ConfigurationTarget.Global);
+  }
+
+  static getRepoSyncScanMaxDepth(): number {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<number>(this.REPO_SYNC_SCAN_MAX_DEPTH, 2);
+  }
+
+  static getRepoSyncScanMaxRepositories(): number {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<number>(this.REPO_SYNC_SCAN_MAX_REPOSITORIES, 100);
+  }
+
+  static isRepoSyncScanWatchEnabled(): boolean {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<boolean>(this.REPO_SYNC_SCAN_WATCH_ENABLED, false);
+  }
+
+  static getRepoSyncAllowedBranches(): string[] {
+    return vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .get<string[]>(this.REPO_SYNC_ALLOWED_BRANCHES, ["main", "master", "develop"]);
+  }
+
+  static getRepoSyncMaxConcurrency(): number {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<number>(this.REPO_SYNC_MAX_CONCURRENCY, 2);
+  }
+
+  static isRepoSyncGlobalConsentGiven(): boolean {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    return this.context.globalState.get<boolean>(this.REPO_SYNC_GLOBAL_CONSENT_KEY, false);
+  }
+
+  static async setRepoSyncGlobalConsentGiven(value: boolean): Promise<void> {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    await this.context.globalState.update(this.REPO_SYNC_GLOBAL_CONSENT_KEY, value);
+  }
+
+  static isRepoSyncExternalRepoTrusted(repositoryUrl: string): boolean {
+    if (!this.context) {
+      return false;
+    }
+
+    const trusted = this.context.workspaceState.get<Record<string, boolean>>(this.REPO_SYNC_EXTERNAL_TRUSTED_KEY, {});
+    return trusted[repositoryUrl] ?? false;
+  }
+
+  static async setRepoSyncExternalRepoTrusted(repositoryUrl: string, value: boolean): Promise<void> {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+
+    const trusted = this.context.workspaceState.get<Record<string, boolean>>(this.REPO_SYNC_EXTERNAL_TRUSTED_KEY, {});
+    trusted[repositoryUrl] = value;
+    await this.context.workspaceState.update(this.REPO_SYNC_EXTERNAL_TRUSTED_KEY, trusted);
+
+    if (value) {
+      const denied = this.context.workspaceState.get<Record<string, boolean>>(this.REPO_SYNC_EXTERNAL_TRUST_DENIED_KEY, {});
+      if (denied[repositoryUrl]) {
+        delete denied[repositoryUrl];
+        await this.context.workspaceState.update(this.REPO_SYNC_EXTERNAL_TRUST_DENIED_KEY, denied);
+      }
+    }
+  }
+
+  static isRepoSyncExternalRepoDenied(repositoryUrl: string): boolean {
+    if (!this.context) {
+      return false;
+    }
+
+    const denied = this.context.workspaceState.get<Record<string, boolean>>(this.REPO_SYNC_EXTERNAL_TRUST_DENIED_KEY, {});
+    return denied[repositoryUrl] ?? false;
+  }
+
+  static async setRepoSyncExternalRepoDenied(repositoryUrl: string, value: boolean): Promise<void> {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+
+    const denied = this.context.workspaceState.get<Record<string, boolean>>(this.REPO_SYNC_EXTERNAL_TRUST_DENIED_KEY, {});
+    denied[repositoryUrl] = value;
+    await this.context.workspaceState.update(this.REPO_SYNC_EXTERNAL_TRUST_DENIED_KEY, denied);
+
+    if (value) {
+      const trusted = this.context.workspaceState.get<Record<string, boolean>>(this.REPO_SYNC_EXTERNAL_TRUSTED_KEY, {});
+      if (trusted[repositoryUrl]) {
+        delete trusted[repositoryUrl];
+        await this.context.workspaceState.update(this.REPO_SYNC_EXTERNAL_TRUSTED_KEY, trusted);
+      }
+    }
   }
 
   // Extension Updates

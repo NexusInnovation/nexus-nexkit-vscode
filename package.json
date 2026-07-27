@@ -139,6 +139,37 @@
         "command": "nexus-nexkit-vscode.openConvertToMarkdown",
         "title": "Nexkit: Convert to Markdown",
         "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.repositorySync.runOnce",
+        "title": "Nexkit: Run Repository Sync",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.repositorySync.toggle",
+        "title": "Nexkit: Toggle Repository Sync",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.repositorySync.retryFailedOnly",
+        "title": "Nexkit: Retry Failed Repository Sync",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.repositorySync.retrySpecific",
+        "title": "Nexkit: Retry Specific Repository Sync",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.repositorySync.applyBatchConflictAction",
+        "title": "Nexkit: Apply Batch Conflict Action",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.repositorySync.showOutput",
+        "title": "Nexkit: Show Repository Sync Output",
+        "category": "Nexkit",
+        "icon": "$(output)"
       }
     ],
     "menus": {
@@ -349,6 +380,118 @@
           "default": "",
           "scope": "application",
           "description": "Path to a Python interpreter used for Convert to Markdown (microsoft/markitdown). Leave empty to auto-detect python3/python/py on PATH."
+        },
+        "nexkit.repoSync.enabled": {
+          "type": "boolean",
+          "default": false,
+          "scope": "application",
+          "description": "Enable Nexkit repository sync scaffolding features."
+        },
+        "nexkit.repoSync.autoSyncOnStartup": {
+          "type": "boolean",
+          "default": false,
+          "scope": "application",
+          "description": "Automatically start repository sync scheduling when VS Code starts."
+        },
+        "nexkit.repoSync.intervalMinutes": {
+          "type": "number",
+          "default": 60,
+          "minimum": 1,
+          "scope": "application",
+          "description": "Repository sync interval in minutes."
+        },
+        "nexkit.repoSync.statusBarEnabled": {
+          "type": "boolean",
+          "default": true,
+          "scope": "application",
+          "description": "Show the Nexkit repository sync status bar item."
+        },
+        "nexkit.repoSync.allowExternalRepositories": {
+          "type": "boolean",
+          "default": false,
+          "scope": "application",
+          "description": "Allow repository sync for external repositories after trust consent."
+        },
+        "nexkit.repoSync.pullStrategy": {
+          "type": "string",
+          "enum": [
+            "ff-only",
+            "rebase",
+            "merge"
+          ],
+          "default": "ff-only",
+          "scope": "application",
+          "description": "Preferred pull strategy for repository sync operations."
+        },
+        "nexkit.repoSync.externalRepositories": {
+          "type": "array",
+          "default": [],
+          "scope": "application",
+          "description": "Additional local repository paths to include in repository sync discovery.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "nexkit.repoSync.hiddenRepositories": {
+          "type": "array",
+          "default": [],
+          "scope": "application",
+          "description": "Repository paths hidden from the Nexkit repository sync panel and discovery list.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "nexkit.repoSync.scanRootPaths": {
+          "type": "array",
+          "default": [],
+          "scope": "application",
+          "description": "Root paths that Nexkit scans for nested git repositories.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "nexkit.repoSync.scanMaxDepth": {
+          "type": "number",
+          "default": 2,
+          "minimum": 0,
+          "maximum": 5,
+          "scope": "application",
+          "description": "Maximum folder depth when scanning root paths for repositories."
+        },
+        "nexkit.repoSync.scanMaxRepositories": {
+          "type": "number",
+          "default": 100,
+          "minimum": 1,
+          "maximum": 500,
+          "scope": "application",
+          "description": "Maximum number of repositories discovered from root scans per run."
+        },
+        "nexkit.repoSync.scanWatchEnabled": {
+          "type": "boolean",
+          "default": false,
+          "scope": "application",
+          "description": "Watch configured root scan paths for git repository additions or removals and suggest a refresh."
+        },
+        "nexkit.repoSync.allowedBranches": {
+          "type": "array",
+          "default": [
+            "main",
+            "master",
+            "develop"
+          ],
+          "scope": "application",
+          "description": "Branch names allowed for repository sync precheck processing.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "nexkit.repoSync.maxConcurrency": {
+          "type": "number",
+          "default": 2,
+          "minimum": 2,
+          "maximum": 3,
+          "scope": "application",
+          "description": "Maximum concurrent repository sync operations per run."
         },
         "nexkit.telemetry.enabled": {
           "type": "boolean",

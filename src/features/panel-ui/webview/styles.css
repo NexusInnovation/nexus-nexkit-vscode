@@ -1375,6 +1375,193 @@ details[open] > .type-header::before {
   background-color: var(--vscode-button-secondaryHoverBackground);
 }
 
+.repository-sync-tool {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.repository-sync-helper-text {
+  margin: 0;
+  font-size: 0.82em;
+  color: var(--vscode-descriptionForeground);
+  line-height: 1.35;
+}
+
+.repository-sync-status {
+  margin: 0;
+  font-size: 0.8em;
+  color: var(--vscode-descriptionForeground);
+  padding: 6px 8px;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 4px;
+  background-color: var(--vscode-editor-background);
+}
+
+.repository-sync-status-info {
+  border-left: 3px solid var(--vscode-focusBorder);
+}
+
+.repository-sync-status-warning {
+  border-left: 3px solid var(--vscode-notificationsWarningIcon-foreground, #cca700);
+}
+
+.repository-sync-status-error {
+  border-left: 3px solid var(--vscode-errorForeground);
+  color: var(--vscode-errorForeground);
+}
+
+.repository-sync-feedback-history {
+  margin: -2px 0 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.repository-sync-feedback-entry {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px;
+  font-size: 0.74em;
+  color: var(--vscode-descriptionForeground);
+  line-height: 1.3;
+}
+
+.repository-sync-feedback-time {
+  color: var(--vscode-disabledForeground);
+}
+
+.repository-sync-feedback-entry-warning .repository-sync-feedback-message {
+  color: var(--vscode-notificationsWarningIcon-foreground, #cca700);
+}
+
+.repository-sync-feedback-entry-error .repository-sync-feedback-message {
+  color: var(--vscode-errorForeground);
+}
+
+.repository-sync-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.repository-sync-batch-action {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 4px;
+  background-color: var(--vscode-editor-background);
+}
+
+.repository-sync-subtitle {
+  margin: 0;
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+}
+
+.repository-sync-batch-helper-text {
+  margin: 0;
+  font-size: 0.78em;
+  line-height: 1.35;
+  color: var(--vscode-descriptionForeground);
+}
+
+.repository-sync-select-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
+.repository-sync-config-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 4px;
+  background-color: var(--vscode-editor-background);
+}
+
+.repository-sync-config-label {
+  margin: 2px 0 0 0;
+  font-size: 0.78em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.repository-sync-path-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.repository-sync-path-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 4px;
+  background-color: var(--vscode-sideBar-background);
+}
+
+.repository-sync-path-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.repository-sync-path-name {
+  font-size: 0.8em;
+  color: var(--vscode-foreground);
+  font-weight: 600;
+}
+
+.repository-sync-path-text {
+  font-size: 0.75em;
+  color: var(--vscode-descriptionForeground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+}
+
+.repository-sync-remove-btn {
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 0.74em;
+  background-color: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.repository-sync-remove-btn:hover {
+  background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+.repository-sync-empty-text {
+  margin: 0;
+  font-size: 0.78em;
+  color: var(--vscode-descriptionForeground);
+  font-style: italic;
+}
+
+.repository-sync-apply-btn {
+  width: 100%;
+}
+
 .mode-card-features {
   list-style: none;
   padding: 0;

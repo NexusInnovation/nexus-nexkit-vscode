@@ -148,6 +148,37 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
             },
           }));
           break;
+
+        case "repositorySyncActionFeedback":
+          setState((prev) => {
+            const nextHistory = [message.feedback, ...prev.repositorySync.history].slice(0, 10);
+
+            return {
+              ...prev,
+              repositorySync: {
+                ...prev.repositorySync,
+                lastFeedback: message.feedback,
+                history: nextHistory,
+              },
+            };
+          });
+          break;
+
+        case "repositorySyncConfigurationUpdate":
+          setState((prev) => ({
+            ...prev,
+            repositorySync: {
+              ...prev.repositorySync,
+              config: {
+                workspaceRepositories: message.configuration.workspaceRepositories,
+                watchedRepositories: message.configuration.watchedRepositories,
+                scanRootPaths: message.configuration.scanRootPaths,
+                hiddenRepositories: message.configuration.hiddenRepositories,
+                isReady: true,
+              },
+            },
+          }));
+          break;
       }
     };
 
@@ -163,6 +194,8 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     const unsubscribeScanComplete = messenger.onMessage("metadataScanComplete", handleMessage);
     const unsubscribeWorkflows = messenger.onMessage("workflowListUpdate", handleMessage);
     const unsubscribeUpdatesAvailable = messenger.onMessage("templateUpdatesAvailable", handleMessage);
+    const unsubscribeRepositorySyncFeedback = messenger.onMessage("repositorySyncActionFeedback", handleMessage);
+    const unsubscribeRepositorySyncConfiguration = messenger.onMessage("repositorySyncConfigurationUpdate", handleMessage);
 
     // Request initial state from extension
     messenger.sendMessage({ command: "webviewReady" });
@@ -180,6 +213,8 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       unsubscribeScanComplete();
       unsubscribeWorkflows();
       unsubscribeUpdatesAvailable();
+      unsubscribeRepositorySyncFeedback();
+      unsubscribeRepositorySyncConfiguration();
     };
   }, [messenger]);
 

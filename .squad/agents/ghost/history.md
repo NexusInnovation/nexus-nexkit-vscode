@@ -31,3 +31,11 @@ Shared context (see decisions.md "Replace custom RTF/DOCX/HTML to Markdown conve
 ## Team update — 2026-07-20 (Convert to Markdown — full migration complete and merged)
 
 Rebuilt `src/features/convert-to-markdown/webview/` (index.html + main.tsx) as a thin message-passing Preact UI driven entirely by Link's `messages.ts` contract — no client-side conversion logic remains. Paste handler calls `event.preventDefault()` before reading clipboard data so pasted HTML is never inserted into the DOM. Availability gating disables (not hides) inputs with a banner + Recheck button. `ToolsSection.tsx` renamed `openRtfConverter` → `openConvertToMarkdown`. `npm run check:types` clean; merged into decisions.md.
+
+## Team update — 2026-07-24 (Repository Sync controls integrated into Tools tab)
+
+Added a dedicated `RepositorySyncTool` molecule under the Tools tab with Run Sync Now, Retry Failed Only, Retry Specific Repository, Apply Batch Conflict Action, and Show Sync Output actions using panel message contracts. Added explicit webview message `repositorySyncRunOnce` and host routing to `Commands.REPOSITORY_SYNC_RUN_ONCE` in `NexkitPanelMessageHandler` to support one-click run-now. Batch conflict action UI resets action on group change and keeps submit disabled until both conflict group and action are selected; helper text explicitly states conflicts are never auto-resolved.
+
+## Team update — 2026-07-24 (Repository Sync UX polish)
+
+For non-blocking operator feedback in webview controls, local component status text with a timestamp is enough; no host contract or global AppState changes are required. Safe action ordering for sync controls should keep operational flow explicit: run first, output second, retry paths after, and batch conflict operations last with pairing guidance.

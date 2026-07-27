@@ -494,3 +494,23 @@ Full suite went from 381 passing / 1 failing to 384 passing / 0 failing.
 ### Why (reusable pattern)
 
 Establishes a reusable, minimal pattern for future tests that need to fake `vscode.workspace.fs.*` or similarly frozen VS Code API surfaces: when Sinon cannot stub a method directly on a VS Code namespace object because its property descriptor is non-configurable, stub the parent property/getter instead and spread-override only the needed member. Avoids time lost rediscovering the Sinon property-descriptor limitation.
+
+---
+
+## Decision: Discovery prompts should use askQuestions with fast choices + custom input
+
+**Date:** 2026-07-24
+**Agent:** Squad (Coordinator), requested by Eric De Carufel
+**Classification:** Generic process preference
+
+### Context
+
+User directive captured in decision inbox requested that discovery questions be asked via `askQuestions` to support rapid selection while still allowing personalized answers.
+
+### Decision
+
+For discovery and requirement-clarification steps, prefer `askQuestions` with selectable options and freeform custom input enabled.
+
+### Why
+
+This reduces back-and-forth for common decisions while preserving flexibility for project-specific details.

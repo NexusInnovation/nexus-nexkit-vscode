@@ -1,7 +1,13 @@
 import * as vscode from "vscode";
+import * as path from "path";
 import { SettingsManager } from "../../core/settingsManager";
 import { Commands } from "../../shared/constants/commands";
-import { WebviewMessage, ExtensionMessage } from "./types/webviewMessages";
+import {
+  WebviewMessage,
+  ExtensionMessage,
+  RepositorySyncFeedbackLevel,
+  RepositorySyncPanelActionType,
+} from "./types/webviewMessages";
 import { ServiceContainer } from "../../core/serviceContainer";
 import { getApmAgentDiagnostics } from "./utils/templateDiagnostics";
 
@@ -47,6 +53,22 @@ export class NexkitPanelMessageHandler {
       // GitHub workflow runner handlers
       ["listWorkflows", this.handleListWorkflows.bind(this)],
       ["runWorkflow", this.handleRunWorkflow.bind(this)],
+      // Repository sync handlers
+      ["repositorySyncRunOnce", this.handleRepositorySyncRunOnce.bind(this)],
+      ["repositorySyncRetryFailedOnly", this.handleRepositorySyncRetryFailedOnly.bind(this)],
+      ["repositorySyncRetrySpecific", this.handleRepositorySyncRetrySpecific.bind(this)],
+      ["repositorySyncApplyBatchConflictAction", this.handleRepositorySyncApplyBatchConflictAction.bind(this)],
+      ["repositorySyncShowOutput", this.handleRepositorySyncShowOutput.bind(this)],
+      ["repositorySyncGetConfiguration", this.handleRepositorySyncGetConfiguration.bind(this)],
+      [
+        "repositorySyncBrowseAddWatchedRepository",
+        this.handleRepositorySyncBrowseAddWatchedRepository.bind(this),
+      ],
+      ["repositorySyncRemoveWatchedRepository", this.handleRepositorySyncRemoveWatchedRepository.bind(this)],
+      ["repositorySyncBrowseAddScanRoot", this.handleRepositorySyncBrowseAddScanRoot.bind(this)],
+      ["repositorySyncRemoveScanRoot", this.handleRepositorySyncRemoveScanRoot.bind(this)],
+      ["repositorySyncHideRepository", this.handleRepositorySyncHideRepository.bind(this)],
+      ["repositorySyncUnhideRepository", this.handleRepositorySyncUnhideRepository.bind(this)],
     ]);
 
     // Auto-refresh template data when it changes (e.g., after config update)
@@ -305,6 +327,268 @@ export class NexkitPanelMessageHandler {
     });
   }
 
+  private async handleRepositorySyncRunOnce(message: WebviewMessage): Promise<void> {
+    this.trackWebviewAction("repositorySyncRunOnce");
+    this._services.repositorySyncOutput.appendLine(
+      `[Repository Sync] Host request from panel: ${Commands.REPOSITORY_SYNC_RUN_ONCE}`
+    );
+    try {
+      await vscode.commands.executeCommand(Commands.REPOSITORY_SYNC_RUN_ONCE);
+      this.sendRepositorySyncFeedback("run-once", "Repository sync run started.");
+    } catch (error) {
+      this.sendRepositorySyncFeedback(
+        "run-once",
+        this.getSafeRepositorySyncErrorMessage(error, "Failed to run repository sync."),
+        "error"
+      );
+      throw error;
+    }
+  }
+
+  private async handleRepositorySyncRetryFailedOnly(message: WebviewMessage): Promise<void> {
+    this.trackWebviewAction("repositorySyncRetryFailedOnly");
+    this._services.repositorySyncOutput.appendLine(
+      `[Repository Sync] Host request from panel: ${Commands.REPOSITORY_SYNC_RETRY_FAILED_ONLY}`
+    );
+    try {
+      await vscode.commands.executeCommand(Commands.REPOSITORY_SYNC_RETRY_FAILED_ONLY);
+      this.sendRepositorySyncFeedback("retry-failed-only", "Retry failed-only request sent.");
+    } catch (error) {
+      this.sendRepositorySyncFeedback(
+        "retry-failed-only",
+        this.getSafeRepositorySyncErrorMessage(error, "Failed to retry failed repository sync operations."),
+        "error"
+      );
+      throw error;
+    }
+  }
+
+  private async handleRepositorySyncRetrySpecific(
+    message: WebviewMessage & { command: "repositorySyncRetrySpecific" }
+  ): Promise<void> {
+    this.trackWebviewAction("repositorySyncRetrySpecific");
+    this._services.repositorySyncOutput.appendLine(
+      `[Repository Sync] Host request from panel: ${Commands.REPOSITORY_SYNC_RETRY_SPECIFIC}`
+    );
+    try {
+      await vscode.commands.executeCommand(Commands.REPOSITORY_SYNC_RETRY_SPECIFIC, {
+        repositoryPath: message.repositoryPath,
+        repositoryName: message.repositoryName,
+      });
+      const repositoryLabel = message.repositoryName ?? message.repositoryPath ?? "selected repository";
+      this.sendRepositorySyncFeedback("retry-specific", `Retry request sent for ${repositoryLabel}.`);
+    } catch (error) {
+      this.sendRepositorySyncFeedback(
+        "retry-specific",
+        this.getSafeRepositorySyncErrorMessage(error, "Failed to retry repository sync for the selected repository."),
+        "error"
+      );
+      throw error;
+    }
+  }
+
+  private async handleRepositorySyncApplyBatchConflictAction(
+    message: WebviewMessage & { command: "repositorySyncApplyBatchConflictAction" }
+  ): Promise<void> {
+    this.trackWebviewAction("repositorySyncApplyBatchConflictAction");
+    this._services.repositorySyncOutput.appendLine(
+      `[Repository Sync] Host request from panel: ${Commands.REPOSITORY_SYNC_APPLY_BATCH_CONFLICT_ACTION}`
+    );
+    try {
+      await vscode.commands.executeCommand(Commands.REPOSITORY_SYNC_APPLY_BATCH_CONFLICT_ACTION, {
+        conflictGroup: message.conflictGroup,
+        action: message.action,
+      });
+      const actionLabel = message.action ?? "selected action";
+      this.sendRepositorySyncFeedback("apply-batch-conflict-action", `Batch conflict action applied: ${actionLabel}.`);
+    } catch (error) {
+      this.sendRepositorySyncFeedback(
+        "apply-batch-conflict-action",
+        this.getSafeRepositorySyncErrorMessage(error, "Failed to apply batch conflict action."),
+        "error"
+      );
+      throw error;
+    }
+  }
+
+  private async handleRepositorySyncShowOutput(message: WebviewMessage): Promise<void> {
+    this.trackWebviewAction("repositorySyncShowOutput");
+    this._services.repositorySyncOutput.appendLine(
+      `[Repository Sync] Host request from panel: ${Commands.REPOSITORY_SYNC_SHOW_OUTPUT}`
+    );
+    try {
+      await vscode.commands.executeCommand(Commands.REPOSITORY_SYNC_SHOW_OUTPUT);
+      this.sendRepositorySyncFeedback("show-output", "Repository sync output opened.");
+    } catch (error) {
+      this.sendRepositorySyncFeedback(
+        "show-output",
+        this.getSafeRepositorySyncErrorMessage(error, "Failed to open repository sync output."),
+        "error"
+      );
+      throw error;
+    }
+  }
+
+  private async handleRepositorySyncGetConfiguration(message: WebviewMessage): Promise<void> {
+    this.trackWebviewAction("repositorySyncGetConfiguration");
+    await this.sendRepositorySyncConfiguration();
+    this.sendRepositorySyncFeedback("get-configuration", "Repository sync configuration refreshed.");
+  }
+
+  private async handleRepositorySyncBrowseAddWatchedRepository(message: WebviewMessage): Promise<void> {
+    this.trackWebviewAction("repositorySyncBrowseAddWatchedRepository");
+
+    const selectedPath = await this.pickSingleFolderPath();
+    if (!selectedPath) {
+      this.sendRepositorySyncFeedback(
+        "browse-add-watched-repository",
+        "Browse canceled. No watched repository added.",
+        "warning"
+      );
+      return;
+    }
+
+    const current = SettingsManager.getRepoSyncExternalRepositories().map((candidate) =>
+      this.normalizePath(candidate)
+    );
+    if (current.includes(selectedPath)) {
+      await this.sendRepositorySyncConfiguration();
+      this.sendRepositorySyncFeedback(
+        "browse-add-watched-repository",
+        "Selected repository is already in watched repositories.",
+        "warning"
+      );
+      return;
+    }
+
+    await SettingsManager.setRepoSyncExternalRepositories([...current, selectedPath]);
+    await this.sendRepositorySyncConfiguration();
+    this.sendRepositorySyncFeedback(
+      "browse-add-watched-repository",
+      `Watched repository added: ${selectedPath}`
+    );
+  }
+
+  private async handleRepositorySyncRemoveWatchedRepository(
+    message: WebviewMessage & { command: "repositorySyncRemoveWatchedRepository" }
+  ): Promise<void> {
+    this.trackWebviewAction("repositorySyncRemoveWatchedRepository");
+    const target = this.normalizePath(message.path);
+    const current = SettingsManager.getRepoSyncExternalRepositories().map((candidate) =>
+      this.normalizePath(candidate)
+    );
+    const next = current.filter((candidate) => candidate !== target);
+
+    await SettingsManager.setRepoSyncExternalRepositories(next);
+    await this.sendRepositorySyncConfiguration();
+    this.sendRepositorySyncFeedback("remove-watched-repository", `Watched repository removed: ${target}`);
+  }
+
+  private async handleRepositorySyncBrowseAddScanRoot(message: WebviewMessage): Promise<void> {
+    this.trackWebviewAction("repositorySyncBrowseAddScanRoot");
+
+    const selectedPath = await this.pickSingleFolderPath();
+    if (!selectedPath) {
+      this.sendRepositorySyncFeedback("browse-add-scan-root", "Browse canceled. No scan root added.", "warning");
+      return;
+    }
+
+    const current = SettingsManager.getRepoSyncScanRootPaths().map((candidate) => this.normalizePath(candidate));
+    if (current.includes(selectedPath)) {
+      await this.sendRepositorySyncConfiguration();
+      this.sendRepositorySyncFeedback("browse-add-scan-root", "Selected scan root already exists.", "warning");
+      return;
+    }
+
+    await SettingsManager.setRepoSyncScanRootPaths([...current, selectedPath]);
+    await this.sendRepositorySyncConfiguration();
+    this.sendRepositorySyncFeedback("browse-add-scan-root", `Scan root added: ${selectedPath}`);
+  }
+
+  private async handleRepositorySyncRemoveScanRoot(
+    message: WebviewMessage & { command: "repositorySyncRemoveScanRoot" }
+  ): Promise<void> {
+    this.trackWebviewAction("repositorySyncRemoveScanRoot");
+    const target = this.normalizePath(message.path);
+    const current = SettingsManager.getRepoSyncScanRootPaths().map((candidate) => this.normalizePath(candidate));
+    const next = current.filter((candidate) => candidate !== target);
+
+    await SettingsManager.setRepoSyncScanRootPaths(next);
+    await this.sendRepositorySyncConfiguration();
+    this.sendRepositorySyncFeedback("remove-scan-root", `Scan root removed: ${target}`);
+  }
+
+  private async handleRepositorySyncHideRepository(
+    message: WebviewMessage & { command: "repositorySyncHideRepository" }
+  ): Promise<void> {
+    this.trackWebviewAction("repositorySyncHideRepository");
+
+    try {
+      const target = this.normalizePath(message.path);
+      const current = SettingsManager.getRepoSyncHiddenRepositories().map((candidate) => this.normalizePath(candidate));
+
+      if (current.includes(target)) {
+        await this.sendRepositorySyncConfiguration();
+        this.sendRepositorySyncFeedback("hide-repository", `Repository already hidden: ${target}`, "warning");
+        return;
+      }
+
+      await SettingsManager.setRepoSyncHiddenRepositories([...current, target]);
+      await this.sendRepositorySyncConfiguration();
+      this.sendRepositorySyncFeedback("hide-repository", `Repository hidden: ${target}`);
+    } catch (error) {
+      this.sendRepositorySyncFeedback(
+        "hide-repository",
+        this.getSafeRepositorySyncErrorMessage(error, "Failed to hide repository."),
+        "error"
+      );
+      throw error;
+    }
+  }
+
+  private async handleRepositorySyncUnhideRepository(
+    message: WebviewMessage & { command: "repositorySyncUnhideRepository" }
+  ): Promise<void> {
+    this.trackWebviewAction("repositorySyncUnhideRepository");
+
+    try {
+      const target = this.normalizePath(message.path);
+      const current = SettingsManager.getRepoSyncHiddenRepositories().map((candidate) => this.normalizePath(candidate));
+      const next = current.filter((candidate) => candidate !== target);
+
+      await SettingsManager.setRepoSyncHiddenRepositories(next);
+      await this.sendRepositorySyncConfiguration();
+      this.sendRepositorySyncFeedback("unhide-repository", `Repository shown: ${target}`);
+    } catch (error) {
+      this.sendRepositorySyncFeedback(
+        "unhide-repository",
+        this.getSafeRepositorySyncErrorMessage(error, "Failed to show repository."),
+        "error"
+      );
+      throw error;
+    }
+  }
+
+  private sendRepositorySyncFeedback(
+    actionType: RepositorySyncPanelActionType,
+    message: string,
+    level: RepositorySyncFeedbackLevel = "info"
+  ): void {
+    this.sendToWebview({
+      command: "repositorySyncActionFeedback",
+      feedback: {
+        actionType,
+        message,
+        level,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  }
+
+  private getSafeRepositorySyncErrorMessage(error: unknown, fallbackMessage: string): string {
+    return fallbackMessage;
+  }
+
   // ============================================================================
   // DATA SENDERS - Send data to webview
   // ============================================================================
@@ -444,6 +728,52 @@ export class NexkitPanelMessageHandler {
     } catch (error) {
       console.error("Failed to list workflows:", error);
     }
+  }
+
+  private async sendRepositorySyncConfiguration(): Promise<void> {
+    const hiddenRepositories = SettingsManager.getRepoSyncHiddenRepositories().map((candidate) =>
+      this.normalizePath(candidate)
+    );
+    const hiddenSet = new Set(hiddenRepositories);
+    const workspaceRepositories = await this._services.repositoryDiscovery.getSyncableRepositories();
+    const workspaceOnly = workspaceRepositories
+      .filter((repository) => repository.source === "workspace")
+      .filter((repository) => !hiddenSet.has(this.normalizePath(repository.path)))
+      .map((repository) => ({
+        name: repository.name,
+        path: this.normalizePath(repository.path),
+      }));
+
+    this.sendToWebview({
+      command: "repositorySyncConfigurationUpdate",
+      configuration: {
+        workspaceRepositories: workspaceOnly,
+        watchedRepositories: SettingsManager.getRepoSyncExternalRepositories().map((candidate) =>
+          this.normalizePath(candidate)
+        ),
+        scanRootPaths: SettingsManager.getRepoSyncScanRootPaths().map((candidate) => this.normalizePath(candidate)),
+        hiddenRepositories,
+      },
+    });
+  }
+
+  private async pickSingleFolderPath(): Promise<string | undefined> {
+    const selected = await vscode.window.showOpenDialog({
+      canSelectFolders: true,
+      canSelectFiles: false,
+      canSelectMany: false,
+      openLabel: "Select Folder",
+    });
+
+    if (!selected || selected.length === 0) {
+      return undefined;
+    }
+
+    return this.normalizePath(selected[0].fsPath);
+  }
+
+  private normalizePath(candidatePath: string): string {
+    return path.normalize(path.resolve(candidatePath));
   }
 
   /**
