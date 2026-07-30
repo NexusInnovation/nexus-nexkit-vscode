@@ -1,7 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # validate-prerequisites.sh
 # Validates all project prerequisites (Node.js, .NET, Git, pnpm, Azure CLI, Squad)
 # Usage: ./scripts/validate-prerequisites.sh
+#
+# Contrat de sortie : 0 = tous les prerequis REQUIS sont satisfaits, 1 sinon.
+# L'etat de validation est persiste dans <project-root>/.vscode/afeas.local.settings.json,
+# comme le fait Validate-Prerequisites.ps1, afin que check-validation converge.
 
 set -o pipefail
 
@@ -13,17 +17,39 @@ CYAN='\033[0;36m'
 MAGENTA='\033[0;35m'
 NC='\033[0m' # No Color
 
-# Load requirements
-REQUIREMENTS_PATH="$(dirname "$0")/requirements.json"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
-if ! command -v jq &> /dev/null; then
-    echo -e "${RED}Error: jq is required to read requirements.json but is not installed.${NC}"
-    echo -e "${YELLOW}Install jq: https://stedolan.github.io/jq/download/${NC}"
+# Load requirements
+REQUIREMENTS_PATH="$SCRIPT_DIR/requirements.json"
+SETTINGS_PATH="${AFEAS_SETTINGS_PATH:-$PROJECT_ROOT/.vscode/afeas.local.settings.json}"
+
+# jq est un prerequis dur des scripts .sh AFEAS. Message identique dans les 3 scripts.
+require_jq() {
+    if command -v jq >/dev/null 2>&1; then
+        return 0
+    fi
+
+    {
+        echo "Error: 'jq' is required by the AFEAS prerequisite scripts but was not found on PATH."
+        echo "Install jq, then re-run this script:"
+        echo "  Debian/Ubuntu : sudo apt-get install -y jq"
+        echo "  Fedora/RHEL   : sudo dnf install -y jq"
+        echo "  Arch          : sudo pacman -S jq"
+        echo "  Alpine        : sudo apk add jq"
+        echo "  macOS         : brew install jq"
+        echo "  Other         : https://jqlang.github.io/jq/download/"
+    } >&2
+
+    return 1
+}
+
+if ! require_jq; then
     exit 1
 fi
 
 if [ ! -f "$REQUIREMENTS_PATH" ]; then
-    echo -e "${RED}Error: requirements.json not found at $REQUIREMENTS_PATH${NC}"
+    echo -e "${RED}Error: requirements.json not found at $REQUIREMENTS_PATH${NC}" >&2
     exit 1
 fi
 
@@ -32,6 +58,43 @@ print_colored() {
     local message="$1"
     local color="$2"
     echo -e "${color}${message}${NC}"
+}
+
+# Persiste l'etat de validation. Equivalent bash de Update-ValidationState (PowerShell).
+# Un fichier de settings illisible est remplace par un objet vide plutot que de bloquer
+# indefiniment la convergence check -> validate -> check.
+update_validation_state() {
+    local validated="$1" # "true" | "false"
+    local settings_dir
+    local tmp_file
+    local current_date
+
+    settings_dir="$(dirname "$SETTINGS_PATH")"
+
+    if ! mkdir -p "$settings_dir" 2>/dev/null; then
+        print_colored "Warning: unable to create $settings_dir" "$YELLOW"
+        return 1
+    fi
+
+    if [ ! -f "$SETTINGS_PATH" ] || ! jq -e . "$SETTINGS_PATH" >/dev/null 2>&1; then
+        printf '{}\n' > "$SETTINGS_PATH" 2>/dev/null || {
+            print_colored "Warning: unable to write $SETTINGS_PATH" "$YELLOW"
+            return 1
+        }
+    fi
+
+    current_date="$(date "+%Y-%m-%d %H:%M:%S")"
+    tmp_file="$SETTINGS_PATH.tmp"
+
+    if jq --argjson validated "$validated" --arg date "$current_date" \
+        '."afeas.prerequisites.validated" = $validated | ."afeas.prerequisites.validationDate" = $date' \
+        "$SETTINGS_PATH" > "$tmp_file" 2>/dev/null && mv -f "$tmp_file" "$SETTINGS_PATH" 2>/dev/null; then
+        return 0
+    fi
+
+    rm -f "$tmp_file"
+    print_colored "Warning: unable to update validation state in $SETTINGS_PATH" "$YELLOW"
+    return 1
 }
 
 # Test if command exists and get version
@@ -51,21 +114,46 @@ test_command() {
     fi
 }
 
-# Compare versions (semantic versioning)
+# Extrait le premier groupe numerique pointe d'une chaine de version.
+# "v24.3.0" -> 24.3.0 | "git version 2.43.0" -> 2.43.0 | "azure-cli 2.60.0" -> 2.60.0
+# Doit rester strictement equivalent a Get-NormalizedVersion (PowerShell).
+normalize_version() {
+    printf '%s' "$1" | grep -oE '[0-9]+(\.[0-9]+)*' | head -n1
+}
+
+# Compare deux versions composante par composante (les composantes absentes valent 0).
+# Retour 0 si current >= minimum, 1 sinon. Une version illisible echoue (fail closed).
 compare_versions() {
-    local current="$1"
-    local minimum="$2"
-    
-    # Remove non-numeric characters except dots
-    current=$(echo "$current" | sed 's/[^0-9.].*//')
-    minimum=$(echo "$minimum" | sed 's/[^0-9.].*//')
-    
-    # Simple comparison for common cases
-    if [ "$(printf '%s\n' "$minimum" "$current" | sort -V | head -n1)" = "$minimum" ]; then
-        return 0  # current >= minimum
-    else
-        return 1  # current < minimum
-    fi
+    local current
+    local minimum
+
+    current="$(normalize_version "$1")"
+    minimum="$(normalize_version "$2")"
+
+    # Pas de minimum exploitable : rien a verifier.
+    [ -z "$minimum" ] && return 0
+    # Version courante illisible : on refuse plutot que de supposer.
+    [ -z "$current" ] && return 1
+
+    local -a c_parts m_parts
+    IFS='.' read -r -a c_parts <<< "$current"
+    IFS='.' read -r -a m_parts <<< "$minimum"
+
+    local len=${#c_parts[@]}
+    [ ${#m_parts[@]} -gt "$len" ] && len=${#m_parts[@]}
+
+    local i c m
+    for ((i = 0; i < len; i++)); do
+        c=${c_parts[i]:-0}
+        m=${m_parts[i]:-0}
+        if [ "$((10#$c))" -gt "$((10#$m))" ]; then
+            return 0
+        elif [ "$((10#$c))" -lt "$((10#$m))" ]; then
+            return 1
+        fi
+    done
+
+    return 0
 }
 
 # Check individual prerequisite
@@ -92,10 +180,17 @@ check_prerequisite() {
                 if compare_versions "$version" "$minimum_version"; then
                     print_colored "    ✓ Version meets minimum requirement ($minimum_version)" "$GREEN"
                 else
-                    print_colored "    ⚠ Version is below minimum ($minimum_version)" "$YELLOW"
+                    if [ -z "$(normalize_version "$version")" ]; then
+                        print_colored "    ⚠ Unable to read a version number (minimum required: $minimum_version)" "$YELLOW"
+                    else
+                        print_colored "    ⚠ Version is below minimum ($minimum_version)" "$YELLOW"
+                    fi
                     return 2  # OUTDATED
                 fi
             fi
+        elif [ -n "$minimum_version" ]; then
+            print_colored "    ⚠ Unable to read a version number (minimum required: $minimum_version)" "$YELLOW"
+            return 2  # OUTDATED
         fi
         return 0  # OK
     else
@@ -178,6 +273,13 @@ else
         print_colored "  [OUTDATED] $n" "$YELLOW"
     done
     local_exit_code=1
+fi
+
+# Persistance de l'etat sur les deux chemins, comme Validate-Prerequisites.ps1.
+if [ $local_exit_code -eq 0 ]; then
+    update_validation_state "true"
+else
+    update_validation_state "false"
 fi
 
 echo ""

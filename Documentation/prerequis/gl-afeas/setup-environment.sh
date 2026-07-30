@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # setup-environment.sh
 # Complete environment setup: validates prerequisites, configures git hooks, installs dependencies
 # Usage: ./scripts/setup-environment.sh
@@ -12,6 +12,30 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 MAGENTA='\033[0;35m'
 NC='\033[0m' # No Color
+
+# jq est un prerequis dur des scripts .sh AFEAS. Message identique dans les 3 scripts.
+require_jq() {
+    if command -v jq >/dev/null 2>&1; then
+        return 0
+    fi
+
+    {
+        echo "Error: 'jq' is required by the AFEAS prerequisite scripts but was not found on PATH."
+        echo "Install jq, then re-run this script:"
+        echo "  Debian/Ubuntu : sudo apt-get install -y jq"
+        echo "  Fedora/RHEL   : sudo dnf install -y jq"
+        echo "  Arch          : sudo pacman -S jq"
+        echo "  Alpine        : sudo apk add jq"
+        echo "  macOS         : brew install jq"
+        echo "  Other         : https://jqlang.github.io/jq/download/"
+    } >&2
+
+    return 1
+}
+
+if ! require_jq; then
+    exit 1
+fi
 
 # Parse options
 SKIP_VALIDATION=false
@@ -111,7 +135,9 @@ if [ "$SKIP_GIT_HOOKS" = false ]; then
     
     GIT_HOOKS_SCRIPT="$SCRIPT_DIR/setup-git-hooks.sh"
     if [ -f "$GIT_HOOKS_SCRIPT" ]; then
-        invoke_command "Configure git hooks" "bash $GIT_HOOKS_SCRIPT" "true"
+        # `|| true` est requis : sous `set -e`, un retour non nul de invoke_command
+        # ferait sortir le script malgre le drapeau continue-on-error.
+        invoke_command "Configure git hooks" "bash '$GIT_HOOKS_SCRIPT'" "true" || true
     else
         print_colored "⚠ Git hooks script not found at $GIT_HOOKS_SCRIPT (optional)" "$YELLOW"
     fi
@@ -133,23 +159,30 @@ invoke_command "Restore .NET dependencies (src/backend)" "cd '$PROJECT_ROOT/src/
 # Step 5: Store setup completion status
 print_section "Step 5: Storing Setup Status"
 
-VSCODE_DIR="$PROJECT_ROOT/.vscode"
-SETTINGS_FILE="$VSCODE_DIR/settings.json"
+# Fichier d'etat dedie, partage avec Check-Validation.ps1 / check-validation.sh /
+# Validate-Prerequisites.ps1 / validate-prerequisites.sh. Ne jamais ecrire l'etat de la
+# fonctionnalite dans .vscode/settings.json : ce fichier suit le schema VS Code et est versionne.
+SETTINGS_PATH="${AFEAS_SETTINGS_PATH:-$PROJECT_ROOT/.vscode/afeas.local.settings.json}"
+SETTINGS_DIR="$(dirname "$SETTINGS_PATH")"
 
-# Create settings file if it doesn't exist with basic structure
-if [ ! -f "$SETTINGS_FILE" ]; then
-    mkdir -p "$VSCODE_DIR"
-    echo "{}" > "$SETTINGS_FILE"
+mkdir -p "$SETTINGS_DIR"
+
+# Un fichier illisible est remplace plutot que de bloquer la convergence check -> validate -> check.
+if [ ! -f "$SETTINGS_PATH" ] || ! jq -e . "$SETTINGS_PATH" >/dev/null 2>&1; then
+    printf '{}\n' > "$SETTINGS_PATH"
 fi
 
-# Update settings with completion status
-if command -v jq &> /dev/null; then
-    CURRENT_DATE=$(date "+%Y-%m-%d %H:%M:%S")
-    jq ".\"afeas.prerequisites.validated\" = true | .\"afeas.prerequisites.validationDate\" = \"$CURRENT_DATE\"" "$SETTINGS_FILE" > "$SETTINGS_FILE.tmp"
-    mv "$SETTINGS_FILE.tmp" "$SETTINGS_FILE"
-    print_colored "✓ Setup status stored in .vscode/settings.json" "$GREEN"
+CURRENT_DATE=$(date "+%Y-%m-%d %H:%M:%S")
+SETTINGS_TMP="$SETTINGS_PATH.tmp"
+
+if jq --argjson validated true --arg date "$CURRENT_DATE" \
+    '."afeas.prerequisites.validated" = $validated | ."afeas.prerequisites.validationDate" = $date' \
+    "$SETTINGS_PATH" > "$SETTINGS_TMP" && mv -f "$SETTINGS_TMP" "$SETTINGS_PATH"; then
+    print_colored "✓ Setup status stored in $SETTINGS_PATH" "$GREEN"
 else
-    print_colored "⚠ jq not available - skipping settings file update" "$YELLOW"
+    rm -f "$SETTINGS_TMP"
+    print_colored "✗ Unable to store setup status in $SETTINGS_PATH" "$RED"
+    exit 1
 fi
 
 # Final summary
