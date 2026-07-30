@@ -96,6 +96,9 @@ export async function activate(context: vscode.ExtensionContext) {
   });
 
   // Check development prerequisites on activation and prompt to install if needed
+  services.prerequisiteScriptsDeployer.deployForActiveWorkspace().catch((error) => {
+    services.logging.error("Failed to deploy prerequisite scripts on activation", error);
+  });
   services.prerequisiteOrchestrator.checkOnActivation().catch((error) => {
     services.logging.error("Failed to run prerequisite check on activation", error);
     services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {

@@ -35,6 +35,7 @@ import { NodeProcessRunner } from "../features/prerequisite-automation/nodeProce
 import { PrerequisiteConfigService } from "../features/prerequisite-automation/prerequisiteConfigService";
 import { PrerequisiteRunnerService } from "../features/prerequisite-automation/prerequisiteRunnerService";
 import { PrerequisiteOrchestratorService } from "../features/prerequisite-automation/prerequisiteOrchestratorService";
+import { PrerequisiteScriptsDeployer } from "../features/prerequisite-automation/prerequisiteScriptsDeployer";
 
 /**
  * Service container for dependency injection
@@ -76,6 +77,7 @@ export interface ServiceContainer {
   prerequisiteConfig: PrerequisiteConfigService;
   prerequisiteRunner: PrerequisiteRunnerService;
   prerequisiteOrchestrator: PrerequisiteOrchestratorService;
+  prerequisiteScriptsDeployer: PrerequisiteScriptsDeployer;
 }
 
 /**
@@ -137,6 +139,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     logging,
     telemetry
   );
+  const prerequisiteScriptsDeployer = new PrerequisiteScriptsDeployer(context.extensionUri, logging);
 
   // Register for disposal
   context.subscriptions.push(logging);
@@ -185,5 +188,6 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     prerequisiteConfig,
     prerequisiteRunner,
     prerequisiteOrchestrator,
+    prerequisiteScriptsDeployer,
   };
 }

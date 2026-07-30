@@ -27,7 +27,7 @@ coverage/**
 tsconfig*.json
 
 # ── tsc-compiled output (superseded by esbuild bundles) ──────────────────────
-# Keep: out/extension.js, out/webview.js, out/webview/** (static assets)
+# Keep: out/extension.js, out/webview.js, out/webview/**, out/prerequisite-scripts/**
 out/src/**
 out/test/**
 

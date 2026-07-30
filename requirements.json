@@ -1,0 +1,61 @@
+{
+  "prerequisites": [
+    {
+      "name": "Node.js",
+      "command": "node",
+      "versionCommand": "node --version",
+      "required": true,
+      "minimumVersion": "99.0.0",
+      "install": {
+        "winget": "winget install OpenJS.NodeJS.LTS",
+        "hint": "Download from https://nodejs.org",
+        "url": "https://nodejs.org/en/download"
+      }
+    },
+    {
+      "name": "nexkit-test-cli",
+      "command": "nexkit-test-cli",
+      "versionCommand": "nexkit-test-cli --version",
+      "required": true,
+      "minimumVersion": "1.0.0",
+      "install": {
+        "npm": "npm install -g nexkit-test-cli",
+        "hint": "Outil fictif utilisé pour tester le flux d'installation de Nexkit",
+        "url": "https://example.com/nexkit-test-cli"
+      }
+    },
+    {
+      "name": "fake-devtool",
+      "command": "fake-devtool",
+      "required": true,
+      "install": {
+        "winget": "winget install FakeVendor.FakeDevTool",
+        "hint": "Outil fictif — introuvable sur tout environnement réel"
+      }
+    },
+    {
+      "name": "Git",
+      "command": "git",
+      "versionCommand": "git --version",
+      "required": true,
+      "minimumVersion": "2.40.0",
+      "install": {
+        "winget": "winget install Git.Git",
+        "hint": "Download from https://git-scm.com",
+        "url": "https://git-scm.com/downloads"
+      }
+    },
+    {
+      "name": "pnpm",
+      "command": "pnpm",
+      "versionCommand": "pnpm --version",
+      "required": false,
+      "minimumVersion": "9.0.0",
+      "install": {
+        "npm": "npm install -g pnpm",
+        "hint": "Gestionnaire de paquets alternatif (optionnel)",
+        "url": "https://pnpm.io/installation"
+      }
+    }
+  ]
+}

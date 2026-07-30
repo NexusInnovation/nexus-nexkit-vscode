@@ -50,6 +50,22 @@ function copyStaticFiles() {
     },
   ];
 
+  // Copy bundled prerequisite scripts to out/ so they are included in the VSIX.
+  const prereqSrc = path.join(__dirname, "src", "features", "prerequisite-automation", "scripts");
+  const prereqOut = path.join(__dirname, "out", "prerequisite-scripts");
+  if (fs.existsSync(prereqSrc)) {
+    if (!fs.existsSync(prereqOut)) {
+      fs.mkdirSync(prereqOut, { recursive: true });
+    }
+    for (const file of fs.readdirSync(prereqSrc)) {
+      const src = path.join(prereqSrc, file);
+      if (fs.statSync(src).isFile()) {
+        fs.copyFileSync(src, path.join(prereqOut, file));
+        console.log(`[copy] prerequisite-scripts/${file}`);
+      }
+    }
+  }
+
   staticConfigs.forEach((config) => {
     if (!fs.existsSync(config.outputDir)) {
       fs.mkdirSync(config.outputDir, { recursive: true });

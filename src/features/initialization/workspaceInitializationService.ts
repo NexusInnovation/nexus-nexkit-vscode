@@ -36,6 +36,10 @@ export class WorkspaceInitializationService {
     if (!SettingsManager.isUserDeployMode()) {
       await services.recommendedExtensionsConfigDeployer.deployVscodeExtensions(workspaceFolder.uri.fsPath);
       await services.mcpConfigDeployer.deployWorkspaceMCPServers(workspaceFolder.uri.fsPath);
+      await services.prerequisiteScriptsDeployer.deployIfConfigured(
+        workspaceFolder.uri.fsPath,
+        SettingsManager.getPrerequisitesScriptsPath()
+      );
     }
 
     let deploymentSummary: BatchInstallSummary | null = null;
