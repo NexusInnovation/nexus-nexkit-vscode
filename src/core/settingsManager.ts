@@ -74,11 +74,20 @@ export class SettingsManager {
   private static readonly ACTIVE_DEVOPS_CONNECTION_KEY = "activeDevOpsConnection";
   private static readonly DEVOPS_CONNECTIONS_KEY = "devOpsConnections";
 
+  // Prerequisite automation settings
+  private static readonly PREREQUISITES_ENABLED = "prerequisites.enabled";
+  private static readonly PREREQUISITES_SCRIPTS_PATH = "prerequisites.scriptsPath";
+
+  // Prerequisite automation state keys (WorkspaceState)
+  private static readonly PREREQUISITES_VALIDATED_KEY = "nexkit.prerequisites.validated";
+  private static readonly PREREQUISITES_VALIDATION_DATE_KEY = "nexkit.prerequisites.validationDate";
+
   /**
    * Workspace-state keys for "Refuse Forever" confirmation dialogs.
    */
   public static readonly CONFIRMATION_KEYS = {
     CHAT_SETTINGS: "nexkit.confirm.chatSettings.refused",
+    PREREQUISITES_RUN: "nexkit.confirm.prerequisites.run.refused",
     mcpUserServer: (serverName: string) => `nexkit.confirm.mcpUser.${serverName}.refused`,
     mcpWorkspaceServer: (serverName: string) => `nexkit.confirm.mcpWorkspace.${serverName}.refused`,
   } as const;
@@ -356,6 +365,50 @@ export class SettingsManager {
       throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
     }
     await this.context.workspaceState.update(this.DEVOPS_CONNECTIONS_KEY, connections);
+  }
+
+  // Prerequisite automation configuration
+  static isPrerequisitesEnabled(): boolean {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<boolean>(this.PREREQUISITES_ENABLED, true);
+  }
+
+  static getPrerequisitesScriptsPath(): string {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<string>(this.PREREQUISITES_SCRIPTS_PATH, "scripts");
+  }
+
+  /**
+   * Cached prerequisite validation state (WorkspaceState).
+   *
+   * This is a cache only. The workspace's own check script is the authoritative
+   * source and must always be executed; this value never short-circuits it.
+   */
+  static getPrerequisitesValidated(): boolean | undefined {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    return this.context.workspaceState.get<boolean | undefined>(this.PREREQUISITES_VALIDATED_KEY, undefined);
+  }
+
+  static async setPrerequisitesValidated(value: boolean): Promise<void> {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    await this.context.workspaceState.update(this.PREREQUISITES_VALIDATED_KEY, value);
+  }
+
+  /** ISO 8601 timestamp of the last prerequisite validation run (WorkspaceState). */
+  static getPrerequisitesValidationDate(): string | undefined {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    return this.context.workspaceState.get<string | undefined>(this.PREREQUISITES_VALIDATION_DATE_KEY, undefined);
+  }
+
+  static async setPrerequisitesValidationDate(isoTimestamp: string): Promise<void> {
+    if (!this.context) {
+      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
+    }
+    await this.context.workspaceState.update(this.PREREQUISITES_VALIDATION_DATE_KEY, isoTimestamp);
   }
 
   // Confirmation "Refused Forever" state (WorkspaceState)

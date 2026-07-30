@@ -1,0 +1,9 @@
+# Shell scripts must always be checked out with LF endings. A CRLF-terminated
+# `.sh` file fails to execute under bash ("bad interpreter: ... ^M") and would
+# corrupt the ::VALIDATED::true|false stdout marker the extension parses.
+*.sh text eol=lf
+
+# The AFEAS reference prerequisite scripts are the CRLF fixture source for the
+# marker-parsing tests: pin their line endings so the tests are deterministic on
+# every platform. Scoped deliberately — it does not apply to the rest of the repo.
+Documentation/prerequis/gl-afeas/*.ps1 text eol=crlf

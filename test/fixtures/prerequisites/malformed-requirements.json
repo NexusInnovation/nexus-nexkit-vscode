@@ -1,0 +1,7 @@
+{
+  "prerequisites": [
+    {
+      "name": "Node.js",
+      "command": "node",
+    }
+  ]

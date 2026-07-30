@@ -35,6 +35,9 @@ export const Commands = {
 
   // Developer tools
   OPEN_CONVERT_TO_MARKDOWN: "nexus-nexkit-vscode.openConvertToMarkdown",
+
+  // Prerequisite automation
+  VALIDATE_PREREQUISITES: "nexus-nexkit-vscode.validatePrerequisites",
 } as const;
 
 // Type-safe command names

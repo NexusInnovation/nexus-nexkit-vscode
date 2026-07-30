@@ -1,0 +1,35 @@
+{
+  "prerequisites": [
+    {
+      "name": "Node.js",
+      "command": "node",
+      "versionCommand": "node --version",
+      "required": true,
+      "minimumVersion": "24.0.0",
+      "install": {
+        "winget": "winget install -e --id OpenJS.NodeJS",
+        "npm": null,
+        "hint": "winget install -e --id OpenJS.NodeJS",
+        "url": "https://nodejs.org/"
+      }
+    },
+    {
+      "name": "pnpm",
+      "command": "pnpm",
+      "versionCommand": "pnpm --version",
+      "required": true,
+      "minimumVersion": "8.0.0",
+      "install": {
+        "winget": "winget install --id pnpm.pnpm & pnpm setup",
+        "npm": "npm install -g pnpm",
+        "hint": "npm install -g pnpm",
+        "url": "https://pnpm.io/installation"
+      }
+    },
+    {
+      "name": "jq",
+      "command": "jq",
+      "required": false
+    }
+  ]
+}

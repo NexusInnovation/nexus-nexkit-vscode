@@ -7,8 +7,11 @@ This directory contains tests for the Nexkit VS Code extension.
 ```
 test/
 ├── runTest.ts              # Test runner configuration
+├── fixtures/               # Read-only test data (see "Fixtures" below)
+│   └── prerequisites/
 └── suite/                  # Test suites
     ├── index.ts           # Mocha configuration
+    ├── helpers/           # Shared test doubles and factories
     ├── serviceContainer.test.ts
     ├── settingsManager.test.ts
     ├── telemetryService.test.ts
@@ -18,6 +21,47 @@ test/
     ├── extensionUpdateService.test.ts
     └── backupService.test.ts
 ```
+
+## Fixtures
+
+`test/fixtures/` holds **read-only** test data — sample JSON documents, tiny
+purpose-built scripts, and anything else a test needs to _read_.
+
+Rules:
+
+- Fixtures are never written to by a test. Treat them as immutable inputs.
+- Anything a test needs to **write** goes to a temporary directory created with
+  `fs.mkdtempSync(path.join(os.tmpdir(), "nexkit-"))` and removed in `teardown()`.
+- Group fixtures by the feature that consumes them
+  (e.g. `test/fixtures/prerequisites/`).
+- Fixture scripts are deliberately trivial stand-ins. Tests must never invoke the
+  real project scripts under `Documentation/` or `scripts/` — those install software.
+- Shell fixtures must use LF line endings (enforced by `.gitattributes`) and are
+  invoked as `bash <script>`, so the executable bit is not required.
+
+Fixtures are resolved from the compiled output, which lives two levels deeper
+than the source tree:
+
+```typescript
+const FIXTURE_ROOT = path.resolve(__dirname, "..", "..", "..", "test", "fixtures");
+```
+
+## Optional Integration Suites
+
+Some integration tests spawn real processes and need tooling that is not present
+on every machine (`bash` + `jq` on Unix, PowerShell on Windows). These are opt-in
+and skip themselves unless an environment variable is set:
+
+```bash
+# PowerShell
+$env:NEXKIT_RUN_SCRIPT_TESTS="1"; npm test
+
+# bash
+NEXKIT_RUN_SCRIPT_TESTS=1 npm test
+```
+
+The gate is implemented with Mocha's `this.skip()` in a `setup()` hook, so the
+suite reports as _pending_ rather than passing when it did not actually run.
 
 ## Running Tests
 
@@ -56,6 +100,15 @@ Tests are organized by feature/service:
 - **extensionUpdateService.test.ts**: Extension update checking tests
 - **backupService.test.ts**: Backup/restore functionality tests
 
+### Prerequisite Automation
+
+- **scriptResolver.test.ts**: Platform mapping, filename allowlist, path containment, `::VALIDATED::` marker parsing
+- **prerequisiteConfigService.test.ts**: `requirements.json` schema validation and discovery
+- **prerequisiteRunnerService.test.ts**: Spawn construction, security guards, result interpretation, failure classification
+- **prerequisiteOrchestratorService.test.ts**: Check → validate → setup state machine, guards, telemetry
+- **outputBuffer.test.ts**: Bounded output capture and truncation
+- **prerequisiteScripts.integration.test.ts**: Real spawns against fixture scripts (opt-in, see above)
+
 ## Test Conventions
 
 - Use **Unit:** prefix for isolated unit tests
@@ -63,6 +116,9 @@ Tests are organized by feature/service:
 - Mock VS Code API and external dependencies where appropriate
 - Tests should be independent and not rely on execution order
 - Clean up resources in `teardown()` hooks
+- Name the test after the behaviour being proven, not the method being called
+- Put shared test doubles and factory helpers in `test/suite/helpers/` — files there
+  are not matched by the `*.test.js` glob, so they never run as suites
 
 ## Writing New Tests
 

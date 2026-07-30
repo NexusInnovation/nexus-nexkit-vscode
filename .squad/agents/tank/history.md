@@ -1,183 +1,83 @@
 # Project Context
 
 - **Owner:** Eric De Carufel
-- **Project:** Azure Function pipeline — Nethris payroll reports to SharePoint. C# .NET 10.0, BDD testing with
-  Gherkin/SpecFlow, multi-environment CI/CD (dev/test/prod). 125-hour budget.
-- **Stack:** C#, .NET 10.0, Azure Functions, SharePoint, SpecFlow/Gherkin, GitHub Actions
+- **Current project:** Nexkit — VS Code extension managing AI templates (agents, prompts, instructions, chatmodes) from
+  GitHub repos, plus workspace init, MCP server config, and extension self-updates. TypeScript strict, esbuild, Preact
+  webview, Mocha + Sinon, semantic-release.
+- **Prior project (archived):** EquipeLaurence — Azure Function pipeline, Nethris payroll → SharePoint. C# .NET 10.0,
+  SpecFlow/Gherkin BDD, multi-environment CI/CD.
 - **Created:** 2026-04-24
+
+## Carried-forward rules (from archived learnings)
+
+Full detail in `history-archive.md`. The rules that still bind:
+
+- **Verify every claim in an inherited defect list against the source before acting on it.** Audit lists contain false
+  positives, and the worst defects are usually the ones nobody reported.
+- **Triage from the current worktree, not from stale build output.** Check `git diff` and re-run after a clean before
+  changing implementation code for a compiler mismatch.
+- **CI trigger separation:** PR triggers validate the proposed change; push triggers validate the merged result.
+  Overlapping triggers across workflows cause duplicate builds; `needs` orders jobs _within_ a workflow only — there is no
+  cross-workflow dependency enforcement, so cross-workflow races must be removed by consolidating the trigger.
+- **PowerShell's `*` wildcard excludes dotfiles on Linux.** Use `Get-ChildItem -Force` when archiving build output.
+- **Prefer environment variables over hardcoded resource names** when the name is generated (e.g. by `uniqueString`).
+- **Default risky feature flags to off** so implementation work cannot affect live environments.
 
 ## Learnings
 
 <!-- Append new learnings below. Each entry is something lasting about the project. -->
 
-### 2026-05-13 — CI Push Trigger on Main Was Missing
+### 2026-07-30 — AFEAS Prerequisite Scripts: Cross-Platform Parity Repair (nexus-nexkit-vscode)
 
-**Completed:** Added `push` trigger on `main` to `ci.yml`.
+**Completed:** Repaired the six reference prerequisite scripts under `Documentation/prerequis/gl-afeas/`, created the
+missing bash twin, pinned line endings, and extended the CI `test` job.
 
-- **Problem:** The CI workflow only fired on `pull_request` and `workflow_dispatch`. After a PR was merged to `main`, no CI
-  run was triggered — no test report and no code coverage were produced for the merged state.
-- **Fix:** Added a `push` trigger targeting `main` with the identical `paths` filter used by the `pull_request` trigger
-  (`src/**`, `tests/**`, `EquipeLaurence.sln`, `Directory.Build.props`).
-- **Guard:** The `pr-comment` job already had `if: github.event_name == 'pull_request'`, so it correctly skips on `push`
-  events without any additional change.
-- **Rule:** CI workflows that need to validate the merged state of `main` must include a `push: branches: [main]` trigger in
-  addition to `pull_request`. PRs validate the proposed change; the push trigger validates the actual merged result.
+- **Inherited defect lists must be re-verified.** Of the six reported bugs, one (`local local_exit_code=0` allegedly at
+  top-level scope in `validate-prerequisites.sh`) was a **false positive** — grep showed the identifier is simply a
+  variable _named_ `local_exit_code`, which is valid bash. Two _unreported_ defects were more severe than anything on
+  the list. Rule: verify every claim against the source before acting on a defect list.
+- **Defect A (unreported, most severe):** `Check-Validation.ps1` computed its settings path with a double
+  `Split-Path -Parent $PSScriptRoot`, landing one directory **above** the project root. check→validate→check therefore
+  never converged **on Windows either** — not just on Unix as the audit implied.
+- **Defect B (unreported):** the bash `compare_versions` normalizer used `sed 's/[^0-9.].*//'`, which yields an empty
+  string for `v22.1.0` (node) and `git version 2.43.0`. **Node and Git were reported OUTDATED on every Unix run.**
+- **State-path divergence was three-way, not two-way.** Canonical path is now
+  `<project-root>/.vscode/afeas.local.settings.json` in all six scripts. Never `.vscode/settings.json` — that is the real
+  VS Code schema file and is usually committed.
+- **Version contract implemented identically in both languages:** normalize = first match of `[0-9]+(\.[0-9]+)*`
+  (bash `grep -oE ... | head -n1`; PS `[regex]::Match($Raw, '\d+(\.\d+)*')`), then component-wise integer compare with
+  missing components padded to `0`. **`sort -V` removed** — absent in busybox and semantically opaque. Verified 8/8
+  identical PASS/FAIL across bash and pwsh.
+- **`function Invoke-Command` in `Setup-Environment.ps1` shadowed the built-in cmdlet** — renamed to `Invoke-Step`,
+  all 3 call sites updated. PowerShell resolves functions before cmdlets, so this silently hijacked every call.
+- **`set -e` + "continue on error" is a contradiction in bash.** `invoke_command ... "true"` still aborted the script
+  because the non-zero return propagated. Fixed with an explicit `|| true` plus a comment explaining why it is required.
+- **Marker contract survives jq being absent.** `check-validation.sh` still emits `::VALIDATED::false` and exits 1 when
+  jq is missing, so the extension's parser never sees a malformed stream; `validate-prerequisites.sh` is what surfaces
+  the jq remediation message loudly.
+- **CI: the 3-OS matrix already existed.** `ci-cd.yml`'s `test` job already ran `ubuntu-latest`, `windows-latest`,
+  `macos-latest` with `xvfb-run -a` on Linux. Nothing was duplicated — only additive changes: job-level
+  `NEXKIT_RUN_SCRIPT_TESTS: "1"`, `jq` appended to the Linux apt list, a guarded `brew install jq` for macOS, and a
+  toolchain reporting step so a missing interpreter is diagnosable instead of mysterious.
+- **`.gitattributes` was empty.** Added `*.sh text eol=lf` (a CRLF `.sh` dies with `bad interpreter: ...^M`) and
+  `Documentation/prerequis/gl-afeas/*.ps1 text eol=crlf` — scoped deliberately to the reference folder so the rest of
+  the repo does not churn, while still giving the tests a deterministic CRLF fixture source.
+- **Executable bit is a git index property, not a file property, on Windows.** `git update-index --chmod=+x` was
+  required; the three `.sh` files are now `100755`.
+- **Residual security risk (reported, deliberately not restructured):** both `validate-prerequisites.sh` (`eval`) and
+  `Validate-Prerequisites.ps1` (`Invoke-Expression`) execute version/install command strings taken from
+  `requirements.json`. Marked with `NOTE SECURITE` comments. Restructuring is a separate change.
+- **Decision recorded:** `.squad/decisions/inbox/tank-prereq-script-parity.md`
 
-### 2026-05-11 — Build Triage Must Start From Current Worktree, Not Stale Failure Text
+### 2026-07-30 — Team update (recorded by Scribe)
 
-**Completed:** Reproduced and resolved the reported root `dotnet build` failure without changing application code.
+The prerequisite automation feature shipped through four rounds. Tank's script contract became the authoritative reference
+that both Link's implementation and Trinity's parity tests conform to. Downstream consequences worth remembering:
 
-- **Observed failure:** first compiler error reported `CS1501` against `ISharePointClient.UploadFileAsync` from
-  `tests/EquipeLaurence.Core.Tests/NethrisReportSyncServiceTests.cs` and
-  `tests/EquipeLaurence.Specs/Steps/NethrisReportSyncSteps.cs`, claiming a removed 6-argument overload.
-- **Controlling path:** not `src/EquipeLaurence.Infrastructure/Clients/SharePointClient.cs`; the controlling contract is
-  `src/EquipeLaurence.Core/Clients/ISharePointClient.cs` and the callers in test/spec projects.
-- **Verified workspace state:** local unstaged edits already removed the obsolete metadata argument from both failing
-  test/spec files. The mismatch was between earlier build output and the live worktree.
-- **Fix path:** `dotnet clean EquipeLaurence.sln --nologo` followed by `dotnet build EquipeLaurence.sln --nologo` succeeds on
-  the current workspace.
-- **Triage rule:** before changing implementation code for a compiler mismatch, check `git diff`/worktree state and
-  revalidate after a clean. Build logs can lag behind the actual source on disk.
+- Ghost's Round 4 revision made the extension's marker parser **case-sensitive, separator-optional, first-match** to match
+  Tank's contract exactly — the contract won, no divergence override was needed.
+- Morpheus accepted the `eval` / `Invoke-Expression` surface as a **recorded residual risk**, confirming that no
+  extension-side control closes it; only Workspace Trust does. The `NOTE SECURITE` comments are the standing marker.
+- `--skip-validation` marks state validated without validating. The extension must never expose that flag.
 
-### 2026-04-30 — OIDC Diagnostic & Provisioning Fix Summary
-
-**Completed batch:** Created diagnostic script, fixed provisioning cascade bug, reviewed infra-deploy.yml.
-
-- **`scripts/diagnose-oidc.ps1`**: Non-interactive 6-check validator for OIDC prerequisites. Prints fix commands inline.
-  `-Fix` flag auto-repairs. Does NOT use Read-Host.
-- **`provisioning.yml` cascade fix**: Added `deploy-dev-infra` to prod's `needs` list. Rewrote `if` condition to distinguish
-  deliberate skip from cascade skip via event type + input check.
-- **`infra-deploy.yml` review**: Confirmed sound. `azure/login@v3` correctly defaults `allow-no-subscriptions: false`. Login
-  failure is Azure AD config (roles/federated credential), not workflow bug.
-- **Decisions 12–14 recorded** in squad/decisions.md.
-
-### 2026-04-30 — Function App Name Fix (Session: fix-function-app-name)
-
-**Completed:** Fixed function app name mismatch in CI/CD pipeline (run 25174109342 ✅).
-
-- **Problem:** `deploy.yml` hardcoded names (`equipelaurence-dev-func`, etc.) that don't match Bicep's `uniqueString` output.
-- **Solution:** Removed `function-app-name` input from `function-deploy.yml`. Now reads exclusively from GitHub Environment
-  `vars.FUNCTION_APP_NAME`.
-- **Changes:** `.github/workflows/function-deploy.yml`, `.github/workflows/deploy.yml`; set
-  `FUNCTION_APP_NAME=eql-dev-func-ifbrc23yuf52o` in dev environment.
-- **Decision 15 recorded** in squad/decisions.md.
-- **Commit:** `9ab6e5b` on `feature/workflow-ci-cd`.
-
-### 2026-04-30 — Fix Dotfile Packaging in function-build.yml
-
-**Completed:** Fixed `Compress-Archive` in the "Create deployment package" step to include hidden directories.
-
-- **Problem:** On Ubuntu runners, `Compress-Archive -Path publish_output/*` does NOT match dotfiles/hidden directories. The
-  `.azurefunctions/` folder (containing `Microsoft.Azure.WebJobs.Extensions.FunctionMetadataLoader.dll`) was omitted from the
-  zip, causing the function host to find 0 functions.
-- **Solution:** Replaced the glob path with `Get-ChildItem -Force` which includes hidden items:
-  `$items = (Get-ChildItem publish_output -Force).FullName` piped into `Compress-Archive`.
-- **Key learning:** PowerShell's `*` wildcard excludes dotfiles on Linux. Always use `Get-ChildItem -Force` when zipping
-  published .NET output to ensure `.azurefunctions/` is included.
-- **File changed:** `.github/workflows/function-build.yml` (line 96).
-- **Commit:** `3629fc0` on `feature/sync-function`.
-- **Decision 20 recorded** in squad/decisions.md.
-
-### 2026-05-08 — CI/CD Pipeline Optimization Analysis
-
-**Completed:** Detailed analysis and proposal for reducing build/deployment times.
-
-- **Core finding:** 3 out of 4 common Git events trigger duplicate or triple builds due to overlapping triggers between
-  `ci.yml`, `deploy.yml`, and `squad-ci.yml`.
-- **Root cause:** `ci.yml` has push triggers that overlap with `deploy.yml`; `deploy.yml` has PR triggers that overlap with
-  `ci.yml`; `squad-ci.yml` targets `main` which overlaps both.
-- **Solution:** Separate by event type — `ci.yml` for PRs only, `deploy.yml` for pushes only. Remove `main` from
-  `squad-ci.yml`.
-- **Secondary findings:** `fetch-depth: 0` in `function-build.yml` is unnecessary (no step uses Git history);
-  `integration-tests.yml` builds entire solution when it only needs the integration test project; `provisioning.yml` has an
-  anomaly where push-to-develop could trigger prod infra deployment.
-- **Key constraint:** Branch protection requires "CI — Build & Test" status check — must verify exact check name before
-  modifying triggers.
-- **Effort:** ~1 hour for all changes.
-- **Deliverable:** `docs/proposal-cicd-optimization.md` — awaiting Eric's approval.
-
-### 2026-05-08 — CI/CD Pipeline Optimization Implementation
-
-**Completed:** Implemented all 6 approved optimizations from `docs/proposal-cicd-optimization.md`.
-
-- **`ci.yml`**: Removed `push` trigger (was duplicating `deploy.yml` on develop). Added `pull-requests: write` permission and
-  `pr-comment` job that posts build summary on PRs (ported from `squad-ci.yml`).
-- **`deploy.yml`**: Removed `pull_request` trigger (was duplicating `ci.yml` on main PRs). Simplified concurrency group to
-  `deploy-${{ github.ref }}`.
-- **`function-build.yml`**: Changed `fetch-depth: 0` → `fetch-depth: 1`. No workflow step uses Git history.
-- **`integration-tests.yml`**: Scoped `dotnet restore`/`dotnet build` to `tests/EquipeLaurence.IntegrationTests` instead of
-  the full solution.
-- **`provisioning.yml`**: Fixed `deploy-prod-infra` condition to require `github.ref == 'refs/heads/main'` for push events,
-  preventing accidental prod infra deployment on develop pushes.
-- **`squad-ci.yml`**: Simplified branches to `preview` only. `develop`/`main` are covered by `ci.yml`; `dev`/`insider` are
-  unused.
-- **Net effect:** Eliminates duplicate/triple builds on the 3 most common Git events; reduces build minutes and removes the
-  risk of accidental prod infra provisioning from develop.
-
-### 2026-05-11 — Fix Provisioning/Deploy Race Condition
-
-**Completed:** Eliminated the cross-workflow race condition where `provisioning.yml` and `deploy.yml` could race each other
-to deploy prod infra and the prod app simultaneously on a push to `main` that touched both `infra/**` and `src/**`.
-
-- **Root cause:** `provisioning.yml` triggered on push to `main` (infra changes) and `deploy.yml` triggered on push to `main`
-  (src changes). GitHub Actions `needs` only orders jobs within a workflow; there is no cross-workflow dependency
-  enforcement.
-- **Fix — `provisioning.yml`:** Removed `main` from `on.push.branches`. Prod infra on push to main now lives exclusively in
-  `deploy.yml`. Cleaned up `deploy-prod-infra` job condition to remove the now-unreachable push-to-main branch.
-  `provisioning.yml` still handles dev infra (push to develop), PR validation (pull_request to main), and manual dispatch.
-- **Fix — `deploy.yml`:** Added `infra/**` to `on.push.paths` so infra-only changes on main still trigger this workflow.
-  Added `detect-changes` job (dorny/paths-filter@v4) to detect whether `infra/**` or `src/**` changed on push events. Updated
-  `build` job to depend on `detect-changes` and skip when only infra changed. Updated `deploy-prod-infra` job to depend on
-  `detect-changes` and fire on push-to-main when infra changed (in addition to existing workflow_dispatch). `deploy-prod-app`
-  required no changes — its existing `always()` + `skipped||success` pattern correctly gates on build and infra results.
-- **Invariant preserved:** Infra always deploys before app on push to main. Both are ordered jobs within the same workflow
-  via `needs`.
-- **Decision recorded:** `.squad/decisions/inbox/tank-pipeline-ordering.md`
-
-### 2026-05-19 — Issue #101 Delivery Readiness Assessment
-
-**Completed:** Assessed GitHub issue #101 (Use Azure Table Storage data to send SMS) for DevOps delivery readiness.
-
-- **Finding:** All DevOps prerequisites are satisfied. Infrastructure, CI/CD, secret management, and DI registration are
-  ready.
-- **Infrastructure status:** Bicep templates support Twilio configuration (`smsEnabled`, `twilioAccountSid`,
-  `twilioAuthToken`, `twilioFromNumber`, `twilioStatusCallbackUrl`). Key Vault stores secrets. App Configuration holds
-  non-secret settings. All three environments (dev, test, prod) have parameter definitions.
-- **Secret flow:** GitHub Actions secrets → Bicep parameters → Key Vault → App Configuration (KV reference) → Function App.
-- **CI/CD status:** `ci.yml`, `deploy.yml`, and `integration-tests.yml` already configured to pass Twilio credentials.
-  Feature flags (`Sms:Enabled`, `AzureWebJobs.SendEmergencySms.Disabled`, `AzureWebJobs.TwilioInboundWebhook.Disabled`) ready
-  to enable SMS.
-- **DI registration:** `FunctionAppStartup.cs` binds `TwilioOptions` and registers `ITwilioClient` (either `TwilioSmsClient`
-  or `DisabledTwilioClient` based on `Sms:Enabled`).
-- **Existing interfaces & implementations:** All necessary clients exist (`ITwilioClient`, `ISmsIdempotencyStore`,
-  `ISmsAuditClient`, `IOptOutRegistryClient`, `IDeliveryStatusStore`, `IRecipientIndexClient`). Infrastructure
-  implementations in place.
-- **Safety:** `smsEnabled` parameter defaults to `false` in all environments (not explicitly set in `.bicepparam` files) —
-  safe for implementation work without affecting live environments.
-- **Next steps:** Morpheus can implement Issue #101 immediately. When ready for production, Tank will enable
-  `smsEnabled = true` per environment and monitor first deployment.
-- **Decision recorded:** `.squad/decisions/inbox/tank-issue-101-readiness.md`
-
-See history-archive.md for prior learnings and context from 2026-04-24 through 2026-04-30.
-
-## 2026-05-19 — Issue #101 Readiness Assessment (Background Spawn)
-
-**Status:** Completed  
-**Verdict:** ✅ READY TO IMPLEMENT  
-**Blocked by:** #100 (architecture triage)  
-**Next:** Morpheus for implementation
-
-Tank assessed DevOps readiness for issue #101 (SMS via Table Storage). Assessment:
-
-- ✅ Bicep templates support Twilio parameters (all envs)
-- ✅ Azure Key Vault secrets wired; App Configuration non-secrets configured
-- ✅ GitHub Actions secrets defined: TWILIO\_\* (prod + test variants)
-- ✅ CI/CD pipeline configured: ci.yml, deploy.yml, integration-tests.yml
-- ✅ DI registration complete: ITwilioClient wired, feature flag Sms:Enabled ready
-- ✅ All interfaces + reference implementations exist (SendEmergencySmsFunction as pattern)
-- ✅ SMS disabled by default (safe until implementation complete)
-
-No DevOps action required now. Implementation can begin immediately. When complete, Tank will enable smsEnabled = true per
-environment.
-
-Full readiness assessment in .squad/decisions.md. Orchestration log: .squad/orchestration-log/2026-05-19T141429Z-tank.md.
+See `history-archive.md` for learnings from 2026-04-24 through 2026-05-19 (EquipeLaurence era).

@@ -318,24 +318,6 @@ This keeps activation non-intrusive while still allowing explicit consent during
 **Agents:** Ghost, approved by Trinity
 **Classification:** Project-specific - RTF converter preview
 
-### Decision
-
-The RTF converter's Markdown/Preview switch is client-only presentation state. The converted Markdown remains the single stored value used by the read-only textarea and Copy Markdown action; raw Markdown remains the default mode. Preview rendering uses `markdown-it` with `html: false`.
-
-No DOM-test dependency is added solely for this toggle. Existing validation covers types, dependency resolution, and focused renderer safety probes; manual UI verification remains the appropriate residual check until the project deliberately adopts a webview DOM test harness.
-
-### Why
-
-This preserves existing clipboard and host-webview messaging behavior while preventing raw converted HTML from being rendered in the preview. Adding a test framework only for component-local UI state would add disproportionate scope to the feature.
-
----
-
-## Decision: RTF converter Markdown preview contract
-
-**Date:** 2026-07-10
-**Agent:** Ghost
-**Classification:** Project-specific - RTF converter preview
-
 ### Context
 
 The standalone RTF converter now provides a switch between the generated Markdown and a rendered preview.
@@ -494,3 +476,190 @@ Full suite went from 381 passing / 1 failing to 384 passing / 0 failing.
 ### Why (reusable pattern)
 
 Establishes a reusable, minimal pattern for future tests that need to fake `vscode.workspace.fs.*` or similarly frozen VS Code API surfaces: when Sinon cannot stub a method directly on a VS Code namespace object because its property descriptor is non-configurable, stub the parent property/getter instead and spread-override only the needed member. Avoids time lost rediscovering the Sinon property-descriptor limitation.
+
+---
+
+## Decision: User directive — use askQuestions for discovery questions
+
+**Date:** 2026-07-24
+**Agent:** Eric Decarufel (captured via Copilot)
+**Classification:** Generic — agent interaction pattern
+
+### Decision
+
+When an agent needs to ask the user discovery or clarification questions, use the `askQuestions` tool with selectable options rather than free-form prose questions in a chat response.
+
+### Why
+
+Selectable options with an escape hatch for custom free text are faster to answer, reduce ambiguity in the reply, and keep multi-question rounds structured instead of collapsing into a single paragraph the user has to unpack.
+
+---
+
+## Decision: Prerequisite automation — product scope (Eric's answers)
+
+**Date:** 2026-07-30
+**Agent:** Eric Decarufel, elicited by Link
+**Classification:** Project-specific — prerequisite automation
+
+### Context
+
+Rusty's plan (`Documentation/prerequis/Plan-implementation-automatisation-prerequis.md`) proposed automating the AFEAS `check → validate → setup` prerequisite flow from inside VS Code. Link's analysis surfaced 5 questions that blocked implementation.
+
+### Decisions
+
+1. **Nexkit orchestrates the target repository's existing scripts.** It does not ship or vendor its own copies. The scripts under `Documentation/prerequis/gl-afeas/` are reference material describing the contract Nexkit must speak.
+2. **Script parity fixes are in scope for V1.** The Windows and Unix branches disagreed on version checking and state persistence, so an orchestrator built on top of them would behave differently per OS.
+3. **`jq` is a hard requirement** on Unix, not an optional dependency with a fallback parser.
+4. **`setup` runs in a visible terminal**, not headless — it is long-running, installs software, and the user must be able to see and trust it.
+5. **Install command strings from `requirements.json` are display-only.** The extension never executes them.
+
+### Why
+
+Vendoring scripts would fork the contract and guarantee drift. Deferring parity fixes would have shipped a feature that silently misbehaves on Unix. Executing install strings is a genuine RCE vector — the shipped data already contains a shell chain operator.
+
+---
+
+## Decision: Prerequisite automation — architecture
+
+**Date:** 2026-07-30
+**Agents:** Link (proposal), Morpheus (gate)
+**Classification:** Project-specific — prerequisite automation
+
+### Context
+
+The plan specified 5 services. Morpheus reviewed the architecture before implementation began and returned **APPROVE WITH CHANGES** with three blocking conditions.
+
+### Decisions
+
+1. **`IProcessRunner` is a required injected seam.** Only the concrete `NodeProcessRunner` may import `child_process`. Without this seam none of the acceptance criteria are unit-testable.
+2. **`ScriptSelectorService` is cut.** Platform → script-path selection is a pure function in `scriptResolver.ts`. A class + DI registration + interface wrapping a `switch` is over-engineering; `GitHubWorkflowRunnerService` sets the precedent for doing this inline.
+3. **Validation state lives in `workspaceState` behind `SettingsManager`** — never in a committed settings file. The plan's "local workspace settings file" would have committed machine-specific state shared across developers, violating the AGENTS.md rule that settings are only ever touched through `SettingsManager`.
+4. **`ValidationStateService` is also cut.** The script owns the state file; that file _is_ the interop contract, so a second writer would create a split-brain.
+5. **Execution is hybrid:** headless `spawn` for `check` and `validate`; `vscode.window.createTerminal` for `setup`.
+6. **A missing `requirements.json` is a silent no-op**, not an error. Most workspaces are not AFEAS repos.
+7. **Activation is command-triggered only.** No activation-path cost for the majority of users.
+
+### Why
+
+The seam requirement came from testability being treated as an architectural input rather than a downstream concern — which is exactly what caught the `scriptNotFound` design bug before any code existed. The service reductions follow the repo's existing preference for pure functions over ceremonial DI.
+
+---
+
+## Decision: Prerequisite automation — script contract
+
+**Date:** 2026-07-30
+**Agent:** Tank
+**Classification:** Project-specific — prerequisite automation / DevOps
+
+### Context
+
+Link's analysis established that the reference scripts' Windows and Unix branches disagreed. Tank was routed to establish an authoritative contract both the extension and the scripts conform to.
+
+### Decisions
+
+1. **Exit codes are 0 and 1 only. This is sacred.** No new exit codes may be introduced; the extension must not infer meaning from any other value.
+2. **The `::VALIDATED::true|false` marker** is emitted on **stdout**, **first**, is **case-sensitive**, and parsing must be **CRLF-safe**. Consumers take the **first** match.
+3. **The canonical state file is `<parent-of-scripts>/.vscode/afeas.local.settings.json`.** Previously three implementations disagreed on this path — including `Check-Validation.ps1` resolving one directory above the project root, which broke `check → validate → check` convergence on Windows as well as Unix.
+4. **Invoke `bash`, never `sh`** — the scripts use process substitution.
+5. **Version normalization is `[0-9]+(\.[0-9]+)*`, first match.** The prior bash normalizer returned an empty string for `v22.1.0` and `git version 2.43.0`, meaning Node and Git were reported OUTDATED on **every** Unix run.
+6. **`Test-Tool` is tri-state** (present-and-current / present-but-outdated / absent), not boolean.
+7. **A corrupt state file is recreated as `{}`**, not treated as fatal.
+8. **Non-terminal callers must pass `-Interactive:$false`** after `-File`.
+9. **`.gitattributes` scopes the CRLF rule to the reference `.ps1` folder only**, so the rest of the repo does not churn while tests still get a deterministic CRLF fixture source.
+10. **The CI 3-OS matrix already existed and was extended, not duplicated.**
+
+### Why
+
+Without a single authoritative contract, the extension and the scripts would each encode their own assumptions and drift. The version-normalizer and settings-path defects were both real, previously undetected, and invisible to the original audit.
+
+### Residual risks (accepted, not fixed)
+
+- The scripts `eval`/`Invoke-Expression` the version command from `requirements.json` on every run. No extension-side control closes this — only Workspace Trust does.
+- `--skip-validation` marks state validated without validating. The extension must not expose this flag.
+
+---
+
+## Decision: Prerequisite automation — test strategy and results
+
+**Date:** 2026-07-30
+**Agent:** Trinity
+**Classification:** Project-specific — prerequisite automation / test infrastructure
+
+### Context
+
+Trinity was routed **before** implementation so testability constraints could shape the architecture rather than be retrofitted.
+
+### Decisions
+
+1. **D1 — the runner result must distinguish "script not found" and "spawn failed" from `exitCode: 1`.** If these collapse, the orchestrator cannot tell a missing script from a legitimate "not validated". Caught pre-implementation and designed in.
+2. **D2 — platform is injected**, never read from `process.platform` outside a composition boundary.
+3. **D3 — filesystem, clock, and logger are injected seams.**
+4. **D4 — per-service coverage buckets**, aligned to the AGENTS.md targets.
+5. **D5 — an honest e2e boundary.** Real-script integration tests are opt-in behind `NEXKIT_RUN_SCRIPT_TESTS=1` and are `pending` by default, so a green local run never implies coverage it does not have.
+6. **D6 — a shared parity contract table** asserted identically against the `.ps1` and `.sh` branches.
+7. **D7 — `test/fixtures/` is a new convention** and must be documented in `test/README.md`.
+
+### Results
+
+157 tests across 6 files plus shared helpers and 16 fixtures. **534 passing / 15 pending / 0 failing** with the integration gate off; **541 passing / 0 failing** with it on. Verdict **APPROVE WITH FINDINGS**.
+
+Four tests failed on the first run; all four were defects in the tests themselves, not the implementation, and were fixed and explained rather than silently adjusted.
+
+### Why
+
+Routing the tester before the implementer is what produced D1 — the highest-value catch of the session — at zero rework cost.
+
+### Known gap
+
+The integration suite ran on **Windows only**. The Unix branch is covered locally by injected fakes plus Tank's CI matrix.
+
+---
+
+## Decision: Prerequisite automation — code review and revision
+
+**Date:** 2026-07-30
+**Agents:** Morpheus (review), Ghost (revision under lockout)
+**Classification:** Project-specific — prerequisite automation
+
+### Context
+
+Morpheus code-reviewed Link's implementation: **APPROVE WITH MINOR CHANGES**, all three blocking architectural conditions confirmed satisfied. Four should-fix items were raised. Under the reviewer rejection rule Link was **locked out** of revising his own work; Ghost was assigned as independent revision author.
+
+### Decisions
+
+1. **Cancellation must kill the process tree, not just the shell.** POSIX spawns `detached: true` and kills the negative PID; Windows escalates through `taskkill /PID <pid> /T /F`. Where the tree kill cannot be delivered, `ScriptRunResult.descendantsMaySurvive` surfaces it and the user is warned an installer may still be running — the limitation is surfaced, never swallowed.
+2. **`"cancelled"` is a first-class `ScriptRunOutcome`**, not a `failureReason` magic string. The cancellation check is deliberately **late** — after probes fail, immediately before throwing — so a pre-cancelled run still reports `furthestStep === "check"`.
+3. **Streams use `setEncoding("utf8")`**; never `chunk.toString("utf8")` per `data` event. The scripts emit accented French and `✓`/`⚠`, so chunk-boundary splits corrupt output.
+4. **`NEXKIT_NON_INTERACTIVE` is removed.** It was a phantom contract — the extension set it, no script ever read it. Non-interactivity is genuinely enforced by `-Interactive:$false`.
+5. **Marker parsing is case-sensitive, separator-optional, first-match**, matching Tank's contract exactly. No divergence override was needed.
+6. **Nits applied:** `stat` before read via a new optional `IFileSystem.fileSizeBytes`; `OutputBuffer` trims on a byte-accurate slice respecting UTF-8 continuation bytes; blank `name`/`command` rejected; `package.json` declares `capabilities.untrustedWorkspaces: "limited"`.
+
+### Verification
+
+Type-check clean, lint clean, **534 passing / 15 pending / 0 failing** — identical to the pre-change baseline, confirming no regression.
+
+### Why
+
+The lockout rule produced an independent second pair of eyes on the exact code that had just been reviewed, and Ghost's fixes were scoped to four files precisely because Morpheus scoped them in the verdict.
+
+---
+
+## Decision: Open item — ConfirmationService fails open on dismiss
+
+**Date:** 2026-07-30
+**Agent:** Morpheus (raised), deferred to Eric Decarufel
+**Classification:** Project-specific — shared service, awaiting decision
+
+### Context
+
+`ConfirmationService.confirm()` returns `"accepted"` when the modal is **dismissed** (Escape, or clicking away). This is pre-existing and repo-wide, but the prerequisite automation feature now routes workspace-controlled script execution through it — so an accidental Escape becomes consent to run scripts from the workspace.
+
+Note that `.squad/decisions-archive.md` records an earlier deliberate UX contract that "ESC / dismiss = Accept". That contract predates this consent use case.
+
+### Status
+
+**Deliberately not fixed in this changeset.** Changing the default affects every existing caller and needs its own regression test. Scoped out as a separate slice awaiting Eric's decision.
+
+### Why
+
+Bundling a shared-service behaviour change into a feature changeset would make the blast radius invisible in review and couple an unrelated regression risk to this feature's merge.

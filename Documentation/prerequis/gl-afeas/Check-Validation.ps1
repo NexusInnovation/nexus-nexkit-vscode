@@ -3,36 +3,34 @@
 
 param([string]$SettingsPath)
 
+# $PSScriptRoot est deja le dossier du script : un seul Split-Path suffit pour remonter
+# a la racine du projet. Le double Split-Path remontait un niveau trop haut et lisait un
+# fichier d'etat different de celui ecrit par Validate-Prerequisites.ps1.
 if (-not $SettingsPath) {
-    $SettingsPath = Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) ".vscode\afeas.local.settings.json"
+    $projectRoot = Split-Path -Parent $PSScriptRoot
+    $SettingsPath = Join-Path (Join-Path $projectRoot ".vscode") "afeas.local.settings.json"
 }
 
 $problemMessage = "afeas.local.settings.json: error AFEAS001: Prerequis AFEAS non valides -- lancez la tache 'validate-prerequisites' pour corriger (Ctrl+Shift+P > Executer une tache)."
 
-try {
-    if (-not (Test-Path $SettingsPath)) {
-        Write-Host "::VALIDATED::false"
-        Write-Host $problemMessage
-        exit 1
-    }
+$validated = $false
 
-    $settings = Get-Content -LiteralPath $SettingsPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
-    $validated = $null -ne $settings.'afeas.prerequisites.validated' -and $settings.'afeas.prerequisites.validated' -eq $true
+try {
+    if (Test-Path -LiteralPath $SettingsPath) {
+        $settings = Get-Content -LiteralPath $SettingsPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+        $validated = ($settings -is [pscustomobject]) -and ($settings.'afeas.prerequisites.validated' -eq $true)
+    }
 }
 catch {
-    Write-Host "::VALIDATED::false"
-    Write-Host $problemMessage
-    exit 1
+    $validated = $false
 }
-
-$result = $validated.ToString().ToLower()
-Write-Host "::VALIDATED::$result"
 
 if ($validated) {
+    Write-Host "::VALIDATED::true"
     exit 0
 }
-else {
-    Write-Host $problemMessage
-    exit 1
-}
+
+Write-Host "::VALIDATED::false"
+Write-Host $problemMessage
+exit 1
 

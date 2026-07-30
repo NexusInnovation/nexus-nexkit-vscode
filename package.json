@@ -28,6 +28,12 @@
     "onStartupFinished"
   ],
   "main": "./out/extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Nexkit reads and writes AI template files in the open workspace and can execute the workspace's own prerequisite scripts. Prerequisite automation is disabled in Restricted Mode."
+    }
+  },
   "contributes": {
     "icons": {
       "custom-mcp": {
@@ -138,6 +144,11 @@
       {
         "command": "nexus-nexkit-vscode.openConvertToMarkdown",
         "title": "Nexkit: Convert to Markdown",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.validatePrerequisites",
+        "title": "Nexkit: Validate Development Prerequisites",
         "category": "Nexkit"
       }
     ],
@@ -349,6 +360,18 @@
           "default": "",
           "scope": "application",
           "description": "Path to a Python interpreter used for Convert to Markdown (microsoft/markitdown). Leave empty to auto-detect python3/python/py on PATH."
+        },
+        "nexkit.prerequisites.enabled": {
+          "type": "boolean",
+          "default": true,
+          "scope": "application",
+          "description": "Enable the Validate Development Prerequisites command, which runs the prerequisite scripts provided by the open workspace."
+        },
+        "nexkit.prerequisites.scriptsPath": {
+          "type": "string",
+          "default": "scripts",
+          "scope": "application",
+          "description": "Workspace-relative directory containing the prerequisite scripts and requirements.json. Must be a relative path inside the workspace; absolute paths and '..' segments are rejected."
         },
         "nexkit.telemetry.enabled": {
           "type": "boolean",

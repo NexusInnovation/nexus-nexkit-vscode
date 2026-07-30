@@ -5,84 +5,22 @@ Testing specialist ensuring all acceptance criteria are met through unit, integr
 ## Project Context
 
 - **Owner:** Eric De Carufel
-- **Project:** Azure Function pipeline — Nethris payroll reports to SharePoint. C# .NET 10.0, BDD testing with
-  Gherkin/SpecFlow, multi-environment CI/CD (dev/test/prod). 125-hour budget.
-- **Stack:** C#, .NET 10.0, Azure Functions, SharePoint, SpecFlow/Gherkin, GitHub Actions
+- **Current project:** Nexkit — VS Code extension (TypeScript strict, esbuild, Preact webview). Test stack is
+  **Mocha `tdd` ui + Sinon + Node `assert`**, run inside a real headless VS Code host. No chai, no Gherkin, no xUnit, no Moq.
+- **Prior project (archived):** EquipeLaurence — C#/.NET Azure Functions with SpecFlow BDD. **None of that tooling applies
+  here.** See `history-archive.md`.
 - **Created:** 2026-04-24
 
-## Phase 1 Summary (Complete)
+## Carried-forward rules (from archived learnings)
 
-✅ **Hello World Foundation Tests — 27 tests, all passing**
-
-- **BDD:** 5 scenarios + 3-row Scenario Outline (8 tests) — SpecFlow + real GreetingService
-- **Unit:** 14 xUnit Theory tests — GreetingServiceTests.cs covering null, empty, whitespace, special chars, Unicode
-- **Functions:** 5 function tests — GreetingFunctionTests.cs with mocked IGreetingService, DefaultHttpContext simulation
-
-**Patterns established:** BDD via SpecFlow auto-code-gen from .feature files, naming convention
-Method_Scenario_ExpectedResult, Moq for external deps, DefaultHttpContext for HTTP trigger testing, [Theory] for
-parameterized edge cases.
-
-**Build Status:** 0 warnings, 0 errors. Phase 1 sign-off approved by Eric (2026-05-06).
-
----
-
-## Phase 2 Progress
-
-### 2026-04-30 — HTTP Sync Function Tests (7 tests, all green)
-
-- NethrisReportSyncFunctionTests.cs — tests thin trigger wrapper, mocks orchestrator
-- Patterns: NullLogger<T>.Instance for simplicity, helper factories for SyncCycleResult creation
-- Verifies 200 on success, 200 with partial failures (per-report isolation), 500 on exception, no sensitive data leakage,
-  single invocation, CancellationToken forwarding
-
-### 2026-04-30 — Nethris Sync BDD Suite (4 scenarios, all green)
-
-- NethrisReportSync.feature — 4 Gherkin scenarios + step definitions
-- Coverage: successful sync (3 uploaded), all already synced (2 skipped), partial failure (per-report isolation), auth
-  failure (500)
-- Real orchestrator + real function, all clients mocked, Moq "last setup wins" pattern for partial failure simulation
-
-### 2026-05-04 — Acceptance Criteria Verification (26/26 tests passing)
-
-- **BL-001 through BL-008:** Full re-verification completed
-- **Gap found & fixed:** BL-005 empty extension test was missing — Neo added ExecuteSyncAsync_EmptyExtension_FallsToBin
-- **Test inventory:** 15 Core.Tests, 7 Functions.Tests, 4 Specs, 0 warnings
-- **Learning:** Cross-reference backlog AC list item-by-item against test method names; use Validator.TryValidateObject for
-  Data Annotations testing
-
-### 2026-05-07 — SharePoint Permission Error Handling Tests (Issue #14, 17 tests)
-
-- **SharePointClient tests (13):** Error handling for 401/403, exception wrapping, metadata PATCH resilience, permission
-  validation
-- **StubSharePointClient tests (4):** Path generation, metadata handling, cancellation token forwarding
-- **Testing approach:** Manual IRequestAdapter mocks (ThrowingRequestAdapter, SuccessRequestAdapter) to avoid real Graph SDK
-- **Edge case learning:** IRequestAdapter.ConvertToNativeRequestAsync<T> has unconstrained nullable return; BaseUrl setter
-  nullable
-- **Build Status:** 98 total tests (19 Core + 42 Infrastructure + 12 Integration + 15 Functions + 10 Specs), 0 failures, 0
-  warnings
-
----
-
-## Key Learnings
-
-- **BDD integration pattern:** Real orchestrator + real function with fully mocked clients (Moq) provides end-to-end coverage
-  without external dependencies
-- **Function test simplicity:** NullLogger<T>.Instance removes test noise; focus on HTTP semantics (status, body type) only
-- **Per-report error isolation:** Partial failures verify correctly via Moq setup override on specific report IDs
-- **Options validation:** Validator.TryValidateObject is the correct pattern for unit-testing Data Annotations outside of
-  host
-- **Graph SDK testing:** Manual IRequestAdapter implementations eliminate dependency on real HTTP/auth; construct ODataError
-  with ResponseStatusCode and MainError
-
----
-
-## Next Phase (Phase 2 continuation)
-
-- Real NethrisAuthClient and NethrisReportClient implementations (Neo) — backlog items and AC needed
-- Real SharePointClient and TableStorageSyncLedger implementations (Neo, Switch)
-- Timer trigger NethrisTimerSyncFunction (not yet tracked)
-- Client-level unit tests following same Moq patterns
-- E2E test plan and infrastructure integration tests
+- **Cross-reference the acceptance-criteria list item-by-item against test method names.** That is how a missing test gets
+  found; scanning for "looks covered" does not.
+- **Per-item error isolation must be asserted explicitly** — a batch that partially fails should prove the other items still
+  succeeded.
+- **Assert on captured log output for compliance**, not on the absence of a crash: prove secrets, phone numbers, and message
+  bodies never reach the log, and that output is length-independent so nothing leaks by inference.
+- **Hand-rolled fakes beat heavyweight SDK mocks** when the SDK boundary is an interface you can implement in a few lines.
+- **Contract tests can be written before the types exist** (reflection-based), so QA never blocks the implementer.
 
 ## Learnings
 
@@ -90,145 +28,176 @@ parameterized edge cases.
 
 - 2026-07-10: QA approved the RTF converter Markdown preview. `npm run check:types`, package-lock dry-run resolution, and a focused markdown-it probe passed: raw HTML is escaped, unsafe `javascript:` and `data:` links do not render as hrefs, and HTTPS links render. The current absence of DOM interaction coverage is acceptable for this small, isolated switch but remains a manual-test boundary.
 
-- 2026-05-20T08:42:26.759-04:00: Issue #111 cleanup found no `AcsInboundSmsFunctionTests.cs` in
-  `tests/EquipeLaurence.Functions.Tests`, so QA removed the four remaining ACS-only startup assertions from
-  `FunctionAppStartupTests.cs` instead. Full-solution validation moved from 205 total tests (199 passed, 1 failed, 5 skipped
-  — failing ACS startup assertion) to 201 total tests (196 passed, 0 failed, 5 skipped), leaving
-  `AcsDeliveryStatusFunctionTests` and `EquipeLaurence.Infrastructure.Acs.Tests` untouched.
+---
 
-- 2026-05-12: **Full test suite inventory (plan-de-tests.md):** Suite totale ~100 tests répartis sur 5 projets. Core.Tests :
-  19 tests (10 NethrisReportSyncService + 9 OptionsValidation). Infrastructure.Tests : ~42 tests (10 NethrisAuthClient + 13+
-  NethrisReportClient dont 13 Theory cases + 13 SharePointClient + 3 StubSharePoint + 4 TableStorageSyncLedger).
-  Functions.Tests : 15 tests (9 NethrisReportSyncFunction + 6 FunctionAppStartup). IntegrationTests : 12 tests (3
-  NethrisAuth + 3 NethrisReportClient + 6 AppConfiguration + 2 Twilio skip). Specs : 10 scénarios BDD (4 NethrisReportSync +
-  6 AppConfiguration). Plan d'acceptation en 9 scénarios client + grille finale rédigé dans `docs/plan-de-tests.md`.
+### 2026-07-21 — Commit-message SCM context reviewer gate / repository routing QA
 
-- 2026-05-11: When a solution build fails near SharePoint/Graph but
-  [src/EquipeLaurence.Infrastructure/Clients/SharePointClient.cs](src/EquipeLaurence.Infrastructure/Clients/SharePointClient.cs)
-  and infrastructure tests already compile, treat it as caller-side contract drift first. The fix here was stale six-argument
-  `ISharePointClient.UploadFileAsync` mocks in
-  [tests/EquipeLaurence.Core.Tests/NethrisReportSyncServiceTests.cs](tests/EquipeLaurence.Core.Tests/NethrisReportSyncServiceTests.cs)
-  and
-  [tests/EquipeLaurence.Specs/Steps/NethrisReportSyncSteps.cs](tests/EquipeLaurence.Specs/Steps/NethrisReportSyncSteps.cs),
-  followed by a focused validation on the touched test slice and then the full solution build.
+APPROVED. The Git-menu command forwards the optional invoking `SourceControl.rootUri`, and `CommitMessageService` selects
+the matching Git repository by canonical `Uri.toString(true)` before preserving the existing single-repository,
+uniquely-staged, then-index-zero fallback sequence. Focused integration coverage proves the selected second repository is
+used and that unmatched context retains staged-change selection; command coverage verifies URI forwarding.
+`git diff --check` passed. `npm run check:types` and full test compilation remained blocked by unrelated missing RTF
+converter dependencies/types (`mammoth`, `turndown`, `turndown-plugin-gfm`, `rtf.js`) in
+`src/features/rtf-converter/webview/main.tsx`; the extension-host runner did not honour the supplied grep and ended with
+SIGINT after broad execution.
 
-- 2026-05-11: **Capturing log output for security tests (Issue #42):** To assert on structured log output without Moq,
-  implement a private sealed `CapturingLogger<T> : ILogger<T>` that appends `formatter(state, exception)` to a
-  `List<string>`. The `formatter` delegate produces the fully formatted log message string (with placeholders substituted),
-  making it easy to `Assert.DoesNotMatch(@"\*{2,}", msg)` for variable-length asterisk masks, or
-  `Assert.Equal(authShort, authLong)` across two different-length passwords to prove log output is password-length
-  independent. This pattern needs no extra NuGet packages and works with any `ILogger<T>` consumer.
+## Team update — 2026-07-20 (Convert to Markdown / markitdown migration, complete and merged)
 
-- 2026-05-19T10:14:29.872-04:00: Issue #100 test prep added two parallel-safe guardrails.
-  `tests/EquipeLaurence.Core.Tests/BaseTiArchitectureContractTests.cs` uses reflection + `DispatchProxy` so QA can lock the
-  future `IBaseTiIngestionService`/`IBaseTiRepository` orchestration contract without blocking Neo before the types exist.
-  `tests/EquipeLaurence.Infrastructure.Tests/BaseTiReferenceWorkbookTests.cs` inspects `References/BDNethris_BaseTI.xlsx`
-  directly and proves the discovery row is row 2 (row 1 blank, row 2 headers including `Matricule`, `Code unique`,
-  `Statut employé`, `Tél. cellulaire`), which keeps schema-discovery tests grounded in the real workbook instead of guessed
-  column models.
+Shared context (see decisions.md "Replace custom RTF/DOCX/HTML to Markdown conversion with microsoft/markitdown"):
+conversion moved host-side via microsoft/markitdown (Python child process). Message contract in `messages.ts`
+(`convert-paste-html` | `convert-file` | `recheck-availability` → `conversion-result` | `conversion-error` |
+`availability-status`). markdown-it preview retained; `mammoth`/`turndown`/`turndown-plugin-gfm`/`rtf.js`/`@types/turndown`
+removed along with the `rtfJsBundle.d.ts` + `turndownPluginGfm.d.ts` shims. Security: argv array + sandboxed temp file,
+`shell: false`, 10 MB cap, two-layer timeout.
 
-- 2026-05-19T10:14:29.872-04:00: Issue #101 SMS QA coverage now lives in
-  `tests/EquipeLaurence.Functions.Tests/SendEmergencySmsFunctionTests.cs`. The function-level suite locks four hard
-  behaviors: recipient selection only sends `IsEligibleForSms` records that are not opted out, cached idempotency responses
-  short-circuit all downstream calls, per-recipient Twilio failures remain isolated in the batch summary, and compliance
-  checks assert logs exclude plaintext message bodies and full phone numbers while audit entries keep only the SHA-256
-  message hash plus successful SIDs.
+My coverage: `markitdownConversionService.test.ts` (19) + `convertToMarkdownPanelService.test.ts` (11); updated
+`extension.test.ts`, `nexkitPanelMessageHandler.test.ts`, `serviceContainer.test.ts` for the rename; deleted
+`rtfConverterPanelService.test.ts`. All 30 pass (full suite 382/0). **Recurring trap:** stale `out/` artifacts abort
+`npm test` — Mocha crashed loading a leftover `out/test/suite/cronSchedule.test.js` from a deleted feature. Resolution is
+to delete `out/`; a clean step before `test-compile` is still an open follow-up.
 
-- 2026-05-20T08:17:46.634-04:00: Issue #110 Twilio inbound QA uses a branch-safe reflection harness in
-  `tests/EquipeLaurence.Functions.Tests/TwilioInboundSmsFunctionTests.cs` so the test project can compile even if Mouse has
-  not pushed `TwilioInboundSmsFunction` yet. Once the function type is present, the suite still exercises the real
-  constructor and `RunAsync` behavior end-to-end with signed `DefaultHttpContext` form posts, covering STOP/ARRET opt-out,
-  START opt-in, unknown keywords, missing `From`, invalid signatures, and the empty TwiML response contract.
+### 2026-07-30 — nexus-nexkit-vscode test stack: the ACTUAL conventions (correcting my BDD/Gherkin default)
+
+This repo is **not** the C#/SpecFlow project my earlier history describes. There is **no Gherkin, no SpecFlow, no Moq, no
+xUnit**. Do not propose `.feature` files here. The real stack:
+
+- **Runner:** Mocha in **TDD ui** (`suite()` / `test()` / `setup()` / `teardown()`), configured in
+  [test/suite/index.ts](test/suite/index.ts) — `ui: "tdd"`, `timeout: 10000`, `reporter: "spec"`. Tests are discovered by
+  globbing `suite/**/*.test.js` from `out/test/`, and a compiled test is only loaded if its `.ts` source still exists
+  (guards against stale build artifacts after refactors).
+- **Assertions:** Node's built-in `assert` (`assert.ok`, `assert.strictEqual`, `assert.deepStrictEqual`). No chai.
+- **Mocking:** `sinon`. Two accepted styles — `sinon.createSandbox()` + `sandbox.restore()` in teardown
+  (githubWorkflowRunnerService), or bare `sinon.stub(...)` + `sinon.restore()` in teardown (markitdownConversionService).
+  Both are in use; sandbox style is cleaner.
+- **Suite naming:** `suite("Unit: ServiceName", ...)` and `suite("Integration: ...", ...)`. The `Unit:` / `Integration:`
+  prefix is the convention documented in [test/README.md](test/README.md). Nested `suite()` blocks group behaviors within
+  a service (markitdownConversionService does this well).
+- **File naming:** `test/suite/<serviceName>.test.ts`, camelCase matching the source file, mirroring `src/` layout.
+- **Execution environment:** tests run inside a **real headless VS Code instance** (`node ./out/test/runTest.js`), so
+  `import * as vscode from "vscode"` works for real. Compile first with `npm run test-compile` (plain `tsc -p ./` → `out/`).
+- **Coverage:** `nyc` (`npm run test:coverage`, lcov + text).
+
+**How VS Code APIs get mocked here:**
+
+- Namespace properties are replaced with `.value()`: `sandbox.stub(vscode.workspace, "workspaceFolders").value([{ uri, name, index: 0 }])`
+  or `.value(undefined)` for the "no workspace" path.
+- Functions are stubbed directly: `sandbox.stub(vscode.window, "showErrorMessage")`,
+  `sandbox.stub(vscode.window, "createTerminal").returns(mockTerminal as any)`.
+- `vscode.Uri.file("/mock/workspace")` is used freely — real `Uri` objects, fake paths.
+- `ExtensionContext` is hand-rolled as a Map-backed literal cast `as any` (see
+  [test/suite/installedTemplatesStateManager.test.ts](test/suite/installedTemplatesStateManager.test.ts)) — `workspaceState.get`
+  reads from a `Map`, `workspaceState.update` writes to it. This is the established pattern for anything touching
+  workspace state; there is no shared mock-context helper yet.
+- A shared `test/suite/mockAuthentication.ts` (`setupBeforeAllTests()`) runs once before the whole suite to neutralize
+  GitHub auth.
+
+**How child processes are mocked (the key precedent for any script-runner work):**
+[test/suite/markitdownConversionService.test.ts](test/suite/markitdownConversionService.test.ts) is the reference. It stubs the
+**module**: `sinon.stub(childProcess, "spawn")`, and returns a `FakeChildProcess` — an `EventEmitter` with `stdout` and
+`stderr` sub-`EventEmitter`s plus a `kill` stub. Named factory helpers make each scenario one line: `createClosingChild(code)`,
+`createErroringChild(err)`, `createSuccessfulChild(stdout)`, `createHangingChild()` (never emits — used for timeout paths).
+All emissions are deferred with `process.nextTick(...)` so the service's promise wiring is in place before events fire.
+Caveat: this stubs a Node module rather than an injected seam, so it couples tests to the import style of the service. For
+new work, prefer injecting a runner interface and stubbing that; keep the module-stub trick as the fallback.
+
+**Filesystem patterns — two idioms, both accepted:**
+
+1. **Real temp dir** (preferred when the code under test does meaningful multi-file I/O):
+   `fs.mkdtempSync(path.join(os.tmpdir(), "nexkit-<feature>-test-"))` in `setup()`, `fs.rmSync(dir, { recursive: true, force: true })`
+   in `teardown()` wrapped in try/catch. See [test/suite/hooksConfigDeployer.test.ts](test/suite/hooksConfigDeployer.test.ts).
+2. **Stubbed fs** (preferred when I/O is incidental and you want zero disk touch):
+   `sinon.stub(fs, "mkdtempSync").returns("C:\\Fake\\Temp\\...")`, `sinon.stub(fs, "writeFileSync")`, `sinon.stub(fs, "rmSync")`.
+
+**Fixtures:** there is currently **no** `test/fixtures/` directory and no fixture convention in this repo. All test data is
+built inline (JSON literals written into temp dirs, or string constants). Introducing `test/fixtures/` is a new convention —
+it must be justified and documented in [test/README.md](test/README.md) if adopted.
+
+**Platform-conditional assertions:** the repo already branches on `process.platform === "win32"` _inside_ a single test to
+assert PowerShell vs bash command shapes (githubWorkflowRunnerService). That works but only ever exercises the host OS. For
+OS-selection logic, prefer injecting the platform rather than reading `process.platform` directly, so both branches are
+covered on any machine.
+
+**Security assertion worth copying:** markitdown tests iterate every recorded `spawn` call and assert `options.shell !== true`
+and `Array.isArray(args)` — a standing guarantee against command injection. Any new process-spawning feature should carry the
+same guard test. They also assert error messages don't leak local paths via regex `/[A-Za-z]:\\|\/(tmp|home|Users)\//`.
+
+**Ground truth for the prerequisites feature:** the real reference scripts live in
+[Documentation/prerequis/gl-afeas/](Documentation/prerequis/gl-afeas/) — `requirements.json`, `Check-Validation.ps1`,
+`Validate-Prerequisites.ps1`, `validate-prerequisites.sh`, `Setup-Environment.ps1`, `setup-environment.sh`. Confirmed:
+`check-validation.sh` genuinely does not exist. `Check-Validation.ps1` emits a `::VALIDATED::true|false` marker on stdout
+and exits 0/1; it treats a missing settings file, unreadable file, and malformed JSON all as `false` + exit 1 (no distinct
+error code), and reads the flag `afeas.prerequisites.validated` from `.vscode/afeas.local.settings.json`. That marker +
+exit-code pair is the cross-platform contract any parser must be tested against.
+
+### 2026-07-30 — Prerequisite automation test suite
+
+**Correction to an earlier note in this file:** `check-validation.sh` now exists in
+`Documentation/prerequis/gl-afeas/`. All six real scripts are present, so the Unix/Windows
+parity gap I recorded previously is closed. Do not repeat the old claim.
+
+**This project is a TypeScript VS Code extension.** The seeded context at the top of this
+file (Azure Functions, C#, SpecFlow, payroll) is from a different engagement and does not
+apply. Test stack here is Mocha `tdd` ui + Sinon + Node `assert`. No chai, no Gherkin.
+
+**Build gate workaround.** `npm test` and `npm run compile` both die on
+`ERR_PNPM_IGNORED_BUILDS` before reaching any code. Do not run `pnpm approve-builds` to
+"fix" it. Route around it: `.\node_modules\.bin\tsc.cmd -p ./` to compile, then
+`node ./out/test/runTest.js` to run inside the VS Code host.
+
+**Which runner to use.** `test/runHeadlessTest.ts` has a hardcoded allowlist of three
+files. Anything importing `vscode` — which is nearly everything — must go through
+`runTest.js`, not the headless runner. `test/suite/index.ts` globs `suite/**/*.test.js`,
+so helper modules are safe in `test/suite/helpers/` as long as they do not end in
+`.test.ts`.
+
+**Fixture path resolution.** Tests run from `out/test/suite/`, so fixtures resolve as
+`path.resolve(__dirname, "..", "..", "..", "test", "fixtures", ...)`. Three levels up,
+not one.
+
+**`assert.throws` returns `void` in Node.** It does not hand back the thrown error. Any
+test that wants to inspect the error object needs a `captureError` helper wrapping
+try/catch. I wrote this bug three times before catching it.
+
+**Fake process runner queueing.** `respondTo(matcher, ...results)` appends to an existing
+queue so a step can be scripted to behave differently on a re-run. That means a test
+cannot contradict a response the harness pre-seeded. Added `overrideResponse` for that
+case rather than changing the append semantics other tests depend on.
+
+**Test the code, not your mental model.** My `OutputBuffer` eviction expectation was
+wrong: eviction halts the moment the buffer is back within budget, so it retains more
+than just the final chunk. When a test fails, read the implementation before assuming a
+defect. Three of my four first-run failures were my error, one was a genuine assertion
+design flaw.
+
+**Divergences worth remembering:** `NEXKIT_NON_INTERACTIVE=1` is injected into every
+spawn and no script reads it — dead safety code. The `::VALIDATED::` parser is
+case-insensitive and whitespace-tolerant while the contract says it is case-sensitive.
+Both are captured in tests named `DIVERGENCE:` so current behaviour is never mistaken
+for agreed behaviour.
+
+**Opt-in integration pattern.** Gate real-process suites behind an env var checked in
+`setup()` with `this.skip()`. Skipped shows as _pending_, never as passing — so a suite
+that never ran cannot masquerade as green.
 
 ---
 
-## 2026-05-19T14:14:29Z — Cross-Agent Handoff (Scribe)
+### 2026-07-30 — Team update (recorded by Scribe)
 
-Mouse Issue #101 deliverables documented:
+- **Tank's script contract is the authoritative reference** for the AFEAS prerequisite scripts. Link's extension
+  implementation and my parity tests both conform to it — when they disagree, the contract wins.
+- **The `::VALIDATED::` divergence I captured is now closed.** Ghost's Round 4 revision made the extension's marker parser
+  case-sensitive, separator-optional, and first-match, matching Tank's contract exactly. My `DIVERGENCE:` test for it should
+  be retired or flipped to an agreement test on the next pass.
+- **Link is locked out of the revision** under the reviewer-rejection protocol; Ghost owned the fix. Route follow-up
+  revisions on this artifact to Ghost, not Link.
+- **Morpheus accepted the `eval` / `Invoke-Expression` surface in the setup scripts as a recorded residual risk**, closed
+  only by VS Code Workspace Trust. Do not file it as a new defect.
+- **`--skip-validation` marks state validated without validating.** The extension must never expose that flag — any test
+  that finds it reachable from the UI is a hard failure.
+- **Open item deferred to Eric:** `ConfirmationService.confirm()` fails **open** on modal dismiss (Escape = consent).
+  Pre-existing and repo-wide, but it now gates workspace-controlled script execution. It ships as its own slice with its own
+  regression test.
+- **My results this cycle:** 534 passing / 15 failing / 0 pending, then 541 / 0 after fixes. Four of the failures were
+  self-inflicted test defects, not product defects. Integration coverage remains Windows-only.
 
-- BaseTI-backed SMS recipient source via ISmsRecipientSource adapter
-- Personalized token rendering in message templates
-- Masked send logs for PII compliance
-- Documentation updated for operator reference
-- Release build and test suite passing
-
-Decision merged to .squad/decisions.md. Trinity's QA validation requirements consolidated into single decision record.
-
-**Status:** All team records updated and committed.
-
-## Session: ralph-round1 (2026-05-20T12:17:46Z)
-
-### Issue #110 — Twilio Inbound SMS Function — Test Coverage
-
-**Status:** 58/58 tests passing — Committed and pushed to squad/110-twilio-inbound-sms-function
-
-**Work Completed:**
-
-- Added `TwilioInboundSmsFunctionTests` with 7 test cases
-- Test coverage:
-  1. Valid STOP keyword — opt-out recorded
-  2. Valid ARRET keyword (French) — opt-out recorded
-  3. Valid START keyword — opt-out cleared
-  4. Unknown keyword — rejected
-  5. Missing From parameter — 400 response
-  6. Invalid HMAC-SHA1 signature — 403 Forbidden
-  7. Valid request — TwiML 200 response with empty body
-- Phone masking log assertion (validates logs never contain plaintext numbers)
-- All 58 unit tests passing
-
-**Quality:**
-
-- Test isolation: each test independently mocks Twilio client
-- Full coverage of security, compliance, and happy path
-- Phone masking validation ensures audit trail compliance
-
-**Next Steps:**
-
-- Await PR merge
-- Post-merge: coordinate with Mouse on AcsInboundSmsFunction transition timeline
-
----
-
-### 2026-05-29 — SMS Auth Fix tests
-
-Added 3 new tests for RequesterPrincipal identity resolution from Entra ID claims. Added fetch/CSS assertions to
-SmsFormFunctionTests. All 224 tests pass.
-
-**Patterns:** ClaimsPrincipal mock setup for Entra ID identity tests, HTML response assertion for fetch() and CSS attributes.
-
----
-
-### 2026-05-29 — SMS Auth Fix tests
-
-Added 3 new tests for RequesterPrincipal identity resolution from Entra ID claims. Added fetch/CSS assertions to
-SmsFormFunctionTests. All 224 tests pass.
-
-**Patterns:** ClaimsPrincipal mock setup for Entra ID identity tests, HTML response assertion for fetch() and CSS attributes.
-
-### 2026-05-29 — Easy Auth Redirect Fix tests
-
-Added assertions for `resp.redirected` and session expiry message detection in `SmsFormFunctionTests.cs`. Validates that
-client-side JavaScript correctly detects when Easy Auth session expires. 224 tests pass.
-
-### 2026-07-21 — Commit-message SCM context reviewer gate
-
-APPROVED: the Git-menu command forwards the optional invoking `SourceControl.rootUri`, and `CommitMessageService` selects the matching Git repository by canonical `Uri.toString(true)` before preserving the existing single-repository, uniquely-staged, then-index-zero fallback sequence. Focused integration coverage proves the selected second repository is used and unmatched context retains staged-change selection; command coverage verifies URI forwarding. `npm run check:types` and test compilation remain blocked by unrelated missing RTF converter dependencies/types in `src/features/rtf-converter/webview/main.tsx`; the extension-host test runner did not honor the supplied grep and ended with SIGINT after broad execution. `git diff --check` reported no focused whitespace errors.
-
-### 2026-07-21 — Commit-message SCM repository routing QA
-
-Approved the commit-management multi-root routing change. The Git-menu command forwards the invoking
-`SourceControl.rootUri`; `CommitMessageService` selects the exact Git API repository by URI before preserving the
-existing single-repository, uniquely staged, and first-repository fallbacks. Focused test cases cover exact selection,
-unmatched-context fallback, and command forwarding. `git diff --check` passed. Full test compilation and type-checking
-remain blocked by unrelated missing RTF converter dependencies (`mammoth`, `turndown`, `turndown-plugin-gfm`, and
-`rtf.js`).
-
-**Patterns:** JavaScript behavior assertions in rendered HTML, session expiry detection via redirect/content-type.
-
-## Team update — 2026-07-20 (RTF converter to markitdown migration)
-
-Shared context (see decisions.md "Replace custom RTF/DOCX/HTML to Markdown conversion with microsoft/markitdown"): conversion moved host-side via microsoft/markitdown (Python child process). Message contract lives in src/features/rtf-converter/messages.ts (convert-paste-html | convert-file | recheck-availability -> conversion-result | conversion-error | availability-status). markdown-it preview retained; deps mammoth/turndown/turndown-plugin-gfm/rtf.js/@types/turndown removed; type shims rtfJsBundle.d.ts + turndownPluginGfm.d.ts deleted. Security: argv array + sandboxed temp file, shell:false, 10MB cap, two-layer timeout. Suite 382 passing / 0 failing. Open follow-up: add clean/rimraf out step before test-compile (stale out/ artifacts can abort npm test).
-
-## Team update — 2026-07-20 (Convert to Markdown — full migration complete and merged)
-
-Wrote `markitdownConversionService.test.ts` (19 tests) and `convertToMarkdownPanelService.test.ts` (11 tests) covering the full-scope migration; updated `extension.test.ts`, `nexkitPanelMessageHandler.test.ts`, `serviceContainer.test.ts` for the rename; deleted `rtfConverterPanelService.test.ts`. All 30 pass. Note for the team: the stale-`out/` test-compile issue flagged in the prior session recurred — Mocha crashed loading a leftover `out/test/suite/cronSchedule.test.js` from a deleted feature. Coordinator resolved it by deleting `out/` (no `cronstrue` dependency was actually needed).
+Older EquipeLaurence-era entries were archived to `history-archive.md` on 2026-07-30.

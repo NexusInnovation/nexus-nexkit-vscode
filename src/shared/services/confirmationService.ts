@@ -37,4 +37,20 @@ export class ConfirmationService {
 
     return "accepted";
   }
+
+  /**
+   * Show a modal confirmation that is deliberately never remembered.
+   *
+   * Use for consequential, one-off actions — installing software, for example —
+   * where a persisted "refuse forever" would silently suppress a decision the
+   * user must make each time.
+   *
+   * @param message Short title shown in the dialog header.
+   * @param detail  Longer description of what Nexkit is about to do.
+   * @returns True when the user explicitly accepted.
+   */
+  public async confirmOnce(message: string, detail: string): Promise<boolean> {
+    const result = await vscode.window.showWarningMessage(message, { detail, modal: true }, "Continue");
+    return result === "Continue";
+  }
 }

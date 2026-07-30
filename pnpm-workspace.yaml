@@ -1,0 +1,7 @@
+allowBuilds:
+  '@vscode/vsce-sign': set this to true or false
+  esbuild: set this to true or false
+  keytar: set this to true or false
+  lefthook: set this to true or false
+  libxmljs2: set this to true or false
+  protobufjs: set this to true or false

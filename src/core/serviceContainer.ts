@@ -31,6 +31,10 @@ import { HooksConfigDeployer } from "../features/initialization/hooksConfigDeplo
 import { UserDirectoryService } from "../features/ai-template-files/services/userDirectoryService";
 import { ConvertToMarkdownPanelService } from "../features/convert-to-markdown/convertToMarkdownPanelService";
 import { MarkitdownConversionService } from "../features/convert-to-markdown/markitdownConversionService";
+import { NodeProcessRunner } from "../features/prerequisite-automation/nodeProcessRunner";
+import { PrerequisiteConfigService } from "../features/prerequisite-automation/prerequisiteConfigService";
+import { PrerequisiteRunnerService } from "../features/prerequisite-automation/prerequisiteRunnerService";
+import { PrerequisiteOrchestratorService } from "../features/prerequisite-automation/prerequisiteOrchestratorService";
 
 /**
  * Service container for dependency injection
@@ -69,6 +73,9 @@ export interface ServiceContainer {
   userDirectory: UserDirectoryService;
   convertToMarkdown: ConvertToMarkdownPanelService;
   markitdownConversion: MarkitdownConversionService;
+  prerequisiteConfig: PrerequisiteConfigService;
+  prerequisiteRunner: PrerequisiteRunnerService;
+  prerequisiteOrchestrator: PrerequisiteOrchestratorService;
 }
 
 /**
@@ -121,6 +128,15 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const githubWorkflowRunner = new GitHubWorkflowRunnerService(context.extensionUri);
   const markitdownConversion = new MarkitdownConversionService(logging);
   const convertToMarkdown = new ConvertToMarkdownPanelService(context.extensionUri, markitdownConversion);
+  const prerequisiteConfig = new PrerequisiteConfigService(logging);
+  const prerequisiteRunner = new PrerequisiteRunnerService(new NodeProcessRunner(), logging);
+  const prerequisiteOrchestrator = new PrerequisiteOrchestratorService(
+    prerequisiteConfig,
+    prerequisiteRunner,
+    confirmation,
+    logging,
+    telemetry
+  );
 
   // Register for disposal
   context.subscriptions.push(logging);
@@ -166,5 +182,8 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     userDirectory,
     convertToMarkdown,
     markitdownConversion,
+    prerequisiteConfig,
+    prerequisiteRunner,
+    prerequisiteOrchestrator,
   };
 }

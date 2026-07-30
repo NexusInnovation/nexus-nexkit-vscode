@@ -1,3 +1,4 @@
+#!/usr/bin/env pwsh
 # Setup-Environment.ps1
 # Complete environment setup: validates prerequisites, configures git hooks, installs dependencies
 # Usage: .\scripts\Setup-Environment.ps1
@@ -5,7 +6,10 @@
 param(
     [switch]$SkipValidation = $false,
     [switch]$SkipGitHooks = $false,
-    [switch]$Verbose = $false
+    [switch]$Verbose = $false,
+    # Passe a Validate-Prerequisites.ps1. Doit valoir $false lorsque le script est lance
+    # par un outil non interactif (extension VS Code, CI) : sinon Read-Host bloque le processus.
+    [switch]$Interactive = $true
 )
 
 $ErrorActionPreference = "Stop"
@@ -42,7 +46,9 @@ function Write-Section {
     Write-ColorOutput "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" -Color $colors.Section
 }
 
-function Invoke-Command {
+# NOTE : ne pas nommer cette fonction Invoke-Command, ce qui masquerait la cmdlet native
+# du meme nom pour tout le script.
+function Invoke-Step {
     param(
         [Parameter(Mandatory = $true)]
         [string]$Description,
@@ -76,14 +82,14 @@ Write-ColorOutput "`n$([char]0x2705) AFEAS PROJECT - ENVIRONMENT SETUP`n" -Color
 
 $scriptRoot = Split-Path $MyInvocation.MyCommand.Path
 $projectRoot = Split-Path $scriptRoot
-$localSettingsPath = Join-Path $projectRoot ".vscode\afeas.local.settings.json"
+$localSettingsPath = Join-Path (Join-Path $projectRoot ".vscode") "afeas.local.settings.json"
 
 # Step 1: Validate prerequisites
 if (-not $SkipValidation) {
     Write-Section "Step 1: Validating Prerequisites"
     
     $validationScript = Join-Path $scriptRoot "Validate-Prerequisites.ps1"
-    & $validationScript -Interactive:$true
+    & $validationScript -Interactive:$Interactive -SettingsPath $localSettingsPath
     if ($LASTEXITCODE -ne 0) {
         Write-ColorOutput "`n✗ Prerequisites validation failed. Please install missing tools and try again." -Color $colors.Error
         exit 1
@@ -100,7 +106,7 @@ if (-not $SkipGitHooks) {
     
     $gitHooksScript = Join-Path $scriptRoot "setup-git-hooks.ps1"
     if (Test-Path $gitHooksScript) {
-        Invoke-Command -Description "Configure git hooks" -Command {
+        Invoke-Step -Description "Configure git hooks" -Command {
             & $gitHooksScript
         } -ContinueOnError:$true
     }
@@ -116,7 +122,7 @@ else {
 # Step 3: Install Frontend Dependencies
 Write-Section "Step 3: Installing Frontend Dependencies"
 
-Invoke-Command -Description "Install pnpm dependencies (src/frontend)" -Command {
+Invoke-Step -Description "Install pnpm dependencies (src/frontend)" -Command {
     Push-Location (Join-Path $projectRoot "src/frontend")
     
     Write-ColorOutput "Running: pnpm install" -Color $colors.Info
@@ -128,7 +134,7 @@ Invoke-Command -Description "Install pnpm dependencies (src/frontend)" -Command 
 # Step 4: Restore Backend Dependencies
 Write-Section "Step 4: Restoring Backend Dependencies"
 
-Invoke-Command -Description "Restore .NET dependencies (src/backend)" -Command {
+Invoke-Step -Description "Restore .NET dependencies (src/backend)" -Command {
     Push-Location (Join-Path $projectRoot "src/backend")
     
     Write-ColorOutput "Running: dotnet restore" -Color $colors.Info
@@ -141,13 +147,24 @@ Invoke-Command -Description "Restore .NET dependencies (src/backend)" -Command {
 Write-Section "Step 5: Storing Setup Status"
 
 $settingsPath = $localSettingsPath
-
-# Read current settings or create empty
-if (Test-Path $settingsPath) {
-    $settings = Get-Content $settingsPath -Raw | ConvertFrom-Json
+$settingsDir = Split-Path -Parent $settingsPath
+if (-not (Test-Path -LiteralPath $settingsDir)) {
+    New-Item -ItemType Directory -Path $settingsDir -Force | Out-Null
 }
-else {
-    $settings = [pscustomobject]@{}
+
+# Read current settings or create empty. Un fichier illisible est remplace plutot que
+# de bloquer indefiniment la convergence check -> validate -> check.
+$settings = [pscustomobject]@{}
+if (Test-Path -LiteralPath $settingsPath) {
+    try {
+        $parsed = Get-Content -LiteralPath $settingsPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
+        if ($parsed -is [pscustomobject]) {
+            $settings = $parsed
+        }
+    }
+    catch {
+        Write-ColorOutput "⚠ $settingsPath is not valid JSON and will be recreated." -Color $colors.Warning
+    }
 }
 
 # Update settings with completion status
@@ -155,9 +172,9 @@ $settings | Add-Member -NotePropertyName "afeas.prerequisites.validated" -NotePr
 $settings | Add-Member -NotePropertyName "afeas.prerequisites.validationDate" -NotePropertyValue (Get-Date -Format "yyyy-MM-dd HH:mm:ss") -Force
 
 # Write settings back
-$settings | ConvertTo-Json -Depth 10 | Set-Content $settingsPath -Encoding UTF8
+$settings | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $settingsPath -Encoding UTF8
 
-Write-ColorOutput "✓ Setup status stored in .vscode/settings.json" -Color $colors.Success
+Write-ColorOutput "✓ Setup status stored in $settingsPath" -Color $colors.Success
 
 # Final summary
 Write-Section "Setup Complete!"
