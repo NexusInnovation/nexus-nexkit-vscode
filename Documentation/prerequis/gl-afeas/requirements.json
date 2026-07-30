@@ -1,0 +1,82 @@
+{
+  "prerequisites": [
+    {
+      "name": "Node.js",
+      "command": "node",
+      "versionCommand": "node --version",
+      "required": true,
+      "minimumVersion": "24.0.0",
+      "install": {
+        "winget": "winget install -e --id OpenJS.NodeJS --accept-source-agreements --accept-package-agreements",
+        "npm": null,
+        "hint": "winget install -e --id OpenJS.NodeJS",
+        "url": "https://nodejs.org/"
+      }
+    },
+    {
+      "name": "pnpm",
+      "command": "pnpm",
+      "versionCommand": "pnpm --version",
+      "required": true,
+      "minimumVersion": "8.0.0",
+      "install": {
+        "winget": "winget install --id pnpm.pnpm --accept-source-agreements --accept-package-agreements & pnpm setup",
+        "npm": "npm install -g pnpm",
+        "hint": "npm install -g pnpm",
+        "url": "https://pnpm.io/installation"
+      }
+    },
+    {
+      "name": ".NET SDK",
+      "command": "dotnet",
+      "versionCommand": "dotnet --version",
+      "required": true,
+      "minimumVersion": "8.0.0",
+      "install": {
+        "winget": "winget install -e --id Microsoft.DotNet.SDK.8 --accept-source-agreements --accept-package-agreements",
+        "npm": null,
+        "hint": "winget install -e --id Microsoft.DotNet.SDK.8",
+        "url": "https://dotnet.microsoft.com/download"
+      }
+    },
+    {
+      "name": "Git",
+      "command": "git",
+      "versionCommand": "git --version",
+      "required": true,
+      "minimumVersion": "2.0.0",
+      "install": {
+        "winget": "winget install -e --id Git.Git --accept-source-agreements --accept-package-agreements",
+        "npm": null,
+        "hint": "winget install -e --id Git.Git",
+        "url": "https://git-scm.com"
+      }
+    },
+    {
+      "name": "Azure CLI",
+      "command": "az",
+      "versionCommand": "az --version",
+      "required": false,
+      "minimumVersion": "2.50.0",
+      "install": {
+        "winget": "winget install -e --id Microsoft.AzureCLI --accept-source-agreements --accept-package-agreements",
+        "npm": null,
+        "hint": "winget install -e --id Microsoft.AzureCLI",
+        "url": "https://learn.microsoft.com/cli/azure/install-azure-cli"
+      }
+    },
+    {
+      "name": "Squad",
+      "command": "squad",
+      "versionCommand": "squad --version",
+      "required": false,
+      "minimumVersion": "0.9.0",
+      "install": {
+        "winget": null,
+        "npm": "pnpm install -g @nexus-innovation/squad",
+        "hint": "pnpm install -g @nexus-innovation/squad",
+        "url": "https://github.com/NexusInnovation/squad"
+      }
+    }
+  ]
+}
