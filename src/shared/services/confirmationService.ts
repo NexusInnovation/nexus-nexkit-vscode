@@ -13,6 +13,10 @@ export class ConfirmationService {
   /**
    * Show a modal confirmation dialog before a potentially disruptive configuration change.
    *
+   * Fails closed: dismissing the dialog (Escape, the close button, or focus loss) resolves
+   * to `undefined` and is reported as `"refused"`. Only an explicit "Accept" grants consent,
+   * and a dismissal is never persisted.
+   *
    * @param message Short title shown in the dialog header.
    * @param detail  Longer description of what Nexkit is about to do.
    * @param workspaceStateKey  Key used to persist the "refused forever" flag in workspaceState.
@@ -31,11 +35,11 @@ export class ConfirmationService {
       return "refused-forever";
     }
 
-    if (result === "Refuse") {
-      return "refused";
+    if (result === "Accept") {
+      return "accepted";
     }
 
-    return "accepted";
+    return "refused";
   }
 
   /**

@@ -109,5 +109,5 @@ Review written to `.squad/decisions/inbox/morpheus-prereq-code-review.md`.
      `ConfirmationService`. It fails closed today so there is no bug — but it will **not** appear in a `.confirm(`
      grep, so it is invisible to the audit you would naturally run. Fold it into the service if that dialog ever
      gains consequences.
-- **Review lesson worth carrying:** the suite was green *because* of the bug — a test asserted dismissal-as-consent as
+- **Review lesson worth carrying:** the suite was green _because_ of the bug — a test asserted dismissal-as-consent as
   intended behaviour. When auditing a consent gate, check whether its tests encode the defect as the expectation.

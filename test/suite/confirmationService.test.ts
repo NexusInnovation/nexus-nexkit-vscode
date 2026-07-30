@@ -50,13 +50,33 @@ suite("Unit: ConfirmationService", () => {
     assert.ok(setRefusedForeverStub.notCalled, "Should not persist state for Accept");
   });
 
-  test("Should return 'accepted' when user dismisses the dialog (ESC)", async () => {
+  // --- Dismissal (must fail closed) ---
+
+  test("Should return 'refused' when user dismisses the dialog (ESC) — must fail closed", async () => {
     // showInformationMessage resolves undefined when dismissed without choosing
     showInfoStub.resolves(undefined);
 
     const result = await service.confirm(TEST_MESSAGE, TEST_DETAIL, TEST_KEY);
 
-    assert.strictEqual(result, "accepted");
+    assert.strictEqual(result, "refused", "Dismissal must never be treated as consent");
+    assert.ok(setRefusedForeverStub.notCalled, "Dismissal should not be persisted");
+  });
+
+  test("Should return 'refused' when the dialog resolves to an unrecognised value", async () => {
+    showInfoStub.resolves("Something Else");
+
+    const result = await service.confirm(TEST_MESSAGE, TEST_DETAIL, TEST_KEY);
+
+    assert.strictEqual(result, "refused");
+  });
+
+  test("confirmOnce should return false when the dialog is dismissed", async () => {
+    const showWarningStub = sandbox.stub(vscode.window, "showWarningMessage").resolves(undefined);
+
+    const result = await service.confirmOnce(TEST_MESSAGE, TEST_DETAIL);
+
+    assert.strictEqual(result, false, "Dismissal must never be treated as consent");
+    assert.ok(showWarningStub.calledOnce);
   });
 
   // --- Refused ---

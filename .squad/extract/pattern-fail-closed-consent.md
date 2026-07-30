@@ -5,7 +5,7 @@
 
 ## The rule
 
-A dialog that gates a **write or an execution** must treat *every* outcome that is not an explicit affirmative as a refusal. Dismissal is not consent.
+A dialog that gates a **write or an execution** must treat _every_ outcome that is not an explicit affirmative as a refusal. Dismissal is not consent.
 
 Write the affirmative branch as an explicit equality check with refusal as the fallthrough default — never the inverse.
 
@@ -33,7 +33,7 @@ Distinguish "declined now" from "declined permanently", and **never persist** a 
 
 ## Re-evaluate the default when the blast radius changes
 
-A "dismiss = accept" default can be a defensible UX call *while every gated operation is non-destructive*. It stops being defensible the moment the same gate starts guarding a config write with machine-global scope, or the execution of code sourced from the workspace. When a shared consent service gains a new caller, re-audit the default against that caller's blast radius — the original reasoning may no longer hold.
+A "dismiss = accept" default can be a defensible UX call _while every gated operation is non-destructive_. It stops being defensible the moment the same gate starts guarding a config write with machine-global scope, or the execution of code sourced from the workspace. When a shared consent service gains a new caller, re-audit the default against that caller's blast radius — the original reasoning may no longer hold.
 
 ## Audit the whole surface, not just the service
 
@@ -41,6 +41,6 @@ Grep for the service's method name **and** for direct calls to the underlying di
 
 ## The test smell
 
-A test named along the lines of *"returns accepted when the user dismisses the dialog"* is asserting the vulnerability as intended behaviour. When a suite is green **because** of a defect, the fix necessarily deletes a passing test. Deleting it is correct — replace it with regression tests that pin the fail-closed behaviour, and note the removal explicitly so it is not mistaken for reduced coverage.
+A test named along the lines of _"returns accepted when the user dismisses the dialog"_ is asserting the vulnerability as intended behaviour. When a suite is green **because** of a defect, the fix necessarily deletes a passing test. Deleting it is correct — replace it with regression tests that pin the fail-closed behaviour, and note the removal explicitly so it is not mistaken for reduced coverage.
 
 **A green suite is not evidence of correct behaviour when a test encodes the defect as the expectation.**

@@ -184,7 +184,7 @@ Older EquipeLaurence-era entries were archived to `history-archive.md` on 2026-0
   a literal `"Accept"` — including `undefined` from Escape, the close button, or focus loss. Any test of yours that
   assumes dismissal proceeds is now wrong.
 - **A test in `test/suite/confirmationService.test.ts` was removed:** `"Should return 'accepted' when user dismisses
-  the dialog (ESC)"`. It asserted the vulnerability as intended behaviour — **the suite was green *because* of the
+the dialog (ESC)"`. It asserted the vulnerability as intended behaviour — **the suite was green _because_ of the
   bug.** Its removal is not a coverage regression; three regression tests replaced it (dismissal returns `"refused"`
   and persists nothing; an unrecognised dialog result returns `"refused"`; `confirmOnce()` returns `false` on dismissal).
 - **Worth generalising into how you review a suite:** when a gate's default is suspicious, check whether a test pins

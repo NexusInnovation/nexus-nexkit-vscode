@@ -709,13 +709,13 @@ It already failed closed (`return result === "Continue"`). A regression test now
 
 Every `confirm()` caller uses the identical guard `if (result !== "accepted") { return; }`, so the new behaviour flows through with no caller edit.
 
-| # | Call site | Gates | On dismiss (old → new) |
-|---|-----------|-------|------------------------|
-| 1 | `mcpConfigDeployer.deployWorkspaceMCPServers()` | write to workspace `.vscode/mcp.json` | wrote → no-op |
-| 2 | `mcpConfigService.addUserMCPServer()` | write to **user-level** `mcp.json` (machine-global) | wrote → no-op |
-| 3 | `mcpConfigService.addWorkspaceMCPServer()` | write to workspace `.vscode/mcp.json` | wrote → no-op |
-| 4 | `prerequisiteOrchestratorService.checkAndSetup()` | **executing workspace-sourced scripts** | ran → returns `"declined"` |
-| 5 | `prerequisiteOrchestratorService` `confirmOnce()` install gate | installing software | already `false` (unchanged) |
+| #   | Call site                                                      | Gates                                               | On dismiss (old → new)      |
+| --- | -------------------------------------------------------------- | --------------------------------------------------- | --------------------------- |
+| 1   | `mcpConfigDeployer.deployWorkspaceMCPServers()`                | write to workspace `.vscode/mcp.json`               | wrote → no-op               |
+| 2   | `mcpConfigService.addUserMCPServer()`                          | write to **user-level** `mcp.json` (machine-global) | wrote → no-op               |
+| 3   | `mcpConfigService.addWorkspaceMCPServer()`                     | write to workspace `.vscode/mcp.json`               | wrote → no-op               |
+| 4   | `prerequisiteOrchestratorService.checkAndSetup()`              | **executing workspace-sourced scripts**             | ran → returns `"declined"`  |
+| 5   | `prerequisiteOrchestratorService` `confirmOnce()` install gate | installing software                                 | already `false` (unchanged) |
 
 **No caller exists where fail-closed is wrong.** All five gate a write or an execution; none depends on dismissal meaning "yes"; none loses a legitimate capability. Caller 2 has the broadest blast radius in the repo and is the highest-value fix of the three.
 
@@ -728,7 +728,7 @@ Every `confirm()` caller uses the identical guard `if (result !== "accepted") { 
 
 `test/suite/confirmationService.test.ts` only — no restructuring of Trinity's suites.
 
-- **Removed** `"Should return 'accepted' when user dismisses the dialog (ESC)"`. This test asserted the vulnerability as intended behaviour — the suite was green *because* of the bug.
+- **Removed** `"Should return 'accepted' when user dismisses the dialog (ESC)"`. This test asserted the vulnerability as intended behaviour — the suite was green _because_ of the bug.
 - **Added** three tests under `// --- Dismissal (must fail closed) ---`: dismissal returns `"refused"` and persists nothing; an unrecognised dialog result returns `"refused"`; `confirmOnce()` returns `false` on dismissal.
 
 ### Verification
