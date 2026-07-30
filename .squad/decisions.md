@@ -663,3 +663,80 @@ Note that `.squad/decisions-archive.md` records an earlier deliberate UX contrac
 ### Why
 
 Bundling a shared-service behaviour change into a feature changeset would make the blast radius invisible in review and couple an unrelated regression risk to this feature's merge.
+
+---
+
+## Decision: ConfirmationService.confirm() fails closed on dismissal
+
+**Date:** 2026-07-30
+**Agent:** Link (TypeScript & VS Code Extension Dev)
+**Requested by:** Eric Decarufel
+**Classification:** Project-specific — shared service (generic principle extracted to `.squad/extract/`)
+**Closes:** "Open item — ConfirmationService fails open on dismiss" (Morpheus, 2026-07-30, above)
+**Supersedes:** "ConfirmationService UX contract (Issue #162) → ESC / dismiss = Accept" (Neo, 2026-06-03, in `decisions-archive.md`)
+
+### Context
+
+`ConfirmationService.confirm()` returned `"accepted"` for anything that was not `"Refuse"` or `"Refuse Forever (this workspace)"`. Because `vscode.window.showInformationMessage` resolves to `undefined` on dismissal (Escape, close button, focus loss), **dismissal was consent**. Neo's original Issue #162 contract made that deliberate on the reasoning that the gated operations were non-destructive. Prerequisite automation invalidated that premise by routing workspace-controlled script execution through the same gate.
+
+### Decisions
+
+#### The accept branch is now explicit
+
+Only the literal `"Accept"` returns `"accepted"`; everything else — including `undefined` — returns `"refused"`.
+
+```ts
+if (result === "Accept") {
+  return "accepted";
+}
+
+return "refused";
+```
+
+#### Dismissal returns `"refused"`, never `"refused-forever"`
+
+Nothing is persisted on dismissal. An accidental Escape costs exactly one extra prompt rather than silently locking the feature out of the workspace. `setConfirmationRefusedForever()` is still written **only** on an explicit "Refuse Forever" click, and the `isConfirmationRefusedForever()` early return is untouched.
+
+#### The public signature is unchanged
+
+`ConfirmationResult` remains `"accepted" | "refused" | "refused-forever"`. A distinct `"dismissed"` member was considered and rejected: it widens a public union for no consumer benefit (no caller distinguishes the two, none has an exhaustive switch) and would force edits into `src/features/prerequisite-automation/`, out of scope for this slice.
+
+#### `confirmOnce()` needed no change
+
+It already failed closed (`return result === "Continue"`). A regression test now pins that so it cannot drift.
+
+### Caller audit — all five sites, fail-closed correct everywhere
+
+Every `confirm()` caller uses the identical guard `if (result !== "accepted") { return; }`, so the new behaviour flows through with no caller edit.
+
+| # | Call site | Gates | On dismiss (old → new) |
+|---|-----------|-------|------------------------|
+| 1 | `mcpConfigDeployer.deployWorkspaceMCPServers()` | write to workspace `.vscode/mcp.json` | wrote → no-op |
+| 2 | `mcpConfigService.addUserMCPServer()` | write to **user-level** `mcp.json` (machine-global) | wrote → no-op |
+| 3 | `mcpConfigService.addWorkspaceMCPServer()` | write to workspace `.vscode/mcp.json` | wrote → no-op |
+| 4 | `prerequisiteOrchestratorService.checkAndSetup()` | **executing workspace-sourced scripts** | ran → returns `"declined"` |
+| 5 | `prerequisiteOrchestratorService` `confirmOnce()` install gate | installing software | already `false` (unchanged) |
+
+**No caller exists where fail-closed is wrong.** All five gate a write or an execution; none depends on dismissal meaning "yes"; none loses a legitimate capability. Caller 2 has the broadest blast radius in the repo and is the highest-value fix of the three.
+
+### Deferred — flagged for Morpheus, not fixed here
+
+- **Callers 1–3 fail silently** (bare `return`, no toast). Pre-existing and shared with the explicit-Refuse path; adding feedback would change Refuse-path behaviour too, so it needs its own slice.
+- **`MCPConfigService.promptInstallRequiredMCPsOnActivation()`** calls `showInformationMessage` directly, bypassing `ConfirmationService` entirely. It already fails closed so there is no bug today — but it is a consent decision living outside the shared service, and it will **not** surface in a `.confirm(` grep. Fold it into the service if that dialog ever gains consequences.
+
+### Tests
+
+`test/suite/confirmationService.test.ts` only — no restructuring of Trinity's suites.
+
+- **Removed** `"Should return 'accepted' when user dismisses the dialog (ESC)"`. This test asserted the vulnerability as intended behaviour — the suite was green *because* of the bug.
+- **Added** three tests under `// --- Dismissal (must fail closed) ---`: dismissal returns `"refused"` and persists nothing; an unrecognised dialog result returns `"refused"`; `confirmOnce()` returns `false` on dismissal.
+
+### Verification
+
+Type-check exit 0 · lint exit 0 · test compile exit 0 · full suite **536 passing / 15 pending / 0 failing** (baseline 534 / 15 / 0; net +2 because one fail-open test was replaced by three).
+
+### Why
+
+A consent gate whose default is "yes" is not a consent gate. The Issue #162 reasoning held only while every gated operation was non-destructive; once the same service began gating execution of workspace-controlled scripts, the ambiguous-dismissal default became an authorisation bypass. Fail-closed is the only defensible default for a dialog that gates a write or an execution, and the cost of being wrong in that direction is one extra prompt.
+
+**A green suite is not evidence of correct behaviour when a test encodes the defect as the expectation.**

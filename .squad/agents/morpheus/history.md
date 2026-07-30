@@ -90,3 +90,24 @@ Review written to `.squad/decisions/inbox/morpheus-prereq-code-review.md`.
 - **Open item deferred to Eric:** `ConfirmationService.confirm()` fails **open** on modal dismiss (Escape = consent).
   Pre-existing and repo-wide, now gating workspace-controlled script execution. Ships as its own slice with its own
   regression test.
+
+### 2026-07-30 — Team update: your ConfirmationService finding is CLOSED (recorded by Scribe)
+
+- **`ConfirmationService.confirm()` now fails closed.** The open item you raised shipped as its own slice (Link).
+  The accept branch is an explicit `=== "Accept"` comparison; everything else — including `undefined` from a
+  dismissal — returns `"refused"`. **Dismissal is no longer consent.** Stop treating it as a live finding.
+- **Dismissal returns `"refused"`, never `"refused-forever"`.** Nothing is persisted, so an accidental Escape costs
+  one extra prompt rather than a silent workspace-wide lockout. The public `ConfirmationResult` union is unchanged.
+- **This supersedes Neo's Issue #162 contract** ("ESC / dismiss = Accept", in `decisions-archive.md`). That contract
+  held only while every gated operation was non-destructive.
+- **All five call sites audited — fail-closed is correct at every one.** Each gates a write or an execution.
+  `addUserMCPServer()` was the highest-value fix (machine-global config write).
+- **Two items Link deferred and routed to you:**
+  1. Callers 1–3 fail **silently** on refusal (bare `return`, no feedback). Pre-existing and shared with the
+     explicit-Refuse path — fixing it changes Refuse-path behaviour too, so it needs its own slice.
+  2. `MCPConfigService.promptInstallRequiredMCPsOnActivation()` calls `showInformationMessage` **directly**, bypassing
+     `ConfirmationService`. It fails closed today so there is no bug — but it will **not** appear in a `.confirm(`
+     grep, so it is invisible to the audit you would naturally run. Fold it into the service if that dialog ever
+     gains consequences.
+- **Review lesson worth carrying:** the suite was green *because* of the bug — a test asserted dismissal-as-consent as
+  intended behaviour. When auditing a consent gate, check whether its tests encode the defect as the expectation.

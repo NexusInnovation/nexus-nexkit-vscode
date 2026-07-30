@@ -24,37 +24,13 @@ Testing specialist ensuring all acceptance criteria are met through unit, integr
 
 ## Learnings
 
-- 2026-07-10: The RTF converter webview in `src/features/rtf-converter/webview/main.tsx` has no exported pure rendering helpers and the test stack has no DOM harness (`jsdom`, Testing Library, or Preact test utilities). Keep service-level panel tests separate; validate the Markdown/Preview interaction manually until a deliberate webview-test architecture is introduced.
+### Archived sections (see `history-archive.md` for full detail)
 
-- 2026-07-10: QA approved the RTF converter Markdown preview. `npm run check:types`, package-lock dry-run resolution, and a focused markdown-it probe passed: raw HTML is escaped, unsafe `javascript:` and `data:` links do not render as hrefs, and HTTPS links render. The current absence of DOM interaction coverage is acceptable for this small, isolated switch but remains a manual-test boundary.
+- RTF converter Markdown/preview QA (2026-07-10) — superseded by the `convert-to-markdown` rename and the markitdown migration.
+- Convert to Markdown / markitdown team update (2026-07-20) — host-side conversion via Python child process, `shell: false`, 10 MB cap, two-layer timeout; my coverage was 30 tests across 6 suites. Mocha crashed on a leftover `out/test/suite` artifact — a clean step before `test-compile` is still missing.
+- Commit-message SCM context reviewer gate (2026-07-21) — APPROVED. Git-menu command forwards the invoking `SourceControl`; repo matched by canonical `Uri.toString(true)` with a documented fallback sequence.
 
 ---
-
-### 2026-07-21 — Commit-message SCM context reviewer gate / repository routing QA
-
-APPROVED. The Git-menu command forwards the optional invoking `SourceControl.rootUri`, and `CommitMessageService` selects
-the matching Git repository by canonical `Uri.toString(true)` before preserving the existing single-repository,
-uniquely-staged, then-index-zero fallback sequence. Focused integration coverage proves the selected second repository is
-used and that unmatched context retains staged-change selection; command coverage verifies URI forwarding.
-`git diff --check` passed. `npm run check:types` and full test compilation remained blocked by unrelated missing RTF
-converter dependencies/types (`mammoth`, `turndown`, `turndown-plugin-gfm`, `rtf.js`) in
-`src/features/rtf-converter/webview/main.tsx`; the extension-host runner did not honour the supplied grep and ended with
-SIGINT after broad execution.
-
-## Team update — 2026-07-20 (Convert to Markdown / markitdown migration, complete and merged)
-
-Shared context (see decisions.md "Replace custom RTF/DOCX/HTML to Markdown conversion with microsoft/markitdown"):
-conversion moved host-side via microsoft/markitdown (Python child process). Message contract in `messages.ts`
-(`convert-paste-html` | `convert-file` | `recheck-availability` → `conversion-result` | `conversion-error` |
-`availability-status`). markdown-it preview retained; `mammoth`/`turndown`/`turndown-plugin-gfm`/`rtf.js`/`@types/turndown`
-removed along with the `rtfJsBundle.d.ts` + `turndownPluginGfm.d.ts` shims. Security: argv array + sandboxed temp file,
-`shell: false`, 10 MB cap, two-layer timeout.
-
-My coverage: `markitdownConversionService.test.ts` (19) + `convertToMarkdownPanelService.test.ts` (11); updated
-`extension.test.ts`, `nexkitPanelMessageHandler.test.ts`, `serviceContainer.test.ts` for the rename; deleted
-`rtfConverterPanelService.test.ts`. All 30 pass (full suite 382/0). **Recurring trap:** stale `out/` artifacts abort
-`npm test` — Mocha crashed loading a leftover `out/test/suite/cronSchedule.test.js` from a deleted feature. Resolution is
-to delete `out/`; a clean step before `test-compile` is still an open follow-up.
 
 ### 2026-07-30 — nexus-nexkit-vscode test stack: the ACTUAL conventions (correcting my BDD/Gherkin default)
 
@@ -201,3 +177,21 @@ that never ran cannot masquerade as green.
   self-inflicted test defects, not product defects. Integration coverage remains Windows-only.
 
 Older EquipeLaurence-era entries were archived to `history-archive.md` on 2026-07-30.
+
+### 2026-07-30 — Team update: ConfirmationService fail-closed, and a test that asserted a bug (recorded by Scribe)
+
+- **Dismissal is no longer consent.** `ConfirmationService.confirm()` now returns `"refused"` for anything that is not
+  a literal `"Accept"` — including `undefined` from Escape, the close button, or focus loss. Any test of yours that
+  assumes dismissal proceeds is now wrong.
+- **A test in `test/suite/confirmationService.test.ts` was removed:** `"Should return 'accepted' when user dismisses
+  the dialog (ESC)"`. It asserted the vulnerability as intended behaviour — **the suite was green *because* of the
+  bug.** Its removal is not a coverage regression; three regression tests replaced it (dismissal returns `"refused"`
+  and persists nothing; an unrecognised dialog result returns `"refused"`; `confirmOnce()` returns `false` on dismissal).
+- **Worth generalising into how you review a suite:** when a gate's default is suspicious, check whether a test pins
+  the defect as the expectation. A passing suite is not evidence of correct behaviour in that case, and the fix will
+  necessarily delete a green test.
+- **Link touched `confirmationService.test.ts` only** — none of your other suites were restructured.
+- **Downstream behaviour change to keep in mind:** `prerequisiteOrchestratorService.checkAndSetup()` now returns
+  `"declined"` on dismissal instead of executing the workspace scripts. The three MCP config writers now no-op on
+  dismissal instead of writing.
+- **Baseline moved:** 536 passing / 15 pending / 0 failing (was 534 / 15 / 0). Net +2 from the test swap.

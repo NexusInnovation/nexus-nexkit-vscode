@@ -58,3 +58,21 @@ Rebuilt `src/features/convert-to-markdown/webview/` (index.html + main.tsx) as a
   Windows-only.
 - **Open item deferred to Eric:** `ConfirmationService.confirm()` fails **open** on modal dismiss (Escape = consent).
   Pre-existing and repo-wide, but it now gates workspace-controlled script execution. Ships as its own slice.
+
+### 2026-07-30 — Team update: ConfirmationService now fails closed (recorded by Scribe)
+
+- **Dismissal is no longer consent.** `ConfirmationService.confirm()` shipped its fix (Link, own slice). The accept
+  branch is an explicit `=== "Accept"` comparison; everything else — including `undefined` from Escape, the close
+  button, or focus loss — returns `"refused"`.
+- **This changes the behaviour of the prerequisite-automation code you revised.** `prerequisiteOrchestratorService`
+  `.checkAndSetup()` previously **ran the workspace scripts** on an accidental Escape; it now returns `"declined"` and
+  logs that the user declined. No caller edit was needed — every `confirm()` caller already used the guard
+  `if (result !== "accepted") { return; }`.
+- **`confirmOnce()` was already correct** (`return result === "Continue"`) and is unchanged. It now has a regression
+  test pinning it so it cannot drift.
+- **Dismissal returns `"refused"`, never `"refused-forever"`** — nothing is persisted, so an accidental Escape costs
+  one extra prompt, not a silent workspace lockout.
+- **Still open, routed to Morpheus:** callers 1–3 (`deployWorkspaceMCPServers`, `addUserMCPServer`,
+  `addWorkspaceMCPServer`) fail **silently** on refusal — bare `return`, no user feedback. Pre-existing, shared with
+  the explicit-Refuse path, deliberately not fixed here.
+- **Suite:** 536 passing / 15 pending / 0 failing (baseline 534 / 15 / 0).

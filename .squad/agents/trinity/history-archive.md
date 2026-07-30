@@ -180,3 +180,41 @@ Added assertions for `resp.redirected` and session expiry message detection in `
 client-side JavaScript correctly detects when Easy Auth session expires. 224 tests pass.
 
 **Patterns:** JavaScript behavior assertions in rendered HTML, session expiry detection via redirect/content-type.
+
+---
+
+## Archived 2026-07-30 (second pass) — 2026-07-10 / -20 / -21 entries
+
+Moved out of `history.md` by the Scribe when the file crossed the 15 KB gate. Verbatim.
+
+- 2026-07-10: The RTF converter webview in `src/features/rtf-converter/webview/main.tsx` has no exported pure rendering helpers and the test stack has no DOM harness (`jsdom`, Testing Library, or Preact test utilities). Keep service-level panel tests separate; validate the Markdown/Preview interaction manually until a deliberate webview-test architecture is introduced.
+
+- 2026-07-10: QA approved the RTF converter Markdown preview. `npm run check:types`, package-lock dry-run resolution, and a focused markdown-it probe passed: raw HTML is escaped, unsafe `javascript:` and `data:` links do not render as hrefs, and HTTPS links render. The current absence of DOM interaction coverage is acceptable for this small, isolated switch but remains a manual-test boundary.
+
+---
+
+### 2026-07-21 — Commit-message SCM context reviewer gate / repository routing QA
+
+APPROVED. The Git-menu command forwards the optional invoking `SourceControl.rootUri`, and `CommitMessageService` selects
+the matching Git repository by canonical `Uri.toString(true)` before preserving the existing single-repository,
+uniquely-staged, then-index-zero fallback sequence. Focused integration coverage proves the selected second repository is
+used and that unmatched context retains staged-change selection; command coverage verifies URI forwarding.
+`git diff --check` passed. `npm run check:types` and full test compilation remained blocked by unrelated missing RTF
+converter dependencies/types (`mammoth`, `turndown`, `turndown-plugin-gfm`, `rtf.js`) in
+`src/features/rtf-converter/webview/main.tsx`; the extension-host runner did not honour the supplied grep and ended with
+SIGINT after broad execution.
+
+## Team update — 2026-07-20 (Convert to Markdown / markitdown migration, complete and merged)
+
+Shared context (see decisions.md "Replace custom RTF/DOCX/HTML to Markdown conversion with microsoft/markitdown"):
+conversion moved host-side via microsoft/markitdown (Python child process). Message contract in `messages.ts`
+(`convert-paste-html` | `convert-file` | `recheck-availability` → `conversion-result` | `conversion-error` |
+`availability-status`). markdown-it preview retained; `mammoth`/`turndown`/`turndown-plugin-gfm`/`rtf.js`/`@types/turndown`
+removed along with the `rtfJsBundle.d.ts` + `turndownPluginGfm.d.ts` shims. Security: argv array + sandboxed temp file,
+`shell: false`, 10 MB cap, two-layer timeout.
+
+My coverage: `markitdownConversionService.test.ts` (19) + `convertToMarkdownPanelService.test.ts` (11); updated
+`extension.test.ts`, `nexkitPanelMessageHandler.test.ts`, `serviceContainer.test.ts` for the rename; deleted
+`rtfConverterPanelService.test.ts`. All 30 pass (full suite 382/0). **Recurring trap:** stale `out/` artifacts abort
+`npm test` — Mocha crashed loading a leftover `out/test/suite/cronSchedule.test.js` from a deleted feature. Resolution is
+to delete `out/`; a clean step before `test-compile` is still an open follow-up.
