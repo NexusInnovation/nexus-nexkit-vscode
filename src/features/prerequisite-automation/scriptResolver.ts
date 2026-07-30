@@ -20,6 +20,7 @@ const POSIX_SCRIPTS: Readonly<Record<PrerequisiteStep, string>> = {
 
 const SUPPORTED_PLATFORMS: ReadonlySet<NodeJS.Platform> = new Set<NodeJS.Platform>(["win32", "linux", "darwin"]);
 
+/** Read from the workspace root, never from the configurable scripts directory. */
 export const REQUIREMENTS_FILE_NAME = "requirements.json";
 
 export const DEFAULT_SCRIPTS_PATH = "scripts";

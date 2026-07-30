@@ -21,7 +21,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
 # Load requirements
-REQUIREMENTS_PATH="$SCRIPT_DIR/requirements.json"
+REQUIREMENTS_PATH="$PROJECT_ROOT/requirements.json"
 SETTINGS_PATH="${AFEAS_SETTINGS_PATH:-$PROJECT_ROOT/.vscode/afeas.local.settings.json}"
 
 # jq est un prerequis dur des scripts .sh AFEAS. Message identique dans les 3 scripts.

@@ -165,6 +165,9 @@ export function parseRequirementsJson(rawText: string): PrerequisiteConfig {
 /**
  * Locates and loads the target workspace's `requirements.json`.
  *
+ * The file is always read from the workspace root; only the scripts it drives
+ * live under the configurable `nexkit.prerequisites.scriptsPath` directory.
+ *
  * Nexkit ships no scripts of its own: everything is discovered inside the open
  * workspace, and a workspace without a prerequisites configuration is a normal,
  * silent outcome rather than an error.
@@ -220,13 +223,15 @@ export class PrerequisiteConfigService {
     }
 
     for (const workspaceRoot of candidates) {
-      const scriptsRoot = resolveScriptsRootUri(workspaceRoot, configuredPath);
-      const configPath = vscode.Uri.joinPath(scriptsRoot, REQUIREMENTS_FILE_NAME).fsPath;
+      const configPath = vscode.Uri.joinPath(workspaceRoot, REQUIREMENTS_FILE_NAME).fsPath;
 
       if (!(await this._fileSystem.fileExists(configPath))) {
         continue;
       }
 
+      // The scripts directory is only resolved once a configuration exists, so an
+      // unrelated workspace never surfaces an error about a setting it does not use.
+      const scriptsRoot = resolveScriptsRootUri(workspaceRoot, configuredPath);
       const containedScriptsRoot = await this._resolveContainedScriptsRoot(workspaceRoot, scriptsRoot);
       const rawText = await this._readConfig(configPath);
 

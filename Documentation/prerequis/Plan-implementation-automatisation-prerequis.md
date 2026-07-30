@@ -46,7 +46,7 @@ Exclus:
 
 ### requirements.json
 
-Reference: <project-root>/scripts/requirements.json
+Reference: <project-root>/requirements.json
 
 Role:
 

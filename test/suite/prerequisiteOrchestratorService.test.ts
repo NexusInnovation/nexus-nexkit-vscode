@@ -50,7 +50,7 @@ const CONFIG: ConfigLoadResult = {
       { name: "jq", command: "jq", required: false },
     ],
   },
-  configPath: vscode.Uri.joinPath(SCRIPTS_ROOT, "requirements.json").fsPath,
+  configPath: vscode.Uri.joinPath(WORKSPACE_ROOT, "requirements.json").fsPath,
   scriptsRoot: SCRIPTS_ROOT,
   workspaceRoot: WORKSPACE_ROOT,
 };

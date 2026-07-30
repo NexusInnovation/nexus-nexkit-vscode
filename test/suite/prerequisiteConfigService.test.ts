@@ -192,7 +192,7 @@ suite("Unit: PrerequisiteConfigService — discovery", () => {
   let sandbox: sinon.SinonSandbox;
   let logger: FakeLogger;
   const scriptsRootPath = vscode.Uri.joinPath(WORKSPACE_ROOT, "scripts").fsPath;
-  const configPath = vscode.Uri.joinPath(WORKSPACE_ROOT, "scripts", REQUIREMENTS_FILE_NAME).fsPath;
+  const configPath = vscode.Uri.joinPath(WORKSPACE_ROOT, REQUIREMENTS_FILE_NAME).fsPath;
 
   setup(() => {
     sandbox = sinon.createSandbox();
@@ -238,7 +238,7 @@ suite("Unit: PrerequisiteConfigService — discovery", () => {
 
   test("the first candidate root carrying a configuration wins", async () => {
     const secondRoot = vscode.Uri.joinPath(WORKSPACE_ROOT, "..", "other");
-    const secondConfig = vscode.Uri.joinPath(secondRoot, "scripts", REQUIREMENTS_FILE_NAME).fsPath;
+    const secondConfig = vscode.Uri.joinPath(secondRoot, REQUIREMENTS_FILE_NAME).fsPath;
     const fs = new FakeFileSystem().addFile(secondConfig, VALID_JSON);
 
     const result = await serviceWith(fs, [WORKSPACE_ROOT, secondRoot]).load();
@@ -277,29 +277,50 @@ suite("Unit: PrerequisiteConfigService — discovery", () => {
     assertNoAbsolutePaths(error.toUserMessage(), "symlink escape");
   });
 
-  test("an absolute configured scripts path is rejected before any filesystem access", async () => {
+  test("an absolute configured scripts path is rejected once a configuration is found", async () => {
     (SettingsManager.getPrerequisitesScriptsPath as sinon.SinonStub).returns("/etc");
-    const error = await captureErrorAsync(() => serviceWith(new FakeFileSystem()).load());
+    const fs = new FakeFileSystem().addFile(configPath, VALID_JSON);
+    const error = await captureErrorAsync(() => serviceWith(fs).load());
     assert.strictEqual(error.category, "Configuration");
   });
 
-  test("a parent-escaping configured scripts path is rejected", async () => {
+  test("a parent-escaping configured scripts path is rejected once a configuration is found", async () => {
     (SettingsManager.getPrerequisitesScriptsPath as sinon.SinonStub).returns("../../outside");
-    const error = await captureErrorAsync(() => serviceWith(new FakeFileSystem()).load());
+    const fs = new FakeFileSystem().addFile(configPath, VALID_JSON);
+    const error = await captureErrorAsync(() => serviceWith(fs).load());
     assert.strictEqual(error.category, "Configuration");
   });
 
-  test("a custom relative scripts folder is honoured", async () => {
+  test("an unsafe scripts path is inert in a workspace with no configuration", async () => {
+    // The scripts directory is irrelevant until a configuration exists, so an
+    // unrelated workspace must never see an error about a setting it does not use.
+    (SettingsManager.getPrerequisitesScriptsPath as sinon.SinonStub).returns("../../outside");
+
+    const result = await serviceWith(new FakeFileSystem()).load();
+
+    assert.strictEqual(result.kind, "absent");
+  });
+
+  test("the configuration is read from the root even when the scripts folder is customised", async () => {
     (SettingsManager.getPrerequisitesScriptsPath as sinon.SinonStub).returns("tools/prereq");
-    const customConfig = vscode.Uri.joinPath(WORKSPACE_ROOT, "tools", "prereq", REQUIREMENTS_FILE_NAME).fsPath;
-    const fs = new FakeFileSystem().addFile(customConfig, VALID_JSON);
+    const fs = new FakeFileSystem().addFile(configPath, VALID_JSON);
 
     const result = await serviceWith(fs).load();
 
     assert.strictEqual(result.kind, "found");
     if (result.kind === "found") {
-      assert.strictEqual(result.configPath, customConfig);
+      assert.strictEqual(result.configPath, configPath);
+      assert.strictEqual(result.scriptsRoot.fsPath, vscode.Uri.joinPath(WORKSPACE_ROOT, "tools", "prereq").fsPath);
     }
+  });
+
+  test("a configuration inside the scripts folder is no longer discovered", async () => {
+    const legacyConfig = vscode.Uri.joinPath(WORKSPACE_ROOT, "scripts", REQUIREMENTS_FILE_NAME).fsPath;
+    const fs = new FakeFileSystem().addFile(legacyConfig, VALID_JSON);
+
+    const result = await serviceWith(fs).load();
+
+    assert.strictEqual(result.kind, "absent");
   });
 
   test("PrerequisiteError instances survive the symlink guard unchanged", async () => {

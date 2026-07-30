@@ -371,7 +371,7 @@
           "type": "string",
           "default": "scripts",
           "scope": "application",
-          "description": "Workspace-relative directory containing the prerequisite scripts and requirements.json. Must be a relative path inside the workspace; absolute paths and '..' segments are rejected."
+          "description": "Workspace-relative directory containing the prerequisite scripts. Must be a relative path inside the workspace; absolute paths and '..' segments are rejected. The requirements.json file is always read from the workspace root."
         },
         "nexkit.telemetry.enabled": {
           "type": "boolean",

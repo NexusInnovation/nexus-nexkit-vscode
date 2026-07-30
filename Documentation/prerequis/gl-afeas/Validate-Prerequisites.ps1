@@ -13,7 +13,7 @@ if (-not $SettingsPath) {
     $SettingsPath = Join-Path (Join-Path $projectRoot ".vscode") "afeas.local.settings.json"
 }
 
-$requirementsPath = Join-Path $scriptRoot "requirements.json"
+$requirementsPath = Join-Path $projectRoot "requirements.json"
 $requirements = Get-Content -LiteralPath $requirementsPath -Raw | ConvertFrom-Json
 
 $tools = $requirements.prerequisites | ForEach-Object {
