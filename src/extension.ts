@@ -95,6 +95,14 @@ export async function activate(context: vscode.ExtensionContext) {
     });
   });
 
+  // Check development prerequisites on activation and prompt to install if needed
+  services.prerequisiteOrchestrator.checkOnActivation().catch((error) => {
+    services.logging.error("Failed to run prerequisite check on activation", error);
+    services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+      context: "prerequisiteOrchestrator.checkOnActivation",
+    });
+  });
+
   // Initialize AI template data asynchronously (don't block extension activation)
   services.aiTemplateData
     .initialize()

@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 import { SettingsManager } from "../../core/settingsManager";
 import { ConfirmationService } from "../../shared/services/confirmationService";
 import { TelemetryService } from "../../shared/services/telemetryService";
+import { Commands } from "../../shared/constants/commands";
 import { PrerequisiteConfigService } from "./prerequisiteConfigService";
 import { PrerequisiteRunnerService } from "./prerequisiteRunnerService";
 import { isSupportedPlatform } from "./scriptResolver";
@@ -65,6 +66,38 @@ export class PrerequisiteOrchestratorService {
 
   public get isRunning(): boolean {
     return this._inFlight !== undefined;
+  }
+
+  /**
+   * Called once at extension activation. Silently skips unconfigured workspaces;
+   * only actionable failures produce a notification.
+   */
+  public async checkOnActivation(): Promise<void> {
+    if (!SettingsManager.isPrerequisitesEnabled()) {
+      return;
+    }
+
+    const result = await this.run();
+
+    const SHOW_LOGS = "Show Logs";
+    switch (result.outcome) {
+      case "notConfigured":
+      case "alreadyValidated":
+      case "validated":
+      case "declined":
+      case "setupDeclined":
+      case "cancelled":
+      case "alreadyRunning":
+        return;
+
+      default: {
+        const message = result.error?.toUserMessage() ?? "Prerequisite validation did not complete successfully.";
+        const choice = await vscode.window.showErrorMessage(message, SHOW_LOGS);
+        if (choice === SHOW_LOGS) {
+          void vscode.commands.executeCommand(Commands.SHOW_LOGS);
+        }
+      }
+    }
   }
 
   /**

@@ -672,3 +672,94 @@ suite("Unit: toDurationBucket", () => {
 
 /** Convenience re-export so the shape stays visible in failure output. */
 export type { OrchestrationResult };
+
+suite("Unit: PrerequisiteOrchestratorService — checkOnActivation", () => {
+  let sandbox: sinon.SinonSandbox;
+  let showErrorMessage: sinon.SinonStub;
+  let executeCommand: sinon.SinonStub;
+  let isEnabled: sinon.SinonStub;
+
+  setup(() => {
+    sandbox = sinon.createSandbox();
+    sandbox.stub(SettingsManager, "setPrerequisitesValidated").resolves();
+    sandbox.stub(SettingsManager, "setPrerequisitesValidationDate").resolves();
+    showErrorMessage = sandbox.stub(vscode.window, "showErrorMessage").resolves(undefined);
+    executeCommand = sandbox.stub(vscode.commands, "executeCommand").resolves();
+    isEnabled = sandbox.stub(SettingsManager, "isPrerequisitesEnabled").returns(true);
+  });
+
+  teardown(() => sandbox.restore());
+
+  test("a workspace with no configuration produces no notification", async () => {
+    const h = buildHarness({ load: () => Promise.resolve({ kind: "absent" }) });
+
+    await h.orchestrator.checkOnActivation();
+
+    assert.strictEqual(showErrorMessage.callCount, 0);
+  });
+
+  test("an already-validated workspace produces no notification", async () => {
+    const h = buildHarness();
+    h.processRunner.respondTo(CHECK, ok(validatedMarker(true)));
+
+    await h.orchestrator.checkOnActivation();
+
+    assert.strictEqual(showErrorMessage.callCount, 0);
+  });
+
+  test("a freshly-validated workspace produces no notification", async () => {
+    const h = buildHarness();
+    h.processRunner.respondTo(CHECK, ko(), ok(validatedMarker(true))).respondTo(VALIDATE, ok(""));
+
+    await h.orchestrator.checkOnActivation();
+
+    assert.strictEqual(showErrorMessage.callCount, 0);
+  });
+
+  test("a failure shows an error notification", async () => {
+    const h = buildHarness({ presentScripts: [] });
+
+    await h.orchestrator.checkOnActivation();
+
+    assert.strictEqual(showErrorMessage.callCount, 1);
+    const message = showErrorMessage.firstCall.args[0] as string;
+    assert.ok(message.length > 0);
+  });
+
+  test("choosing Show Logs from the notification executes the showLogs command", async () => {
+    const h = buildHarness({ presentScripts: [] });
+    showErrorMessage.resolves("Show Logs");
+
+    await h.orchestrator.checkOnActivation();
+
+    assert.strictEqual(executeCommand.callCount, 1);
+    assert.ok((executeCommand.firstCall.args[0] as string).includes("showLogs"));
+  });
+
+  test("dismissing the notification does not execute any command", async () => {
+    const h = buildHarness({ presentScripts: [] });
+    showErrorMessage.resolves(undefined);
+
+    await h.orchestrator.checkOnActivation();
+
+    assert.strictEqual(executeCommand.callCount, 0);
+  });
+
+  test("the user declining the run produces no notification", async () => {
+    const h = buildHarness({ consent: "refused" });
+
+    await h.orchestrator.checkOnActivation();
+
+    assert.strictEqual(showErrorMessage.callCount, 0);
+  });
+
+  test("when the feature is disabled the orchestrator is never invoked", async () => {
+    isEnabled.returns(false);
+    const h = buildHarness();
+
+    await h.orchestrator.checkOnActivation();
+
+    assert.strictEqual(h.processRunner.calls.length, 0);
+    assert.strictEqual(showErrorMessage.callCount, 0);
+  });
+});
