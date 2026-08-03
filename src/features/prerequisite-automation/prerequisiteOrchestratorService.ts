@@ -361,6 +361,10 @@ export class PrerequisiteOrchestratorService {
     }
 
     await this._cacheValidationState(false);
+    const validateTools = this._formatFailedTools(this._extractFailedTools(steps));
+    if (validateTools) {
+      this._logging.warn(`Prerequisites [${correlationId}]: validation reported missing/outdated tools: ${validateTools}`);
+    }
 
     const installConsent = await this._confirmation.confirmOnce(
       "Install missing prerequisites?",
@@ -390,13 +394,19 @@ export class PrerequisiteOrchestratorService {
     if (setup.result.exitCode !== 0) {
       // Deliberately no retry: re-running a partially-succeeded installer can
       // leave the machine in a worse state than failing cleanly.
+      const toolList = this._formatFailedTools(this._extractFailedTools(steps));
+      if (toolList) {
+        this._logging.warn(`Prerequisites [${correlationId}]: setup did not satisfy these tools: ${toolList}`);
+      }
       return finish(
         "setupFailed",
         "setup",
         steps,
         new PrerequisiteError(
           "Execution",
-          "The environment setup script did not complete successfully.",
+          toolList
+            ? `Setup failed — missing or outdated prerequisites: ${toolList}.`
+            : "The environment setup script did not complete successfully.",
           "See the Nexkit output log, then install the remaining tools manually."
         )
       );
@@ -410,13 +420,19 @@ export class PrerequisiteOrchestratorService {
     }
 
     await this._cacheValidationState(false);
+    const stillInvalidTools = this._formatFailedTools(this._extractFailedTools(steps));
+    if (stillInvalidTools) {
+      this._logging.warn(`Prerequisites [${correlationId}]: final check still failing for tools: ${stillInvalidTools}`);
+    }
     return finish(
       "stillInvalid",
       "check",
       steps,
       new PrerequisiteError(
         "Execution",
-        "Setup completed but the prerequisites are still reported as not validated.",
+        stillInvalidTools
+          ? `Setup completed but some prerequisites are still not satisfied: ${stillInvalidTools}.`
+          : "Setup completed but the prerequisites are still reported as not validated.",
         "See the Nexkit output log for the remaining problems."
       )
     );
@@ -456,6 +472,41 @@ export class PrerequisiteOrchestratorService {
       `Declared prerequisites:\n${lines.join("\n")}\n\n` +
       "Only continue if you trust this workspace."
     );
+  }
+
+  /**
+   * Parses `[REQUIRED] name` and `[OUTDATED] name` lines from the validate or
+   * setup step stdout. Returns tool names only — no paths, commands, or hints.
+   */
+  private _extractFailedTools(steps: StepExecution[]): string[] {
+    // Setup re-runs validate internally, so its stdout is the most recent picture.
+    const stdout =
+      steps.find((s) => s.step === "setup")?.result.stdout ??
+      steps.find((s) => s.step === "validate")?.result.stdout ??
+      "";
+
+    const tools: string[] = [];
+    // Matches summary lines like "  [REQUIRED] tool-name" and "  [OUTDATED] tool-name (minimum: x)"
+    const pattern = /^\s+\[(REQUIRED|OUTDATED)\]\s+([^(\n]+)/gm;
+    let match: RegExpExecArray | null;
+    while ((match = pattern.exec(stdout)) !== null) {
+      const name = match[2].trim();
+      if (name && !tools.includes(name)) {
+        tools.push(name);
+      }
+    }
+    return tools;
+  }
+
+  /** Returns a compact comma-separated list, capped at 3 entries with "and N more". */
+  private _formatFailedTools(tools: string[], max = 3): string {
+    if (tools.length === 0) {
+      return "";
+    }
+    if (tools.length <= max) {
+      return tools.join(", ");
+    }
+    return `${tools.slice(0, max).join(", ")} and ${tools.length - max} more`;
   }
 
   /**

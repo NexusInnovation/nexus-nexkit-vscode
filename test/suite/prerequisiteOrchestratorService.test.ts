@@ -302,6 +302,96 @@ suite("Unit: PrerequisiteOrchestratorService — happy paths", () => {
     assert.deepStrictEqual(stepsRun(h.processRunner), [CHECK, VALIDATE, SETUP]);
   });
 
+  test("setupFailed message lists the failing tools from setup stdout", async () => {
+    const setupStdout = [
+      "  [REQUIRED] nexkit-test-cli",
+      "  [REQUIRED] fake-devtool",
+      "  [OUTDATED] Node.js (minimum: 99.0.0)",
+    ].join("\n");
+    const h = buildHarness();
+    h.processRunner.respondTo(CHECK, ko()).respondTo(VALIDATE, ko("")).respondTo(SETUP, ko(setupStdout));
+
+    const result = await h.orchestrator.run();
+
+    assert.strictEqual(result.outcome, "setupFailed");
+    const msg = result.error?.toUserMessage() ?? "";
+    assert.ok(msg.includes("nexkit-test-cli"), `message should mention first tool: ${msg}`);
+    assert.ok(msg.includes("fake-devtool"), `message should mention second tool: ${msg}`);
+    assert.ok(msg.includes("Node.js"), `message should mention third tool: ${msg}`);
+  });
+
+  test("setupFailed message falls back to generic text when stdout has no tool list", async () => {
+    const h = buildHarness();
+    h.processRunner.respondTo(CHECK, ko()).respondTo(VALIDATE, ko("")).respondTo(SETUP, ko("no marker here"));
+
+    const result = await h.orchestrator.run();
+
+    assert.strictEqual(result.outcome, "setupFailed");
+    assert.ok(result.error?.message.includes("did not complete"), result.error?.message);
+  });
+
+  test("setupFailed message caps at 3 tools with 'and N more'", async () => {
+    const setupStdout = [
+      "  [REQUIRED] tool-a",
+      "  [REQUIRED] tool-b",
+      "  [REQUIRED] tool-c",
+      "  [REQUIRED] tool-d",
+    ].join("\n");
+    const h = buildHarness();
+    h.processRunner.respondTo(CHECK, ko()).respondTo(VALIDATE, ko("")).respondTo(SETUP, ko(setupStdout));
+
+    const result = await h.orchestrator.run();
+
+    const msg = result.error?.message ?? "";
+    assert.ok(msg.includes("and 1 more"), `expected 'and 1 more' in: ${msg}`);
+    assert.ok(!msg.includes("tool-d"), `tool-d must be folded into 'more': ${msg}`);
+  });
+
+  test("stillInvalid message lists the failing tools from the last step stdout", async () => {
+    const setupStdout = [
+      "  [REQUIRED] my-missing-tool",
+      "  [OUTDATED] old-tool (minimum: 5.0.0)",
+    ].join("\n");
+    const h = buildHarness();
+    h.processRunner.respondTo(CHECK, ko(), ko()).respondTo(VALIDATE, ko("")).respondTo(SETUP, ok(setupStdout));
+
+    const result = await h.orchestrator.run();
+
+    assert.strictEqual(result.outcome, "stillInvalid");
+    const msg = result.error?.toUserMessage() ?? "";
+    assert.ok(msg.includes("my-missing-tool"), `message should mention missing tool: ${msg}`);
+    assert.ok(msg.includes("old-tool"), `message should mention outdated tool: ${msg}`);
+  });
+
+  test("validate step writes a warning with failing tools before setup consent", async () => {
+    const validateStdout = [
+      "  [REQUIRED] nexkit-test-cli",
+      "  [OUTDATED] Node.js (minimum: 99.0.0)",
+    ].join("\n");
+    const h = buildHarness({ installConsent: false });
+    h.processRunner.respondTo(CHECK, ko()).respondTo(VALIDATE, ko(validateStdout));
+
+    const result = await h.orchestrator.run();
+
+    assert.strictEqual(result.outcome, "setupDeclined");
+    assert.ok(h.logger.hasMessageContaining("validation reported missing/outdated tools"));
+    assert.ok(h.logger.hasMessageContaining("nexkit-test-cli"));
+    assert.ok(h.logger.hasMessageContaining("Node.js"));
+  });
+
+  test("setup failure writes a warning with remaining failing tools", async () => {
+    const setupStdout = ["  [REQUIRED] fake-devtool", "  [OUTDATED] Node.js (minimum: 99.0.0)"].join("\n");
+    const h = buildHarness();
+    h.processRunner.respondTo(CHECK, ko()).respondTo(VALIDATE, ko("")) .respondTo(SETUP, ko(setupStdout));
+
+    const result = await h.orchestrator.run();
+
+    assert.strictEqual(result.outcome, "setupFailed");
+    assert.ok(h.logger.hasMessageContaining("setup did not satisfy these tools"));
+    assert.ok(h.logger.hasMessageContaining("fake-devtool"));
+    assert.ok(h.logger.hasMessageContaining("Node.js"));
+  });
+
   test("setup never retries after a failure", async () => {
     // Re-running a partially-succeeded installer can leave a machine worse off
     // than failing cleanly.
