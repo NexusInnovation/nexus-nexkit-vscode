@@ -1,30 +1,33 @@
 # Squad Decisions
 
 ### 2026-08-06: SCM menu entry + protected-branch commit prompt
+
 **By:** Link (requested by Eric Decarufel)
 **What:**
+
 1. Added `nexus-nexkit-vscode.createBranchFromWorkItem` to the `nexus-nexkit-vscode.commitMenu` submenu in `package.json`, group `"1_generate@2"` — positioned directly after "Generate Commit Message" and before "Open Settings".
 2. `CommitMessageService.generateCommitMessage()` now proposes creating a branch when the generated commit message is written to a repo whose current branch (`repo.state.HEAD?.name`) is exactly `"main"` or `"develop"` (case-sensitive), via a new `const PROTECTED_BRANCHES = ["main", "develop"];` local to `commitMessageService.ts` (no settings/config surface — intentionally hardcoded and minimal). Shows a French `vscode.window.showWarningMessage` with a single action button; accepting it runs `Commands.CREATE_BRANCH_FROM_WORK_ITEM`. Dismissing does nothing — the commit message is never blocked or cleared either way. Detached/unknown HEAD is skipped silently.
-**Why:** User request — reduce accidental direct commits to protected branches and surface the existing branch-creation command from the SCM menu.
-**Verification:** `npm run check:types` clean; `npm test` → 444 passing, 0 failing (4 new tests added to `commitMessageService.integration.test.ts`).
+   **Why:** User request — reduce accidental direct commits to protected branches and surface the existing branch-creation command from the SCM menu.
+   **Verification:** `npm run check:types` clean; `npm test` → 444 passing, 0 failing (4 new tests added to `commitMessageService.integration.test.ts`).
 
 ---
 
 ### 2026-08-06: Branch prefix mapping for DevOps Branch Creation
+
 **By:** Link
 **Classification:** Project-specific — `devops-branch-creation` feature
 
 **What:** `buildBranchName()` in `branchNameBuilder.ts` now resolves the branch prefix from a normalized
 work-item-type → prefix mapping table instead of always slugifying the raw type:
 
-| Azure DevOps Work Item Type | Prefix |
-|---|---|
-| Bug, Issue | `bugfix` |
-| User Story, Product Backlog Item, Requirement, Feature, Epic, Improvement | `feature` |
-| POC, Spike | `experiment` |
-| Technical Debt, Task, Impediment, Risk, Review, Change Request | `chore` |
-| Test Case | `test` |
-| Documentation | `docs` |
+| Azure DevOps Work Item Type                                               | Prefix       |
+| ------------------------------------------------------------------------- | ------------ |
+| Bug, Issue                                                                | `bugfix`     |
+| User Story, Product Backlog Item, Requirement, Feature, Epic, Improvement | `feature`    |
+| POC, Spike                                                                | `experiment` |
+| Technical Debt, Task, Impediment, Risk, Review, Change Request            | `chore`      |
+| Test Case                                                                 | `test`       |
+| Documentation                                                             | `docs`       |
 
 Lookup is case-insensitive and tolerant of extra spacing/hyphens (normalized via trim + lowercase + whitespace/hyphen
 collapse before matching). Any work item type not in the table falls back to the original behavior — slugify the raw

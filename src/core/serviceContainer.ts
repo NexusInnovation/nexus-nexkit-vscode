@@ -31,6 +31,9 @@ import { HooksConfigDeployer } from "../features/initialization/hooksConfigDeplo
 import { UserDirectoryService } from "../features/ai-template-files/services/userDirectoryService";
 import { ConvertToMarkdownPanelService } from "../features/convert-to-markdown/convertToMarkdownPanelService";
 import { MarkitdownConversionService } from "../features/convert-to-markdown/markitdownConversionService";
+import { AzureDevOpsAuthService } from "../features/devops-branch-creation/azureDevOpsAuthService";
+import { AzureDevOpsRestClient } from "../features/devops-branch-creation/azureDevOpsRestClient";
+import { DevOpsBranchCreationService } from "../features/devops-branch-creation/devOpsBranchCreationService";
 
 /**
  * Service container for dependency injection
@@ -69,6 +72,7 @@ export interface ServiceContainer {
   userDirectory: UserDirectoryService;
   convertToMarkdown: ConvertToMarkdownPanelService;
   markitdownConversion: MarkitdownConversionService;
+  devOpsBranchCreation: DevOpsBranchCreationService;
 }
 
 /**
@@ -121,6 +125,9 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const githubWorkflowRunner = new GitHubWorkflowRunnerService(context.extensionUri);
   const markitdownConversion = new MarkitdownConversionService(logging);
   const convertToMarkdown = new ConvertToMarkdownPanelService(context.extensionUri, markitdownConversion);
+  const azureDevOpsAuthService = new AzureDevOpsAuthService();
+  const azureDevOpsRestClient = new AzureDevOpsRestClient(azureDevOpsAuthService);
+  const devOpsBranchCreation = new DevOpsBranchCreationService(devOpsConfig, azureDevOpsRestClient, telemetry);
 
   // Register for disposal
   context.subscriptions.push(logging);
@@ -166,5 +173,6 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     userDirectory,
     convertToMarkdown,
     markitdownConversion,
+    devOpsBranchCreation,
   };
 }

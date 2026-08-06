@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { SettingsManager } from "../../core/settingsManager";
 import { LoggingService } from "../../shared/services/loggingService";
+import { Commands } from "../../shared/constants/commands";
 
 /**
  * Minimal type definitions for the VS Code Git Extension API
@@ -17,6 +18,7 @@ interface GitRepository {
   state: {
     indexChanges: GitChange[];
     workingTreeChanges: GitChange[];
+    HEAD?: { name?: string };
   };
 }
 
@@ -30,6 +32,9 @@ interface GitExtensionAPI {
  */
 /** Placeholder token replaced with the actual git diff in the prompt template. */
 const DIFF_PLACEHOLDER = "{{diff}}";
+
+/** Branches on which committing directly should prompt the user to create a branch instead. */
+const PROTECTED_BRANCHES = ["main", "develop"];
 
 /** Default system prompt used when the user has not customised the setting. */
 export const DEFAULT_SYSTEM_PROMPT = `You are an expert software developer. Generate a concise commit message following the Conventional Commits specification (https://www.conventionalcommits.org/) based on the provided git diff of staged changes.
@@ -150,12 +155,30 @@ export class CommitMessageService {
         const trimmed = commitMessage.trim();
         if (trimmed) {
           repo.inputBox.value = trimmed;
+          await this._maybeProposeBranchCreation(repo);
         }
       }
     );
   }
 
   // ─── Private helpers ─────────────────────────────────────────────────────
+
+  private async _maybeProposeBranchCreation(repo: GitRepository): Promise<void> {
+    const currentBranch = repo.state.HEAD?.name;
+    if (!currentBranch || !PROTECTED_BRANCHES.includes(currentBranch)) {
+      return;
+    }
+
+    const createBranchAction = "Créer une branche depuis un élément de travail";
+    const choice = await vscode.window.showWarningMessage(
+      `Nexkit: Vous êtes sur la branche protégée "${currentBranch}". Créer une branche avant de committer ?`,
+      createBranchAction
+    );
+
+    if (choice === createBranchAction) {
+      await vscode.commands.executeCommand(Commands.CREATE_BRANCH_FROM_WORK_ITEM);
+    }
+  }
 
   private async _getActiveRepository(rootUri?: vscode.Uri): Promise<GitRepository | undefined> {
     const gitExtension = vscode.extensions.getExtension("vscode.git")?.exports as

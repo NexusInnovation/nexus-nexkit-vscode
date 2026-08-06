@@ -113,6 +113,55 @@ export function parseDevOpsUrl(url: string): DevOpsUrlParseResult {
 }
 
 /**
+ * Result of parsing a git remote URL for Azure Repos ownership.
+ */
+export interface AzureReposGitRemoteParseResult {
+  isAzureRepos: boolean;
+  organization?: string;
+  project?: string;
+  repository?: string;
+}
+
+/** Regex-based git remote URL shapes recognized as Azure Repos (https + SSH, current + legacy). */
+const AZURE_REPOS_GIT_REMOTE_PATTERNS: RegExp[] = [
+  // https://dev.azure.com/{org}/{project}/_git/{repo} (optionally https://{org}@dev.azure.com/...)
+  /^https?:\/\/(?:[^@/]+@)?dev\.azure\.com\/([^/]+)\/([^/]+)\/_git\/([^/]+?)\/?$/i,
+  // git@ssh.dev.azure.com:v3/{org}/{project}/{repo}
+  /^[^@\s]+@ssh\.dev\.azure\.com:v3\/([^/]+)\/([^/]+)\/([^/]+?)$/i,
+  // https://{org}.visualstudio.com/{project}/_git/{repo} or .../DefaultCollection/{project}/_git/{repo}
+  /^https?:\/\/([^./]+)\.visualstudio\.com\/(?:DefaultCollection\/)?([^/]+)\/_git\/([^/]+?)\/?$/i,
+  // xxx@vs-ssh.visualstudio.com:v3/{org}/{project}/{repo}
+  /^[^@\s]+@vs-ssh\.visualstudio\.com:v3\/([^/]+)\/([^/]+)\/([^/]+?)$/i,
+];
+
+/**
+ * Parse a git remote URL to determine whether it points to Azure Repos, and if so
+ * extract the organization/project/repository. Returns `{ isAzureRepos: false }`
+ * for anything else (e.g. GitHub remotes) rather than throwing.
+ */
+export function parseAzureReposGitRemoteUrl(remoteUrl: string): AzureReposGitRemoteParseResult {
+  if (!remoteUrl || typeof remoteUrl !== "string") {
+    return { isAzureRepos: false };
+  }
+
+  const trimmedUrl = remoteUrl.trim();
+
+  for (const pattern of AZURE_REPOS_GIT_REMOTE_PATTERNS) {
+    const match = trimmedUrl.match(pattern);
+    if (match) {
+      return {
+        isAzureRepos: true,
+        organization: decodeURIComponent(match[1]),
+        project: decodeURIComponent(match[2]),
+        repository: decodeURIComponent(match[3]),
+      };
+    }
+  }
+
+  return { isAzureRepos: false };
+}
+
+/**
  * Sanitize a name for use in connection ID
  * Allows alphanumeric, hyphens, and underscores
  */

@@ -33,7 +33,7 @@
   to the local `GitRepository` shim interface, mirroring the real Git extension API). If HEAD is undefined
   (detached/unknown) or the branch isn't in the protected list, it silently returns — no prompt, no throw. If
   protected, shows a French `vscode.window.showWarningMessage` (`"Nexkit: Vous êtes sur la branche protégée
-  \"${currentBranch}\". Créer une branche avant de committer ?"`) with one action button
+\"${currentBranch}\". Créer une branche avant de committer ?"`) with one action button
   (`"Créer une branche depuis un élément de travail"`); on that response it executes
   `Commands.CREATE_BRANCH_FROM_WORK_ITEM` via `vscode.commands.executeCommand`. Dismissing/no-action does nothing —
   the commit message always stays in the input box regardless of the prompt outcome. No new imports/deps beyond
@@ -81,4 +81,3 @@
 - Bug fix (2026-07-23): accented-character (mojibake) corruption on Windows — forced `PYTHONIOENCODING=utf-8`/`PYTHONUTF8=1` into the markitdown subprocess env (piped stdout doesn't inherit console UTF-8 mode). Pattern: always force UTF-8 env vars explicitly for locale-dependent child processes on Windows.
 - Bug fix (2026-07-23): bumped `@types/sinon` to `^22.0.0` to fix `TS2694` type-only drift vs `sinon@21`/`@sinonjs/fake-timers@15`. Pattern: keep `@types/sinon`'s major in step whenever `sinon` gets a major bump.
 - Bug fix (2026-07-23): fixed a pre-existing Sinon stub failure on `vscode.workspace.fs.writeFile` (non-configurable property) by stubbing the parent `fs` getter with a spread override instead. Reusable pattern for any frozen VS Code namespace object.
-

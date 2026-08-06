@@ -130,4 +130,18 @@ suite("Unit: Extension Activation", () => {
     assert.strictEqual(command.title, "Nexkit: Convert to Markdown");
     assert.strictEqual(command.category, "Nexkit");
   });
+
+  test("Should contribute Create Branch from Work Item command", () => {
+    const packageJsonPath = path.join(__dirname, "..", "..", "..", "package.json");
+    const packageJsonRaw = fs.readFileSync(packageJsonPath, "utf8");
+    const packageJson = JSON.parse(packageJsonRaw);
+
+    const command = packageJson.contributes?.commands?.find(
+      (entry: { command: string }) => entry.command === "nexus-nexkit-vscode.createBranchFromWorkItem"
+    );
+    assert.ok(command, "Expected createBranchFromWorkItem command contribution.");
+    assert.strictEqual(command.title, "Nexkit: Create Branch from Work Item");
+    assert.strictEqual(command.category, "Nexkit");
+    assert.strictEqual(command.icon, "$(git-branch)");
+  });
 });

@@ -3,6 +3,12 @@
 		{
 			"path": "."
 		},
+		{
+			"path": "../../My"
+		},
+		{
+			"path": "../../ing-launchpad"
+		}
 	],
 	"settings": {
 		"debug.internalConsoleOptions": "neverOpen",

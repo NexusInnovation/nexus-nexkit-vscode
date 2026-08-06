@@ -21,6 +21,7 @@ export type WebviewMessage =
   | { command: "deleteProfile"; profile: Profile }
   | { command: "openFeedback" }
   | { command: "openConvertToMarkdown" }
+  | { command: "createBranchFromWorkItem" }
   | { command: "setMode"; mode: OperationMode }
   // APM DevOps connection messages
   | { command: "getDevOpsConnections" }
