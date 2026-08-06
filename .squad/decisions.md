@@ -1,5 +1,33 @@
 # Squad Decisions
 
+### 2026-08-06: Branch prefix mapping for DevOps Branch Creation
+**By:** Link
+**Classification:** Project-specific — `devops-branch-creation` feature
+
+**What:** `buildBranchName()` in `branchNameBuilder.ts` now resolves the branch prefix from a normalized
+work-item-type → prefix mapping table instead of always slugifying the raw type:
+
+| Azure DevOps Work Item Type | Prefix |
+|---|---|
+| Bug, Issue | `bugfix` |
+| User Story, Product Backlog Item, Requirement, Feature, Epic, Improvement | `feature` |
+| POC, Spike | `experiment` |
+| Technical Debt, Task, Impediment, Risk, Review, Change Request | `chore` |
+| Test Case | `test` |
+| Documentation | `docs` |
+
+Lookup is case-insensitive and tolerant of extra spacing/hyphens (normalized via trim + lowercase + whitespace/hyphen
+collapse before matching). Any work item type not in the table falls back to the original behavior — slugify the raw
+type string (e.g. custom type "Design Task" → `design-task/...`) — so orgs with custom process templates are
+unaffected.
+
+`hotfix/`, `ci/`, `release/`, `refactor/` are intentionally NOT auto-mapped from any work item type — there is no
+clean 1:1 signal from Azure DevOps work item types to these conventions today.
+
+**Why:** Requested by Eric Decarufel to align generated branch names with industry-standard prefix conventions.
+
+**Verification:** `npm run check:types` clean; `npm test` → 440 passing, 8 pending, exit code 0.
+
 > Entries older than 30 days are periodically moved to `decisions-archive.md` by the Scribe.
 
 ## Decision: DevOps Branch Creation — implemented per approved plan

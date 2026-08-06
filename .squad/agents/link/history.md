@@ -22,6 +22,19 @@
 
 ## Learnings
 
+- 2026-08-06: **Branch prefix mapping added to `branchNameBuilder.ts`.** Replaced the raw slugified work-item-type
+  prefix with an industry-standard mapping table (`WORK_ITEM_TYPE_PREFIXES: Record<string, string>`, co-located in
+  `branchNameBuilder.ts` itself — small enough not to warrant a separate file). Bug/Issue → `bugfix`; User
+  Story/Product Backlog Item/Requirement/Feature/Epic/Improvement → `feature`; POC/Spike → `experiment`; Technical
+  Debt/Task/Impediment/Risk/Review/Change Request → `chore`; Test Case → `test`; Documentation → `docs`. Lookup
+  normalizes the raw `workItem.type` via `normalizeTypeName()` (trim, lowercase, collapse internal whitespace/hyphens
+  to a single space) before matching table keys (written in the same normalized form, e.g. `"product backlog item"`).
+  Unmapped/custom types fall back unchanged to the original behavior: `slugify(type) || FALLBACK_TYPE_SLUG`.
+  `hotfix`/`ci`/`release`/`refactor` are intentionally NOT mapped from any work item type — no clean 1:1 signal.
+  Updated `branchNameBuilder.test.ts` (existing "Bug"→`bug/` and "Product Backlog Item"→`product-backlog-item/`
+  assertions now expect `bugfix/`/`feature/`; added per-type mapping coverage, case-insensitivity, and unmapped-type
+  fallback tests) and `devOpsBranchCreationService.test.ts` (integration mocks hardcoded the old `bug/42-...` branch
+  name — updated to `bugfix/42-...`). `npm run check:types` clean, `npm test` → 440 passing, 8 pending, exit code 0.
 - 2026-08-06: **DevOps Branch Creation — implemented.** New feature folder `src/features/devops-branch-creation/`
   (models, `AzureDevOpsAuthService`, `AzureDevOpsRestClient`, `branchNameBuilder`, `DevOpsBranchCreationService`,
   `commands.ts`), plus `parseAzureReposGitRemoteUrl()` added to `devOpsUrlParser.ts`. Auth via
