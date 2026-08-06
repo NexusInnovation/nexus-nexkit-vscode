@@ -1,6 +1,159 @@
 # Squad Decisions
 
+### 2026-08-06: Sole DevOps connection is now activated before returning `resolutionSource: "activeConnection"`
+
+**By:** Link
+
+**What:** In `devOpsBranchCreationService.ts`'s `_resolveTarget()`, when exactly one Azure DevOps connection is
+configured and it is not currently active, the service now calls `DevOpsMcpConfigService.setActiveConnection()`
+to actually activate it before labeling the resolution `"activeConnection"` in telemetry. This is a deliberate
+side effect: `setActiveConnection()` rewrites `.vscode/mcp.json` and triggers `workbench.action.reloadWindow`
+(after a 500ms info-message delay). If activation fails, it's logged via `LoggingService.warn` but does not
+block branch creation — the target still resolves normally.
+
+**Why:** Approved by Eric Decarufel — fixes inaccurate telemetry (previously claimed "activeConnection" even when
+the sole connection was not active) without introducing a new `resolutionSource` value or silently swallowing the
+mismatch.
+
+**Verification:** 3 new tests added to `devOpsBranchCreationService.test.ts`; `npm test` → 447 passing, 8 pending,
+0 failing; `npm run check:types` clean.
+
+---
+
+### 2026-08-06: SCM menu entry + protected-branch commit prompt
+
+**By:** Link (requested by Eric Decarufel)
+**What:**
+
+1. Added `nexus-nexkit-vscode.createBranchFromWorkItem` to the `nexus-nexkit-vscode.commitMenu` submenu in `package.json`, group `"1_generate@2"` — positioned directly after "Generate Commit Message" and before "Open Settings".
+2. `CommitMessageService.generateCommitMessage()` now proposes creating a branch when the generated commit message is written to a repo whose current branch (`repo.state.HEAD?.name`) is exactly `"main"` or `"develop"` (case-sensitive), via a new `const PROTECTED_BRANCHES = ["main", "develop"];` local to `commitMessageService.ts` (no settings/config surface — intentionally hardcoded and minimal). Shows a French `vscode.window.showWarningMessage` with a single action button; accepting it runs `Commands.CREATE_BRANCH_FROM_WORK_ITEM`. Dismissing does nothing — the commit message is never blocked or cleared either way. Detached/unknown HEAD is skipped silently.
+   **Why:** User request — reduce accidental direct commits to protected branches and surface the existing branch-creation command from the SCM menu.
+   **Verification:** `npm run check:types` clean; `npm test` → 444 passing, 0 failing (4 new tests added to `commitMessageService.integration.test.ts`).
+
+---
+
+### 2026-08-06: Branch prefix mapping for DevOps Branch Creation
+
+**By:** Link
+**Classification:** Project-specific — `devops-branch-creation` feature
+
+**What:** `buildBranchName()` in `branchNameBuilder.ts` now resolves the branch prefix from a normalized
+work-item-type → prefix mapping table instead of always slugifying the raw type:
+
+| Azure DevOps Work Item Type                                               | Prefix       |
+| ------------------------------------------------------------------------- | ------------ |
+| Bug, Issue                                                                | `bugfix`     |
+| User Story, Product Backlog Item, Requirement, Feature, Epic, Improvement | `feature`    |
+| POC, Spike                                                                | `experiment` |
+| Technical Debt, Task, Impediment, Risk, Review, Change Request            | `chore`      |
+| Test Case                                                                 | `test`       |
+| Documentation                                                             | `docs`       |
+
+Lookup is case-insensitive and tolerant of extra spacing/hyphens (normalized via trim + lowercase + whitespace/hyphen
+collapse before matching). Any work item type not in the table falls back to the original behavior — slugify the raw
+type string (e.g. custom type "Design Task" → `design-task/...`) — so orgs with custom process templates are
+unaffected.
+
+`hotfix/`, `ci/`, `release/`, `refactor/` are intentionally NOT auto-mapped from any work item type — there is no
+clean 1:1 signal from Azure DevOps work item types to these conventions today.
+
+**Why:** Requested by Eric Decarufel to align generated branch names with industry-standard prefix conventions.
+
+**Verification:** `npm run check:types` clean; `npm test` → 440 passing, 8 pending, exit code 0.
+
 > Entries older than 30 days are periodically moved to `decisions-archive.md` by the Scribe.
+
+## Decision: DevOps Branch Creation — implemented per approved plan
+
+**Date:** 2026-08-06
+**Agents:** Link (extension host), Ghost (panel UI)
+**Classification:** Project-specific — `devops-branch-creation` feature (implementation)
+
+### Context
+
+Implementation of the "Create Branch from Azure DevOps Work Item" feature per the design plan approved by Eric
+Decarufel (see the design-plan entry below).
+
+### Decisions
+
+- **Link** implemented the full extension-host side: new feature folder `src/features/devops-branch-creation/`
+  (models, `AzureDevOpsAuthService`, `AzureDevOpsRestClient`, `branchNameBuilder`, `DevOpsBranchCreationService`,
+  `commands.ts`), `parseAzureReposGitRemoteUrl()` added to `devOpsUrlParser.ts`, and all wiring (`commands.ts`
+  constants, `serviceContainer.ts`, `extension.ts`, `package.json` command contribution with `$(git-branch)` icon,
+  `webviewMessages.ts` + `nexkitPanelMessageHandler.ts` thin panel-trigger handler — no `.tsx` files touched, per
+  boundary).
+- **Telemetry adjustment applied:** per Eric's approval note, `devops.branch.created` now includes `organization` in
+  addition to `workItemType`, `resolutionSource`, `triggerSource` — aligned with the existing
+  `devops.connection.added` precedent. Still does NOT log project, work item title, branch name, or any other user
+  content. `devops.branch.cancelled` (reason: `userCancelled` | `branchExistsCancelled`) unchanged from the design.
+- **Ghost** added the panel UI trigger: `createBranchFromWorkItem` handler and a new `CollapsibleSection`
+  ("Create Branch from Work Item") in `ToolsSection.tsx`, mirroring the existing `openConvertToMarkdown`
+  fire-and-forget button pattern exactly. No new `AppState`/hook needed — the extension host already owns the
+  command, message type, and handler wiring. No test file exists yet for `ToolsSection.tsx`, so no test was added.
+
+### Tests
+
+Link extended `devOpsUrlParser.test.ts` (`parseAzureReposGitRemoteUrl`, all URL shapes + GitHub/invalid), added
+`branchNameBuilder.test.ts`, `azureDevOpsRestClient.test.ts` (mocked global fetch), `devOpsBranchCreationService.test.ts`
+(mocked Git extension API, `DevOpsMcpConfigService`, REST client — covers gitRemote/activeConnection/pickedConnection
+resolution, branch collision checkout vs cancel, cancellation paths, and telemetry properties including
+`organization`), and extended `nexkitPanelMessageHandler.test.ts` + `extension.test.ts`.
+
+### Verification
+
+`npm run check:types` clean; `npm test` → 420 passing, 8 pending, exit code 0 (both Link's and Ghost's changes,
+confirmed no regressions).
+
+### Status
+
+Feature complete per the approved design.
+
+---
+
+## Decision: DevOps Branch Creation — design plan (awaiting approval)
+
+**Date:** 2026-08-06
+**Agent:** Link (TypeScript & VS Code Extension Dev)
+**Classification:** Project-specific — new `devops-branch-creation` feature (design phase, no code written)
+
+### Context
+
+New NexKit tool: "Create Branch from Azure DevOps Work Item" — a VS Code command (+ panel button) that takes a work
+item ID, resolves the Azure DevOps organization, fetches the work item, builds a branch name, and creates+checks out
+the branch locally (no push). Link produced a full implementation plan and presented it to Eric Decarufel for
+approval — no code was written yet.
+
+### Decisions
+
+- New feature folder `src/features/devops-branch-creation/` (own REST client, auth service, branch name builder,
+  orchestrating service, commands) — own surface area, doesn't fit existing folders.
+- Azure DevOps Work Item REST call is scoped to **organization + work item ID only**
+  (`GET https://dev.azure.com/{org}/_apis/wit/workitems/{id}?api-version=7.1`). Project is NOT sent to the API — work
+  item IDs are unique per-org, not per-project. Project is kept only as UX/context metadata when falling back to
+  `DevOpsMcpConfigService` connections.
+- Auth: `vscode.authentication.getSession("microsoft", ["499b84ac-1321-427f-aa17-267ca6975798/.default"], { createIfNone: true })`.
+  401/403 from the REST call is surfaced as a clear "org may not be Entra ID-backed" error (can't detect this ahead of time).
+- Branch naming: slugify the raw `System.WorkItemType` (no hardcoded type→prefix mapping table) — simplest, meets the
+  `{type}/{id}-{slug}` format, easy to extend to a configurable mapping later if requested.
+- Git extension API shim: followed existing precedent from `commitMessageService.ts` (local minimal TS interfaces per
+  file, not shared/imported), extended with `state.remotes`, `createBranch()`, `getBranch()`, `checkout()`.
+- New `parseAzureReposGitRemoteUrl()` added to existing `devOpsUrlParser.ts` (not a new file), covering https
+  (dev.azure.com + legacy visualstudio.com incl. DefaultCollection) and SSH (`ssh.dev.azure.com` + legacy
+  `vs-ssh.visualstudio.com`) git remote shapes.
+- Telemetry: intentionally does NOT log organization/project names for this feature (existing `devops.connection.added`
+  event does log org, but branch creation is more frequent/sensitive — chose the more conservative option). Only
+  `workItemType`, `resolutionSource` (gitRemote|activeConnection|pickedConnection), `triggerSource` (palette|panel) are
+  tracked.
+- Trigger-source disambiguation (palette vs panel) reuses the existing convention already present for
+  `UPDATE_INSTALLED_TEMPLATES` (command accepts an optional arg passed by the panel's `executeCommand` call), rather
+  than special-casing the panel handler — keeps the "panel button = thin command trigger" pattern intact.
+
+### Status
+
+Awaiting explicit go-ahead from Eric Decarufel — no code has been written yet (design/planning step of
+`nexus-implement`).
+
+---
 
 ## Decision: Convert to Markdown — production packaging bug (missing webview index.html)
 

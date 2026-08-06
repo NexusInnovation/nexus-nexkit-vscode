@@ -26,6 +26,7 @@ export const Commands = {
   // APM DevOps commands
   ADD_DEVOPS_CONNECTION: "nexus-nexkit-vscode.addDevOpsConnection",
   REMOVE_DEVOPS_CONNECTION: "nexus-nexkit-vscode.removeDevOpsConnection",
+  CREATE_BRANCH_FROM_WORK_ITEM: "nexus-nexkit-vscode.createBranchFromWorkItem",
 
   // Logging commands
   SHOW_LOGS: "nexus-nexkit-vscode.showLogs",

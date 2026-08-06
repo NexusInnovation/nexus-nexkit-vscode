@@ -38,6 +38,7 @@ export class NexkitPanelMessageHandler {
       ["deleteProfile", this.handleDeleteProfile.bind(this)],
       ["openFeedback", this.handleOpenFeedback.bind(this)],
       ["openConvertToMarkdown", this.handleOpenConvertToMarkdown.bind(this)],
+      ["createBranchFromWorkItem", this.handleCreateBranchFromWorkItem.bind(this)],
       ["setMode", this.handleSetMode.bind(this)],
       // APM DevOps connection handlers
       ["getDevOpsConnections", this.handleGetDevOpsConnections.bind(this)],
@@ -205,6 +206,11 @@ export class NexkitPanelMessageHandler {
   private async handleOpenConvertToMarkdown(message: WebviewMessage): Promise<void> {
     this.trackWebviewAction("openConvertToMarkdown");
     await vscode.commands.executeCommand(Commands.OPEN_CONVERT_TO_MARKDOWN);
+  }
+
+  private async handleCreateBranchFromWorkItem(message: WebviewMessage): Promise<void> {
+    this.trackWebviewAction("createBranchFromWorkItem");
+    await vscode.commands.executeCommand(Commands.CREATE_BRANCH_FROM_WORK_ITEM);
   }
 
   private async handleSetMode(message: WebviewMessage & { command: "setMode" }): Promise<void> {

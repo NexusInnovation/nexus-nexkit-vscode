@@ -24,6 +24,7 @@ import { registerShowLogsCommand } from "./shared/commands/loggingCommand";
 import { registerAddDevOpsConnectionCommand, registerRemoveDevOpsConnectionCommand } from "./features/apm-devops/commands";
 import { registerGenerateCommitMessageCommand } from "./features/commit-management/commands";
 import { registerOpenConvertToMarkdownCommand } from "./features/convert-to-markdown/commands";
+import { registerCreateBranchFromWorkItemCommand } from "./features/devops-branch-creation/commands";
 
 /**
  * Extension activation
@@ -70,6 +71,7 @@ export async function activate(context: vscode.ExtensionContext) {
   registerRemoveDevOpsConnectionCommand(context, services);
   registerGenerateCommitMessageCommand(context, services);
   registerOpenConvertToMarkdownCommand(context, services);
+  registerCreateBranchFromWorkItemCommand(context, services);
 
   // Register webview panel
   const nexkitPanelProvider = new NexkitPanelViewProvider();

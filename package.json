@@ -2,7 +2,7 @@
   "name": "nexus-nexkit-vscode",
   "displayName": "Nexkit",
   "description": "VS Code extension for Nexkit",
-  "version": "3.11.4-beta.1",
+  "version": "3.11.4",
   "publisher": "NexusInnovation",
   "private": true,
   "license": "MIT",
@@ -139,6 +139,12 @@
         "command": "nexus-nexkit-vscode.openConvertToMarkdown",
         "title": "Nexkit: Convert to Markdown",
         "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.createBranchFromWorkItem",
+        "title": "Nexkit: Create Branch from Work Item",
+        "category": "Nexkit",
+        "icon": "$(git-branch)"
       }
     ],
     "menus": {
@@ -181,6 +187,11 @@
           "command": "nexus-nexkit-vscode.generateCommitMessage",
           "when": "scmProvider == git",
           "group": "1_generate@1"
+        },
+        {
+          "command": "nexus-nexkit-vscode.createBranchFromWorkItem",
+          "when": "scmProvider == git",
+          "group": "1_generate@2"
         },
         {
           "command": "nexus-nexkit-vscode.openSettings",

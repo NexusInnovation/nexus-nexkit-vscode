@@ -49,4 +49,13 @@ suite("Unit: NexkitPanelMessageHandler", () => {
 
     assert.ok(executeCommand.calledOnceWithExactly(Commands.OPEN_CONVERT_TO_MARKDOWN));
   });
+
+  test("triggers Create Branch from Work Item from the webview", async () => {
+    const executeCommand = sandbox.stub(vscode.commands, "executeCommand").resolves();
+    const handler = new NexkitPanelMessageHandler(() => undefined, createServices());
+
+    await handler.handleMessage({ command: "createBranchFromWorkItem" });
+
+    assert.ok(executeCommand.calledOnceWithExactly(Commands.CREATE_BRANCH_FROM_WORK_ITEM));
+  });
 });
