@@ -1,5 +1,25 @@
 # Squad Decisions
 
+### 2026-08-06: Sole DevOps connection is now activated before returning `resolutionSource: "activeConnection"`
+
+**By:** Link
+
+**What:** In `devOpsBranchCreationService.ts`'s `_resolveTarget()`, when exactly one Azure DevOps connection is
+configured and it is not currently active, the service now calls `DevOpsMcpConfigService.setActiveConnection()`
+to actually activate it before labeling the resolution `"activeConnection"` in telemetry. This is a deliberate
+side effect: `setActiveConnection()` rewrites `.vscode/mcp.json` and triggers `workbench.action.reloadWindow`
+(after a 500ms info-message delay). If activation fails, it's logged via `LoggingService.warn` but does not
+block branch creation — the target still resolves normally.
+
+**Why:** Approved by Eric Decarufel — fixes inaccurate telemetry (previously claimed "activeConnection" even when
+the sole connection was not active) without introducing a new `resolutionSource` value or silently swallowing the
+mismatch.
+
+**Verification:** 3 new tests added to `devOpsBranchCreationService.test.ts`; `npm test` → 447 passing, 8 pending,
+0 failing; `npm run check:types` clean.
+
+---
+
 ### 2026-08-06: SCM menu entry + protected-branch commit prompt
 
 **By:** Link (requested by Eric Decarufel)

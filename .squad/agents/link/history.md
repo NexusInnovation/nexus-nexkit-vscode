@@ -22,6 +22,21 @@
 
 ## Learnings
 
+- 2026-08-06: **Bug fix — telemetry `resolutionSource: "activeConnection"` was inaccurate for the single-connection
+  path.** In `devOpsBranchCreationService.ts`'s `_resolveTarget()`, the `connections.length === 1` branch now checks
+  `onlyConnection.isActive` and, when `false`, calls `await this._devOpsConfig.setActiveConnection(onlyConnection.id)`
+  before returning — so the label actually reflects the resulting state (approved by Eric, side effect accepted:
+  `setActiveConnection` rewrites `.vscode/mcp.json` and triggers `workbench.action.reloadWindow` after a 500ms
+  delay via `DevOpsMcpConfigService.reloadWindowForMcpChange()`). Wrapped in try/catch — a failure only logs via
+  `this._logging.warn(...)` and branch creation still proceeds with `resolutionSource: "activeConnection"` returned
+  regardless (telemetry accuracy isn't allowed to block the actual feature). No changes needed to
+  `ResolvedDevOpsTarget` — `"activeConnection"` was already in the union. Test mock `devOpsConfig` in
+  `devOpsBranchCreationService.test.ts` needed a `setActiveConnection: sandbox.stub().resolves()` added alongside
+  `getConnections` (wasn't there before — the single-connection tests only asserted on `getConnections`). Added 3
+  tests: not-active → `setActiveConnection` called with the connection's `id`; already-active → not called;
+  `setActiveConnection` rejects → target still resolves and telemetry still fires. `npm run check:types` clean,
+  `npm test` → 447 passing, 8 pending, 0 failing.
+
 - 2026-08-06: **SCM "Create Branch from Work Item" menu entry + protected-branch commit prompt.** Added
   `nexus-nexkit-vscode.createBranchFromWorkItem` to the `nexus-nexkit-vscode.commitMenu` submenu in `package.json`
   (`group: "1_generate@2"`, right after Generate Commit Message, before Open Settings — command/contribution entry
