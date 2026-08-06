@@ -2,6 +2,53 @@
 
 > Entries older than 30 days are periodically moved to `decisions-archive.md` by the Scribe.
 
+## Decision: DevOps Branch Creation — implemented per approved plan
+
+**Date:** 2026-08-06
+**Agents:** Link (extension host), Ghost (panel UI)
+**Classification:** Project-specific — `devops-branch-creation` feature (implementation)
+
+### Context
+
+Implementation of the "Create Branch from Azure DevOps Work Item" feature per the design plan approved by Eric
+Decarufel (see the design-plan entry below).
+
+### Decisions
+
+- **Link** implemented the full extension-host side: new feature folder `src/features/devops-branch-creation/`
+  (models, `AzureDevOpsAuthService`, `AzureDevOpsRestClient`, `branchNameBuilder`, `DevOpsBranchCreationService`,
+  `commands.ts`), `parseAzureReposGitRemoteUrl()` added to `devOpsUrlParser.ts`, and all wiring (`commands.ts`
+  constants, `serviceContainer.ts`, `extension.ts`, `package.json` command contribution with `$(git-branch)` icon,
+  `webviewMessages.ts` + `nexkitPanelMessageHandler.ts` thin panel-trigger handler — no `.tsx` files touched, per
+  boundary).
+- **Telemetry adjustment applied:** per Eric's approval note, `devops.branch.created` now includes `organization` in
+  addition to `workItemType`, `resolutionSource`, `triggerSource` — aligned with the existing
+  `devops.connection.added` precedent. Still does NOT log project, work item title, branch name, or any other user
+  content. `devops.branch.cancelled` (reason: `userCancelled` | `branchExistsCancelled`) unchanged from the design.
+- **Ghost** added the panel UI trigger: `createBranchFromWorkItem` handler and a new `CollapsibleSection`
+  ("Create Branch from Work Item") in `ToolsSection.tsx`, mirroring the existing `openConvertToMarkdown`
+  fire-and-forget button pattern exactly. No new `AppState`/hook needed — the extension host already owns the
+  command, message type, and handler wiring. No test file exists yet for `ToolsSection.tsx`, so no test was added.
+
+### Tests
+
+Link extended `devOpsUrlParser.test.ts` (`parseAzureReposGitRemoteUrl`, all URL shapes + GitHub/invalid), added
+`branchNameBuilder.test.ts`, `azureDevOpsRestClient.test.ts` (mocked global fetch), `devOpsBranchCreationService.test.ts`
+(mocked Git extension API, `DevOpsMcpConfigService`, REST client — covers gitRemote/activeConnection/pickedConnection
+resolution, branch collision checkout vs cancel, cancellation paths, and telemetry properties including
+`organization`), and extended `nexkitPanelMessageHandler.test.ts` + `extension.test.ts`.
+
+### Verification
+
+`npm run check:types` clean; `npm test` → 420 passing, 8 pending, exit code 0 (both Link's and Ghost's changes,
+confirmed no regressions).
+
+### Status
+
+Feature complete per the approved design.
+
+---
+
 ## Decision: DevOps Branch Creation — design plan (awaiting approval)
 
 **Date:** 2026-08-06
