@@ -22,6 +22,27 @@
 
 ## Learnings
 
+- 2026-08-06: **SCM "Create Branch from Work Item" menu entry + protected-branch commit prompt.** Added
+  `nexus-nexkit-vscode.createBranchFromWorkItem` to the `nexus-nexkit-vscode.commitMenu` submenu in `package.json`
+  (`group: "1_generate@2"`, right after Generate Commit Message, before Open Settings — command/contribution entry
+  already existed). Separately, `CommitMessageService.generateCommitMessage()` now calls a new private
+  `_maybeProposeBranchCreation(repo)` helper immediately after `repo.inputBox.value = trimmed;` (only when `trimmed`
+  is non-empty). Protected branch list lives as a small local const in `commitMessageService.ts` itself:
+  `const PROTECTED_BRANCHES = ["main", "develop"];` (exact, case-sensitive match, no settings/config — intentionally
+  not put in `SettingsManager`). Reads current branch via `repo.state.HEAD?.name` (added `HEAD?: { name?: string }`
+  to the local `GitRepository` shim interface, mirroring the real Git extension API). If HEAD is undefined
+  (detached/unknown) or the branch isn't in the protected list, it silently returns — no prompt, no throw. If
+  protected, shows a French `vscode.window.showWarningMessage` (`"Nexkit: Vous êtes sur la branche protégée
+  \"${currentBranch}\". Créer une branche avant de committer ?"`) with one action button
+  (`"Créer une branche depuis un élément de travail"`); on that response it executes
+  `Commands.CREATE_BRANCH_FROM_WORK_ITEM` via `vscode.commands.executeCommand`. Dismissing/no-action does nothing —
+  the commit message always stays in the input box regardless of the prompt outcome. No new imports/deps beyond
+  `Commands` from `shared/constants/commands`; deliberately did not add `TelemetryService` (file has none today).
+  Test mocks: existing repo mocks in `commitMessageService.integration.test.ts` don't need `HEAD` (undefined is a
+  valid, non-throwing state); added a `mockHead` var + `state.HEAD` getter to the primary mock repo and 4 new tests
+  (main → prompt+execute, develop → prompt+dismiss-no-execute, feature branch → no prompt, HEAD undefined → no
+  prompt). `npm run check:types` clean, `npm test` → 444 passing, 0 failing.
+
 - 2026-08-06: **Branch prefix mapping added to `branchNameBuilder.ts`.** Replaced the raw slugified work-item-type
   prefix with an industry-standard mapping table (`WORK_ITEM_TYPE_PREFIXES: Record<string, string>`, co-located in
   `branchNameBuilder.ts` itself — small enough not to warrant a separate file). Bug/Issue → `bugfix`; User
