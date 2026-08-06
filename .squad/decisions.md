@@ -2,6 +2,51 @@
 
 > Entries older than 30 days are periodically moved to `decisions-archive.md` by the Scribe.
 
+## Decision: DevOps Branch Creation — design plan (awaiting approval)
+
+**Date:** 2026-08-06
+**Agent:** Link (TypeScript & VS Code Extension Dev)
+**Classification:** Project-specific — new `devops-branch-creation` feature (design phase, no code written)
+
+### Context
+
+New NexKit tool: "Create Branch from Azure DevOps Work Item" — a VS Code command (+ panel button) that takes a work
+item ID, resolves the Azure DevOps organization, fetches the work item, builds a branch name, and creates+checks out
+the branch locally (no push). Link produced a full implementation plan and presented it to Eric Decarufel for
+approval — no code was written yet.
+
+### Decisions
+
+- New feature folder `src/features/devops-branch-creation/` (own REST client, auth service, branch name builder,
+  orchestrating service, commands) — own surface area, doesn't fit existing folders.
+- Azure DevOps Work Item REST call is scoped to **organization + work item ID only**
+  (`GET https://dev.azure.com/{org}/_apis/wit/workitems/{id}?api-version=7.1`). Project is NOT sent to the API — work
+  item IDs are unique per-org, not per-project. Project is kept only as UX/context metadata when falling back to
+  `DevOpsMcpConfigService` connections.
+- Auth: `vscode.authentication.getSession("microsoft", ["499b84ac-1321-427f-aa17-267ca6975798/.default"], { createIfNone: true })`.
+  401/403 from the REST call is surfaced as a clear "org may not be Entra ID-backed" error (can't detect this ahead of time).
+- Branch naming: slugify the raw `System.WorkItemType` (no hardcoded type→prefix mapping table) — simplest, meets the
+  `{type}/{id}-{slug}` format, easy to extend to a configurable mapping later if requested.
+- Git extension API shim: followed existing precedent from `commitMessageService.ts` (local minimal TS interfaces per
+  file, not shared/imported), extended with `state.remotes`, `createBranch()`, `getBranch()`, `checkout()`.
+- New `parseAzureReposGitRemoteUrl()` added to existing `devOpsUrlParser.ts` (not a new file), covering https
+  (dev.azure.com + legacy visualstudio.com incl. DefaultCollection) and SSH (`ssh.dev.azure.com` + legacy
+  `vs-ssh.visualstudio.com`) git remote shapes.
+- Telemetry: intentionally does NOT log organization/project names for this feature (existing `devops.connection.added`
+  event does log org, but branch creation is more frequent/sensitive — chose the more conservative option). Only
+  `workItemType`, `resolutionSource` (gitRemote|activeConnection|pickedConnection), `triggerSource` (palette|panel) are
+  tracked.
+- Trigger-source disambiguation (palette vs panel) reuses the existing convention already present for
+  `UPDATE_INSTALLED_TEMPLATES` (command accepts an optional arg passed by the panel's `executeCommand` call), rather
+  than special-casing the panel handler — keeps the "panel button = thin command trigger" pattern intact.
+
+### Status
+
+Awaiting explicit go-ahead from Eric Decarufel — no code has been written yet (design/planning step of
+`nexus-implement`).
+
+---
+
 ## Decision: Convert to Markdown — production packaging bug (missing webview index.html)
 
 **Date:** 2026-07-23
