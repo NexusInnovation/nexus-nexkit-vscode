@@ -152,6 +152,10 @@ export class CommitMessageService {
           return;
         }
 
+        if (token.isCancellationRequested) {
+          return;
+        }
+
         const trimmed = commitMessage.trim();
         if (trimmed) {
           repo.inputBox.value = trimmed;

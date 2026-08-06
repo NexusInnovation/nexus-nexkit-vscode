@@ -134,7 +134,10 @@ export class DevOpsBranchCreationService {
 
     const activeUri = vscode.window.activeTextEditor?.document.uri;
     if (activeUri) {
-      const matching = repos.find((repo) => activeUri.fsPath.startsWith(repo.rootUri.fsPath));
+      const matching = repos.find((repo) => {
+        const relative = path.relative(repo.rootUri.fsPath, activeUri.fsPath);
+        return !relative.startsWith("..") && !path.isAbsolute(relative);
+      });
       if (matching) {
         return matching;
       }
@@ -182,7 +185,16 @@ export class DevOpsBranchCreationService {
     }
 
     if (connections.length === 1) {
-      return { organization: connections[0].organization, project: connections[0].project, resolutionSource: "activeConnection" };
+      const onlyConnection = connections[0];
+      if (!onlyConnection.isActive) {
+        // Activate so telemetry's "activeConnection" label reflects reality (also updates mcp.json + reloads window)
+        try {
+          await this._devOpsConfig.setActiveConnection(onlyConnection.id);
+        } catch (error) {
+          this._logging.warn("Failed to activate the sole DevOps connection", error);
+        }
+      }
+      return { organization: onlyConnection.organization, project: onlyConnection.project, resolutionSource: "activeConnection" };
     }
 
     const activeConnections = connections.filter((connection) => connection.isActive);

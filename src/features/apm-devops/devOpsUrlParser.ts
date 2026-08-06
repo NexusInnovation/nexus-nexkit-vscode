@@ -146,16 +146,20 @@ export function parseAzureReposGitRemoteUrl(remoteUrl: string): AzureReposGitRem
 
   const trimmedUrl = remoteUrl.trim();
 
-  for (const pattern of AZURE_REPOS_GIT_REMOTE_PATTERNS) {
-    const match = trimmedUrl.match(pattern);
-    if (match) {
-      return {
-        isAzureRepos: true,
-        organization: decodeURIComponent(match[1]),
-        project: decodeURIComponent(match[2]),
-        repository: decodeURIComponent(match[3]),
-      };
+  try {
+    for (const pattern of AZURE_REPOS_GIT_REMOTE_PATTERNS) {
+      const match = trimmedUrl.match(pattern);
+      if (match) {
+        return {
+          isAzureRepos: true,
+          organization: decodeURIComponent(match[1]),
+          project: decodeURIComponent(match[2]),
+          repository: decodeURIComponent(match[3]),
+        };
+      }
     }
+  } catch (error) {
+    console.error("Error parsing Azure Repos git remote URL:", error);
   }
 
   return { isAzureRepos: false };

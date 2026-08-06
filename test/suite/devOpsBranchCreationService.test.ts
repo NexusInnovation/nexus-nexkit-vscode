@@ -41,7 +41,7 @@ suite("Integration: DevOpsBranchCreationService – Create Branch from Work Item
   let showInformationMessageStub: sinon.SinonStub;
   let executeCommandStub: sinon.SinonStub;
   let getExtensionStub: sinon.SinonStub;
-  let devOpsConfig: { getConnections: sinon.SinonStub };
+  let devOpsConfig: { getConnections: sinon.SinonStub; setActiveConnection: sinon.SinonStub };
   let restClient: { getWorkItem: sinon.SinonStub };
   let telemetry: { trackEvent: sinon.SinonStub; trackError: sinon.SinonStub };
   let service: DevOpsBranchCreationService;
@@ -57,7 +57,7 @@ suite("Integration: DevOpsBranchCreationService – Create Branch from Work Item
     executeCommandStub = sandbox.stub(vscode.commands, "executeCommand").resolves();
     getExtensionStub = sandbox.stub(vscode.extensions, "getExtension");
 
-    devOpsConfig = { getConnections: sandbox.stub().resolves([]) };
+    devOpsConfig = { getConnections: sandbox.stub().resolves([]), setActiveConnection: sandbox.stub().resolves() };
     restClient = { getWorkItem: sandbox.stub().resolves(workItem()) };
     telemetry = { trackEvent: sandbox.stub(), trackError: sandbox.stub() };
 
@@ -117,6 +117,54 @@ suite("Integration: DevOpsBranchCreationService – Create Branch from Work Item
     await service.createBranchFromWorkItem("palette");
 
     assert.ok(showQuickPickStub.notCalled);
+    assert.ok(restClient.getWorkItem.calledOnceWith("onlyorg", 1234));
+    assert.ok(
+      telemetry.trackEvent.calledWith(
+        "devops.branch.created",
+        sinon.match({ resolutionSource: "activeConnection", organization: "onlyorg" })
+      )
+    );
+  });
+
+  test("Should activate the single configured connection when it is not already active", async () => {
+    const repo = createRepo("/repo", []);
+    stubGit([repo]);
+    devOpsConfig.getConnections.resolves([
+      connection({ id: "onlyorg-onlyproj", organization: "onlyorg", project: "onlyproj", isActive: false }),
+    ]);
+
+    await service.createBranchFromWorkItem("palette");
+
+    assert.ok(devOpsConfig.setActiveConnection.calledOnceWith("onlyorg-onlyproj"));
+    assert.ok(
+      telemetry.trackEvent.calledWith(
+        "devops.branch.created",
+        sinon.match({ resolutionSource: "activeConnection", organization: "onlyorg" })
+      )
+    );
+  });
+
+  test("Should not re-activate the single configured connection when it is already active", async () => {
+    const repo = createRepo("/repo", []);
+    stubGit([repo]);
+    devOpsConfig.getConnections.resolves([connection({ organization: "onlyorg", project: "onlyproj", isActive: true })]);
+
+    await service.createBranchFromWorkItem("palette");
+
+    assert.ok(devOpsConfig.setActiveConnection.notCalled);
+  });
+
+  test("Should still resolve the target when activating the sole connection fails", async () => {
+    const repo = createRepo("/repo", []);
+    stubGit([repo]);
+    devOpsConfig.getConnections.resolves([
+      connection({ id: "onlyorg-onlyproj", organization: "onlyorg", project: "onlyproj", isActive: false }),
+    ]);
+    devOpsConfig.setActiveConnection.rejects(new Error("mcp.json write failed"));
+
+    await service.createBranchFromWorkItem("palette");
+
+    assert.ok(devOpsConfig.setActiveConnection.calledOnceWith("onlyorg-onlyproj"));
     assert.ok(restClient.getWorkItem.calledOnceWith("onlyorg", 1234));
     assert.ok(
       telemetry.trackEvent.calledWith(
