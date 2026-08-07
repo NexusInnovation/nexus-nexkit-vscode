@@ -25,7 +25,7 @@ export class StartupVerificationService {
 
   /**
    * Run all startup verification checks for the active workspace.
-    * User-level settings are applied to keep NexKit defaults (including plugin marketplace priority) enforced.
+   * User-level settings are applied to keep NexKit defaults (including plugin marketplace priority) enforced.
    * This method does not block extension activation — errors are logged but not re-thrown.
    */
   public async verifyOnStartup(): Promise<void> {

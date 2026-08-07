@@ -105,6 +105,10 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
         return { globalValue: true };
       }
 
+      if (key === "plugins.marketplaces") {
+        return { globalValue: ["NexusInnovation/nexus-plugin-marketplace#main"] };
+      }
+
       const settingMap: Record<string, Record<string, boolean>> = {
         agentFilesLocations: { ".nexkit/agents": true },
         agentSkillsLocations: { ".nexkit/skills": true },
