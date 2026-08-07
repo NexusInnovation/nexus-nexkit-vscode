@@ -1,8 +1,8 @@
 /**
  * Tests for StartupVerificationService
- * Verifies that essential Nexkit checks run at every VS Code startup without writing user-level settings:
+ * Verifies that essential Nexkit checks run at every VS Code startup and keep user-level settings in sync:
  * - .git/info/exclude contains .nexkit/ exclusion
- * - startup avoids user-level chat settings writes
+ * - startup applies user-level chat settings writes
  * - nexkit.* files are migrated from .github to .nexkit
  * - GitHub authentication is verified
  */
@@ -180,7 +180,7 @@ suite("Unit: StartupVerificationService", () => {
     await service.verifyOnStartup();
   });
 
-  test("verifyOnStartup should not deploy user-level settings", async () => {
+  test("verifyOnStartup should deploy user-level settings", async () => {
     const settingsSpy = sandbox.spy(settingsDeployer, "deployVscodeSettings");
     sandbox.stub(authPromptService, "ensureAuthenticated").resolves();
     sandbox.stub(vscode.workspace, "workspaceFile").value(undefined);
@@ -194,7 +194,7 @@ suite("Unit: StartupVerificationService", () => {
 
     await service.verifyOnStartup();
 
-    assert.strictEqual(settingsSpy.callCount, 0, "Startup verification should not write user-level settings");
+    assert.strictEqual(settingsSpy.callCount, 1, "Startup verification should write user-level settings");
   });
 
   test("verifyWorkspaceConfiguration should gracefully handle missing .git directory", async () => {
