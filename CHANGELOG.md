@@ -1,3 +1,13 @@
+## 3.12.0-beta.1 (2026-08-21)
+
+* fix(marketplace): Merge pull request #206 from NexusInnovation:feature/nexus-markeplace-support ([00d0a4b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/00d0a4b)), closes [#206](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/206)
+* fix(test): upgrade @vscode/test-electron for macOS CI compatibility ([87b4dfb](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/87b4dfb))
+* docs: add user directive for discovery questions ([1235669](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/1235669))
+* docs(agents): add quality-playbook orchestrator agent ([61f9c7c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/61f9c7c))
+* docs(squad): record settings bootstrap and test triage decisions ([7736e64](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/7736e64))
+* test(settings): add marketplace config to deployer test ([9b1109b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9b1109b))
+* feat(initialization): enforce official plugin marketplace priority ([17ad8a4](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/17ad8a4))
+
 ## <small>3.11.4-beta.1 (2026-07-23)</small>
 
 * Merge branch 'main' into develop ([a8e7edf](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a8e7edf))
