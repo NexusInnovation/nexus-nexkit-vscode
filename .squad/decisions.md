@@ -494,3 +494,73 @@ Full suite went from 381 passing / 1 failing to 384 passing / 0 failing.
 ### Why (reusable pattern)
 
 Establishes a reusable, minimal pattern for future tests that need to fake `vscode.workspace.fs.*` or similarly frozen VS Code API surfaces: when Sinon cannot stub a method directly on a VS Code namespace object because its property descriptor is non-configurable, stub the parent property/getter instead and spread-override only the needed member. Avoids time lost rediscovering the Sinon property-descriptor limitation.
+
+---
+
+## Decision: Use `askQuestions` for structured discovery prompts
+
+**Date:** 2026-07-24
+**Agent:** Copilot (user directive capture)
+**Classification:** Team process preference
+
+### Context
+
+User provided a directive on preferred discovery flow during technical exchanges.
+
+### Decision
+
+For discovery and clarification steps, use `askQuestions` with selectable options plus freeform input when helpful.
+
+### Why
+
+This improves speed for common choices while preserving flexibility for custom responses.
+
+---
+
+## Decision: Align unchanged-settings test with marketplace bootstrap behavior
+
+**Date:** 2026-08-07
+**Agent:** Link
+**Classification:** Project-specific — settings deployer tests
+
+### Context
+
+An unchanged-settings unit test in `RecommendedSettingsConfigDeployer` failed because it asserted no writes while the deployer intentionally bootstraps `chat.plugins.marketplaces` when missing.
+
+### Decision
+
+Pre-seed `plugins.marketplaces` with `NexusInnovation/nexus-plugin-marketplace#main` in the unchanged-settings test setup so the assertion validates only true regressions.
+
+### Why
+
+The deployer's bootstrap write is expected behavior, and the prior setup produced a false negative.
+
+---
+
+## Decision: Test triage outcome and regression-risk posture after transient failure
+
+**Date:** 2026-08-07
+**Agent:** Trinity
+**Classification:** Project-specific — test pipeline validation
+
+### Context
+
+A prior run reported `npm run test` exit code `1`. Trinity revalidated the full pipeline.
+
+### Decision
+
+Current status is stable for this run: `npm run test-compile` pass, `npm run lint` pass, `npm test` pass (`388 passing`, `8 pending`, exit `0`). The previous failure is treated as transient/non-reproducible for now.
+
+### Regression risk
+
+Medium. Extension-host auth-path logs still produce repeated blocked-dialog noise during tests, which can obscure real auth regressions.
+
+### Follow-up hardening
+
+1. Add a focused extension-host test that explicitly validates auth prompt suppression in test mode.
+2. Add negative-path assertions around auth session retrieval to validate expected failures.
+3. Add a deterministic smoke script (compile + lint + unit + extension-host) that preserves per-stage logs for flaky-run diagnosis.
+
+### Why
+
+QA classification separates transient environment noise from actionable product/test regressions while documenting concrete hardening work.
