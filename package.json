@@ -11,7 +11,8 @@
     "url": "https://github.com/NexusInnovation/nexus-nexkit-vscode.git"
   },
   "engines": {
-    "vscode": "^1.105.0"
+    "vscode": "^1.105.0",
+    "node": ">=22"
   },
   "categories": [
     "Other"

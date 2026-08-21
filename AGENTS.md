@@ -18,7 +18,7 @@ Nexkit is a VS Code extension that manages AI templates (agents, prompts, instru
 ## Setup Commands
 
 ```bash
-# Prerequisites: Node.js 20.x+, VS Code 1.105.0+
+# Prerequisites: Node.js 22.x+ (see .nvmrc), VS Code 1.105.0+
 git clone https://github.com/NexusInnovation/nexus-nexkit-vscode.git
 cd nexus-nexkit-vscode
 npm ci
