@@ -1,0 +1,10 @@
+# TDD Traceability
+
+| Bug ID  | Requirement ID   | Spec Doc                | Spec Section                                 | Behavioral Contract                                          | Test File:Function                  | Red Result      | Green Result           |
+| ------- | ---------------- | ----------------------- | -------------------------------------------- | ------------------------------------------------------------ | ----------------------------------- | --------------- | ---------------------- |
+| BUG-001 | REQ-003, REQ-011 | quality/REQUIREMENTS.md | Activation and Lifecycle; Quality Guardrails | Startup must be non-interactive on passive open              | quality/test_regression.js::BUG-001 | fail (expected) | not run (no fix patch) |
+| BUG-002 | REQ-006, REQ-007 | quality/REQUIREMENTS.md | MCP Configuration                            | Parse/read failure must not trigger destructive write        | quality/test_regression.js::BUG-002 | fail (expected) | not run (no fix patch) |
+| BUG-003 | REQ-004          | quality/REQUIREMENTS.md | Managed Files                                | Managed rollback must preserve bytes                         | quality/test_regression.js::BUG-003 | fail (expected) | not run (no fix patch) |
+| BUG-004 | REQ-008          | quality/REQUIREMENTS.md | Workflow Execution                           | Event/job args must be shell-safe                            | quality/test_regression.js::BUG-004 | fail (expected) | not run (no fix patch) |
+| BUG-005 | REQ-001, REQ-010 | quality/REQUIREMENTS.md | Activation and Lifecycle; Quality Guardrails | Activation contract tests must execute and match command set | quality/test_regression.js::BUG-005 | fail (expected) | not run (no fix patch) |
+| BUG-006 | REQ-002          | quality/REQUIREMENTS.md | Activation and Lifecycle                     | Global handlers must not duplicate across lifecycle          | quality/test_regression.js::BUG-006 | fail (expected) | not run (no fix patch) |

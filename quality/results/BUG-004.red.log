@@ -1,0 +1,6 @@
+RED
+BUG-004
+Command: node quality/test_regression.js
+Result: FAIL (expected)
+Message: Found direct interpolation for event/job command args
+Timestamp: 2026-07-24T02:23:33.274Z

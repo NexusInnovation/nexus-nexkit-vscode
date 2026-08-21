@@ -1,0 +1,6 @@
+RED
+BUG-006
+Command: node quality/test_regression.js
+Result: FAIL (expected)
+Message: Found global process handlers without teardown in deactivate()
+Timestamp: 2026-07-24T02:23:33.274Z

@@ -1,33 +1,33 @@
 ## <small>3.11.4 (2026-07-23)</small>
 
-* Merge branch 'main' into develop ([a8e7edf](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a8e7edf))
-* Merge branch 'main' of https://github.com/NexusInnovation/nexus-nexkit-vscode ([ba12162](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ba12162))
-* fix(chore): Remove obsolete test output files and documentation ([3488aee](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3488aee))
-* fix(panel-ui): add tools tab to APM mode ([294cd33](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/294cd33))
-* fix(release): v3.11.2-beta.4 [skip ci] (#195) ([ef09043](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ef09043)), closes [#195](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/195)
-* chore(release): v3.11.2-beta.2 [skip ci] ([4aca9b8](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4aca9b8))
-* chore(release): v3.11.2-beta.3 [skip ci] ([a135678](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a135678))
-* chore(release): v3.11.2-beta.4 [skip ci] ([a5dddbe](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a5dddbe))
-* chore(release): v3.11.4-beta.1 [skip ci] ([3dd1d12](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3dd1d12))
-* refactor(history): archive outdated sections and streamline content ([4bb4510](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4bb4510))
+- Merge branch 'main' into develop ([a8e7edf](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a8e7edf))
+- Merge branch 'main' of https://github.com/NexusInnovation/nexus-nexkit-vscode ([ba12162](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ba12162))
+- fix(chore): Remove obsolete test output files and documentation ([3488aee](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3488aee))
+- fix(panel-ui): add tools tab to APM mode ([294cd33](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/294cd33))
+- fix(release): v3.11.2-beta.4 [skip ci] (#195) ([ef09043](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/ef09043)), closes [#195](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/195)
+- chore(release): v3.11.2-beta.2 [skip ci] ([4aca9b8](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4aca9b8))
+- chore(release): v3.11.2-beta.3 [skip ci] ([a135678](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a135678))
+- chore(release): v3.11.2-beta.4 [skip ci] ([a5dddbe](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a5dddbe))
+- chore(release): v3.11.4-beta.1 [skip ci] ([3dd1d12](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3dd1d12))
+- refactor(history): archive outdated sections and streamline content ([4bb4510](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4bb4510))
 
 ## <small>3.11.4-beta.1 (2026-07-23)</small>
 
-* Merge branch 'main' into develop ([a8e7edf](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a8e7edf))
-* chore(release): v3.11.2-beta.2 [skip ci] ([4aca9b8](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4aca9b8))
-* chore(release): v3.11.2-beta.3 [skip ci] ([a135678](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a135678))
-* chore(release): v3.11.2-beta.4 [skip ci] ([a5dddbe](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a5dddbe))
-* fix(chore): Remove obsolete test output files and documentation ([3488aee](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3488aee))
-* fix(panel-ui): add tools tab to APM mode ([294cd33](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/294cd33))
-* refactor(history): archive outdated sections and streamline content ([4bb4510](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4bb4510))
+- Merge branch 'main' into develop ([a8e7edf](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a8e7edf))
+- chore(release): v3.11.2-beta.2 [skip ci] ([4aca9b8](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4aca9b8))
+- chore(release): v3.11.2-beta.3 [skip ci] ([a135678](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a135678))
+- chore(release): v3.11.2-beta.4 [skip ci] ([a5dddbe](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a5dddbe))
+- fix(chore): Remove obsolete test output files and documentation ([3488aee](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3488aee))
+- fix(panel-ui): add tools tab to APM mode ([294cd33](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/294cd33))
+- refactor(history): archive outdated sections and streamline content ([4bb4510](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4bb4510))
 
 ## <small>3.11.3 (2026-07-23)</small>
 
-* Merge branch 'develop' ([626181c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/626181c))
-* Merge branch 'main' of https://github.com/NexusInnovation/nexus-nexkit-vscode ([6e81339](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/6e81339))
-* fix(convert-to-markdown): add missing webview HTML and error logging (#194) ([2814a17](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2814a17)), closes [#194](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/194)
-* chore(release): v3.11.2-beta.1 [skip ci] ([245bee2](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/245bee2))
-* chore(squad): log Link's convert-to-markdown production packaging fix ([aa1ce65](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/aa1ce65))
+- Merge branch 'develop' ([626181c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/626181c))
+- Merge branch 'main' of https://github.com/NexusInnovation/nexus-nexkit-vscode ([6e81339](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/6e81339))
+- fix(convert-to-markdown): add missing webview HTML and error logging (#194) ([2814a17](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2814a17)), closes [#194](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/194)
+- chore(release): v3.11.2-beta.1 [skip ci] ([245bee2](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/245bee2))
+- chore(squad): log Link's convert-to-markdown production packaging fix ([aa1ce65](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/aa1ce65))
 
 ## <small>3.11.2 (2026-07-23)</small>
 

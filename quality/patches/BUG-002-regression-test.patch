@@ -1,0 +1,16 @@
+*** Begin Patch
+*** Update File: quality/test_regression.js
+@@
+   {
++    id: "BUG-002",
++    description: "MCP config parse errors should not continue to destructive write path",
++    run: () => {
++      const mcp = read("src/features/mcp-management/mcpConfigService.ts");
++      const hasParseCatchFallback = /JSON\\.parse\\(content\\)[\\s\\S]*catch\\s*\\{[\\s\\S]*start fresh/i.test(mcp);
++      const hasWriteBack = mcp.includes("await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2), \"utf8\")");
++      if (hasParseCatchFallback && hasWriteBack) {
++        throw new Error("Parse fallback plus unconditional write-back indicates overwrite risk");
++      }
++    },
++  },
+*** End Patch

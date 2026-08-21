@@ -1,0 +1,6 @@
+RED
+BUG-005
+Command: node quality/test_regression.js
+Result: FAIL (expected)
+Message: Activation contract coverage is skipped and/or stale
+Timestamp: 2026-07-24T02:23:33.274Z

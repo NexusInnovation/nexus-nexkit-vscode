@@ -9,7 +9,7 @@ import { getWorkspaceRoot } from "../../shared/utils/fileHelper";
 
 /**
  * Service that runs essential Nexkit verification checks at every VS Code startup.
- * Startup verification avoids user-level VS Code settings writes so activation stays non-intrusive.
+ * Startup verification ensures required user-level and workspace configuration stays in sync.
  * Workspace initialization (initWorkspace command) reuses the same service and performs the full configuration flow.
  */
 export class StartupVerificationService {
@@ -25,7 +25,7 @@ export class StartupVerificationService {
 
   /**
    * Run all startup verification checks for the active workspace.
-   * User-level VS Code settings are intentionally not written during activation to avoid opening profile settings.json.
+   * User-level settings are applied to keep NexKit defaults (including plugin marketplace priority) enforced.
    * This method does not block extension activation — errors are logged but not re-thrown.
    */
   public async verifyOnStartup(): Promise<void> {
@@ -37,7 +37,7 @@ export class StartupVerificationService {
     }
     this._logging.info("Running Nexkit startup verification...");
 
-    await this.verifyWorkspaceConfiguration(workspaceRoot, { deployUserLevelSettings: false });
+    await this.verifyWorkspaceConfiguration(workspaceRoot);
     await this._githubAuthPrompt.ensureAuthenticated();
 
     this._logging.info("Nexkit startup verification complete.");

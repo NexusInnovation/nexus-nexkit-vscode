@@ -4,6 +4,8 @@ import * as path from "path";
 import { fileExists } from "../../shared/utils/fileHelper";
 import { LoggingService } from "../../shared/services/loggingService";
 
+const OFFICIAL_PLUGIN_MARKETPLACE = "NexusInnovation/nexus-plugin-marketplace#main";
+
 /**
  * Mapping from VS Code chat setting keys to workspace .nexkit subdirectory names.
  */
@@ -85,6 +87,15 @@ export class RecommendedSettingsConfigDeployer {
     if (useHooksInspect?.globalValue !== true) {
       await chatConfig.update("useHooks", true, vscode.ConfigurationTarget.Global);
       this._logging.debug("Set user-level chat.useHooks: true");
+    }
+
+    // Ensure the official Nexus plugin marketplace is first in the list
+    const marketplacesInspect = chatConfig.inspect<string[]>("plugins.marketplaces");
+    const existingMarketplaces = marketplacesInspect?.globalValue ?? [];
+    if (existingMarketplaces[0] !== OFFICIAL_PLUGIN_MARKETPLACE) {
+      const filtered = existingMarketplaces.filter((m) => m !== OFFICIAL_PLUGIN_MARKETPLACE);
+      await chatConfig.update("plugins.marketplaces", [OFFICIAL_PLUGIN_MARKETPLACE, ...filtered], vscode.ConfigurationTarget.Global);
+      this._logging.debug(`Set user-level chat.plugins.marketplaces: ensured ${OFFICIAL_PLUGIN_MARKETPLACE} is first`);
     }
   }
 

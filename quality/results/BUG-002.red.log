@@ -1,0 +1,6 @@
+RED
+BUG-002
+Command: node quality/test_regression.js
+Result: FAIL (expected)
+Message: Parse fallback plus unconditional write-back indicates overwrite risk
+Timestamp: 2026-07-24T02:23:33.274Z

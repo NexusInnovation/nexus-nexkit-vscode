@@ -1,0 +1,70 @@
+{
+    "schema_version": "1.5.6",
+    "generated_at": "2026-07-24T02:31:00Z",
+    "project": "nexus-nexkit-vscode",
+    "records": [
+        {
+            "id": "BUG-001",
+            "severity": "HIGH",
+            "requirements": [
+                "REQ-003",
+                "REQ-011"
+            ],
+            "status": "open",
+            "regression_test": "quality/test_regression.js::BUG-001",
+            "writeup_path": "quality/writeups/BUG-001.md"
+        },
+        {
+            "id": "BUG-002",
+            "severity": "CRITICAL",
+            "requirements": [
+                "REQ-006",
+                "REQ-007"
+            ],
+            "status": "open",
+            "regression_test": "quality/test_regression.js::BUG-002",
+            "writeup_path": "quality/writeups/BUG-002.md"
+        },
+        {
+            "id": "BUG-003",
+            "severity": "HIGH",
+            "requirements": [
+                "REQ-004"
+            ],
+            "status": "open",
+            "regression_test": "quality/test_regression.js::BUG-003",
+            "writeup_path": "quality/writeups/BUG-003.md"
+        },
+        {
+            "id": "BUG-004",
+            "severity": "HIGH",
+            "requirements": [
+                "REQ-008"
+            ],
+            "status": "open",
+            "regression_test": "quality/test_regression.js::BUG-004",
+            "writeup_path": "quality/writeups/BUG-004.md"
+        },
+        {
+            "id": "BUG-005",
+            "severity": "MEDIUM",
+            "requirements": [
+                "REQ-001",
+                "REQ-010"
+            ],
+            "status": "open",
+            "regression_test": "quality/test_regression.js::BUG-005",
+            "writeup_path": "quality/writeups/BUG-005.md"
+        },
+        {
+            "id": "BUG-006",
+            "severity": "MEDIUM",
+            "requirements": [
+                "REQ-002"
+            ],
+            "status": "open",
+            "regression_test": "quality/test_regression.js::BUG-006",
+            "writeup_path": "quality/writeups/BUG-006.md"
+        }
+    ]
+}

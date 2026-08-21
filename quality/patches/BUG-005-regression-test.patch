@@ -1,0 +1,18 @@
+*** Begin Patch
+*** Update File: quality/test_regression.js
+@@
+   {
++    id: "BUG-005",
++    description: "Activation contract tests should not be skipped and should use live command IDs",
++    run: () => {
++      const extensionTest = read("test/suite/extension.test.ts");
++      const packageJson = read("package.json");
++      const hasSkippedActivation = extensionTest.includes('test.skip("Commands should be registered"');
++      const expectsInitProject = extensionTest.includes('"nexus-nexkit-vscode.initProject"');
++      const packageHasInitProject = packageJson.includes('"nexus-nexkit-vscode.initProject"');
++      if (hasSkippedActivation || (expectsInitProject && !packageHasInitProject)) {
++        throw new Error("Activation contract coverage is skipped and/or stale");
++      }
++    },
++  },
+*** End Patch

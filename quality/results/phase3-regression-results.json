@@ -1,0 +1,45 @@
+{
+  "date": "2026-07-24T02:23:33.274Z",
+  "total": 6,
+  "passed": 0,
+  "failed": 6,
+  "expected_failed_open_bugs": 6,
+  "results": [
+    {
+      "id": "BUG-001",
+      "status": "FAIL",
+      "description": "Startup verification should not call interactive auth prompt path unconditionally",
+      "message": "Found unconditional startup ensureAuthenticated() call"
+    },
+    {
+      "id": "BUG-002",
+      "status": "FAIL",
+      "description": "MCP config parse errors should not continue to destructive write path",
+      "message": "Parse fallback plus unconditional write-back indicates overwrite risk"
+    },
+    {
+      "id": "BUG-003",
+      "status": "FAIL",
+      "description": "Watcher restore should not rely exclusively on UTF-8 string reads/writes",
+      "message": "Found utf8 string restore path instead of byte-safe restore"
+    },
+    {
+      "id": "BUG-004",
+      "status": "FAIL",
+      "description": "Workflow command args should be escaped instead of direct interpolation",
+      "message": "Found direct interpolation for event/job command args"
+    },
+    {
+      "id": "BUG-005",
+      "status": "FAIL",
+      "description": "Activation contract tests should not be skipped and should use live command IDs",
+      "message": "Activation contract coverage is skipped and/or stale"
+    },
+    {
+      "id": "BUG-006",
+      "status": "FAIL",
+      "description": "Global process handlers should have explicit teardown or dedupe guard",
+      "message": "Found global process handlers without teardown in deactivate()"
+    }
+  ]
+}
