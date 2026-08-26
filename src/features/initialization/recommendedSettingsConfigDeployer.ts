@@ -4,7 +4,7 @@ import * as path from "path";
 import { fileExists } from "../../shared/utils/fileHelper";
 import { LoggingService } from "../../shared/services/loggingService";
 
-const OFFICIAL_PLUGIN_MARKETPLACE = "NexusInnovation/nexus-plugin-marketplace#main";
+const OFFICIAL_PLUGIN_MARKETPLACE = "NexusInnovation/nexus-plugin-marketplace";
 
 /**
  * Mapping from VS Code chat setting keys to workspace .nexkit subdirectory names.
@@ -89,14 +89,29 @@ export class RecommendedSettingsConfigDeployer {
       this._logging.debug("Set user-level chat.useHooks: true");
     }
 
-    // Ensure the official Nexus plugin marketplace is first in the list
+    // Ensure the official Nexus plugin marketplace is first in the list, normalizing/deduping any
+    // legacy `#ref`-suffixed variants (e.g. "NexusInnovation/nexus-plugin-marketplace#main") down
+    // to the bare key.
     const marketplacesInspect = chatConfig.inspect<string[]>("plugins.marketplaces");
     const existingMarketplaces = marketplacesInspect?.globalValue ?? [];
-    if (existingMarketplaces[0] !== OFFICIAL_PLUGIN_MARKETPLACE) {
-      const filtered = existingMarketplaces.filter((m) => m !== OFFICIAL_PLUGIN_MARKETPLACE);
-      await chatConfig.update("plugins.marketplaces", [OFFICIAL_PLUGIN_MARKETPLACE, ...filtered], vscode.ConfigurationTarget.Global);
+    const filtered = existingMarketplaces.filter((m) => this._marketplaceKey(m) !== OFFICIAL_PLUGIN_MARKETPLACE);
+    const normalizedMarketplaces = [OFFICIAL_PLUGIN_MARKETPLACE, ...filtered];
+
+    if (!this._areArraysEqual(existingMarketplaces, normalizedMarketplaces)) {
+      await chatConfig.update("plugins.marketplaces", normalizedMarketplaces, vscode.ConfigurationTarget.Global);
       this._logging.debug(`Set user-level chat.plugins.marketplaces: ensured ${OFFICIAL_PLUGIN_MARKETPLACE} is first`);
     }
+  }
+
+  /**
+   * Strip any `#ref` suffix from a marketplace identifier to get its stable dedupe key.
+   */
+  private _marketplaceKey(marketplace: string): string {
+    return marketplace.split("#")[0];
+  }
+
+  private _areArraysEqual(a: string[], b: string[]): boolean {
+    return a.length === b.length && a.every((value, index) => value === b[index]);
   }
 
   /**

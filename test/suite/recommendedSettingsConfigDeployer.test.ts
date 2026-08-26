@@ -106,7 +106,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
       }
 
       if (key === "plugins.marketplaces") {
-        return { globalValue: ["NexusInnovation/nexus-plugin-marketplace#main"] };
+        return { globalValue: ["NexusInnovation/nexus-plugin-marketplace"] };
       }
 
       const settingMap: Record<string, Record<string, boolean>> = {
@@ -182,7 +182,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
 
     const call = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "plugins.marketplaces");
     assert.ok(call, "Should update plugins.marketplaces");
-    assert.deepStrictEqual(call.args[1], ["NexusInnovation/nexus-plugin-marketplace#main"]);
+    assert.deepStrictEqual(call.args[1], ["NexusInnovation/nexus-plugin-marketplace"]);
     assert.strictEqual(call.args[2], vscode.ConfigurationTarget.Global);
   });
 
@@ -198,7 +198,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
 
     const call = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "plugins.marketplaces");
     assert.ok(call, "Should update plugins.marketplaces");
-    assert.strictEqual(call.args[1][0], "NexusInnovation/nexus-plugin-marketplace#main");
+    assert.strictEqual(call.args[1][0], "NexusInnovation/nexus-plugin-marketplace");
     assert.strictEqual(call.args[1][1], "github/copilot-plugins");
     assert.strictEqual(call.args[1][2], "github/awesome-copilot#marketplace");
   });
@@ -206,7 +206,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
   test("Should not update plugins.marketplaces when official marketplace is already first", async () => {
     inspectStub.callsFake((key: string) => {
       if (key === "plugins.marketplaces") {
-        return { globalValue: ["NexusInnovation/nexus-plugin-marketplace#main", "github/copilot-plugins"] };
+        return { globalValue: ["NexusInnovation/nexus-plugin-marketplace", "github/copilot-plugins"] };
       }
       if (key === "useHooks") {
         return { globalValue: true };
@@ -223,7 +223,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
   test("Should move official marketplace to front when it appears in the middle", async () => {
     inspectStub.callsFake((key: string) => {
       if (key === "plugins.marketplaces") {
-        return { globalValue: ["github/copilot-plugins", "NexusInnovation/nexus-plugin-marketplace#main", "github/awesome-copilot#marketplace"] };
+        return { globalValue: ["github/copilot-plugins", "NexusInnovation/nexus-plugin-marketplace", "github/awesome-copilot#marketplace"] };
       }
       return { globalValue: undefined };
     });
@@ -233,10 +233,46 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     const call = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "plugins.marketplaces");
     assert.ok(call, "Should update plugins.marketplaces");
     assert.deepStrictEqual(call.args[1], [
-      "NexusInnovation/nexus-plugin-marketplace#main",
+      "NexusInnovation/nexus-plugin-marketplace",
       "github/copilot-plugins",
       "github/awesome-copilot#marketplace",
     ]);
+  });
+
+  test("Should normalize a legacy #main-suffixed marketplace entry to the bare key", async () => {
+    inspectStub.callsFake((key: string) => {
+      if (key === "plugins.marketplaces") {
+        return { globalValue: ["github/copilot-plugins", "NexusInnovation/nexus-plugin-marketplace#main"] };
+      }
+      return { globalValue: undefined };
+    });
+
+    await deployer.deployVscodeSettings(tempDir);
+
+    const call = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "plugins.marketplaces");
+    assert.ok(call, "Should update plugins.marketplaces");
+    assert.deepStrictEqual(call.args[1], ["NexusInnovation/nexus-plugin-marketplace", "github/copilot-plugins"]);
+  });
+
+  test("Should dedupe when both the bare key and #main-suffixed variant are present", async () => {
+    inspectStub.callsFake((key: string) => {
+      if (key === "plugins.marketplaces") {
+        return {
+          globalValue: [
+            "github/copilot-plugins",
+            "NexusInnovation/nexus-plugin-marketplace#main",
+            "NexusInnovation/nexus-plugin-marketplace",
+          ],
+        };
+      }
+      return { globalValue: undefined };
+    });
+
+    await deployer.deployVscodeSettings(tempDir);
+
+    const call = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "plugins.marketplaces");
+    assert.ok(call, "Should update plugins.marketplaces");
+    assert.deepStrictEqual(call.args[1], ["NexusInnovation/nexus-plugin-marketplace", "github/copilot-plugins"]);
   });
 });
 
