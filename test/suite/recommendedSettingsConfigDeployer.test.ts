@@ -221,12 +221,14 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
       }),
       "utf8"
     );
-      const executeCommand = sandbox.stub(vscode.commands, "executeCommand").resolves();
-      const migrationDeployer = new RecommendedSettingsConfigDeployer(installedPath);
+    const showWarningMessage = sandbox.stub(vscode.window, "showWarningMessage").resolves("Open Agent Plugins" as any);
+    const executeCommand = sandbox.stub(vscode.commands, "executeCommand").resolves();
+    const migrationDeployer = new RecommendedSettingsConfigDeployer(installedPath);
 
-      await migrationDeployer.deployVscodeSettings(tempDir);
+    await migrationDeployer.deployVscodeSettings(tempDir);
 
-      assert.ok(executeCommand.calledWith("workbench.agentPlugins.browse"), "Should offer to open Agent Plugins");
+    assert.ok(showWarningMessage.calledOnce, "Should warn the user about legacy plugins");
+    assert.ok(executeCommand.calledWith("workbench.agentPlugins.browse"), "Should offer to open Agent Plugins");
   });
 
   test("Should prepend official marketplace when other entries exist", async () => {
