@@ -4,7 +4,7 @@ import * as path from "path";
 import { fileExists } from "../../shared/utils/fileHelper";
 import { LoggingService } from "../../shared/services/loggingService";
 
-const OFFICIAL_PLUGIN_MARKETPLACE = "NexusInnovation/nexus-plugin-marketplace#main";
+const OFFICIAL_PLUGIN_MARKETPLACE = "NexusInnovation/nexus-plugin-marketplace";
 
 /**
  * Mapping from VS Code chat setting keys to workspace .nexkit subdirectory names.
