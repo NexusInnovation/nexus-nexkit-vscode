@@ -5,6 +5,8 @@ import { fileExists } from "../../shared/utils/fileHelper";
 import { LoggingService } from "../../shared/services/loggingService";
 
 const OFFICIAL_PLUGIN_MARKETPLACE = "NexusInnovation/nexus-plugin-marketplace";
+const MARKETPLACE_SETTING_KEY = "chat.plugins.marketplaces";
+const LEGACY_PLUGIN_MARKETPLACE = `${OFFICIAL_PLUGIN_MARKETPLACE}#main`;
 
 /**
  * Mapping from VS Code chat setting keys to workspace .nexkit subdirectory names.
@@ -36,6 +38,11 @@ const LEGACY_WORKSPACE_KEYS = [
  */
 export class RecommendedSettingsConfigDeployer {
   private readonly _logging = LoggingService.getInstance();
+  private readonly _installedPluginsPath: string;
+
+  constructor(installedPluginsPath = path.join(process.env.HOME ?? process.env.USERPROFILE ?? "", ".vscode", "agent-plugins", "installed.json")) {
+    this._installedPluginsPath = installedPluginsPath;
+  }
 
   /**
    * Deploy chat location settings to user-level VS Code configuration.
@@ -49,6 +56,7 @@ export class RecommendedSettingsConfigDeployer {
 
     await this._deployUserLevelChatSettings();
     await this._cleanupWorkspaceSettings(workspaceRoot);
+    await this._notifyLegacyInstalledPlugins();
 
     this._logging.info("Chat settings deployed to user-level configuration successfully.");
   }
@@ -94,8 +102,7 @@ export class RecommendedSettingsConfigDeployer {
     // to the bare key.
     const marketplacesInspect = chatConfig.inspect<string[]>("plugins.marketplaces");
     const existingMarketplaces = marketplacesInspect?.globalValue ?? [];
-    const filtered = existingMarketplaces.filter((m) => this._marketplaceKey(m) !== OFFICIAL_PLUGIN_MARKETPLACE);
-    const normalizedMarketplaces = [OFFICIAL_PLUGIN_MARKETPLACE, ...filtered];
+    const normalizedMarketplaces = this._normalizeMarketplaces(existingMarketplaces);
 
     if (!this._areArraysEqual(existingMarketplaces, normalizedMarketplaces)) {
       await chatConfig.update("plugins.marketplaces", normalizedMarketplaces, vscode.ConfigurationTarget.Global);
@@ -108,6 +115,38 @@ export class RecommendedSettingsConfigDeployer {
    */
   private _marketplaceKey(marketplace: string): string {
     return marketplace.split("#")[0];
+  }
+
+  private _normalizeMarketplaces(marketplaces: string[]): string[] {
+    const filtered = marketplaces.filter((marketplace) => this._marketplaceKey(marketplace) !== OFFICIAL_PLUGIN_MARKETPLACE);
+    return [OFFICIAL_PLUGIN_MARKETPLACE, ...filtered];
+  }
+
+  private async _notifyLegacyInstalledPlugins(): Promise<void> {
+    try {
+      const content = await fs.promises.readFile(this._installedPluginsPath, "utf8");
+      const installed = JSON.parse(content) as { installed?: Array<{ marketplace?: string; name?: string }> };
+      const legacyPlugins = (installed.installed ?? []).filter(
+        (plugin) => plugin.marketplace === LEGACY_PLUGIN_MARKETPLACE && typeof plugin.name === "string" && plugin.name.length > 0 && plugin.name !== "nexkit"
+      );
+
+      if (legacyPlugins.length === 0) {
+        return;
+      }
+
+      const pluginNames = legacyPlugins.map((plugin) => plugin.name).filter((name): name is string => Boolean(name));
+      const selection = await vscode.window.showWarningMessage(
+        `Agent Plugins installed from the legacy marketplace reference (#main) were detected: ${pluginNames.join(", ")}. Please uninstall and reinstall them from ${OFFICIAL_PLUGIN_MARKETPLACE}.`,
+        "Open Agent Plugins",
+        "Later"
+      );
+
+      if (selection === "Open Agent Plugins") {
+        await vscode.commands.executeCommand("workbench.agentPlugins.browse");
+      }
+    } catch (error) {
+      this._logging.warn("Could not check for Agent Plugins installed from the legacy marketplace reference.", error);
+    }
   }
 
   private _areArraysEqual(a: string[], b: string[]): boolean {
@@ -151,6 +190,15 @@ export class RecommendedSettingsConfigDeployer {
             delete settings[key];
             modified = true;
           }
+        }
+      }
+
+      const workspaceMarketplaces = settings[MARKETPLACE_SETTING_KEY];
+      if (Array.isArray(workspaceMarketplaces) && workspaceMarketplaces.some((marketplace) => this._marketplaceKey(marketplace) === OFFICIAL_PLUGIN_MARKETPLACE)) {
+        const normalizedMarketplaces = this._normalizeMarketplaces(workspaceMarketplaces);
+        if (!this._areArraysEqual(workspaceMarketplaces, normalizedMarketplaces)) {
+          settings[MARKETPLACE_SETTING_KEY] = normalizedMarketplaces;
+          modified = true;
         }
       }
 

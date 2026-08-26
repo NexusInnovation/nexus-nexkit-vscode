@@ -197,6 +197,43 @@ suite("Unit: StartupVerificationService", () => {
     assert.strictEqual(settingsSpy.callCount, 1, "Startup verification should write user-level settings");
   });
 
+  test("verifyOnStartup should migrate the legacy marketplace identifier", async () => {
+    const updateStub = sandbox.stub().resolves();
+    const inspectStub = sandbox.stub().callsFake((key: string) => {
+      if (key === "plugins.marketplaces") {
+        return { globalValue: ["github/copilot-plugins", "NexusInnovation/nexus-plugin-marketplace#main"] };
+      }
+
+      return { globalValue: undefined };
+    });
+    const fakeConfig = {
+      inspect: inspectStub,
+      update: updateStub,
+      get: sandbox.stub(),
+      has: sandbox.stub(),
+    };
+    sandbox.stub(vscode.workspace, "getConfiguration").returns(fakeConfig as any);
+    sandbox.stub(authPromptService, "ensureAuthenticated").resolves();
+    sandbox.stub(vscode.workspace, "workspaceFile").value(undefined);
+    sandbox.stub(vscode.workspace, "workspaceFolders").value([
+      {
+        uri: vscode.Uri.file(tempDir),
+        name: path.basename(tempDir),
+        index: 0,
+      } as vscode.WorkspaceFolder,
+    ]);
+
+    await service.verifyOnStartup();
+
+    const marketplaceCall = updateStub.getCalls().find((call: sinon.SinonSpyCall) => call.args[0] === "plugins.marketplaces");
+    assert.ok(marketplaceCall, "Startup verification should update the marketplace setting");
+    assert.deepStrictEqual(marketplaceCall.args[1], [
+      "NexusInnovation/nexus-plugin-marketplace",
+      "github/copilot-plugins",
+    ]);
+    assert.strictEqual(marketplaceCall.args[2], vscode.ConfigurationTarget.Global);
+  });
+
   test("verifyWorkspaceConfiguration should gracefully handle missing .git directory", async () => {
     // Create a temp dir without .git
     const noGitDir = fs.mkdtempSync(path.join(os.tmpdir(), "nexkit-no-git-test-"));
