@@ -215,7 +215,7 @@ jobs:
       - name: Package extension
         id: package
         run: |
-          pnpm dlx @vscode/vsce package --out nexkit-vscode.vsix
+          pnpm exec vsce package --no-dependencies --out nexkit-vscode.vsix
           echo "vsix-name=nexkit-vscode.vsix" >> $GITHUB_OUTPUT
 
       - name: Get package size
@@ -353,7 +353,7 @@ jobs:
 
       - name: Package VSIX
         run: |
-          pnpm dlx @vscode/vsce package --out nexkit-vscode-${{ steps.preview-version.outputs.version }}.vsix
+          pnpm exec vsce package --no-dependencies --out nexkit-vscode-${{ steps.preview-version.outputs.version }}.vsix
 
       - name: Upload preview VSIX
         uses: actions/upload-artifact@v4

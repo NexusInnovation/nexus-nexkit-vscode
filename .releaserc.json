@@ -35,17 +35,13 @@
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "node -e \"require('fs').mkdirSync('sbom',{recursive:true})\" && npm version ${nextRelease.version} --no-git-tag-version && pnpm run build:ci && pnpm dlx @vscode/vsce package --out nexkit-vscode.vsix && pnpm dlx @cyclonedx/cyclonedx-npm --output-file sbom/manifest.json --spec-version 1.5"
+        "prepareCmd": "node -e \"require('fs').mkdirSync('sbom',{recursive:true})\" && pnpm version ${nextRelease.version} --no-git-tag-version && pnpm run build:ci && pnpm exec vsce package --no-dependencies --out nexkit-vscode.vsix && pnpm dlx @cyclonedx/cdxgen -t pnpm -o sbom/manifest.json --spec-version 1.5"
       }
     ],
     [
       "@semantic-release/git",
       {
-        "assets": [
-          "package.json",
-          "package-lock.json",
-          "CHANGELOG.md"
-        ],
+        "assets": ["package.json", "pnpm-lock.yaml", "CHANGELOG.md"],
         "message": "chore(release): v${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
       }
     ],
