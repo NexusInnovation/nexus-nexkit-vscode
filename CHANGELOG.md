@@ -1,4 +1,21 @@
-## 3.12.0 (2026-08-21)
+## 3.13.0-beta.1 (2026-08-27)
+
+* Merge pull request #209 from NexusInnovation/develop ([c3da96e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c3da96e)), closes [#209](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/209)
+* Merge remote-tracking branch 'origin/main' into develop ([4e21f95](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4e21f95))
+* chore(release): v3.12.0-beta.2 [skip ci] ([f138307](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/f138307))
+* test(initialization): assert legacy plugin warning ([99d09ff](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/99d09ff))
+* feat(initialization): normalize legacy plugin marketplace references ([8c27b1f](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8c27b1f))
+* refactor(initialization): normalize plugin marketplace identifier ([a70c5ae](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a70c5ae))
+
+## 3.12.0-beta.2 (2026-08-26)
+
+* test(initialization): assert legacy plugin warning ([99d09ff](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/99d09ff))
+* feat(initialization): normalize legacy plugin marketplace references ([8c27b1f](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8c27b1f))
+* refactor(initialization): normalize plugin marketplace identifier ([a70c5ae](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a70c5ae))
+* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([44f78ed](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/44f78ed))
+* chore(build): require Node.js 22.x ([34d006f](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/34d006f))
+
+## 3.12.0-beta.1 (2026-08-21)
 
 * Merge branch 'develop' ([a26e1b9](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a26e1b9))
 * Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([44f78ed](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/44f78ed))

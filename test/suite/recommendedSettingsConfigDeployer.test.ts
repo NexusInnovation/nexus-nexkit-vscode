@@ -163,6 +163,28 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     assert.ok(!fs.existsSync(path.join(settingsDir, "settings.json")), "Empty settings.json should be removed");
   });
 
+  test("Should normalize legacy marketplace entries in workspace settings.json", async () => {
+    const settingsDir = path.join(tempDir, ".vscode");
+    fs.mkdirSync(settingsDir, { recursive: true });
+
+    const existingSettings = {
+      "chat.plugins.marketplaces": [
+        "github/copilot-plugins",
+        "NexusInnovation/nexus-plugin-marketplace#main",
+        "NexusInnovation/nexus-plugin-marketplace",
+      ],
+    };
+    fs.writeFileSync(path.join(settingsDir, "settings.json"), JSON.stringify(existingSettings, null, 2), "utf8");
+
+    await deployer.deployVscodeSettings(tempDir);
+
+    const content = JSON.parse(fs.readFileSync(path.join(settingsDir, "settings.json"), "utf8"));
+    assert.deepStrictEqual(content["chat.plugins.marketplaces"], [
+      "NexusInnovation/nexus-plugin-marketplace",
+      "github/copilot-plugins",
+    ]);
+  });
+
   test("Should handle missing workspace settings.json gracefully", async () => {
     await deployer.deployVscodeSettings(tempDir);
     assert.ok(updateStub.called, "Should still write user-level settings");
@@ -184,6 +206,29 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     assert.ok(call, "Should update plugins.marketplaces");
     assert.deepStrictEqual(call.args[1], ["NexusInnovation/nexus-plugin-marketplace"]);
     assert.strictEqual(call.args[2], vscode.ConfigurationTarget.Global);
+  });
+
+  test("Should refresh plugins installed from the legacy marketplace through VS Code", async () => {
+    const installedPath = path.join(tempDir, "installed.json");
+    fs.writeFileSync(
+      installedPath,
+      JSON.stringify({
+        version: 1,
+        installed: [
+          { marketplace: "NexusInnovation/nexus-plugin-marketplace#main", name: "core" },
+          { marketplace: "github/other-marketplace", name: "other" },
+        ],
+      }),
+      "utf8"
+    );
+    const showWarningMessage = sandbox.stub(vscode.window, "showWarningMessage").resolves("Open Agent Plugins" as any);
+    const executeCommand = sandbox.stub(vscode.commands, "executeCommand").resolves();
+    const migrationDeployer = new RecommendedSettingsConfigDeployer(installedPath);
+
+    await migrationDeployer.deployVscodeSettings(tempDir);
+
+    assert.ok(showWarningMessage.calledOnce, "Should warn the user about legacy plugins");
+    assert.ok(executeCommand.calledWith("workbench.agentPlugins.browse"), "Should offer to open Agent Plugins");
   });
 
   test("Should prepend official marketplace when other entries exist", async () => {
