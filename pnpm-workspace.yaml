@@ -1,0 +1,10 @@
+allowBuilds:
+  '@vscode/vsce-sign': true
+  esbuild: true
+  keytar: true
+  lefthook: true
+  libxmljs2: true
+  protobufjs: true
+
+overrides:
+  '@opentelemetry/propagator-jaeger': '2.10.0'

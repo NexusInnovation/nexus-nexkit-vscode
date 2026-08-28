@@ -1,7 +1,7 @@
 {
   "servers": {
     "azureDevOps": {
-      "command": "npx",
+      "command": "pnpm dlx",
       "args": [
         "-y",
         "@azure-devops/mcp",

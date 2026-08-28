@@ -21,16 +21,16 @@ if (-not (Test-Path "package.json")) {
 
 # Install dependencies
 Write-Host "Installing dependencies..." -ForegroundColor Cyan
-npm install
+pnpm install
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "✗ npm install failed" -ForegroundColor Red
+    Write-Host "✗ pnpm install failed" -ForegroundColor Red
     exit 1
 }
 
 # Build TypeScript
 Write-Host "Building TypeScript..." -ForegroundColor Cyan
-npm run build
+pnpm run build
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "✗ Build failed" -ForegroundColor Red
