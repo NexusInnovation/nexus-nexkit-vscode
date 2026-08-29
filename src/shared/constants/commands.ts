@@ -35,6 +35,10 @@ export const Commands = {
 
   // Developer tools
   OPEN_CONVERT_TO_MARKDOWN: "nexus-nexkit-vscode.openConvertToMarkdown",
+
+  // Git Hooks commands
+  SETUP_GIT_HOOKS: "nexus-nexkit-vscode.setupGitHooks",
+  SYNC_GIT_HOOKS: "nexus-nexkit-vscode.syncGitHooks",
 } as const;
 
 // Type-safe command names

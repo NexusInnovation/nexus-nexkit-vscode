@@ -4,6 +4,7 @@
  */
 
 export type { WebviewMessage, ExtensionMessage } from "../../types/webviewMessages";
+export type { GitHooksWebviewMessage, GitHooksExtensionMessage, GitHooksStatusData } from "../../types/gitHooksMessages";
 
 export interface WorkspaceState {
   hasWorkspace: boolean;
