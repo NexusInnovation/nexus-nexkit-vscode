@@ -26,6 +26,7 @@ function ActionProbe() {
       <button data-testid="check-updates" onClick={() => squad.checkUpdates()} />
       <button data-testid="refresh-plugins" onClick={() => squad.refreshPlugins()} />
       <button data-testid="install-cli" onClick={() => squad.installCli()} />
+      <button data-testid="upgrade-cli" onClick={() => squad.upgradeCli()} />
       <button data-testid="use-npx" onClick={() => squad.setCliInvocation(SquadCliSource.Npx)} />
       <button data-testid="use-custom" onClick={() => squad.setCliInvocation(SquadCliSource.Custom, "/opt/squad")} />
     </div>
@@ -118,6 +119,13 @@ suite("useSquadState — actions", () => {
     const view = renderWithAppState(<ActionProbe />);
     click(view, "install-cli");
     assert.deepStrictEqual(lastPostedMessage(), { command: "installSquadCli" });
+  });
+
+  test("upgradeCli posts upgradeSquadCli (host confirms before running)", () => {
+    const view = renderWithAppState(<ActionProbe />);
+    click(view, "upgrade-cli");
+    assert.deepStrictEqual(lastPostedMessage(), { command: "upgradeSquadCli" });
+    assert.strictEqual(postedMessagesOfCommand("upgradeSquadCli").length, 1);
   });
 
   test("setCliInvocation(npx) posts setSquadCliInvocation without a path", () => {

@@ -12,6 +12,7 @@ import { useVSCodeAPI } from "./useVSCodeAPI";
 import type {
   SquadCharter,
   SquadCliSource,
+  SquadCliUpgradeSummary,
   SquadDetectionResult,
   SquadDocKind,
   SquadDoctorReport,
@@ -71,6 +72,9 @@ export interface UseSquadStateResult {
   /** Latest Squad CLI/project update-check result, when requested. */
   updates: SquadUpdatesResult | null;
 
+  /** Latest successful CLI self-upgrade result; failures surface via `error`. */
+  cliUpgrade: SquadCliUpgradeSummary | null;
+
   /** Request the initial Squad state / refresh everything. */
   refresh: () => void;
 
@@ -109,6 +113,12 @@ export interface UseSquadStateResult {
    * re-runs detection — it never installs silently.
    */
   installCli: () => void;
+
+  /**
+   * Upgrade the Squad CLI with `squad upgrade --self` (FR-005). The host asks
+   * for explicit confirmation first and verifies the new version afterwards.
+   */
+  upgradeCli: () => void;
 }
 
 /**
@@ -158,6 +168,10 @@ export function useSquadState(): UseSquadStateResult {
     messenger.sendMessage({ command: "installSquadCli" });
   };
 
+  const upgradeCli = () => {
+    messenger.sendMessage({ command: "upgradeSquadCli" });
+  };
+
   return {
     isReady: squad.isReady,
     isLoading: squad.isLoading,
@@ -173,6 +187,7 @@ export function useSquadState(): UseSquadStateResult {
     plugins: squad.plugins,
     doctor: squad.doctor,
     updates: squad.updates,
+    cliUpgrade: squad.cliUpgrade,
     refresh,
     refreshDetection,
     saveCharter,
@@ -182,5 +197,6 @@ export function useSquadState(): UseSquadStateResult {
     refreshPlugins,
     setCliInvocation,
     installCli,
+    upgradeCli,
   };
 }

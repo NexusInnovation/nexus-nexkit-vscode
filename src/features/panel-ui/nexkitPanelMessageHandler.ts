@@ -7,6 +7,7 @@ import { getApmAgentDiagnostics } from "./utils/templateDiagnostics";
 import { SquadPanelMessageHandler } from "./squadPanelMessageHandler";
 import { SquadPresetMessageHandler } from "./squadPresetMessageHandler";
 import { SquadCliSetupMessageHandler } from "./squadCliSetupMessageHandler";
+import { SquadCliUpgradeMessageHandler } from "./squadCliUpgradeMessageHandler";
 
 /**
  * Handles message processing and business logic for the Nexkit panel webview
@@ -25,6 +26,7 @@ export class NexkitPanelMessageHandler {
   private readonly _squadHandler: SquadPanelMessageHandler;
   private readonly _squadPresetHandler: SquadPresetMessageHandler;
   private readonly _squadCliSetupHandler: SquadCliSetupMessageHandler;
+  private readonly _squadCliUpgradeHandler: SquadCliUpgradeMessageHandler;
   private _lastApmEmptySignature: string | undefined;
 
   constructor(
@@ -38,6 +40,12 @@ export class NexkitPanelMessageHandler {
       async () => {
         await this._squadHandler.handle({ command: "refreshSquadDetection" });
       },
+      _services.logging
+    );
+    this._squadCliUpgradeHandler = new SquadCliUpgradeMessageHandler(
+      _services.squadCliUpgrade,
+      (message) => this.sendToWebview(message),
+      undefined,
       _services.logging
     );
     this._messageHandlers = new Map([
@@ -105,6 +113,9 @@ export class NexkitPanelMessageHandler {
       return;
     }
     if (await this._squadCliSetupHandler.handle(message)) {
+      return;
+    }
+    if (await this._squadCliUpgradeHandler.handle(message)) {
       return;
     }
     console.warn(`[Nexkit] Unknown webview command: ${message.command}`);

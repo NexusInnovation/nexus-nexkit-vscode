@@ -114,6 +114,35 @@ suite("AppStateContext — Squad messages", () => {
     assert.deepStrictEqual(state.error, error);
   });
 
+  test("squadCliUpgradeResult stores the verified upgrade and clears loading/error (SQD-031)", () => {
+    const squad = renderProbe();
+    assert.strictEqual(squad().cliUpgrade, null);
+    send({ command: "squadError", error: makeError() });
+    send({ command: "squadLoading", isLoading: true });
+    const upgrade = {
+      upgraded: true,
+      previousVersion: "1.0.0",
+      installedVersion: "1.2.0",
+      latestVersion: "1.2.0",
+      source: "global",
+    };
+    send({ command: "squadCliUpgradeResult", upgrade });
+
+    const state = squad();
+    assert.deepStrictEqual(state.cliUpgrade, upgrade);
+    assert.strictEqual(state.isLoading, false);
+    assert.strictEqual(state.error, null);
+  });
+
+  test("a failed CLI upgrade (squadError) never records an upgrade result", () => {
+    const squad = renderProbe();
+    send({ command: "squadError", error: makeError({ code: "upgrade-failed", message: "The Squad CLI upgrade failed." }) });
+
+    const state = squad();
+    assert.strictEqual(state.cliUpgrade, null);
+    assert.strictEqual(state.error?.code, "upgrade-failed");
+  });
+
   test("squadRosterUpdate stores roster and charters", () => {
     const squad = renderProbe();
     send({

@@ -8,6 +8,7 @@ import type {
   RejectedSquadPreset,
   SquadCharter,
   SquadCliSource,
+  SquadCliUpgradeSummary,
   SquadDetectionResult,
   SquadDoctorReport,
   SquadDocKind,
@@ -92,7 +93,9 @@ export type WebviewMessage =
   | { command: "initSquadFromPreset"; presetId: string }
   // Squad CLI setup (SQD-025 / #240): choose npm-global / npx / custom path, or install the CLI
   | { command: "setSquadCliInvocation"; source: SquadCliSource; cliPath?: string }
-  | { command: "installSquadCli" };
+  | { command: "installSquadCli" }
+  // Squad CLI self-upgrade (SQD-031 / #246): host confirms, runs `squad upgrade --self`, then verifies
+  | { command: "upgradeSquadCli" };
 
 /**
  * Messages sent FROM the extension TO the webview
@@ -236,4 +239,9 @@ export type ExtensionMessage =
       presetId: string;
       ok: boolean;
       error?: SquadError;
+    }
+  // Squad CLI self-upgrade (SQD-031 / #246); failures are sent as `squadError`
+  | {
+      command: "squadCliUpgradeResult";
+      upgrade: SquadCliUpgradeSummary;
     };

@@ -25,6 +25,7 @@ export const SQUAD_ERROR_CODES = [
   "parse-failed",
   "doctor-failed",
   "update-check-failed",
+  "upgrade-failed",
   "plugin-list-failed",
   "backup-failed",
   "not-a-workspace",

@@ -19,3 +19,4 @@ export * from "./squadConfig";
 export * from "./squadProfileConfig";
 export * from "./squadUpdates";
 export * from "./squadTransfer";
+export * from "./squadCliUpgrade";
