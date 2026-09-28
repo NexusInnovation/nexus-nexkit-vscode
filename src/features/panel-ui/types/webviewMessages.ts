@@ -4,6 +4,19 @@ import { TemplateMetadataEntry, MetadataScanProgress } from "../../ai-template-f
 import { Profile } from "../../profile-management/models/profile";
 import { DevOpsConnection } from "../../apm-devops/models/devOpsConnection";
 import { WorkflowInfo } from "../../github-workflow-runner/githubWorkflowRunnerService";
+import type {
+  SquadCharter,
+  SquadDetectionResult,
+  SquadDoctorReport,
+  SquadDocKind,
+  SquadError,
+  SquadMarkdownDoc,
+  SquadPluginRef,
+  SquadPreset,
+  SquadRosterMember,
+  SquadUpstreamSource,
+} from "../../squad/models";
+import type { SquadLogDocument } from "../webview/types/squadState";
 
 /**
  * Messages sent FROM the webview TO the extension
@@ -29,7 +42,15 @@ export type WebviewMessage =
   | { command: "setActiveDevOpsConnection"; connectionId: string }
   // GitHub workflow runner messages
   | { command: "listWorkflows" }
-  | { command: "runWorkflow"; workflowFile: string; job?: string; event: string; dryRun: boolean; list: boolean };
+  | { command: "runWorkflow"; workflowFile: string; job?: string; event: string; dryRun: boolean; list: boolean }
+  // Squad management messages (SQD-007; host routing implemented in #223)
+  | { command: "getSquadState" }
+  | { command: "refreshSquadDetection" }
+  | { command: "saveSquadCharter"; agentId: string; content: string }
+  | { command: "saveSquadDoc"; kind: SquadDocKind; content: string }
+  | { command: "selectSquadPreset"; presetId: string }
+  | { command: "applySquadPreset"; presetId: string }
+  | { command: "runSquadDoctor" };
 
 /**
  * Messages sent FROM the extension TO the webview
@@ -95,4 +116,42 @@ export type ExtensionMessage =
   | {
       command: "workflowListUpdate";
       workflows: WorkflowInfo[];
+    }
+  // Squad management messages (SQD-007; host routing implemented in #223)
+  | {
+      command: "squadStatusUpdate";
+      detection: SquadDetectionResult;
+      upstreams: SquadUpstreamSource[];
+      plugins: SquadPluginRef[];
+    }
+  | {
+      command: "squadRosterUpdate";
+      roster: SquadRosterMember[];
+      charters: SquadCharter[];
+    }
+  | {
+      command: "squadDocsUpdate";
+      decisions: SquadMarkdownDoc | null;
+      routing: SquadMarkdownDoc | null;
+    }
+  | {
+      command: "squadLogsUpdate";
+      logs: SquadLogDocument[];
+    }
+  | {
+      command: "squadPresetsUpdate";
+      presets: SquadPreset[];
+      selectedPresetId?: string | null;
+    }
+  | {
+      command: "squadDoctorUpdate";
+      doctor: SquadDoctorReport;
+    }
+  | {
+      command: "squadLoading";
+      isLoading: boolean;
+    }
+  | {
+      command: "squadError";
+      error: SquadError;
     };

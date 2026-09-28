@@ -148,6 +148,97 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
             },
           }));
           break;
+
+        case "squadStatusUpdate":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              detection: message.detection,
+              upstreams: message.upstreams,
+              plugins: message.plugins,
+              isReady: true,
+              isLoading: false,
+              error: null,
+            },
+          }));
+          break;
+
+        case "squadRosterUpdate":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              roster: message.roster,
+              charters: message.charters,
+            },
+          }));
+          break;
+
+        case "squadDocsUpdate":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              decisions: message.decisions,
+              routing: message.routing,
+            },
+          }));
+          break;
+
+        case "squadLogsUpdate":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              logs: message.logs,
+            },
+          }));
+          break;
+
+        case "squadPresetsUpdate":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              presets: message.presets,
+              selectedPresetId:
+                message.selectedPresetId !== undefined ? message.selectedPresetId : prev.squad.selectedPresetId,
+            },
+          }));
+          break;
+
+        case "squadDoctorUpdate":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              doctor: message.doctor,
+              isLoading: false,
+            },
+          }));
+          break;
+
+        case "squadLoading":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              isLoading: message.isLoading,
+            },
+          }));
+          break;
+
+        case "squadError":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              error: message.error,
+              isLoading: false,
+            },
+          }));
+          break;
       }
     };
 
@@ -163,6 +254,14 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     const unsubscribeScanComplete = messenger.onMessage("metadataScanComplete", handleMessage);
     const unsubscribeWorkflows = messenger.onMessage("workflowListUpdate", handleMessage);
     const unsubscribeUpdatesAvailable = messenger.onMessage("templateUpdatesAvailable", handleMessage);
+    const unsubscribeSquadStatus = messenger.onMessage("squadStatusUpdate", handleMessage);
+    const unsubscribeSquadRoster = messenger.onMessage("squadRosterUpdate", handleMessage);
+    const unsubscribeSquadDocs = messenger.onMessage("squadDocsUpdate", handleMessage);
+    const unsubscribeSquadLogs = messenger.onMessage("squadLogsUpdate", handleMessage);
+    const unsubscribeSquadPresets = messenger.onMessage("squadPresetsUpdate", handleMessage);
+    const unsubscribeSquadDoctor = messenger.onMessage("squadDoctorUpdate", handleMessage);
+    const unsubscribeSquadLoading = messenger.onMessage("squadLoading", handleMessage);
+    const unsubscribeSquadError = messenger.onMessage("squadError", handleMessage);
 
     // Request initial state from extension
     messenger.sendMessage({ command: "webviewReady" });
@@ -180,6 +279,14 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       unsubscribeScanComplete();
       unsubscribeWorkflows();
       unsubscribeUpdatesAvailable();
+      unsubscribeSquadStatus();
+      unsubscribeSquadRoster();
+      unsubscribeSquadDocs();
+      unsubscribeSquadLogs();
+      unsubscribeSquadPresets();
+      unsubscribeSquadDoctor();
+      unsubscribeSquadLoading();
+      unsubscribeSquadError();
     };
   }, [messenger]);
 
