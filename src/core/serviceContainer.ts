@@ -40,6 +40,7 @@ import { NexusMarketplacePresetProvider } from "../features/squad/services/nexus
 import { ExternalRepoPresetProvider } from "../features/squad/services/externalRepoPresetProvider";
 import { SquadPresetDownloadService } from "../features/squad/services/squadPresetDownloadService";
 import { SquadInitService } from "../features/squad/services/squadInitService";
+import { SquadExportService } from "../features/squad/services/squadExportService";
 
 /**
  * Service container for dependency injection
@@ -103,6 +104,12 @@ export interface ServiceContainer {
    * FR-014/FR-006). Lazily constructed on first access — no activation work.
    */
   readonly squadInit: SquadInitService;
+
+  /**
+   * Export the current Squad through the allowlisted CLI (SQD-033). Lazily
+   * prompts for a destination only when invoked.
+   */
+  squadExport: SquadExportService;
 }
 
 /**
@@ -162,6 +169,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const squadFile = squadWorkspaceRoot ? new SquadFileService(squadWorkspaceRoot) : undefined;
   // SquadCliService (SQD-005, #220) — no work runs until a command is invoked.
   const squadCli = new SquadCliService();
+  const squadExport = new SquadExportService({ cli: squadCli });
   // Detection delegates CLI probing to SquadCliService so a globally-installed
   // CLI is found across platforms (npm `squad.cmd`/`squad.ps1` shims on Windows).
   const squadDetection = new SquadDetectionService({ cliService: squadCli });
@@ -242,6 +250,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     markitdownConversion,
     squadDetection,
     squadCli,
+    squadExport,
     squadFile,
     get squadPresets(): SquadPresetProvider {
       return getSquadPresets();

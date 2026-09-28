@@ -42,6 +42,7 @@ interface SquadStubs {
   readLog: sinon.SinonStub;
   readUpstreams: sinon.SinonStub;
   runDoctor: sinon.SinonStub;
+  exportSquad: sinon.SinonStub;
 }
 
 function createStubs(): SquadStubs {
@@ -56,6 +57,7 @@ function createStubs(): SquadStubs {
     readLog: sinon.stub(),
     readUpstreams: sinon.stub().resolves(squadOk([])),
     runDoctor: sinon.stub(),
+    exportSquad: sinon.stub(),
   };
 }
 
@@ -104,6 +106,9 @@ function createServices(stubs: SquadStubs, hasWorkspace = true): ServiceContaine
     },
     squadCli: {
       runDoctor: stubs.runDoctor,
+    },
+    squadExport: {
+      exportSquad: stubs.exportSquad,
     },
     squadFile,
   } as unknown as ServiceContainer;
@@ -308,6 +313,45 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
 
     assert.deepStrictEqual(commands(), ["squadLoading", "squadError", "squadLoading"]);
     assert.strictEqual(find("squadError")?.error.code, "cli-not-found");
+    assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
+  });
+
+  test("exportSquad emits squadExportResult and clears loading on success", async () => {
+    const stubs = createStubs();
+    const outcome = {
+      target: { kind: "file" as const, uri: "file:///tmp/squad-export.json" },
+      exportedAt: 123,
+      stdout: "ok",
+      stderr: "",
+      durationMs: 10,
+    };
+    stubs.exportSquad.resolves(squadOk(outcome));
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({
+      command: "exportSquad",
+      request: { target: { kind: "file", uri: "file:///tmp/squad-export.json" } },
+    });
+
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadExportResult", "squadLoading"]);
+    const update = find("squadExportResult");
+    assert.ok(update);
+    assert.deepStrictEqual(update.export, outcome);
+    assert.ok(stubs.exportSquad.calledOnce);
+    assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
+  });
+
+  test("exportSquad emits squadError and clears loading on failure", async () => {
+    const stubs = createStubs();
+    stubs.exportSquad.resolves(
+      squadErr({ code: "cli-execution-failed", message: "export failed", remediation: "retry" })
+    );
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "exportSquad" });
+
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadError", "squadLoading"]);
+    assert.strictEqual(find("squadError")?.error.code, "cli-execution-failed");
     assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
   });
 

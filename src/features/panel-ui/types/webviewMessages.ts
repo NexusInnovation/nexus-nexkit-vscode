@@ -12,6 +12,8 @@ import type {
   SquadDoctorReport,
   SquadDocKind,
   SquadError,
+  SquadExportOutcome,
+  SquadExportRequest,
   SquadMarkdownDoc,
   SquadPluginRef,
   SquadPreset,
@@ -52,6 +54,7 @@ export type WebviewMessage =
   | { command: "saveSquadCharter"; agentId: string; content: string }
   | { command: "saveSquadDoc"; kind: SquadDocKind; content: string }
   | { command: "runSquadDoctor" }
+  | { command: "exportSquad"; request?: SquadExportRequest }
   // Squad preset selection screen (SQD-019 / #234)
   | { command: "listSquadPresets" }
   | { command: "initSquadFromPreset"; presetId: string }
@@ -148,6 +151,10 @@ export type ExtensionMessage =
   | {
       command: "squadDoctorUpdate";
       doctor: SquadDoctorReport;
+    }
+  | {
+      command: "squadExportResult";
+      export: SquadExportOutcome;
     }
   | {
       command: "squadLoading";

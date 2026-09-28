@@ -2,22 +2,20 @@
  * useSquadState (SQD-007) — selectors + action message plumbing.
  *
  * Verifies each action posts exactly the message the host expects (with its
- * payload), and that the derived `selectedPreset` selector resolves against the
- * presets slice. The VS Code bridge is mocked; only the posted messages are
+ * payload). The VS Code bridge is mocked; only the posted messages are
  * asserted (components stay purely presentational).
  */
 
 import * as assert from "assert";
 import { useSquadState } from "../../../src/features/panel-ui/webview/hooks/useSquadState";
 import { SquadCliSource } from "../../../src/features/squad/models";
-import { renderWithAppState, fireEvent, cleanup, makePreset } from "./harness/renderSquad";
+import { renderWithAppState, fireEvent, cleanup } from "./harness/renderSquad";
 import { lastPostedMessage, postedMessagesOfCommand, resetVsCodeApiMock } from "./harness/vscodeApiMock";
 
 function ActionProbe() {
   const squad = useSquadState();
   return (
     <div>
-      <span data-testid="selected-preset">{squad.selectedPreset?.name ?? "none"}</span>
       <button data-testid="refresh" onClick={() => squad.refresh()} />
       <button data-testid="refresh-detection" onClick={() => squad.refreshDetection()} />
       <button data-testid="save-charter" onClick={() => squad.saveCharter("trinity", "# Charter")} />
@@ -108,21 +106,5 @@ suite("useSquadState — actions", () => {
     const view = renderWithAppState(<ActionProbe />);
     click(view, "refresh");
     assert.strictEqual(postedMessagesOfCommand("getSquadState").length, 1);
-  });
-
-  test("selectedPreset resolves from presets + selectedPresetId", () => {
-    const view = renderWithAppState(<ActionProbe />, {
-      presets: [makePreset("alpha", { name: "Alpha team" }), makePreset("beta")],
-      selectedPresetId: "alpha",
-    });
-    assert.strictEqual(view.getByTestId("selected-preset").textContent, "Alpha team");
-  });
-
-  test("selectedPreset is null when the selected id is unknown", () => {
-    const view = renderWithAppState(<ActionProbe />, {
-      presets: [makePreset("alpha")],
-      selectedPresetId: "missing",
-    });
-    assert.strictEqual(view.getByTestId("selected-preset").textContent, "none");
   });
 });

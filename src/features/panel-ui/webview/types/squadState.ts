@@ -20,6 +20,7 @@ import type {
   SquadDoctorReport,
   SquadError,
   SquadMarkdownDoc,
+  SquadPreset,
   SquadPluginRef,
   SquadRosterMember,
   SquadUpstreamSource,
