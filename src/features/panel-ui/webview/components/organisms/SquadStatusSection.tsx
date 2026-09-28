@@ -1,5 +1,6 @@
+import { useState } from "preact/hooks";
 import { useSquadState } from "../../hooks/useSquadState";
-import { SquadInstallState } from "../../../../squad/models";
+import { SquadCliSource, SquadInstallState } from "../../../../squad/models";
 import {
   describeCliVersion,
   describeProjectVersion,
@@ -33,30 +34,98 @@ function UpdatePill() {
   );
 }
 
+/** npm package that provides the Squad CLI executable (FR-004). */
+const SQUAD_CLI_PACKAGE = "@bradygaster/squad-cli";
+
 /**
- * Guidance shown when the Squad CLI is not detected (FR-004).
+ * Interactive diagnostic shown when the Squad CLI is not detected (FR-004, SQD-025).
  *
- * Lists the three supported invocation strategies. The interactive npm / npx /
- * custom-path chooser is delivered separately (#240); a slot is reserved here
- * without faking a non-functional control.
+ * Presents the three supported invocation strategies as actionable choices,
+ * matching the SQD-002 `nexkit.squad.cliSource` setting:
+ *  - install globally via npm (host confirms, then runs the command in a
+ *    terminal — never silently),
+ *  - run on demand with npx,
+ *  - point NexKit at a custom executable path.
+ *
+ * Purely presentational: the local input holds only transient form state; the
+ * actual persistence and terminal handling live in the host handler, reached
+ * through {@link useSquadState} action callbacks.
  */
-function SquadCliMissingNotice() {
+function SquadCliMissingNotice({
+  onInstallGlobal,
+  onUseNpx,
+  onSetCustomPath,
+  disabled,
+}: {
+  onInstallGlobal: () => void;
+  onUseNpx: () => void;
+  onSetCustomPath: (cliPath: string) => void;
+  disabled: boolean;
+}) {
+  const [customPath, setCustomPath] = useState("");
+  const trimmedPath = customPath.trim();
+
   return (
     <div class="squad-cli-missing info-message">
-      <p>
+      <p class="squad-cli-missing-lead">
         <i class="codicon codicon-warning" aria-hidden="true"></i> The Squad CLI was not detected.
       </p>
-      <p>NexKit can use the CLI in one of three ways:</p>
+      <p>Choose how NexKit should run the Squad CLI:</p>
       <ul class="squad-cli-options">
-        <li>
-          Install it globally: <code>npm install -g @bradygaster/squad-cli@latest</code>
+        <li class="squad-cli-option">
+          <div class="squad-cli-option-body">
+            <span class="squad-cli-option-title">Install globally with npm</span>
+            <p class="squad-cli-option-desc">Install the CLI once and run it directly.</p>
+            <code class="squad-cli-command">npm install -g {SQUAD_CLI_PACKAGE}@latest</code>
+          </div>
+          <button
+            class="squad-cli-option-action"
+            onClick={onInstallGlobal}
+            disabled={disabled}
+            title="Install the Squad CLI globally (asks for confirmation, then runs in a terminal)"
+          >
+            <i class="codicon codicon-cloud-download" aria-hidden="true"></i> Install with npm
+          </button>
         </li>
-        <li>
-          Run it on demand with <code>npx @bradygaster/squad-cli</code>
+        <li class="squad-cli-option">
+          <div class="squad-cli-option-body">
+            <span class="squad-cli-option-title">Use npx (no install)</span>
+            <p class="squad-cli-option-desc">Run the CLI on demand. No global install required.</p>
+            <code class="squad-cli-command">npx {SQUAD_CLI_PACKAGE}</code>
+          </div>
+          <button
+            class="squad-cli-option-action"
+            onClick={onUseNpx}
+            disabled={disabled}
+            title="Configure NexKit to invoke the Squad CLI via npx"
+          >
+            <i class="codicon codicon-check" aria-hidden="true"></i> Use npx
+          </button>
         </li>
-        <li>Point NexKit at a custom executable path</li>
+        <li class="squad-cli-option">
+          <div class="squad-cli-option-body">
+            <span class="squad-cli-option-title">Use a custom path</span>
+            <p class="squad-cli-option-desc">Point NexKit at an existing Squad executable.</p>
+            <input
+              class="squad-cli-path-input"
+              type="text"
+              value={customPath}
+              placeholder="Path to the squad executable"
+              aria-label="Custom Squad CLI path"
+              disabled={disabled}
+              onInput={(event) => setCustomPath((event.target as HTMLInputElement).value)}
+            />
+          </div>
+          <button
+            class="squad-cli-option-action"
+            onClick={() => onSetCustomPath(trimmedPath)}
+            disabled={disabled || trimmedPath === ""}
+            title="Use the entered path as the Squad CLI"
+          >
+            <i class="codicon codicon-folder-opened" aria-hidden="true"></i> Use this path
+          </button>
+        </li>
       </ul>
-      <p class="squad-init-slot-note">Choosing how to run the CLI — coming soon.</p>
     </div>
   );
 }
@@ -73,7 +142,8 @@ function SquadCliMissingNotice() {
  * this component renders nothing until the first detection snapshot arrives.
  */
 export function SquadStatusSection() {
-  const { detection, isLoading, upstreams, plugins, refreshDetection, doctor, runDoctor, error } = useSquadState();
+  const { detection, isLoading, upstreams, plugins, refreshDetection, doctor, runDoctor, error, setCliInvocation, installCli } =
+    useSquadState();
 
   if (!detection) {
     return null;
@@ -128,7 +198,14 @@ export function SquadStatusSection() {
         </div>
       </dl>
 
-      {!cli.installed && <SquadCliMissingNotice />}
+      {!cli.installed && (
+        <SquadCliMissingNotice
+          disabled={isLoading}
+          onInstallGlobal={installCli}
+          onUseNpx={() => setCliInvocation(SquadCliSource.Npx)}
+          onSetCustomPath={(cliPath) => setCliInvocation(SquadCliSource.Custom, cliPath)}
+        />
+      )}
 
       <div class="squad-diagnostics">
         <div class="squad-diagnostics-header">

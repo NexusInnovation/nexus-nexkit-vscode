@@ -7,6 +7,7 @@ import { WorkflowInfo } from "../../github-workflow-runner/githubWorkflowRunnerS
 import type {
   RejectedSquadPreset,
   SquadCharter,
+  SquadCliSource,
   SquadDetectionResult,
   SquadDoctorReport,
   SquadDocKind,
@@ -55,7 +56,10 @@ export type WebviewMessage =
   | { command: "runSquadDoctor" }
   // Squad preset selection screen (SQD-019 / #234)
   | { command: "listSquadPresets" }
-  | { command: "initSquadFromPreset"; presetId: string };
+  | { command: "initSquadFromPreset"; presetId: string }
+  // Squad CLI setup (SQD-025 / #240): choose npm-global / npx / custom path, or install the CLI
+  | { command: "setSquadCliInvocation"; source: SquadCliSource; cliPath?: string }
+  | { command: "installSquadCli" };
 
 /**
  * Messages sent FROM the extension TO the webview
