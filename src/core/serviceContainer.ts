@@ -40,6 +40,7 @@ import { NexusMarketplacePresetProvider } from "../features/squad/services/nexus
 import { ExternalRepoPresetProvider } from "../features/squad/services/externalRepoPresetProvider";
 import { SquadPresetDownloadService } from "../features/squad/services/squadPresetDownloadService";
 import { SquadInitService } from "../features/squad/services/squadInitService";
+import { SquadUpstreamService } from "../features/squad/services/squadUpstreamService";
 
 /**
  * Service container for dependency injection
@@ -103,6 +104,12 @@ export interface ServiceContainer {
    * FR-014/FR-006). Lazily constructed on first access — no activation work.
    */
   readonly squadInit: SquadInitService;
+
+  /**
+   * Squad upstream add/list/sync/remove via the Squad CLI (SQD-036,
+   * FR-031/FR-032). Lazily constructed on first access — no activation work.
+   */
+  readonly squadUpstream: SquadUpstreamService;
 }
 
 /**
@@ -196,6 +203,16 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     return squadInitService;
   };
 
+  // Squad upstream add/sync/remove (SQD-036) — lazily constructed; nothing runs
+  // until the panel requests an upstream operation. Backs up upstream.json first.
+  let squadUpstreamService: SquadUpstreamService | undefined;
+  const getSquadUpstream = (): SquadUpstreamService => {
+    if (!squadUpstreamService) {
+      squadUpstreamService = new SquadUpstreamService({ cli: squadCli, backup, logger: logging });
+    }
+    return squadUpstreamService;
+  };
+
   // Register for disposal
   context.subscriptions.push(logging);
   context.subscriptions.push(aiTemplateData);
@@ -248,6 +265,9 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     },
     get squadInit(): SquadInitService {
       return getSquadInit();
+    },
+    get squadUpstream(): SquadUpstreamService {
+      return getSquadUpstream();
     },
   };
 }

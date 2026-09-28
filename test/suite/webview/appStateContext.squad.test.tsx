@@ -210,4 +210,30 @@ suite("AppStateContext — Squad messages", () => {
     assert.strictEqual(picker.initResultPresetId, "alpha");
     assert.strictEqual(picker.initError, null);
   });
+
+  test("squadUpstreamOperationStarted marks the upstream operation as running", () => {
+    const squad = renderProbe();
+    assert.strictEqual(squad().upstreamOperation, null);
+    send({ command: "squadUpstreamOperationStarted", operation: "sync", name: "org" });
+    assert.deepStrictEqual(squad().upstreamOperation, { operation: "sync", name: "org", status: "running", error: null });
+  });
+
+  test("squadUpstreamOperationResult stores upstreams and a success status", () => {
+    const squad = renderProbe();
+    const upstreams = [{ id: "org", kind: "git", reference: "org/org" }];
+    send({ command: "squadUpstreamOperationResult", operation: "add", name: "org", ok: true, upstreams });
+    const state = squad();
+    assert.deepStrictEqual(state.upstreams, upstreams);
+    assert.strictEqual(state.upstreamOperation?.status, "succeeded");
+    assert.strictEqual(state.upstreamOperation?.error, null);
+  });
+
+  test("a failed squadUpstreamOperationResult keeps the error visible (never a success)", () => {
+    const squad = renderProbe();
+    const error = makeError({ code: "upstream-failed", message: "Some upstreams failed to sync." });
+    send({ command: "squadUpstreamOperationResult", operation: "sync", ok: false, upstreams: [], error });
+    const op = squad().upstreamOperation;
+    assert.strictEqual(op?.status, "failed");
+    assert.deepStrictEqual(op?.error, error);
+  });
 });

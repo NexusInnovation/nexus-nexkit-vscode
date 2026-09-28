@@ -233,8 +233,47 @@ suite("Unit: SquadFileService", () => {
     assert.strictEqual(result.error.code, "parse-failed");
   });
 
-  test("readUpstreams fails with parse-failed when the manifest shape is unsupported", async () => {
+  test("readUpstreams parses the Squad CLI manifest format", async () => {
+    writeFile(
+      ".squad/upstream.json",
+      JSON.stringify({
+        upstreams: [
+          {
+            name: "org",
+            type: "git",
+            source: "https://github.com/org/squad.git",
+            ref: "release",
+            added_at: "2026-06-01T00:00:00.000Z",
+            last_synced: "2026-06-02T00:00:00.000Z",
+          },
+          { name: "team", type: "local", source: "C:\\repos\\team", added_at: "2026-06-01T00:00:00.000Z", last_synced: null },
+        ],
+      })
+    );
+
+    const result = await service.readUpstreams();
+    assert.ok(isSquadOk(result));
+    const [org, team] = result.value;
+    assert.strictEqual(org.id, "org");
+    assert.strictEqual(org.kind, SquadUpstreamKind.Git);
+    assert.strictEqual(org.reference, "https://github.com/org/squad.git");
+    assert.strictEqual(org.gitRef, "release");
+    assert.strictEqual(org.lastSyncedAt, Date.parse("2026-06-02T00:00:00.000Z"));
+    assert.strictEqual(team.kind, SquadUpstreamKind.Local);
+    assert.strictEqual(team.reference, "C:\\repos\\team");
+    assert.strictEqual(team.gitRef, undefined);
+    assert.strictEqual(team.lastSyncedAt, undefined);
+  });
+
+  test("readUpstreams accepts an empty Squad CLI manifest", async () => {
     writeFile(".squad/upstream.json", JSON.stringify({ upstreams: [] }));
+    const result = await service.readUpstreams();
+    assert.ok(isSquadOk(result));
+    assert.deepStrictEqual(result.value, []);
+  });
+
+  test("readUpstreams fails with parse-failed when the manifest shape is unsupported", async () => {
+    writeFile(".squad/upstream.json", JSON.stringify({ remotes: [] }));
     const result = await service.readUpstreams();
     assert.ok(isSquadErr(result));
     assert.strictEqual(result.error.code, "parse-failed");

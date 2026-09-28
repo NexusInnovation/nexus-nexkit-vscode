@@ -117,7 +117,7 @@ export const SQUAD_CLI_COMMAND_SPECS: Readonly<Record<SquadCliCommand, SquadCliC
   },
   [SquadCliCommand.Upstream]: {
     argv: ["upstream"],
-    allowedFlags: ["--yes"],
+    allowedFlags: ["--yes", "--name", "--ref"],
     allowsOperands: true,
     defaultTimeoutMs: SQUAD_CLI_TIMEOUTS_MS.standard,
   },

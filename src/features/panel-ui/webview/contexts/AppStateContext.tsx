@@ -287,6 +287,37 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
             },
           }));
           break;
+
+        case "squadUpstreamOperationStarted":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              upstreamOperation: {
+                operation: message.operation,
+                name: message.name,
+                status: "running",
+                error: null,
+              },
+            },
+          }));
+          break;
+
+        case "squadUpstreamOperationResult":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              upstreams: message.upstreams,
+              upstreamOperation: {
+                operation: message.operation,
+                name: message.name,
+                status: message.ok ? "succeeded" : "failed",
+                error: message.ok ? null : message.error ?? null,
+              },
+            },
+          }));
+          break;
       }
     };
 
@@ -313,6 +344,8 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     const unsubscribeSquadPresetsLoading = messenger.onMessage("squadPresetsLoading", handleMessage);
     const unsubscribeSquadPresetsError = messenger.onMessage("squadPresetsError", handleMessage);
     const unsubscribeSquadInitResult = messenger.onMessage("squadInitResult", handleMessage);
+    const unsubscribeSquadUpstreamStarted = messenger.onMessage("squadUpstreamOperationStarted", handleMessage);
+    const unsubscribeSquadUpstreamResult = messenger.onMessage("squadUpstreamOperationResult", handleMessage);
 
     // Request initial state from extension
     messenger.sendMessage({ command: "webviewReady" });
@@ -341,6 +374,8 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       unsubscribeSquadPresetsLoading();
       unsubscribeSquadPresetsError();
       unsubscribeSquadInitResult();
+      unsubscribeSquadUpstreamStarted();
+      unsubscribeSquadUpstreamResult();
     };
   }, [messenger]);
 

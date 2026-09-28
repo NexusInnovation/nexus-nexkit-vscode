@@ -24,6 +24,10 @@ function ActionProbe() {
       <button data-testid="install-cli" onClick={() => squad.installCli()} />
       <button data-testid="use-npx" onClick={() => squad.setCliInvocation(SquadCliSource.Npx)} />
       <button data-testid="use-custom" onClick={() => squad.setCliInvocation(SquadCliSource.Custom, "/opt/squad")} />
+      <button data-testid="list-upstreams" onClick={() => squad.listUpstreams()} />
+      <button data-testid="add-upstream" onClick={() => squad.addUpstream("org/repo", "org", "main")} />
+      <button data-testid="sync-upstream" onClick={() => squad.syncUpstream("org")} />
+      <button data-testid="remove-upstream" onClick={() => squad.removeUpstream("org")} />
     </div>
   );
 }
@@ -100,6 +104,18 @@ suite("useSquadState — actions", () => {
       source: SquadCliSource.Custom,
       cliPath: "/opt/squad",
     });
+  });
+
+  test("upstream actions post the SQD-036 messages", () => {
+    const view = renderWithAppState(<ActionProbe />);
+    click(view, "list-upstreams");
+    assert.deepStrictEqual(lastPostedMessage(), { command: "listSquadUpstreams" });
+    click(view, "add-upstream");
+    assert.deepStrictEqual(lastPostedMessage(), { command: "addSquadUpstream", source: "org/repo", name: "org", ref: "main" });
+    click(view, "sync-upstream");
+    assert.deepStrictEqual(lastPostedMessage(), { command: "syncSquadUpstream", name: "org" });
+    click(view, "remove-upstream");
+    assert.deepStrictEqual(lastPostedMessage(), { command: "removeSquadUpstream", name: "org" });
   });
 
   test("each action posts exactly one message", () => {
