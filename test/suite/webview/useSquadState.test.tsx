@@ -22,6 +22,7 @@ function ActionProbe() {
       <button data-testid="save-doc" onClick={() => squad.saveDoc("decisions", "# Decisions")} />
       <button data-testid="run-doctor" onClick={() => squad.runDoctor()} />
       <button data-testid="check-updates" onClick={() => squad.checkUpdates()} />
+      <button data-testid="refresh-plugins" onClick={() => squad.refreshPlugins()} />
       <button data-testid="install-cli" onClick={() => squad.installCli()} />
       <button data-testid="use-npx" onClick={() => squad.setCliInvocation(SquadCliSource.Npx)} />
       <button data-testid="use-custom" onClick={() => squad.setCliInvocation(SquadCliSource.Custom, "/opt/squad")} />
@@ -81,6 +82,12 @@ suite("useSquadState — actions", () => {
     const view = renderWithAppState(<ActionProbe />);
     click(view, "check-updates");
     assert.deepStrictEqual(lastPostedMessage(), { command: "checkSquadUpdates" });
+  });
+
+  test("refreshPlugins posts refreshSquadPlugins", () => {
+    const view = renderWithAppState(<ActionProbe />);
+    click(view, "refresh-plugins");
+    assert.deepStrictEqual(lastPostedMessage(), { command: "refreshSquadPlugins" });
   });
 
   test("installCli posts installSquadCli", () => {

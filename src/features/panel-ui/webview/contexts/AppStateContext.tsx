@@ -156,8 +156,22 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
               ...prev.squad,
               detection: message.detection,
               upstreams: message.upstreams,
+              marketplaces: message.marketplaces,
               plugins: message.plugins,
               isReady: true,
+              isLoading: false,
+              error: null,
+            },
+          }));
+          break;
+
+        case "squadPluginsUpdate":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              marketplaces: message.marketplaces,
+              plugins: message.plugins,
               isLoading: false,
               error: null,
             },
@@ -316,6 +330,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     const unsubscribeWorkflows = messenger.onMessage("workflowListUpdate", handleMessage);
     const unsubscribeUpdatesAvailable = messenger.onMessage("templateUpdatesAvailable", handleMessage);
     const unsubscribeSquadStatus = messenger.onMessage("squadStatusUpdate", handleMessage);
+    const unsubscribeSquadPlugins = messenger.onMessage("squadPluginsUpdate", handleMessage);
     const unsubscribeSquadRoster = messenger.onMessage("squadRosterUpdate", handleMessage);
     const unsubscribeSquadDocs = messenger.onMessage("squadDocsUpdate", handleMessage);
     const unsubscribeSquadLogs = messenger.onMessage("squadLogsUpdate", handleMessage);
@@ -345,6 +360,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       unsubscribeWorkflows();
       unsubscribeUpdatesAvailable();
       unsubscribeSquadStatus();
+      unsubscribeSquadPlugins();
       unsubscribeSquadRoster();
       unsubscribeSquadDocs();
       unsubscribeSquadLogs();
