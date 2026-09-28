@@ -70,6 +70,15 @@ suite("Unit: ServiceContainer", () => {
     assert.ok(services.startupVerification, "StartupVerificationService should be initialized");
     assert.ok(services.convertToMarkdown, "ConvertToMarkdownPanelService should be initialized");
     assert.ok(services.markitdownConversion, "MarkitdownConversionService should be initialized");
+    assert.ok(services.squadDetection, "SquadDetectionService should be initialized");
+  });
+
+  test("Should bind SquadFileService when a workspace folder is open", () => {
+    if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+      assert.ok(services.squadFile, "SquadFileService should be bound to the open workspace folder");
+    } else {
+      assert.strictEqual(services.squadFile, undefined, "SquadFileService should be undefined without a workspace folder");
+    }
   });
 
   test("Should register disposables in context", () => {
