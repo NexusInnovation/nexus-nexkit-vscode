@@ -55,7 +55,7 @@ function makeUnreachable(sourceId: string): UnreachableSquadSource {
   };
 }
 
-function createServices(discover: sinon.SinonStub): ServiceContainer {
+function createServices(discover: sinon.SinonStub, initFromPreset?: sinon.SinonStub): ServiceContainer {
   return {
     logging: {
       warn: () => undefined,
@@ -66,6 +66,9 @@ function createServices(discover: sinon.SinonStub): ServiceContainer {
       id: "composite",
       label: "All Squad preset sources",
       discoverPresets: discover,
+    },
+    squadInit: {
+      initializeFromPreset: initFromPreset ?? sinon.stub(),
     },
   } as unknown as ServiceContainer;
 }
@@ -158,8 +161,43 @@ suite("Unit: SquadPresetMessageHandler (SQD-019 preset picker host)", () => {
     assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
   });
 
-  test("initSquadFromPreset replies with a not-available-yet result (init is #235)", async () => {
-    const handler = new SquadPresetMessageHandler(createServices(sinon.stub()), postMessage);
+  test("initSquadFromPreset delegates to SquadInitService and reports success", async () => {
+    const detection = { installed: true } as unknown as SquadResult<never>;
+    const initFromPreset = sinon.stub().resolves(
+      squadOk({ presetId: "alpha", detection, backupPath: null, writtenFileCount: 3 })
+    );
+    const handler = new SquadPresetMessageHandler(createServices(sinon.stub(), initFromPreset), postMessage);
+
+    const handled = await handler.handle({ command: "initSquadFromPreset", presetId: "alpha" });
+
+    assert.strictEqual(handled, true);
+    assert.ok(initFromPreset.calledOnceWithExactly("alpha"));
+    const result = find("squadInitResult");
+    assert.ok(result);
+    assert.strictEqual(result.presetId, "alpha");
+    assert.strictEqual(result.ok, true);
+    assert.strictEqual(result.error, undefined);
+    // A successful init re-emits the detection so the tab flips to the detected view.
+    assert.ok(find("squadStatusUpdate"));
+  });
+
+  test("initSquadFromPreset does not emit squadStatusUpdate without detection", async () => {
+    const initFromPreset = sinon.stub().resolves(
+      squadOk({ presetId: "alpha", backupPath: null, writtenFileCount: 0 })
+    );
+    const handler = new SquadPresetMessageHandler(createServices(sinon.stub(), initFromPreset), postMessage);
+
+    await handler.handle({ command: "initSquadFromPreset", presetId: "alpha" });
+
+    assert.ok(find("squadInitResult"));
+    assert.strictEqual(find("squadStatusUpdate"), undefined);
+  });
+
+  test("initSquadFromPreset surfaces a SquadInitService failure verbatim", async () => {
+    const initFromPreset = sinon.stub().resolves(
+      squadErr({ code: "cancelled", message: "Squad initialisation was cancelled.", remediation: "Try again." })
+    );
+    const handler = new SquadPresetMessageHandler(createServices(sinon.stub(), initFromPreset), postMessage);
 
     const handled = await handler.handle({ command: "initSquadFromPreset", presetId: "alpha" });
 
@@ -169,7 +207,22 @@ suite("Unit: SquadPresetMessageHandler (SQD-019 preset picker host)", () => {
     assert.strictEqual(result.presetId, "alpha");
     assert.strictEqual(result.ok, false);
     assert.ok(result.error);
-    assert.strictEqual(result.error.code, "preset-fetch-failed");
+    assert.strictEqual(result.error.code, "cancelled");
+    assert.strictEqual(find("squadStatusUpdate"), undefined);
+  });
+
+  test("initSquadFromPreset converts a thrown error into an actionable result", async () => {
+    const initFromPreset = sinon.stub().rejects(new Error("kaboom"));
+    const handler = new SquadPresetMessageHandler(createServices(sinon.stub(), initFromPreset), postMessage);
+
+    await handler.handle({ command: "initSquadFromPreset", presetId: "alpha" });
+
+    const result = find("squadInitResult");
+    assert.ok(result);
+    assert.strictEqual(result.ok, false);
+    assert.ok(result.error);
+    assert.strictEqual(result.error.code, "unknown");
+    assert.strictEqual(result.error.detail, "kaboom");
     assert.ok(result.error.remediation && result.error.remediation.length > 0);
   });
 });
