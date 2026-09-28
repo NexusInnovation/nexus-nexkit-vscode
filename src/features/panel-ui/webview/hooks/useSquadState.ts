@@ -7,7 +7,6 @@
  * purely presentational; all side effects live here.
  */
 
-import { useMemo } from "preact/hooks";
 import { useAppState } from "./useAppState";
 import { useVSCodeAPI } from "./useVSCodeAPI";
 import type {
@@ -19,7 +18,6 @@ import type {
   SquadError,
   SquadMarkdownDoc,
   SquadPluginRef,
-  SquadPreset,
   SquadRosterMember,
   SquadUpstreamSource,
 } from "../../../squad/models";
@@ -62,15 +60,6 @@ export interface UseSquadStateResult {
   /** Installed plugins. */
   plugins: SquadPluginRef[];
 
-  /** Presets available from Nexus plugins. */
-  presets: SquadPreset[];
-
-  /** Currently selected preset id, or `null`. */
-  selectedPresetId: string | null;
-
-  /** The currently selected preset object, or `null`. */
-  selectedPreset: SquadPreset | null;
-
   /** Latest Squad Doctor report, when produced. */
   doctor: SquadDoctorReport | null;
 
@@ -85,12 +74,6 @@ export interface UseSquadStateResult {
 
   /** Persist an edited governance document (decisions/routing). */
   saveDoc: (kind: SquadDocKind, content: string) => void;
-
-  /** Select a preset without applying it. */
-  selectPreset: (presetId: string) => void;
-
-  /** Apply/initialise a preset. */
-  applyPreset: (presetId: string) => void;
 
   /** Run Squad Doctor diagnostics. */
   runDoctor: () => void;
@@ -117,11 +100,6 @@ export function useSquadState(): UseSquadStateResult {
   const { squad } = useAppState();
   const messenger = useVSCodeAPI();
 
-  const selectedPreset = useMemo(
-    () => squad.presets.find((preset) => preset.id === squad.selectedPresetId) ?? null,
-    [squad.presets, squad.selectedPresetId]
-  );
-
   const refresh = () => {
     messenger.sendMessage({ command: "getSquadState" });
   };
@@ -136,14 +114,6 @@ export function useSquadState(): UseSquadStateResult {
 
   const saveDoc = (kind: SquadDocKind, content: string) => {
     messenger.sendMessage({ command: "saveSquadDoc", kind, content });
-  };
-
-  const selectPreset = (presetId: string) => {
-    messenger.sendMessage({ command: "selectSquadPreset", presetId });
-  };
-
-  const applyPreset = (presetId: string) => {
-    messenger.sendMessage({ command: "applySquadPreset", presetId });
   };
 
   const runDoctor = () => {
@@ -170,16 +140,11 @@ export function useSquadState(): UseSquadStateResult {
     logs: squad.logs,
     upstreams: squad.upstreams,
     plugins: squad.plugins,
-    presets: squad.presets,
-    selectedPresetId: squad.selectedPresetId,
-    selectedPreset,
     doctor: squad.doctor,
     refresh,
     refreshDetection,
     saveCharter,
     saveDoc,
-    selectPreset,
-    applyPreset,
     runDoctor,
     setCliInvocation,
     installCli,

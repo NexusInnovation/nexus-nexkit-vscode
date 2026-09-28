@@ -29,11 +29,10 @@ import { SquadLogDocument, SquadLogKind } from "./webview/types/squadState";
  * response types; failures always surface as a structured, actionable
  * {@link SquadError} via `squadError` — never a silent success.
  *
- * Write-back flows (`saveSquadCharter`, `saveSquadDoc`) and the CLI-backed
- * preset flow (`applySquadPreset`) depend on services still in flight (a write
- * service / preset source); they respond with a clear "not available yet"
- * {@link SquadError} rather than faking success. Squad Doctor (`runSquadDoctor`)
- * is wired to {@link SquadCliService} (SQD-021).
+ * Write-back flows (`saveSquadCharter`, `saveSquadDoc`) depend on services
+ * still in flight (a write service); they respond with a clear "not available
+ * yet" {@link SquadError} rather than faking success. Squad Doctor
+ * (`runSquadDoctor`) is wired to {@link SquadCliService} (SQD-021).
  */
 export class SquadPanelMessageHandler {
   private readonly _logger: LoggingService;
@@ -62,12 +61,6 @@ export class SquadPanelMessageHandler {
         return true;
       case "saveSquadDoc":
         await this.handleSaveSquadDoc();
-        return true;
-      case "selectSquadPreset":
-        this.handleSelectSquadPreset(message.presetId);
-        return true;
-      case "applySquadPreset":
-        await this.handleApplySquadPreset();
         return true;
       case "runSquadDoctor":
         await this.handleRunSquadDoctor();
@@ -150,28 +143,6 @@ export class SquadPanelMessageHandler {
       message: "Saving Squad documents is not available yet.",
       remediation: "Editing decisions/routing from the panel will be enabled in an upcoming NexKit release.",
     });
-  }
-
-  /**
-   * Echo the preset selection back to the webview. No preset source is wired
-   * yet, so the available list stays empty while the selection is preserved.
-   */
-  private handleSelectSquadPreset(presetId: string): void {
-    this._postMessage({ command: "squadPresetsUpdate", presets: [], selectedPresetId: presetId });
-  }
-
-  /** Preset application is CLI-backed and not available yet (SQD-005 in flight). */
-  private async handleApplySquadPreset(): Promise<void> {
-    this._setLoading(true);
-    try {
-      this._emitError({
-        code: "preset-fetch-failed",
-        message: "Applying Squad presets is not available yet.",
-        remediation: "Preset initialization will be enabled once the Squad CLI integration ships.",
-      });
-    } finally {
-      this._setLoading(false);
-    }
   }
 
   /**
