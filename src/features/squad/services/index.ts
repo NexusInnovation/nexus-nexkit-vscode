@@ -3,3 +3,4 @@
  */
 
 export * from "./squadPresetDownloadService";
+export * from "./nexusMarketplacePresetProvider";

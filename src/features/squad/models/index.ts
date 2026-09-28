@@ -13,6 +13,7 @@ export * from "./squadRoster";
 export * from "./squadDocs";
 export * from "./squadPreset";
 export * from "./squadPresetValidation";
+export * from "./squadPresetProvider";
 export * from "./squadDoctor";
 export * from "./squadConfig";
 export * from "./squadProfileConfig";
