@@ -1,4 +1,4 @@
-# Link — History
+﻿# Link — History
 
 ## Project Context
 
@@ -47,3 +47,14 @@ Implemented 11 major SQD tickets (see .squad/decisions.md for full details):
 
 **Issue #298 (SQD-R2: Service folder inconsistency):** SQD-005 files (`squadCliService.ts`, `squadProcessRunner.ts`, `squadDetectionService.ts`, `squadProjectVersionReader.ts`, `squadDoctorParser.ts`) sit at `src/features/squad/` root while SQD-011/016/017/018/020 use `src/features/squad/services/`. Link to consolidate under `services/` (pure move + import fixups, low risk). Tracked as issue #298.
 
+## Learnings
+
+- **SQD-R2 canonical Squad service layout (2026-09-28):** PR #300 moved the remaining root-level Squad service modules into `src/features/squad/services/` and updated `src/` + `test/` imports. Keep future Squad service/provider/process/parser modules under `services/`; `models/` remains the domain-type barrel and `validation/` remains pure validator logic.
+
+## 2026-09-28 — Ralph Round 1, P2 Kickoff (Team Update)
+
+**From Scribe:** SQD-R2 (issue #298, PR #300) completed and merged into feature/squad-support. Consolidated 5 Squad service files under src/features/squad/services/: squadCliService, squadProcessRunner, squadDetectionService, squadProjectVersionReader, squadDoctorParser. Pure move + import fixups. Domain types stay in models/, validation in alidation/. Canonical layout established for future Squad modules.
+
+**Cross-team note:** Ghost (SQD-R1) removed legacy preset commands; Trinity validated webview harness (69 tests green, isolated from Electron). All post-MVP cleanup changes landed safely.
+
+**MVP Status:** All 23 SQD PRs merged into squad/mvp-integration branch (744 tests passing, Morpheus-approved). P2 wave 1 (#241, #245, #248, #250, #253) launching now — Link to lead additional Squad features.

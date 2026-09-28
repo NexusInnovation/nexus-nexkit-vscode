@@ -1,4 +1,4 @@
-# Morpheus — History
+﻿# Morpheus — History
 
 ## Project Context
 
@@ -60,3 +60,11 @@ Two non-blocking coherence findings (emergent from parallel dev, not any single 
 Strategy recommended to Eric: **Option (b)** — merge the single integration branch (conflicts resolved once, validated green, per-PR authorship preserved via merge commits) and close the 23 PRs as superseded; NOT one-by-one (GitHub would re-hit the same 3 conflicts across 23 CI runs). Decision: `.squad/decisions/inbox/morpheus-mvp-merge-train.md`.
 
 Process learning: for large parallel PR stacks, grep-based convention sweeps across the merged tree catch violations faster and more completely than reading each diff in isolation — the emergent issues (dead paths, folder drift) only surface *after* integration, so review the integrated whole, not just the parts. Decision inbox docs from Link/Ghost gave reliable design intent to verify against.
+
+## 2026-09-28 — Ralph Round 1: MVP Merge Train (Team Update)
+
+**From Scribe:** SQD MVP merge-train review (23 SQD PRs, SQD-001 through SQD-025) completed and validated green (744 tests passing, 11 pending). All PRs approved APPROVE (0 ❌). Two non-blocking follow-ups: R1 (Ghost: remove dead legacy preset path) and R2 (Link: consolidate service folder). Both landed safely in P2 phase.
+
+**Integration branch:** squad/mvp-integration (from feature/squad-support) created, validated, pushed to origin. No PR opened yet — Eric merges with merge commit to preserve per-PR authorship. Then close 23 superseded PRs as historical reference.
+
+**Next:** P2 wave 1 (#241, #245, #248, #250, #253) launching; Link leads. Integration branch represents complete Squad MVP foundation — ready for feature promotion.
