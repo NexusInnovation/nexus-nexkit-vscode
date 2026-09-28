@@ -17,9 +17,11 @@ import type {
   SquadDoctorReport,
   SquadError,
   SquadMarkdownDoc,
+  SquadMarketplaceRef,
   SquadPluginRef,
   SquadRosterMember,
   SquadUpstreamRecommendations,
+  SquadUpdatesResult,
   SquadUpstreamSource,
 } from "../../../squad/models";
 import type { SquadLogDocument } from "../types/squadState";
@@ -61,11 +63,17 @@ export interface UseSquadStateResult {
   /** Org → team → project recommendations and upstream warnings, when evaluated. */
   upstreamRecommendations: SquadUpstreamRecommendations | null;
 
+  /** Plugin marketplaces. */
+  marketplaces: SquadMarketplaceRef[];
+
   /** Installed plugins. */
   plugins: SquadPluginRef[];
 
   /** Latest Squad Doctor report, when produced. */
   doctor: SquadDoctorReport | null;
+
+  /** Latest Squad CLI/project update-check result, when requested. */
+  updates: SquadUpdatesResult | null;
 
   /** Request the initial Squad state / refresh everything. */
   refresh: () => void;
@@ -81,6 +89,12 @@ export interface UseSquadStateResult {
 
   /** Run Squad Doctor diagnostics. */
   runDoctor: () => void;
+
+  /** Check for available Squad CLI/project updates without running upgrades. */
+  checkUpdates: () => void;
+
+  /** Re-read Squad plugin marketplaces and installed plugins. */
+  refreshPlugins: () => void;
 
   /**
    * Persist how the Squad CLI is invoked (FR-004): install globally via npm,
@@ -124,6 +138,14 @@ export function useSquadState(): UseSquadStateResult {
     messenger.sendMessage({ command: "runSquadDoctor" });
   };
 
+  const checkUpdates = () => {
+    messenger.sendMessage({ command: "checkSquadUpdates" });
+  };
+
+  const refreshPlugins = () => {
+    messenger.sendMessage({ command: "refreshSquadPlugins" });
+  };
+
   const setCliInvocation = (source: SquadCliSource, cliPath?: string) => {
     messenger.sendMessage({ command: "setSquadCliInvocation", source, cliPath });
   };
@@ -144,13 +166,17 @@ export function useSquadState(): UseSquadStateResult {
     logs: squad.logs,
     upstreams: squad.upstreams,
     upstreamRecommendations: squad.upstreamRecommendations,
+    marketplaces: squad.marketplaces,
     plugins: squad.plugins,
     doctor: squad.doctor,
+    updates: squad.updates,
     refresh,
     refreshDetection,
     saveCharter,
     saveDoc,
     runDoctor,
+    checkUpdates,
+    refreshPlugins,
     setCliInvocation,
     installCli,
   };

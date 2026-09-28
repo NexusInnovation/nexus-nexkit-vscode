@@ -124,6 +124,7 @@ export class SquadPresetMessageHandler {
         upstreams: [],
         // Upstreams are not re-read here; the next getSquadState evaluates them.
         upstreamRecommendations: null,
+        marketplaces: [],
         plugins: [],
       });
     }
