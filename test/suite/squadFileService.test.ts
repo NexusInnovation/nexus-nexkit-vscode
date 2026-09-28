@@ -255,6 +255,72 @@ suite("Unit: SquadFileService", () => {
     assert.deepStrictEqual(result.value, []);
   });
 
+  // --- model config (FR-063) ---
+
+  test("readModelConfig parses default and per-agent overrides", async () => {
+    const content = JSON.stringify({ default: "gpt-5.6-terra", overrides: { neo: "gpt-5.6-sol", tank: "gpt-5.6-luna" } });
+    writeFile(".squad/model-config.json", content);
+
+    const result = await service.readModelConfig();
+
+    assert.ok(isSquadOk(result));
+    assert.strictEqual(result.value.validationError, undefined);
+    assert.deepStrictEqual(result.value.document, {
+      relativePath: ".squad/model-config.json",
+      exists: true,
+      content,
+      config: {
+        defaultModel: "gpt-5.6-terra",
+        overrides: [
+          { agentId: "neo", model: "gpt-5.6-sol" },
+          { agentId: "tank", model: "gpt-5.6-luna" },
+        ],
+      },
+    });
+  });
+
+  test("readModelConfig reports an absent file as exists:false without an error", async () => {
+    const result = await service.readModelConfig();
+
+    assert.ok(isSquadOk(result));
+    assert.deepStrictEqual(result.value, {
+      document: { relativePath: ".squad/model-config.json", exists: false, content: "", config: null },
+    });
+  });
+
+  test("readModelConfig keeps malformed JSON visible with a parse-failed validation error", async () => {
+    writeFile(".squad/model-config.json", '{ "default": ');
+
+    const result = await service.readModelConfig();
+
+    assert.ok(isSquadOk(result));
+    assert.strictEqual(result.value.document.exists, true);
+    assert.strictEqual(result.value.document.content, '{ "default": ');
+    assert.strictEqual(result.value.document.config, null);
+    assert.strictEqual(result.value.validationError?.code, "parse-failed");
+    assert.ok(result.value.validationError?.remediation);
+  });
+
+  test("readModelConfig flags schema violations", async () => {
+    writeFile(".squad/model-config.json", JSON.stringify({ overrides: ["neo"] }));
+
+    const result = await service.readModelConfig();
+
+    assert.ok(isSquadOk(result));
+    assert.strictEqual(result.value.document.config, null);
+    assert.strictEqual(result.value.validationError?.code, "parse-failed");
+    assert.ok(result.value.validationError?.detail?.includes('"overrides"'));
+  });
+
+  test("readModelConfig refuses oversized files instead of validating truncated JSON", async () => {
+    writeFile(".squad/model-config.json", `{ "default": "m", "pad": "${"x".repeat(SQUAD_MAX_READ_BYTES)}" }`);
+
+    const result = await service.readModelConfig();
+
+    assert.ok(isSquadErr(result));
+    assert.strictEqual(result.error.code, "file-read-failed");
+  });
+
   test("readUpstreams fails with parse-failed on invalid JSON", async () => {
     writeFile(".squad/upstream.json", "{ not json ");
     const result = await service.readUpstreams();

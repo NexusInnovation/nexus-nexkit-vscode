@@ -16,6 +16,7 @@ import type {
   SquadExportRequest,
   SquadMarkdownDoc,
   SquadMarketplaceRef,
+  SquadModelConfigDocument,
   SquadPluginAction,
   SquadPluginRef,
   SquadPreset,
@@ -78,6 +79,8 @@ export type WebviewMessage =
   // Confirmed + backed-up project upgrade (SQD-032 / #247)
   | { command: "upgradeSquadProject" }
   | { command: "saveSquadCharter"; agentId: string; content: string }
+  // Squad model configuration editing (SQD-028 / #243, FR-063): raw JSON, validated host-side
+  | { command: "saveSquadModelConfig"; content: string }
   | {
       command: "saveSquadDoc";
       kind: SquadDocKind;
@@ -247,6 +250,15 @@ export type ExtensionMessage =
   | {
       command: "squadDocSaved";
       doc: SquadMarkdownDoc;
+      result: SquadWriteSummary;
+    }
+  | {
+      command: "squadModelConfigUpdate";
+      modelConfig: SquadModelConfigDocument | null;
+    }
+  | {
+      command: "squadModelConfigSaved";
+      modelConfig: SquadModelConfigDocument;
       result: SquadWriteSummary;
     }
   | {

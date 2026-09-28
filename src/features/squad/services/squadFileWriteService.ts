@@ -14,10 +14,13 @@ import {
   SquadCharter,
   SquadDocKind,
   SquadMarkdownDoc,
+  SquadModelConfigDocument,
   SquadResult,
+  SQUAD_MODEL_CONFIG_RELATIVE_PATH,
   squadErr,
   squadOk,
 } from "../models";
+import { parseSquadModelConfig } from "../validation/squadModelConfigValidator";
 import { computeSquadContentHash } from "./squadContentHash";
 import { SQUAD_MAX_READ_BYTES } from "./squadFileService";
 import { SquadArtifactBackup } from "./squadInitService";
@@ -33,6 +36,7 @@ const DOC_RELATIVE_PATH: Record<SquadDocKind, string> = {
 export const SquadWritableFileKind = {
   Charter: "charter",
   MarkdownDoc: "markdown-doc",
+  ModelConfig: "model-config",
 } as const;
 
 export type SquadWritableFileKind = (typeof SquadWritableFileKind)[keyof typeof SquadWritableFileKind];
@@ -57,6 +61,13 @@ export type SquadControlledWriteRequest =
       docKind: SquadDocKind;
 
       /** Raw markdown content to persist. */
+      content: string;
+    }
+  | {
+      /** Write `.squad/model-config.json` (FR-063). Callers must validate the JSON first. */
+      kind: typeof SquadWritableFileKind.ModelConfig;
+
+      /** Raw JSON content to persist. */
       content: string;
     };
 
@@ -85,6 +96,12 @@ export interface SquadCharterWriteOutcome extends SquadControlledWriteOutcome {
 export interface SquadMarkdownDocWriteOutcome extends SquadControlledWriteOutcome {
   /** Updated markdown document read-model for the panel. */
   doc: SquadMarkdownDoc;
+}
+
+/** Successful model-config write result (SQD-028). */
+export interface SquadModelConfigWriteOutcome extends SquadControlledWriteOutcome {
+  /** Updated, validated model configuration document for the panel. */
+  document: SquadModelConfigDocument;
 }
 
 /** Optional guards for a governance-doc save (SQD-027). */
@@ -196,6 +213,45 @@ export class SquadFileWriteService {
         content: prepared,
         contentHash: computeSquadContentHash(this._encoder.encode(prepared)),
         truncated: false,
+      },
+    });
+  }
+
+  /**
+   * Validate and save `.squad/model-config.json` (SQD-028, FR-063). Invalid
+   * JSON or an unsupported shape fails with `parse-failed` before
+   * BackupService or the file system is touched, so nothing is changed.
+   */
+  public async saveModelConfig(content: string): Promise<SquadResult<SquadModelConfigWriteOutcome>> {
+    if (this._encoder.encode(content).byteLength > SQUAD_MAX_READ_BYTES) {
+      return squadErr({
+        code: "file-write-failed",
+        message: "The Squad model configuration is too large, so it was not saved.",
+        remediation: `Keep ${SQUAD_MODEL_CONFIG_RELATIVE_PATH} below ${SQUAD_MAX_READ_BYTES} bytes and try again. Nothing was changed.`,
+        detail: SQUAD_MODEL_CONFIG_RELATIVE_PATH,
+      });
+    }
+
+    const parsed = parseSquadModelConfig(content);
+    if (!parsed.ok) {
+      return squadErr({
+        ...parsed.error,
+        message: `${parsed.error.message} Your changes were not saved.`,
+      });
+    }
+
+    const writeResult = await this.saveControlledFile({ kind: SquadWritableFileKind.ModelConfig, content });
+    if (!writeResult.ok) {
+      return writeResult;
+    }
+
+    return squadOk({
+      ...writeResult.value,
+      document: {
+        relativePath: writeResult.value.relativePath,
+        exists: true,
+        content,
+        config: parsed.value,
       },
     });
   }
@@ -348,6 +404,13 @@ export class SquadFileWriteService {
       return squadOk({
         relativePath,
         uri: vscode.Uri.joinPath(this._workspaceRoot, SQUAD_DIR, "agents", request.agentId, "charter.md"),
+      });
+    }
+
+    if (request.kind === SquadWritableFileKind.ModelConfig) {
+      return squadOk({
+        relativePath: SQUAD_MODEL_CONFIG_RELATIVE_PATH,
+        uri: vscode.Uri.joinPath(this._workspaceRoot, ...SQUAD_MODEL_CONFIG_RELATIVE_PATH.split("/")),
       });
     }
 

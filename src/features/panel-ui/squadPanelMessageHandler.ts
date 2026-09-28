@@ -8,6 +8,7 @@ import {
   SquadDocKind,
   SquadError,
   SquadMarketplaceRef,
+  SquadModelConfigDocument,
   SquadPluginRef,
   SquadResult,
   SquadRosterMember,
@@ -44,7 +45,8 @@ interface SquadPluginInventory {
  * response types; failures always surface as a structured, actionable
  * {@link SquadError} via `squadError` — never a silent success.
  *
- * Write-back flows (`saveSquadCharter`, `saveSquadDoc`) are delegated to the
+ * Write-back flows (`saveSquadCharter`, `saveSquadDoc`, `saveSquadModelConfig`)
+ * are delegated to the
  * controlled write service, which invokes BackupService before every write
  * (SQD-026, FR-006/FR-023). Squad Doctor (`runSquadDoctor`) is wired to
  * {@link SquadCliService} (SQD-021).
@@ -83,6 +85,9 @@ export class SquadPanelMessageHandler {
         return true;
       case "saveSquadDoc":
         await this.handleSaveSquadDoc(message);
+        return true;
+      case "saveSquadModelConfig":
+        await this.handleSaveSquadModelConfig(message);
         return true;
       case "runSquadDoctor":
         await this.handleRunSquadDoctor();
@@ -135,6 +140,9 @@ export class SquadPanelMessageHandler {
     const decisions = this._unwrap(await fileService.readDecisions(), (error) => (firstError ??= error)) ?? null;
     const routing = this._unwrap(await fileService.readRouting(), (error) => (firstError ??= error)) ?? null;
     this._postMessage({ command: "squadDocsUpdate", decisions, routing });
+
+    const modelConfig = await this._readModelConfig(fileService, (error) => (firstError ??= error));
+    this._postMessage({ command: "squadModelConfigUpdate", modelConfig });
 
     const logs = await this._collectLogs(fileService, roster, (error) => (firstError ??= error));
     this._postMessage({ command: "squadLogsUpdate", logs });
@@ -253,6 +261,47 @@ export class SquadPanelMessageHandler {
       this._postMessage({
         command: "squadDocSaved",
         doc: result.value.doc,
+        result: this._toWriteSummary(result.value),
+      });
+    } finally {
+      this._setLoading(false);
+    }
+  }
+
+  /**
+   * Validate and save `.squad/model-config.json` (SQD-028, FR-063) through the
+   * backup-first controlled write service. JSON/schema failures surface as a
+   * `parse-failed` squadError and nothing is written.
+   */
+  private async handleSaveSquadModelConfig(
+    message: Extract<WebviewMessage, { command: "saveSquadModelConfig" }>
+  ): Promise<void> {
+    const writer = this._services.squadWrite;
+    if (!writer) {
+      this._emitNoWorkspaceWriteError();
+      return;
+    }
+
+    if (typeof message.content !== "string") {
+      this._emitError({
+        code: "file-write-failed",
+        message: "The Squad model configuration could not be saved because the edit was empty or malformed.",
+        remediation: "Reopen the model configuration editor and try saving again.",
+      });
+      return;
+    }
+
+    this._setLoading(true);
+    try {
+      const result = await writer.saveModelConfig(message.content);
+      if (isSquadErr(result)) {
+        this._emitError(result.error);
+        return;
+      }
+
+      this._postMessage({
+        command: "squadModelConfigSaved",
+        modelConfig: result.value.document,
         result: this._toWriteSummary(result.value),
       });
     } finally {
@@ -381,6 +430,22 @@ export class SquadPanelMessageHandler {
       return { upstreams: [], recommendations: null };
     }
     return { upstreams: result.value, recommendations: this._upstreamRecommender.recommend(result.value) };
+  }
+
+  private async _readModelConfig(
+    fileService: SquadFileService,
+    onError: (error: SquadError) => void
+  ): Promise<SquadModelConfigDocument | null> {
+    const result = await fileService.readModelConfig();
+    if (isSquadErr(result)) {
+      this._logger.warn("Squad: failed to read model configuration", result.error);
+      onError(result.error);
+      return null;
+    }
+    if (result.value.validationError) {
+      onError(result.value.validationError);
+    }
+    return result.value.document;
   }
 
   private async _readPluginInventory(pluginService: SquadPluginService | undefined): Promise<SquadPluginInventory> {
