@@ -85,14 +85,13 @@ export class SquadPanelMessageHandler {
     }
 
     const fileService = this._services.squadFile;
-    const upstreams = fileService ? await this._readUpstreams(fileService) : [];
+    let firstError: SquadError | undefined;
+    const upstreams = fileService ? await this._readUpstreams(fileService, (error) => (firstError ??= error)) : [];
     this._emitStatus(detection.value, upstreams, []);
 
     if (!fileService) {
       return;
     }
-
-    let firstError: SquadError | undefined;
 
     const roster = this._unwrap(await fileService.readRoster(), (error) => (firstError ??= error)) ?? [];
     const charters = await this._readCharters(fileService, roster, (error) => (firstError ??= error));
@@ -120,8 +119,12 @@ export class SquadPanelMessageHandler {
         return;
       }
       const fileService = this._services.squadFile;
-      const upstreams = fileService ? await this._readUpstreams(fileService) : [];
+      let upstreamError: SquadError | undefined;
+      const upstreams = fileService ? await this._readUpstreams(fileService, (error) => (upstreamError = error)) : [];
       this._emitStatus(detection.value, upstreams, []);
+      if (upstreamError) {
+        this._emitError(upstreamError);
+      }
     } finally {
       this._setLoading(false);
     }
@@ -167,10 +170,14 @@ export class SquadPanelMessageHandler {
 
   // --- helpers ----------------------------------------------------------
 
-  private async _readUpstreams(fileService: SquadFileService): Promise<SquadUpstreamSource[]> {
+  private async _readUpstreams(
+    fileService: SquadFileService,
+    onError: (error: SquadError) => void
+  ): Promise<SquadUpstreamSource[]> {
     const result = await fileService.readUpstreams();
     if (isSquadErr(result)) {
       this._logger.warn("Squad: failed to read upstream sources", result.error);
+      onError(result.error);
       return [];
     }
     return result.value;
