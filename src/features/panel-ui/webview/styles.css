@@ -1603,3 +1603,111 @@ details[open] > .type-header::before {
   font-size: 0.8em;
   color: var(--vscode-descriptionForeground);
 }
+
+/* Squad tab container (SQD-009) */
+.squad-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.squad-status {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 4px;
+  background-color: var(--vscode-editorWidget-background, transparent);
+}
+
+.squad-status-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.squad-status-badge {
+  font-size: 0.8em;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background-color: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+}
+
+.squad-status-badge.squad-status-installed {
+  background-color: var(--vscode-testing-iconPassed, var(--vscode-badge-background));
+  color: var(--vscode-editor-background, var(--vscode-badge-foreground));
+}
+
+.squad-status-badge.squad-status-not-installed {
+  background-color: var(--vscode-editorWarning-foreground, var(--vscode-badge-background));
+  color: var(--vscode-editor-background, var(--vscode-badge-foreground));
+}
+
+.squad-refresh-button,
+.squad-retry-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border: 1px solid var(--vscode-button-border, transparent);
+  border-radius: 4px;
+  background: none;
+  color: var(--vscode-foreground);
+  cursor: pointer;
+  font-size: 0.85em;
+}
+
+.squad-refresh-button:hover:not(:disabled),
+.squad-retry-button:hover {
+  background-color: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground));
+}
+
+.squad-refresh-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.squad-retry-button {
+  align-self: flex-start;
+  margin-top: 6px;
+}
+
+.squad-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 12px;
+  margin: 0;
+}
+
+.squad-status-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.squad-status-item dt {
+  font-size: 0.75em;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.squad-status-item dd {
+  margin: 0;
+  font-size: 0.9em;
+  color: var(--vscode-foreground);
+}
+
+.squad-not-detected code {
+  font-size: 0.85em;
+}
+
+.squad-init-slot-note {
+  margin: 8px 0 0;
+  font-size: 0.85em;
+  font-style: italic;
+  color: var(--vscode-descriptionForeground);
+}

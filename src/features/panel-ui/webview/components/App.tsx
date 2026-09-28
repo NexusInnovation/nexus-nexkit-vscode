@@ -11,6 +11,7 @@ import { ApmConnectionSection } from "./organisms/ApmConnectionSection";
 import { ApmTemplateSection } from "./organisms/ApmTemplateSection";
 import { ModeSelectionSection } from "./organisms/ModeSelectionSection";
 import { ToolsSection } from "./organisms/ToolsSection";
+import { SquadSection } from "./organisms/SquadSection";
 import { TabBar, TabDefinition } from "./molecules/TabBar";
 import { InitializationBanner } from "./molecules/InitializationBanner";
 
@@ -19,6 +20,7 @@ const TAB_DEFINITIONS: Record<string, TabDefinition> = {
   project: { id: "project", icon: "azure-devops", label: "Project" },
   tools: { id: "tools", icon: "tools", label: "Tools" },
   profile: { id: "profile", icon: "account", label: "Profiles" },
+  squad: { id: "squad", icon: "organization", label: "Squad" },
 };
 
 /**
@@ -32,7 +34,7 @@ export function App() {
   // Build the list of visible tabs based on the current mode
   const tabs = useMemo<TabDefinition[]>(() => {
     if (isDevelopersMode) {
-      return [TAB_DEFINITIONS.template, TAB_DEFINITIONS.tools, TAB_DEFINITIONS.profile];
+      return [TAB_DEFINITIONS.template, TAB_DEFINITIONS.tools, TAB_DEFINITIONS.profile, TAB_DEFINITIONS.squad];
     }
     if (isAPMMode) {
       return [TAB_DEFINITIONS.template, TAB_DEFINITIONS.tools, TAB_DEFINITIONS.project];
@@ -130,6 +132,11 @@ export function App() {
             {activeTab === "profile" && (
               <div class="tab-panel" role="tabpanel" id="profile-tabpanel">
                 <ProfileSection />
+              </div>
+            )}
+            {activeTab === "squad" && (
+              <div class="tab-panel" role="tabpanel" id="squad-tabpanel">
+                <SquadSection />
               </div>
             )}
           </>
