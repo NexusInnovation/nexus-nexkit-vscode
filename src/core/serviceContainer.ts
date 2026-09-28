@@ -44,6 +44,7 @@ import { SquadUpdateService } from "../features/squad/services/squadUpdateServic
 import { SquadExportService } from "../features/squad/services/squadExportService";
 import { SquadFileWriteService } from "../features/squad/services/squadFileWriteService";
 import { SquadPluginService } from "../features/squad/services/squadPluginService";
+import { SquadProjectUpgradeService } from "../features/squad/services/squadProjectUpgradeService";
 
 /**
  * Service container for dependency injection
@@ -132,6 +133,12 @@ export interface ServiceContainer {
    * prompts for a destination only when invoked.
    */
   squadExport: SquadExportService;
+
+  /**
+   * Run a confirmed, backed-up `squad upgrade` for the workspace project
+   * (SQD-032, FR-005/FR-006). No work runs until invoked.
+   */
+  squadProjectUpgrade: SquadProjectUpgradeService;
 }
 
 /**
@@ -198,6 +205,12 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const squadDetection = new SquadDetectionService({ cliService: squadCli });
   const squadUpdates = new SquadUpdateService({ detectionService: squadDetection });
   const squadPlugins = squadFile ? new SquadPluginService({ fileService: squadFile, cli: squadCli }) : undefined;
+  const squadProjectUpgrade = new SquadProjectUpgradeService({
+    updates: squadUpdates,
+    cli: squadCli,
+    backup,
+    detection: squadDetection,
+  });
 
   // Preset discovery (SQD-017/018) aggregated behind one provider (SQD-019).
   // Built lazily so no preset listing or network work happens during activation.
@@ -280,6 +293,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     squadUpdates,
     squadWrite,
     squadPlugins,
+    squadProjectUpgrade,
     get squadPresets(): SquadPresetProvider {
       return getSquadPresets();
     },

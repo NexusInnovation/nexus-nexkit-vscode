@@ -109,6 +109,12 @@ export interface UseSquadStateResult {
    * re-runs detection — it never installs silently.
    */
   installCli: () => void;
+
+  /**
+   * Upgrade the workspace Squad project (SQD-032). The host asks for explicit
+   * confirmation and backs up Squad files before running `squad upgrade`.
+   */
+  upgradeProject: () => void;
 }
 
 /**
@@ -158,6 +164,10 @@ export function useSquadState(): UseSquadStateResult {
     messenger.sendMessage({ command: "installSquadCli" });
   };
 
+  const upgradeProject = () => {
+    messenger.sendMessage({ command: "upgradeSquadProject" });
+  };
+
   return {
     isReady: squad.isReady,
     isLoading: squad.isLoading,
@@ -182,5 +192,6 @@ export function useSquadState(): UseSquadStateResult {
     refreshPlugins,
     setCliInvocation,
     installCli,
+    upgradeProject,
   };
 }

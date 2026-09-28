@@ -66,6 +66,9 @@ export class SquadPanelMessageHandler {
       case "checkSquadUpdates":
         await this.handleCheckSquadUpdates();
         return true;
+      case "upgradeSquadProject":
+        await this.handleUpgradeSquadProject();
+        return true;
       case "saveSquadCharter":
         await this.handleSaveSquadCharter(message);
         return true;
@@ -299,6 +302,49 @@ export class SquadPanelMessageHandler {
       });
       if (inventory.error) {
         this._emitError(inventory.error);
+      }
+    } finally {
+      this._setLoading(false);
+    }
+  }
+
+  /**
+   * Run the confirmed, backed-up project upgrade (SQD-032, FR-005/FR-006). The
+   * service owns confirmation, backup, CLI execution and rollback; failures
+   * (including a declined confirmation) surface as `squadError`, never as a
+   * success message.
+   */
+  private async handleUpgradeSquadProject(): Promise<void> {
+    this._setLoading(true);
+    try {
+      const result = await this._services.squadProjectUpgrade.upgradeProject();
+      if (isSquadErr(result)) {
+        this._emitError(result.error);
+        return;
+      }
+
+      const outcome = result.value;
+      let refreshError: SquadError | undefined;
+      if (outcome.detection) {
+        const fileService = this._services.squadFile;
+        const upstreams = fileService ? await this._readUpstreams(fileService, (error) => (refreshError = error)) : [];
+        const pluginInventory = await this._readPluginInventory(this._services.squadPlugins);
+        refreshError ??= pluginInventory.error;
+        this._emitStatus(outcome.detection, upstreams, pluginInventory.marketplaces, pluginInventory.plugins);
+      }
+
+      this._postMessage({
+        command: "squadProjectUpgraded",
+        result: {
+          upgraded: outcome.upgraded,
+          previousVersion: outcome.previousVersion,
+          targetVersion: outcome.targetVersion,
+          currentVersion: outcome.currentVersion,
+          backupCreated: outcome.backupPath !== null,
+        },
+      });
+      if (refreshError) {
+        this._emitError(refreshError);
       }
     } finally {
       this._setLoading(false);

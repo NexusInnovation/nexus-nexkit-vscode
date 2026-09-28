@@ -105,7 +105,9 @@ export const SQUAD_CLI_COMMAND_SPECS: Readonly<Record<SquadCliCommand, SquadCliC
   },
   [SquadCliCommand.Upgrade]: {
     argv: ["upgrade"],
-    allowedFlags: ["--yes"],
+    // `--force` overwrites Squad-owned files without an interactive prompt; the
+    // host only passes it after explicit confirmation + backup (SQD-032).
+    allowedFlags: ["--yes", "--force"],
     allowsOperands: false,
     defaultTimeoutMs: SQUAD_CLI_TIMEOUTS_MS.upgrade,
   },

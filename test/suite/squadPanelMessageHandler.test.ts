@@ -52,6 +52,7 @@ interface SquadStubs {
   runDoctor: sinon.SinonStub;
   checkUpdates: sinon.SinonStub;
   exportSquad: sinon.SinonStub;
+  upgradeProject: sinon.SinonStub;
 }
 
 function createStubs(): SquadStubs {
@@ -92,6 +93,7 @@ function createStubs(): SquadStubs {
     runDoctor: sinon.stub(),
     checkUpdates: sinon.stub().resolves(squadOk(updatesResult())),
     exportSquad: sinon.stub(),
+    upgradeProject: sinon.stub(),
   };
 }
 
@@ -199,6 +201,9 @@ function createServices(stubs: SquadStubs, hasWorkspace = true): ServiceContaine
     },
     squadExport: {
       exportSquad: stubs.exportSquad,
+    },
+    squadProjectUpgrade: {
+      upgradeProject: stubs.upgradeProject,
     },
     squadFile,
     squadWrite,
@@ -603,6 +608,51 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
     assert.deepStrictEqual(commands(), ["squadLoading", "squadError", "squadLoading"]);
     assert.strictEqual(find("squadError")?.error.code, "update-check-failed");
     assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
+  });
+
+  test("upgradeSquadProject emits refreshed status and a sanitized upgrade result (SQD-032)", async () => {
+    const stubs = createStubs();
+    const upgraded = detectionResult();
+    upgraded.project.projectVersion = "1.2.0";
+    stubs.upgradeProject.resolves(
+      squadOk({
+        upgraded: true,
+        previousVersion: "1.0.0",
+        targetVersion: "1.2.0",
+        currentVersion: "1.2.0",
+        backupPath: "C:\\Users\\secret\\backups\\squad-1",
+        detection: upgraded,
+      })
+    );
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "upgradeSquadProject" });
+
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadStatusUpdate", "squadProjectUpgraded", "squadLoading"]);
+    assert.strictEqual(find("squadStatusUpdate")?.detection.project.projectVersion, "1.2.0");
+    assert.deepStrictEqual(find("squadProjectUpgraded")?.result, {
+      upgraded: true,
+      previousVersion: "1.0.0",
+      targetVersion: "1.2.0",
+      currentVersion: "1.2.0",
+      backupCreated: true,
+    });
+    assert.ok(!JSON.stringify(posted).includes("secret"), "absolute backup paths stay host-side");
+    assert.ok(stubs.upgradeProject.calledOnce);
+  });
+
+  test("upgradeSquadProject emits squadError (never success) when the upgrade fails or is declined", async () => {
+    const stubs = createStubs();
+    stubs.upgradeProject.resolves(
+      squadErr({ code: "backup-failed", message: "Could not back up", remediation: "Free disk space." })
+    );
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "upgradeSquadProject" });
+
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadError", "squadLoading"]);
+    assert.strictEqual(find("squadError")?.error.code, "backup-failed");
+    assert.strictEqual(find("squadProjectUpgraded"), undefined);
   });
 
   test("exportSquad emits squadExportResult and clears loading on success", async () => {
