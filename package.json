@@ -507,7 +507,7 @@
     "check:types": "tsc --noEmit",
     "test-compile": "tsc -p ./",
     "pretest": "pnpm run test-compile && pnpm run lint",
-    "test": "node ./out/test/runTest.js",
+    "test": "node ./out/test/runTest.js && node ./out/test/runWebviewTest.js",
     "test:unit": "node ./out/test/runTest.js",
     "test:headless": "node ./out/test/runHeadlessTest.js",
     "test:integration": "node ./out/test/runTest.js",
@@ -518,7 +518,8 @@
     "publish-private": "npm version patch --tag-version-prefix=v && git push && git push --tags",
     "release": "semantic-release",
     "release:dry": "semantic-release --dry-run",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "test:webview": "node ./out/test/runWebviewTest.js"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.4.0",
@@ -532,6 +533,7 @@
     "@semantic-release/github": "^11.0.6",
     "@semantic-release/release-notes-generator": "^14.0.3",
     "@sinonjs/fake-timers": "15.4.0",
+    "@testing-library/preact": "^3.2.4",
     "@types/adm-zip": "^0.5.7",
     "@types/markdown-it": "^14.1.2",
     "@types/mocha": "^10.0.10",
@@ -547,6 +549,7 @@
     "esbuild": "^0.27.2",
     "eslint": "^9.36.0",
     "glob": "^11.0.0",
+    "happy-dom": "^20.14.5",
     "lefthook": "^2.1.1",
     "mocha": "^11.3.0",
     "nyc": "^18.0.0",

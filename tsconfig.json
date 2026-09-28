@@ -12,6 +12,7 @@
 		"inlineSources": false,
 		"rootDir": ".",
 		"strict": true,
+		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
 		"jsx": "react-jsx",
 		"jsxImportSource": "preact"
