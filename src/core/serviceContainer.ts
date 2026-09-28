@@ -32,6 +32,7 @@ import { UserDirectoryService } from "../features/ai-template-files/services/use
 import { ConvertToMarkdownPanelService } from "../features/convert-to-markdown/convertToMarkdownPanelService";
 import { MarkitdownConversionService } from "../features/convert-to-markdown/markitdownConversionService";
 import { SquadDetectionService } from "../features/squad/squadDetectionService";
+import { SquadCliService } from "../features/squad/squadCliService";
 import { SquadFileService } from "../features/squad/services/squadFileService";
 import { SquadPresetProvider } from "../features/squad/models";
 import { CompositeSquadPresetProvider } from "../features/squad/services/compositeSquadPresetProvider";
@@ -76,6 +77,12 @@ export interface ServiceContainer {
   convertToMarkdown: ConvertToMarkdownPanelService;
   markitdownConversion: MarkitdownConversionService;
   squadDetection: SquadDetectionService;
+  /**
+   * Safe, allowlisted wrapper over the Squad CLI (SQD-005). Constructed lazily
+   * with no activation work; each invocation resolves the configured CLI source
+   * and spawns on demand.
+   */
+  squadCli: SquadCliService;
   /**
    * Read-only accessor for the workspace `.squad/` directory. Undefined when no
    * workspace folder is open, since the service is bound to a folder root.
@@ -147,7 +154,8 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const squadDetection = new SquadDetectionService();
   const squadWorkspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri;
   const squadFile = squadWorkspaceRoot ? new SquadFileService(squadWorkspaceRoot) : undefined;
-  // NOTE: SquadCliService (SQD-005, #220) will be registered here in a follow-up.
+  // SquadCliService (SQD-005, #220) — no work runs until a command is invoked.
+  const squadCli = new SquadCliService();
 
   // Preset discovery (SQD-017/018) aggregated behind one provider (SQD-019).
   // Built lazily so no preset listing or network work happens during activation.
@@ -207,6 +215,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     convertToMarkdown,
     markitdownConversion,
     squadDetection,
+    squadCli,
     squadFile,
     get squadPresets(): SquadPresetProvider {
       return getSquadPresets();

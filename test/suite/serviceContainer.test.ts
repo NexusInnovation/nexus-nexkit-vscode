@@ -71,6 +71,7 @@ suite("Unit: ServiceContainer", () => {
     assert.ok(services.convertToMarkdown, "ConvertToMarkdownPanelService should be initialized");
     assert.ok(services.markitdownConversion, "MarkitdownConversionService should be initialized");
     assert.ok(services.squadDetection, "SquadDetectionService should be initialized");
+    assert.ok(services.squadCli, "SquadCliService should be initialized");
   });
 
   test("Should bind SquadFileService when a workspace folder is open", () => {
