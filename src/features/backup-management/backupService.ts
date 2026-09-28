@@ -16,6 +16,13 @@ const TEMPLATE_FOLDERS = AI_TEMPLATE_FILE_TYPES;
 const MAX_BACKUPS = 5;
 
 /**
+ * Workspace-relative Squad artifacts backed up before an overwriting init or
+ * upgrade (FR-006). Directories are copied recursively; single files are
+ * copied with their parent directory preserved.
+ */
+const SQUAD_ARTIFACTS: readonly string[] = [".squad", path.join(".github", "agents", "squad.agent.md")];
+
+/**
  * Service for managing Nexkit template folder backups.
  * Stores backups in the user directory (via UserDirectoryService) instead of the workspace.
  */
@@ -196,6 +203,79 @@ export class GitHubTemplateBackupService {
         console.error(`Error cleaning up backup ${backup}:`, error);
       }
     }
+  }
+
+  /**
+   * Back up existing Squad artifacts (`.squad/` and
+   * `.github/agents/squad.agent.md`) before an overwriting init/upgrade (FR-006).
+   *
+   * Copies whatever exists into a fresh, timestamped `squad-<ts>` folder in the
+   * user backup directory and returns its absolute path. Returns `null` when no
+   * Squad artifacts are present (nothing to back up). Retention is intentionally
+   * NOT enforced here so a just-created backup cannot be pruned before a caller
+   * uses it for rollback; callers may invoke {@link cleanupBackups} afterwards.
+   *
+   * @param workspaceRoot Absolute path to the workspace root.
+   * @returns Absolute path to the created backup directory, or `null`.
+   */
+  public async backupSquadArtifacts(workspaceRoot: string): Promise<string | null> {
+    const present: string[] = [];
+    for (const relative of SQUAD_ARTIFACTS) {
+      if (await fileExists(path.join(workspaceRoot, relative))) {
+        present.push(relative);
+      }
+    }
+
+    if (present.length === 0) {
+      return null;
+    }
+
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/T/g, "_").replace(/:/g, "-");
+    const backupDir = this._userDirectoryService.getUserBackupDir();
+    const backupPath = path.join(backupDir, `squad-${timestamp}`);
+    await fs.promises.mkdir(backupPath, { recursive: true });
+
+    for (const relative of present) {
+      await this._copyArtifact(path.join(workspaceRoot, relative), path.join(backupPath, relative));
+    }
+
+    return backupPath;
+  }
+
+  /**
+   * Restore Squad artifacts from a backup created by
+   * {@link backupSquadArtifacts}, used to roll back a failed init.
+   *
+   * The current `.squad/` and `.github/agents/squad.agent.md` are removed first
+   * so the workspace is returned exactly to its backed-up state (artifacts that
+   * did not exist at backup time are left absent).
+   *
+   * @param workspaceRoot Absolute path to the workspace root.
+   * @param backupPath Absolute path returned by {@link backupSquadArtifacts}.
+   */
+  public async restoreSquadArtifacts(workspaceRoot: string, backupPath: string): Promise<void> {
+    for (const relative of SQUAD_ARTIFACTS) {
+      const current = path.join(workspaceRoot, relative);
+      if (await fileExists(current)) {
+        await fs.promises.rm(current, { recursive: true, force: true });
+      }
+    }
+
+    for (const relative of SQUAD_ARTIFACTS) {
+      const source = path.join(backupPath, relative);
+      if (await fileExists(source)) {
+        await this._copyArtifact(source, path.join(workspaceRoot, relative));
+      }
+    }
+  }
+
+  /** Copy a file or directory, creating the destination's parent directory. */
+  private async _copyArtifact(source: string, destination: string): Promise<void> {
+    const stats = await fs.promises.stat(source);
+    if (!stats.isDirectory()) {
+      await fs.promises.mkdir(path.dirname(destination), { recursive: true });
+    }
+    await copyDirectory(source, destination);
   }
 
   /**

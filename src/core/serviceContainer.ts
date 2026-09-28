@@ -38,6 +38,8 @@ import { SquadPresetProvider } from "../features/squad/models";
 import { CompositeSquadPresetProvider } from "../features/squad/services/compositeSquadPresetProvider";
 import { NexusMarketplacePresetProvider } from "../features/squad/services/nexusMarketplacePresetProvider";
 import { ExternalRepoPresetProvider } from "../features/squad/services/externalRepoPresetProvider";
+import { SquadPresetDownloadService } from "../features/squad/services/squadPresetDownloadService";
+import { SquadInitService } from "../features/squad/services/squadInitService";
 
 /**
  * Service container for dependency injection
@@ -95,6 +97,12 @@ export interface ServiceContainer {
    * discovery itself only runs when the panel requests the preset list.
    */
   readonly squadPresets: SquadPresetProvider;
+
+  /**
+   * Initialise Squad from a selected preset with a prior backup (SQD-020,
+   * FR-014/FR-006). Lazily constructed on first access — no activation work.
+   */
+  readonly squadInit: SquadInitService;
 }
 
 /**
@@ -170,6 +178,23 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     return squadPresetsProvider;
   };
 
+  // Squad init from preset (SQD-020) — lazily constructed so activation stays
+  // free of any preset/network/CLI work; it only runs when the panel requests
+  // an initialisation. Reuses BackupService for the FR-006 prior backup.
+  let squadInitService: SquadInitService | undefined;
+  const getSquadInit = (): SquadInitService => {
+    if (!squadInitService) {
+      squadInitService = new SquadInitService({
+        presetProvider: getSquadPresets(),
+        downloadService: new SquadPresetDownloadService(),
+        cli: squadCli,
+        backup,
+        detection: squadDetection,
+      });
+    }
+    return squadInitService;
+  };
+
   // Register for disposal
   context.subscriptions.push(logging);
   context.subscriptions.push(aiTemplateData);
@@ -219,6 +244,9 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     squadFile,
     get squadPresets(): SquadPresetProvider {
       return getSquadPresets();
+    },
+    get squadInit(): SquadInitService {
+      return getSquadInit();
     },
   };
 }
