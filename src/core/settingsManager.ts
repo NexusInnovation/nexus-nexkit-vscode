@@ -74,6 +74,11 @@ export class SettingsManager {
   private static readonly ACTIVE_DEVOPS_CONNECTION_KEY = "activeDevOpsConnection";
   private static readonly DEVOPS_CONNECTIONS_KEY = "devOpsConnections";
 
+  // Git Hooks settings
+  private static readonly GIT_HOOKS_ENABLED = "gitHooks.enabled";
+  private static readonly GIT_HOOKS_AUTO_SYNC = "gitHooks.autoSync";
+  private static readonly GIT_HOOKS_SCOPE = "gitHooks.scope";
+
   /**
    * Workspace-state keys for "Refuse Forever" confirmation dialogs.
    */
@@ -396,5 +401,36 @@ export class SettingsManager {
 
   static async setConfirmMcpWorkspaceServerRefused(serverName: string, value: boolean): Promise<void> {
     await this.setConfirmationRefusedForever(this.CONFIRMATION_KEYS.mcpWorkspaceServer(serverName), value);
+  }
+
+  // Git Hooks
+  static isGitHooksEnabled(): boolean {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<boolean>(this.GIT_HOOKS_ENABLED, false);
+  }
+
+  static async setGitHooksEnabled(value: boolean): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .update(this.GIT_HOOKS_ENABLED, value, vscode.ConfigurationTarget.Workspace);
+  }
+
+  static isGitHooksAutoSyncEnabled(): boolean {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<boolean>(this.GIT_HOOKS_AUTO_SYNC, true);
+  }
+
+  static async setGitHooksAutoSync(value: boolean): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .update(this.GIT_HOOKS_AUTO_SYNC, value, vscode.ConfigurationTarget.Workspace);
+  }
+
+  static getGitHooksScope(): string {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<string>(this.GIT_HOOKS_SCOPE, "");
+  }
+
+  static async setGitHooksScope(scope: string): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .update(this.GIT_HOOKS_SCOPE, scope, vscode.ConfigurationTarget.Workspace);
   }
 }

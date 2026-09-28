@@ -4,6 +4,7 @@ import { TemplateMetadataEntry, MetadataScanProgress } from "../../ai-template-f
 import { Profile } from "../../profile-management/models/profile";
 import { DevOpsConnection } from "../../apm-devops/models/devOpsConnection";
 import { WorkflowInfo } from "../../github-workflow-runner/githubWorkflowRunnerService";
+import { GitHooksWebviewMessage, GitHooksExtensionMessage, GitHooksStatusData } from "./gitHooksMessages";
 
 /**
  * Messages sent FROM the webview TO the extension
@@ -29,7 +30,9 @@ export type WebviewMessage =
   | { command: "setActiveDevOpsConnection"; connectionId: string }
   // GitHub workflow runner messages
   | { command: "listWorkflows" }
-  | { command: "runWorkflow"; workflowFile: string; job?: string; event: string; dryRun: boolean; list: boolean };
+  | { command: "runWorkflow"; workflowFile: string; job?: string; event: string; dryRun: boolean; list: boolean }
+  // Git hooks messages
+  | GitHooksWebviewMessage;
 
 /**
  * Messages sent FROM the extension TO the webview
@@ -95,4 +98,6 @@ export type ExtensionMessage =
   | {
       command: "workflowListUpdate";
       workflows: WorkflowInfo[];
-    };
+    }
+  // Git hooks messages
+  | GitHooksExtensionMessage;

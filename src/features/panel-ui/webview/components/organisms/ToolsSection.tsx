@@ -3,10 +3,11 @@ import { WorkflowRunnerTool } from "../molecules/WorkflowRunnerTool";
 import { CollapsibleSection } from "../molecules/CollapsibleSection";
 import { useVSCodeAPI } from "../../hooks/useVSCodeAPI";
 import { useAppState } from "../../hooks/useAppState";
+import { GitHooksSection } from "./GitHooksSection";
 
 /**
  * ToolsSection Component
- * Developer tools section with GitHub Workflow Runner.
+ * Developer tools section with GitHub Workflow Runner and Git Hooks.
  * The initialization prompt is handled globally by InitializationBanner.
  */
 export function ToolsSection() {
@@ -34,6 +35,7 @@ export function ToolsSection() {
       <CollapsibleSection id="tools-workflow-runner" title="GitHub Workflow Runner">
         <WorkflowRunnerTool />
       </CollapsibleSection>
+      <GitHooksSection />
     </>
   );
 }

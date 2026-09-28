@@ -1,5 +1,13 @@
 {
   "editor.formatOnSave": true,
   "debug.internalConsoleOptions": "neverOpen",
-  "githubPullRequests.ignoredPullRequestBranches": ["develop"]
+  "githubPullRequests.ignoredPullRequestBranches": [
+    "develop"
+  ],
+  "azureFunctions.deploySubpath": "infrastructure\\badge-service",
+  "azureFunctions.postDeployTask": "npm install (functions)",
+  "azureFunctions.projectLanguage": "TypeScript",
+  "azureFunctions.projectRuntime": "~4",
+  "azureFunctions.projectLanguageModel": 4,
+  "azureFunctions.preDeployTask": "npm prune (functions)"
 }

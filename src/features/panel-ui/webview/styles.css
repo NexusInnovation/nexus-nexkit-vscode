@@ -1417,3 +1417,101 @@ details[open] > .type-header::before {
 .mode-selection-note .codicon {
   font-size: 14px;
 }
+
+/* ===== GIT HOOKS SECTION ===== */
+
+.git-hooks-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.status-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  background-color: var(--vscode-editor-background);
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-label {
+  font-weight: 500;
+  color: var(--vscode-foreground);
+  flex-shrink: 0;
+}
+
+.status-value {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--vscode-descriptionForeground);
+  word-break: break-word;
+}
+
+.status-value.installed,
+.status-value.enabled,
+.status-value.available {
+  color: var(--vscode-testing-iconPassed);
+}
+
+.status-value.not-installed,
+.status-value.disabled,
+.status-value.unavailable {
+  color: var(--vscode-testing-iconFailed);
+}
+
+.status-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  color: var(--vscode-descriptionForeground);
+  font-style: italic;
+}
+
+.status-message {
+  padding: 6px 8px;
+  background-color: var(--vscode-editor-infoBackground);
+  color: var(--vscode-editor-infoForeground);
+  border-radius: 2px;
+  font-size: 0.85em;
+}
+
+.error-message {
+  padding: 8px;
+  background-color: var(--vscode-editor-errorBackground);
+  color: var(--vscode-editor-errorForeground);
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.buttons-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.buttons-container .action-button {
+  flex: 1;
+  min-width: 140px;
+  padding: 6px 12px;
+  font-size: 0.85em;
+}
+
+.info-note {
+  padding: 8px;
+  background-color: var(--vscode-editor-infoBackground);
+  color: var(--vscode-editor-infoForeground);
+  border-radius: 4px;
+  font-size: 0.85em;
+  line-height: 1.4;
+}
