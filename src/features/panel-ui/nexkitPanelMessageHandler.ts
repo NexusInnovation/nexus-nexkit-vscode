@@ -4,6 +4,7 @@ import { Commands } from "../../shared/constants/commands";
 import { WebviewMessage, ExtensionMessage } from "./types/webviewMessages";
 import { ServiceContainer } from "../../core/serviceContainer";
 import { getApmAgentDiagnostics } from "./utils/templateDiagnostics";
+import { SquadPanelMessageHandler } from "./squadPanelMessageHandler";
 
 /**
  * Handles message processing and business logic for the Nexkit panel webview
@@ -19,12 +20,14 @@ import { getApmAgentDiagnostics } from "./utils/templateDiagnostics";
  */
 export class NexkitPanelMessageHandler {
   private readonly _messageHandlers: Map<string, (message: WebviewMessage) => Promise<void>>;
+  private readonly _squadHandler: SquadPanelMessageHandler;
   private _lastApmEmptySignature: string | undefined;
 
   constructor(
     private readonly getWebview: () => vscode.WebviewView | undefined,
     private readonly _services: ServiceContainer
   ) {
+    this._squadHandler = new SquadPanelMessageHandler(_services, (message) => this.sendToWebview(message));
     this._messageHandlers = new Map([
       ["webviewReady", this.handleWebviewReady.bind(this)],
       ["initWorkspace", this.handleInitWorkspace.bind(this)],
@@ -81,9 +84,12 @@ export class NexkitPanelMessageHandler {
     const handler = this._messageHandlers.get(message.command);
     if (handler) {
       await handler(message);
-    } else {
-      console.warn(`[Nexkit] Unknown webview command: ${message.command}`);
+      return;
     }
+    if (await this._squadHandler.handle(message)) {
+      return;
+    }
+    console.warn(`[Nexkit] Unknown webview command: ${message.command}`);
   }
 
   public async initialize(): Promise<void> {
