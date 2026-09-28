@@ -19,6 +19,7 @@ import type {
   SquadPluginRef,
   SquadPreset,
   SquadRosterMember,
+  SquadUpdatesResult,
   SquadUpstreamSource,
   UnreachableSquadSource,
 } from "../../squad/models";
@@ -70,6 +71,7 @@ export type WebviewMessage =
   // Squad management messages (SQD-007; host routing implemented in #223)
   | { command: "getSquadState" }
   | { command: "refreshSquadDetection" }
+  | { command: "checkSquadUpdates" }
   | { command: "saveSquadCharter"; agentId: string; content: string }
   | { command: "saveSquadDoc"; kind: SquadDocKind; content: string }
   | { command: "runSquadDoctor" }
@@ -177,6 +179,10 @@ export type ExtensionMessage =
   | {
       command: "squadDoctorUpdate";
       doctor: SquadDoctorReport;
+    }
+  | {
+      command: "squadUpdatesUpdate";
+      updates: SquadUpdatesResult;
     }
   | {
       command: "squadExportResult";

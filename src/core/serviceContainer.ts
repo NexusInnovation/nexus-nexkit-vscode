@@ -40,6 +40,7 @@ import { NexusMarketplacePresetProvider } from "../features/squad/services/nexus
 import { ExternalRepoPresetProvider } from "../features/squad/services/externalRepoPresetProvider";
 import { SquadPresetDownloadService } from "../features/squad/services/squadPresetDownloadService";
 import { SquadInitService } from "../features/squad/services/squadInitService";
+import { SquadUpdateService } from "../features/squad/services/squadUpdateService";
 import { SquadExportService } from "../features/squad/services/squadExportService";
 import { SquadFileWriteService } from "../features/squad/services/squadFileWriteService";
 import { SquadPluginService } from "../features/squad/services/squadPluginService";
@@ -121,6 +122,12 @@ export interface ServiceContainer {
   readonly squadInit: SquadInitService;
 
   /**
+   * Detects available Squad CLI/project updates (SQD-030, FR-005). Lazily
+   * performs npm/detection work only when requested by the panel/command.
+   */
+  squadUpdates: SquadUpdateService;
+
+  /**
    * Export the current Squad through the allowlisted CLI (SQD-033). Lazily
    * prompts for a destination only when invoked.
    */
@@ -189,6 +196,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   // Detection delegates CLI probing to SquadCliService so a globally-installed
   // CLI is found across platforms (npm `squad.cmd`/`squad.ps1` shims on Windows).
   const squadDetection = new SquadDetectionService({ cliService: squadCli });
+  const squadUpdates = new SquadUpdateService({ detectionService: squadDetection });
   const squadPlugins = squadFile ? new SquadPluginService({ fileService: squadFile, cli: squadCli }) : undefined;
 
   // Preset discovery (SQD-017/018) aggregated behind one provider (SQD-019).
@@ -269,6 +277,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     squadCli,
     squadExport,
     squadFile,
+    squadUpdates,
     squadWrite,
     squadPlugins,
     get squadPresets(): SquadPresetProvider {
