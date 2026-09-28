@@ -26,7 +26,7 @@ import type {
   SquadUpdatesResult,
   SquadUpstreamSource,
 } from "../../../squad/models";
-import type { SquadLogDocument, SquadPluginActionResultState } from "../types/squadState";
+import type { SquadLogDocument, SquadPluginActionResultState, SquadUpstreamOperationState } from "../types/squadState";
 
 /**
  * Hook result for Squad state and actions.
@@ -134,6 +134,21 @@ export interface UseSquadStateResult {
    * re-runs detection — it never installs silently.
    */
   installCli: () => void;
+
+  /** Latest upstream operation (running / succeeded / failed), or `null`. */
+  upstreamOperation: SquadUpstreamOperationState | null;
+
+  /** Re-list upstreams through `squad upstream list` (FR-032). */
+  listUpstreams: () => void;
+
+  /** Add a free local / git / export upstream via `squad upstream add` (FR-031). */
+  addUpstream: (source: string, name?: string, ref?: string) => void;
+
+  /** Sync one upstream, or all when `name` is omitted (FR-032). */
+  syncUpstream: (name?: string) => void;
+
+  /** Remove an upstream; the host asks for confirmation first (FR-032). */
+  removeUpstream: (name: string) => void;
 }
 
 /**
@@ -191,6 +206,22 @@ export function useSquadState(): UseSquadStateResult {
     messenger.sendMessage({ command: "installSquadCli" });
   };
 
+  const listUpstreams = () => {
+    messenger.sendMessage({ command: "listSquadUpstreams" });
+  };
+
+  const addUpstream = (source: string, name?: string, ref?: string) => {
+    messenger.sendMessage({ command: "addSquadUpstream", source, name, ref });
+  };
+
+  const syncUpstream = (name?: string) => {
+    messenger.sendMessage({ command: "syncSquadUpstream", name });
+  };
+
+  const removeUpstream = (name: string) => {
+    messenger.sendMessage({ command: "removeSquadUpstream", name });
+  };
+
   return {
     isReady: squad.isReady,
     isLoading: squad.isLoading,
@@ -220,5 +251,10 @@ export function useSquadState(): UseSquadStateResult {
     runPluginAction,
     setCliInvocation,
     installCli,
+    upstreamOperation: squad.upstreamOperation,
+    listUpstreams,
+    addUpstream,
+    syncUpstream,
+    removeUpstream,
   };
 }

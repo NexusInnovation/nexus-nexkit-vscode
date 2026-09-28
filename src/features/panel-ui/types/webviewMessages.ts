@@ -24,6 +24,7 @@ import type {
   SquadUpstreamRecommendations,
   SquadUpdatesResult,
   SquadUpstreamSource,
+  SquadUpstreamOperation,
   UnreachableSquadSource,
 } from "../../squad/models";
 import type { SquadLogDocument } from "../webview/types/squadState";
@@ -100,7 +101,12 @@ export type WebviewMessage =
   | { command: "initSquadFromPreset"; presetId: string }
   // Squad CLI setup (SQD-025 / #240): choose npm-global / npx / custom path, or install the CLI
   | { command: "setSquadCliInvocation"; source: SquadCliSource; cliPath?: string }
-  | { command: "installSquadCli" };
+  | { command: "installSquadCli" }
+  // Squad upstream operations via `squad upstream` (SQD-036 / #251, FR-031/FR-032)
+  | { command: "listSquadUpstreams" }
+  | { command: "addSquadUpstream"; source: string; name?: string; ref?: string }
+  | { command: "syncSquadUpstream"; name?: string }
+  | { command: "removeSquadUpstream"; name: string };
 
 /**
  * Messages sent FROM the extension TO the webview
@@ -269,5 +275,20 @@ export type ExtensionMessage =
       command: "squadInitResult";
       presetId: string;
       ok: boolean;
+      error?: SquadError;
+    }
+  // Squad upstream operations (SQD-036 / #251, FR-031/FR-032)
+  | {
+      command: "squadUpstreamOperationStarted";
+      operation: SquadUpstreamOperation;
+      name?: string;
+    }
+  | {
+      command: "squadUpstreamOperationResult";
+      operation: SquadUpstreamOperation;
+      name?: string;
+      ok: boolean;
+      /** Upstreams re-read from `.squad/upstream.json` after the operation (also on failure). */
+      upstreams: SquadUpstreamSource[];
       error?: SquadError;
     };
