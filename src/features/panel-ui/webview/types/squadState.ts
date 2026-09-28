@@ -3,8 +3,8 @@
  *
  * Models everything the Squad tab (#224) will render: detection status and
  * versions, roster and charters, editable governance docs, read-only logs,
- * upstreams/plugins, preset selection, doctor diagnostics, plus loading and
- * error states. Covers PRD FR-020, FR-021, FR-022 (and prepares FR-023..FR-025,
+ * upstreams/plugins, doctor diagnostics, plus loading and error states. Covers
+ * PRD FR-020, FR-021, FR-022 (and prepares FR-023..FR-025,
  * FR-060) while reusing the SQD-001 domain types.
  *
  * All types are serialisable and imported type-only from `../../../squad/models`
@@ -21,7 +21,6 @@ import type {
   SquadError,
   SquadMarkdownDoc,
   SquadPluginRef,
-  SquadPreset,
   SquadRosterMember,
   SquadUpstreamSource,
   UnreachableSquadSource,
@@ -175,12 +174,6 @@ export interface SquadState {
   /** Installed plugins shown in the status area (FR-021). */
   plugins: SquadPluginRef[];
 
-  /** Presets available from Nexus plugins (FR-010). */
-  presets: SquadPreset[];
-
-  /** Currently selected preset id, or `null` when none is selected. */
-  selectedPresetId: string | null;
-
   /** Latest Squad Doctor report (FR-060), when one has been produced. */
   doctor: SquadDoctorReport | null;
 
@@ -201,8 +194,6 @@ export const initialSquadState: SquadState = {
   logs: [],
   upstreams: [],
   plugins: [],
-  presets: [],
-  selectedPresetId: null,
   doctor: null,
   presetPicker: initialSquadPresetPickerState,
 };

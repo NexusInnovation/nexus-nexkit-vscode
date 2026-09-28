@@ -196,18 +196,6 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
           }));
           break;
 
-        case "squadPresetsUpdate":
-          setState((prev) => ({
-            ...prev,
-            squad: {
-              ...prev.squad,
-              presets: message.presets,
-              selectedPresetId:
-                message.selectedPresetId !== undefined ? message.selectedPresetId : prev.squad.selectedPresetId,
-            },
-          }));
-          break;
-
         case "squadDoctorUpdate":
           setState((prev) => ({
             ...prev,
@@ -318,7 +306,6 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     const unsubscribeSquadRoster = messenger.onMessage("squadRosterUpdate", handleMessage);
     const unsubscribeSquadDocs = messenger.onMessage("squadDocsUpdate", handleMessage);
     const unsubscribeSquadLogs = messenger.onMessage("squadLogsUpdate", handleMessage);
-    const unsubscribeSquadPresets = messenger.onMessage("squadPresetsUpdate", handleMessage);
     const unsubscribeSquadDoctor = messenger.onMessage("squadDoctorUpdate", handleMessage);
     const unsubscribeSquadLoading = messenger.onMessage("squadLoading", handleMessage);
     const unsubscribeSquadError = messenger.onMessage("squadError", handleMessage);
@@ -347,7 +334,6 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       unsubscribeSquadRoster();
       unsubscribeSquadDocs();
       unsubscribeSquadLogs();
-      unsubscribeSquadPresets();
       unsubscribeSquadDoctor();
       unsubscribeSquadLoading();
       unsubscribeSquadError();

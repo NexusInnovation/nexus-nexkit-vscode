@@ -185,13 +185,11 @@ suite("Unit: Squad read-only display (SQD-024)", () => {
       assert.strictEqual(initialSquadState.decisions, null);
       assert.strictEqual(initialSquadState.routing, null);
       assert.strictEqual(initialSquadState.doctor, null);
-      assert.strictEqual(initialSquadState.selectedPresetId, null);
       assert.deepStrictEqual(initialSquadState.roster, []);
       assert.deepStrictEqual(initialSquadState.charters, []);
       assert.deepStrictEqual(initialSquadState.logs, []);
       assert.deepStrictEqual(initialSquadState.upstreams, []);
       assert.deepStrictEqual(initialSquadState.plugins, []);
-      assert.deepStrictEqual(initialSquadState.presets, []);
     });
 
     test("Should wire the default Squad slice into the global AppState", () => {

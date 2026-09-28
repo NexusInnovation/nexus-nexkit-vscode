@@ -51,8 +51,6 @@ export type WebviewMessage =
   | { command: "refreshSquadDetection" }
   | { command: "saveSquadCharter"; agentId: string; content: string }
   | { command: "saveSquadDoc"; kind: SquadDocKind; content: string }
-  | { command: "selectSquadPreset"; presetId: string }
-  | { command: "applySquadPreset"; presetId: string }
   | { command: "runSquadDoctor" }
   // Squad preset selection screen (SQD-019 / #234)
   | { command: "listSquadPresets" }
@@ -146,11 +144,6 @@ export type ExtensionMessage =
   | {
       command: "squadLogsUpdate";
       logs: SquadLogDocument[];
-    }
-  | {
-      command: "squadPresetsUpdate";
-      presets: SquadPreset[];
-      selectedPresetId?: string | null;
     }
   | {
       command: "squadDoctorUpdate";
