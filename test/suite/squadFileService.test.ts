@@ -9,7 +9,7 @@ import * as path from "path";
 import * as os from "os";
 import * as vscode from "vscode";
 import { SquadFileService, SquadLogKind, SQUAD_MAX_READ_BYTES } from "../../src/features/squad/services/squadFileService";
-import { isSquadOk, isSquadErr, SquadDocKind, SquadUpstreamKind } from "../../src/features/squad/models";
+import { isSquadOk, isSquadErr, SquadDocKind, SquadMarketplaceKind, SquadUpstreamKind } from "../../src/features/squad/models";
 
 const TEAM_MD = `# Squad Team
 
@@ -231,6 +231,56 @@ suite("Unit: SquadFileService", () => {
     const result = await service.readUpstreams();
     assert.ok(isSquadErr(result));
     assert.strictEqual(result.error.code, "parse-failed");
+  });
+
+  // --- plugin marketplaces (FR-042) ---
+
+  test("readPluginMarketplaces parses marketplace entries from the manifest", async () => {
+    writeFile(
+      ".squad/plugins/marketplaces.json",
+      JSON.stringify({
+        marketplaces: [
+          "NexusInnovation/nexus-plugin-marketplace#main",
+          {
+            id: "team",
+            displayName: "Team Marketplace",
+            type: "url",
+            url: "https://example.com/team-marketplace.json",
+            enabled: false,
+            ref: "stable",
+            lastRefresh: "2026-09-28T00:00:00Z",
+          },
+        ],
+      })
+    );
+
+    const result = await service.readPluginMarketplaces();
+
+    assert.ok(isSquadOk(result));
+    assert.strictEqual(result.value.length, 2);
+    assert.strictEqual(result.value[0].id, "nexus-plugin-marketplace");
+    assert.strictEqual(result.value[0].kind, SquadMarketplaceKind.GitHub);
+    assert.strictEqual(result.value[0].enabled, true);
+    assert.strictEqual(result.value[1].id, "team");
+    assert.strictEqual(result.value[1].displayName, "Team Marketplace");
+    assert.strictEqual(result.value[1].kind, SquadMarketplaceKind.Url);
+    assert.strictEqual(result.value[1].enabled, false);
+    assert.strictEqual(result.value[1].ref, "stable");
+    assert.strictEqual(result.value[1].lastRefreshedAt, Date.parse("2026-09-28T00:00:00Z"));
+  });
+
+  test("readPluginMarketplaces returns an empty list when the manifest is absent", async () => {
+    const result = await service.readPluginMarketplaces();
+    assert.ok(isSquadOk(result));
+    assert.deepStrictEqual(result.value, []);
+  });
+
+  test("readPluginMarketplaces fails with parse-failed on invalid JSON", async () => {
+    writeFile(".squad/plugins/marketplaces.json", "{ not json ");
+    const result = await service.readPluginMarketplaces();
+    assert.ok(isSquadErr(result));
+    assert.strictEqual(result.error.code, "parse-failed");
+    assert.ok(result.error.remediation);
   });
 
   test("readUpstreams fails with parse-failed when the manifest shape is unsupported", async () => {

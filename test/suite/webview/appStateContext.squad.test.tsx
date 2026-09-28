@@ -63,6 +63,7 @@ suite("AppStateContext — Squad messages", () => {
       command: "squadStatusUpdate",
       detection,
       upstreams: [{ id: "up", kind: "local", reference: "../peer" }],
+      marketplaces: [{ id: "market", source: "NexusInnovation/nexus-plugin-marketplace", kind: "github", enabled: true }],
       plugins: [{ id: "plug", enabled: true }],
     });
 
@@ -72,7 +73,26 @@ suite("AppStateContext — Squad messages", () => {
     assert.strictEqual(state.error, null, "a successful status update must clear the previous error");
     assert.strictEqual(state.detection?.project.installState, detection.project.installState);
     assert.strictEqual(state.upstreams.length, 1);
+    assert.strictEqual(state.marketplaces.length, 1);
     assert.strictEqual(state.plugins.length, 1);
+  });
+
+  test("squadPluginsUpdate stores marketplaces and plugins while clearing loading/error", () => {
+    const squad = renderProbe();
+    send({ command: "squadError", error: makeError() });
+    send({ command: "squadLoading", isLoading: true });
+
+    send({
+      command: "squadPluginsUpdate",
+      marketplaces: [{ id: "core", source: "NexusInnovation/nexus-plugin-marketplace", kind: "github", enabled: true }],
+      plugins: [{ id: "greffondors", marketplace: "core", enabled: false, status: "disabled" }],
+    });
+
+    const state = squad();
+    assert.strictEqual(state.isLoading, false);
+    assert.strictEqual(state.error, null);
+    assert.strictEqual(state.marketplaces[0].id, "core");
+    assert.strictEqual(state.plugins[0].enabled, false);
   });
 
   test("squadLoading toggles the in-flight flag both ways", () => {

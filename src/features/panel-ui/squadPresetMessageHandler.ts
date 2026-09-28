@@ -122,6 +122,7 @@ export class SquadPresetMessageHandler {
         command: "squadStatusUpdate",
         detection: result.value.detection,
         upstreams: [],
+        marketplaces: [],
         plugins: [],
       });
     }
