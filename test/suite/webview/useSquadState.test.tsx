@@ -2,8 +2,8 @@
  * useSquadState (SQD-007) — selectors + action message plumbing.
  *
  * Verifies each action posts exactly the message the host expects (with its
- * payload). The VS Code bridge is mocked; only the posted messages are asserted
- * (components stay purely presentational).
+ * payload). Preset selection is covered by useSquadPresets; this suite only
+ * asserts the host messages exposed by the Squad state hook.
  */
 
 import * as assert from "assert";

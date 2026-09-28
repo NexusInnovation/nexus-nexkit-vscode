@@ -41,6 +41,7 @@ import { ExternalRepoPresetProvider } from "../features/squad/services/externalR
 import { SquadPresetDownloadService } from "../features/squad/services/squadPresetDownloadService";
 import { SquadInitService } from "../features/squad/services/squadInitService";
 import { SquadUpdateService } from "../features/squad/services/squadUpdateService";
+import { SquadFileWriteService } from "../features/squad/services/squadFileWriteService";
 import { SquadPluginService } from "../features/squad/services/squadPluginService";
 
 /**
@@ -92,6 +93,12 @@ export interface ServiceContainer {
    * workspace folder is open, since the service is bound to a folder root.
    */
   squadFile?: SquadFileService;
+
+  /**
+   * Controlled writer for allowlisted Squad markdown files. Undefined when no
+   * workspace folder is open; every write invokes BackupService first (SQD-026).
+   */
+  squadWrite?: SquadFileWriteService;
 
   /**
    * Read-only Squad plugin inventory (SQD-038): marketplaces from
@@ -175,6 +182,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   // the first open workspace folder when one exists.
   const squadWorkspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri;
   const squadFile = squadWorkspaceRoot ? new SquadFileService(squadWorkspaceRoot) : undefined;
+  const squadWrite = squadWorkspaceRoot ? new SquadFileWriteService(squadWorkspaceRoot, backup, logging) : undefined;
   // SquadCliService (SQD-005, #220) — no work runs until a command is invoked.
   const squadCli = new SquadCliService();
   // Detection delegates CLI probing to SquadCliService so a globally-installed
@@ -261,6 +269,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     squadCli,
     squadFile,
     squadUpdates,
+    squadWrite,
     squadPlugins,
     get squadPresets(): SquadPresetProvider {
       return getSquadPresets();

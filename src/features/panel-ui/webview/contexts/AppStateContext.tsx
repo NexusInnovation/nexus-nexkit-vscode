@@ -234,6 +234,38 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
           }));
           break;
 
+        case "squadCharterSaved":
+          setState((prev) => {
+            const existingIndex = prev.squad.charters.findIndex((charter) => charter.agentId === message.charter.agentId);
+            const charters =
+              existingIndex >= 0
+                ? prev.squad.charters.map((charter, index) => (index === existingIndex ? message.charter : charter))
+                : [...prev.squad.charters, message.charter];
+            return {
+              ...prev,
+              squad: {
+                ...prev.squad,
+                charters,
+                error: null,
+                isLoading: false,
+              },
+            };
+          });
+          break;
+
+        case "squadDocSaved":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              decisions: message.doc.kind === "decisions" ? message.doc : prev.squad.decisions,
+              routing: message.doc.kind === "routing" ? message.doc : prev.squad.routing,
+              error: null,
+              isLoading: false,
+            },
+          }));
+          break;
+
         case "squadLoading":
           setState((prev) => ({
             ...prev,
@@ -336,6 +368,8 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     const unsubscribeSquadLogs = messenger.onMessage("squadLogsUpdate", handleMessage);
     const unsubscribeSquadDoctor = messenger.onMessage("squadDoctorUpdate", handleMessage);
     const unsubscribeSquadUpdates = messenger.onMessage("squadUpdatesUpdate", handleMessage);
+    const unsubscribeSquadCharterSaved = messenger.onMessage("squadCharterSaved", handleMessage);
+    const unsubscribeSquadDocSaved = messenger.onMessage("squadDocSaved", handleMessage);
     const unsubscribeSquadLoading = messenger.onMessage("squadLoading", handleMessage);
     const unsubscribeSquadError = messenger.onMessage("squadError", handleMessage);
     const unsubscribeSquadPresetsDiscovered = messenger.onMessage("squadPresetsDiscovered", handleMessage);
@@ -366,6 +400,8 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       unsubscribeSquadLogs();
       unsubscribeSquadDoctor();
       unsubscribeSquadUpdates();
+      unsubscribeSquadCharterSaved();
+      unsubscribeSquadDocSaved();
       unsubscribeSquadLoading();
       unsubscribeSquadError();
       unsubscribeSquadPresetsDiscovered();
