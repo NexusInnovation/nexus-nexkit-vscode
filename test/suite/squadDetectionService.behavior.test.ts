@@ -13,7 +13,7 @@
 import * as assert from "assert";
 import * as vscode from "vscode";
 import {
-  SquadCliRunResult,
+  SquadCliProbe,
   SquadDetectionService,
   SquadFileReader,
 } from "../../src/features/squad/squadDetectionService";
@@ -25,6 +25,8 @@ import {
   SquadVersionStatus,
   isSquadErr,
   isSquadOk,
+  squadErr,
+  squadOk,
 } from "../../src/features/squad/models";
 
 const ROOT = vscode.Uri.file("/tmp/workspace");
@@ -70,14 +72,31 @@ function allMarkers(agentContent: string): Record<string, string | true> {
   };
 }
 
-const cliNotFound = async (): Promise<SquadCliRunResult> => ({ found: false, stdout: "", timedOut: false });
+const cliMissing: SquadCliProbe = {
+  async probeCli() {
+    return squadErr({ code: "cli-not-found", message: "not found", remediation: "install it" });
+  },
+};
+
+/** Probe fake that reports a version for a single source (default: global). */
+function cliFound(version: string, source: SquadCliSource = SquadCliSource.Global): SquadCliProbe {
+  return {
+    async probeCli(options) {
+      const requested = options?.source ?? SquadCliSource.Npx;
+      if (requested === source) {
+        return squadOk({ version, source });
+      }
+      return squadErr({ code: "cli-not-found", message: "not found", remediation: "install it" });
+    },
+  } as SquadCliProbe;
+}
 
 suite("Unit: SquadDetectionService — detection scenarios (SQD-022)", () => {
   suite("Marker presence (FR-001)", () => {
     test("Should report not-installed when .squad is absent entirely", async () => {
       const service = new SquadDetectionService({
         fileReader: fakeReader({}),
-        cliRunner: cliNotFound,
+        cliService: cliMissing,
         logger: silentLogger,
       });
 
@@ -95,7 +114,7 @@ suite("Unit: SquadDetectionService — detection scenarios (SQD-022)", () => {
           ".ai-team/config.json": "{}",
           ".ai-team/team.md": "roster",
         }),
-        cliRunner: cliNotFound,
+        cliService: cliMissing,
         logger: silentLogger,
       });
 
@@ -111,7 +130,7 @@ suite("Unit: SquadDetectionService — detection scenarios (SQD-022)", () => {
     test("Should report partial when only the agent marker is present", async () => {
       const service = new SquadDetectionService({
         fileReader: fakeReader({ ".github/agents/squad.agent.md": "<!-- version: 1.0.0 -->" }),
-        cliRunner: cliNotFound,
+        cliService: cliMissing,
         logger: silentLogger,
       });
 
@@ -130,7 +149,7 @@ suite("Unit: SquadDetectionService — detection scenarios (SQD-022)", () => {
           ".squad/config.json": "",
           ".squad/team.md": "",
         }),
-        cliRunner: cliNotFound,
+        cliService: cliMissing,
         logger: silentLogger,
       });
 
@@ -147,7 +166,7 @@ suite("Unit: SquadDetectionService — detection scenarios (SQD-022)", () => {
     test("Should expose the source sentinel and stay unknown even with a latest version", async () => {
       const service = new SquadDetectionService({
         fileReader: fakeReader(allMarkers(`<!-- version: ${SQUAD_SOURCE_VERSION} -->`)),
-        cliRunner: cliNotFound,
+        cliService: cliMissing,
         logger: silentLogger,
         latestProjectVersion: "9.9.9",
       });
@@ -162,7 +181,7 @@ suite("Unit: SquadDetectionService — detection scenarios (SQD-022)", () => {
     test("Should degrade a malformed stamp to unknown without failing detection", async () => {
       const service = new SquadDetectionService({
         fileReader: fakeReader(allMarkers("<!-- version: banana -->")),
-        cliRunner: cliNotFound,
+        cliService: cliMissing,
         logger: silentLogger,
         latestProjectVersion: "2.0.0",
       });
@@ -179,7 +198,7 @@ suite("Unit: SquadDetectionService — detection scenarios (SQD-022)", () => {
     test("Should parse a CRLF-terminated stamp", async () => {
       const service = new SquadDetectionService({
         fileReader: fakeReader(allMarkers("<!-- version: 4.5.6 -->\r\n# agent\r\n")),
-        cliRunner: cliNotFound,
+        cliService: cliMissing,
         logger: silentLogger,
       });
 
@@ -192,7 +211,7 @@ suite("Unit: SquadDetectionService — detection scenarios (SQD-022)", () => {
     test("Should report up-to-date when the project version is newer than the latest known", async () => {
       const service = new SquadDetectionService({
         fileReader: fakeReader(allMarkers("<!-- version: 2.0.0 -->")),
-        cliRunner: cliNotFound,
+        cliService: cliMissing,
         logger: silentLogger,
         latestProjectVersion: "1.5.0",
       });
@@ -206,7 +225,7 @@ suite("Unit: SquadDetectionService — detection scenarios (SQD-022)", () => {
     test("Should stay unknown when the latest version is not comparable", async () => {
       const service = new SquadDetectionService({
         fileReader: fakeReader(allMarkers("<!-- version: 1.0.0 -->")),
-        cliRunner: cliNotFound,
+        cliService: cliMissing,
         logger: silentLogger,
         latestProjectVersion: "not-a-version",
       });
@@ -230,7 +249,7 @@ suite("Unit: SquadDetectionService — detection scenarios (SQD-022)", () => {
       };
       const service = new SquadDetectionService({
         fileReader: reader,
-        cliRunner: cliNotFound,
+        cliService: cliMissing,
         logger: silentLogger,
       });
 
@@ -243,12 +262,14 @@ suite("Unit: SquadDetectionService — detection scenarios (SQD-022)", () => {
     });
   });
 
-  suite("CLI resilience (FR-003)", () => {
-    test("Should treat a CLI runner rejection as not installed", async () => {
+  suite("CLI resilience (FR-003, FR-004)", () => {
+    test("Should treat a CLI probe rejection as not installed", async () => {
       const service = new SquadDetectionService({
         fileReader: fakeReader({}),
-        cliRunner: async () => {
-          throw new Error("spawn failed");
+        cliService: {
+          async probeCli() {
+            throw new Error("spawn failed");
+          },
         },
         logger: silentLogger,
       });
@@ -260,13 +281,21 @@ suite("Unit: SquadDetectionService — detection scenarios (SQD-022)", () => {
       assert.strictEqual(result.value.cli.versionStatus, SquadVersionStatus.Unknown);
     });
 
-    test("Should fall back to --version after the version subcommand times out", async () => {
+    test("Should keep probing later locations after an earlier source times out", async () => {
       const service = new SquadDetectionService({
         fileReader: fakeReader({}),
-        cliRunner: async (_command, args) =>
-          args[0] === "version"
-            ? { found: true, stdout: "", timedOut: true }
-            : { found: true, stdout: "squad 5.6.7", timedOut: false },
+        cliService: {
+          async probeCli(options) {
+            const source = options?.source ?? SquadCliSource.Npx;
+            if (source === SquadCliSource.Custom) {
+              return squadErr({ code: "cli-timeout", message: "timed out", remediation: "retry" });
+            }
+            if (source === SquadCliSource.Global) {
+              return squadOk({ version: "5.6.7", source: SquadCliSource.Global });
+            }
+            return squadErr({ code: "cli-not-found", message: "not found", remediation: "install it" });
+          },
+        },
         logger: silentLogger,
       });
 
@@ -277,10 +306,10 @@ suite("Unit: SquadDetectionService — detection scenarios (SQD-022)", () => {
       assert.strictEqual(result.value.cli.cliVersion, "5.6.7");
     });
 
-    test("Should parse a prerelease CLI version token", async () => {
+    test("Should surface a prerelease CLI version token", async () => {
       const service = new SquadDetectionService({
         fileReader: fakeReader({}),
-        cliRunner: async () => ({ found: true, stdout: "squad 3.2.1-beta.2\n", timedOut: false }),
+        cliService: cliFound("3.2.1-beta.2", SquadCliSource.Global),
         logger: silentLogger,
       });
 
@@ -290,10 +319,14 @@ suite("Unit: SquadDetectionService — detection scenarios (SQD-022)", () => {
       assert.strictEqual(result.value.cli.cliVersion, "3.2.1-beta.2");
     });
 
-    test("Should report not installed when output carries no version token", async () => {
+    test("Should report not installed when the probe cannot determine a version", async () => {
       const service = new SquadDetectionService({
         fileReader: fakeReader({}),
-        cliRunner: async () => ({ found: true, stdout: "no version anywhere", timedOut: false }),
+        cliService: {
+          async probeCli() {
+            return squadErr({ code: "version-unknown", message: "unknown", remediation: "upgrade" });
+          },
+        },
         logger: silentLogger,
       });
 
@@ -307,7 +340,7 @@ suite("Unit: SquadDetectionService — detection scenarios (SQD-022)", () => {
     test("Should flag an update-available CLI against a newer published version", async () => {
       const service = new SquadDetectionService({
         fileReader: fakeReader({}),
-        cliRunner: async () => ({ found: true, stdout: "squad 1.0.0", timedOut: false }),
+        cliService: cliFound("1.0.0", SquadCliSource.Global),
         logger: silentLogger,
         latestCliVersion: "1.2.0",
       });
@@ -340,7 +373,7 @@ suite("Unit: SquadDetectionService — detection scenarios (SQD-022)", () => {
       };
       const service = new SquadDetectionService({
         fileReader: reader,
-        cliRunner: cliNotFound,
+        cliService: cliMissing,
         logger: silentLogger,
       });
 
@@ -357,7 +390,7 @@ suite("Unit: SquadDetectionService — detection scenarios (SQD-022)", () => {
       const winRoot = vscode.Uri.file("C:\\Users\\dev\\my-project");
       const service = new SquadDetectionService({
         fileReader: fakeReader(allMarkers("<!-- version: 7.8.9 -->")),
-        cliRunner: cliNotFound,
+        cliService: cliMissing,
         logger: silentLogger,
       });
 
@@ -377,7 +410,7 @@ suite("Unit: SquadDetectionService — detection scenarios (SQD-022)", () => {
       try {
         const service = new SquadDetectionService({
           fileReader: fakeReader({}),
-          cliRunner: cliNotFound,
+          cliService: cliMissing,
           logger: silentLogger,
         });
 
@@ -401,7 +434,7 @@ suite("Unit: SquadDetectionService — detection scenarios (SQD-022)", () => {
     test("Should report the global source when no custom path is configured", async () => {
       const service = new SquadDetectionService({
         fileReader: fakeReader({}),
-        cliRunner: async () => ({ found: true, stdout: "squad 1.0.0", timedOut: false }),
+        cliService: cliFound("1.0.0", SquadCliSource.Global),
         logger: silentLogger,
       });
 

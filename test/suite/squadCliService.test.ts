@@ -331,6 +331,62 @@ suite("Unit: SquadCliService", () => {
     });
   });
 
+  suite("probeCli (FR-003, FR-004)", () => {
+    test("Should return the parsed version and resolved source", async () => {
+      const service = new SquadCliService({
+        runner: fakeRunner({ stdout: "squad version 1.4.0\n" }),
+        logger: silentLogger,
+        cliSource: SquadCliSource.Global,
+      });
+
+      const result = await service.probeCli();
+
+      assert.strictEqual(result.ok, true);
+      if (result.ok) {
+        assert.strictEqual(result.value.version, "1.4.0");
+        assert.strictEqual(result.value.source, SquadCliSource.Global);
+      }
+    });
+
+    test("Should honor a per-call source override without mutating the service", async () => {
+      const captured: { request?: SquadSpawnRequest } = {};
+      const service = new SquadCliService({
+        runner: fakeRunner({ stdout: "1.0.0" }, captured),
+        logger: silentLogger,
+        cliSource: SquadCliSource.Global,
+      });
+
+      const result = await service.probeCli({ source: SquadCliSource.Npx });
+
+      assert.strictEqual(result.ok, true);
+      if (result.ok) {
+        assert.strictEqual(result.value.source, SquadCliSource.Npx);
+      }
+      // The override resolved an npx invocation for this call only.
+      assert.strictEqual(captured.request?.command, "npx");
+      assert.deepStrictEqual(captured.request?.args, [
+        "--yes",
+        "@bradygaster/squad-cli",
+        "version",
+      ]);
+    });
+
+    test("Should surface cli-not-found when the executable is missing", async () => {
+      const service = new SquadCliService({
+        runner: fakeRunner({ exitCode: null, spawnErrorCode: "ENOENT" }),
+        logger: silentLogger,
+        cliSource: SquadCliSource.Global,
+      });
+
+      const result = await service.probeCli();
+
+      assert.strictEqual(result.ok, false);
+      if (!result.ok) {
+        assert.strictEqual(result.error.code, "cli-not-found");
+      }
+    });
+  });
+
   suite("timeout selection", () => {
     test("Should use the command default timeout when not overridden", async () => {
       const captured: { request?: SquadSpawnRequest } = {};

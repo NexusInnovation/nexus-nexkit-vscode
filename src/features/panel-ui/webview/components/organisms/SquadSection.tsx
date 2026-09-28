@@ -1,5 +1,6 @@
 import { useEffect } from "preact/hooks";
 import { useSquadState } from "../../hooks/useSquadState";
+import { SkeletonList } from "../atoms/Skeleton";
 import { SquadErrorNotice } from "../molecules/SquadErrorNotice";
 import { CollapsibleSection } from "../molecules/CollapsibleSection";
 import { SquadStatusSection } from "./SquadStatusSection";
@@ -62,7 +63,7 @@ export function SquadSection() {
             </button>
           </>
         ) : (
-          <p class="loading">Detecting Squad…</p>
+          <SkeletonList label="Detecting Squad" rows={4} withHeader />
         )}
       </div>
     );

@@ -1,4 +1,5 @@
 import { useProfileData } from "../../hooks/useProfileData";
+import { SkeletonList } from "../atoms/Skeleton";
 import { ProfileInfoTooltip } from "../atoms/ProfileInfoTooltip";
 
 /**
@@ -10,7 +11,7 @@ export function ProfileSection() {
 
   return (
     <>
-      {!isReady && <p class="loading">Loading profiles...</p>}
+      {!isReady && <SkeletonList label="Loading profiles" rows={3} />}
       {isReady && profiles.length === 0 && (
         <p class="empty-message">
           No saved profiles yet. Save your current template configuration to quickly apply it to other projects.

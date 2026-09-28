@@ -1,5 +1,4 @@
 import * as vscode from "vscode";
-import { execFile } from "child_process";
 import { LoggingService } from "../../shared/services/loggingService";
 import {
   SQUAD_MARKER_FILES,
@@ -16,15 +15,27 @@ import {
   squadErr,
   squadOk,
 } from "./models";
+import { SquadCliService } from "./squadCliService";
 import { SQUAD_AGENT_MARKER, parseSquadProjectVersion } from "./squadProjectVersionReader";
-
-/**
- * Matches a semver-like version token in arbitrary CLI output (FR-003).
- */
-const CLI_VERSION_PATTERN = /(\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?)/;
 
 /** Default timeout for the non-interactive `squad version` call (FR-003). */
 const DEFAULT_CLI_TIMEOUT_MS = 5000;
+
+/**
+ * Order in which the CLI is probed across local install locations (FR-003,
+ * FR-004). A configured custom path wins, otherwise a global install is the
+ * common case. Cross-platform executable resolution (Windows `.cmd`/`.ps1`
+ * shims, POSIX `PATH`) is handled by the underlying process runner used by
+ * {@link SquadCliService}.
+ *
+ * `npx` is intentionally excluded: it is a download-on-demand *runner*, not an
+ * install location. Probing it would run `npx --yes …`, which fetches the
+ * package over the network (slow on every panel refresh) and can leave a
+ * process tree that hangs detection on Windows — freezing the panel. `npx`
+ * remains available for explicit user-initiated CLI commands, where a spinner
+ * and longer timeout are appropriate.
+ */
+const CLI_PROBE_SOURCES: readonly SquadCliSource[] = [SquadCliSource.Custom, SquadCliSource.Global];
 
 /** Abstraction over reading workspace files, injectable for tests. */
 export interface SquadFileReader {
@@ -35,41 +46,41 @@ export interface SquadFileReader {
   readFile(uri: vscode.Uri): Promise<string>;
 }
 
-/** Outcome of a single Squad CLI invocation. */
-export interface SquadCliRunResult {
-  /** Whether the executable was found and could be launched. */
-  found: boolean;
-
-  /** Captured stdout (or stderr fallback), when the process ran. */
-  stdout: string;
-
-  /** Whether the process was killed after exceeding the timeout. */
-  timedOut: boolean;
+/**
+ * Minimal CLI-probe seam consumed by detection. Backed in production by
+ * {@link SquadCliService}, which spawns the CLI through a cross-platform,
+ * shell-safe process runner. Injectable so unit tests need not spawn processes.
+ */
+export interface SquadCliProbe {
+  /**
+   * Probe the CLI for a given source, returning the parsed version and the
+   * resolved source, or an actionable error (e.g. `cli-not-found`).
+   */
+  probeCli(options?: {
+    timeoutMs?: number;
+    source?: SquadCliSource;
+    token?: vscode.CancellationToken;
+  }): Promise<SquadResult<{ version: string; source: SquadCliSource }>>;
 }
-
-/** Runs the Squad CLI non-interactively, injectable for tests. */
-export type SquadCliRunner = (command: string, args: string[], timeoutMs: number) => Promise<SquadCliRunResult>;
 
 /** Constructor options for {@link SquadDetectionService}. */
 export interface SquadDetectionServiceOptions {
   /** File reader; defaults to a `vscode.workspace.fs`-backed reader. */
   fileReader?: SquadFileReader;
 
-  /** CLI runner; defaults to an `execFile`-backed runner. */
-  cliRunner?: SquadCliRunner;
+  /**
+   * CLI probe seam; defaults to a shared {@link SquadCliService}. Detection
+   * delegates all executable resolution to it so a globally-installed CLI is
+   * found across platforms (e.g. an npm `squad.cmd`/`squad.ps1` shim on
+   * Windows), respecting the configured `nexkit.squad.cliSource`/`cliPath`.
+   */
+  cliService?: SquadCliProbe;
 
   /** Logging service; defaults to the shared singleton. */
   logger?: LoggingService;
 
   /** Clock for `detectedAt`; defaults to `Date.now`. */
   now?: () => number;
-
-  /**
-   * Custom CLI executable path (FR-004). When provided, it is invoked instead
-   * of the global `squad` command and the resolved source is reported as
-   * {@link SquadCliSource.Custom}.
-   */
-  customCliPath?: string;
 
   /** CLI call timeout in milliseconds (FR-003). */
   cliTimeoutMs?: number;
@@ -98,20 +109,18 @@ export interface SquadDetectionServiceOptions {
  */
 export class SquadDetectionService {
   private readonly _fileReader: SquadFileReader;
-  private readonly _cliRunner: SquadCliRunner;
+  private readonly _cliService: SquadCliProbe;
   private readonly _logger: LoggingService;
   private readonly _now: () => number;
-  private readonly _customCliPath?: string;
   private readonly _cliTimeoutMs: number;
   private readonly _latestProjectVersion: string | null;
   private readonly _latestCliVersion: string | null;
 
   constructor(options: SquadDetectionServiceOptions = {}) {
     this._fileReader = options.fileReader ?? createDefaultFileReader();
-    this._cliRunner = options.cliRunner ?? defaultCliRunner;
+    this._cliService = options.cliService ?? new SquadCliService();
     this._logger = options.logger ?? LoggingService.getInstance();
     this._now = options.now ?? (() => Date.now());
-    this._customCliPath = options.customCliPath;
     this._cliTimeoutMs = options.cliTimeoutMs ?? DEFAULT_CLI_TIMEOUT_MS;
     this._latestProjectVersion = options.latestProjectVersion ?? null;
     this._latestCliVersion = options.latestCliVersion ?? null;
@@ -180,38 +189,30 @@ export class SquadDetectionService {
   }
 
   /**
-   * Detect Squad CLI availability via a non-interactive, timed-out call
-   * (FR-003). Absence is a valid state — never a thrown error.
+   * Detect Squad CLI availability by probing local install locations
+   * (custom `cliPath`, then the global PATH) across platforms (FR-003, FR-004).
+   * Resolution and shell-safe spawning are delegated to {@link SquadCliService},
+   * so npm shims (`squad.cmd`/`squad.ps1` on Windows) and `PATH`-resolved
+   * binaries on Linux are all found. The `npx` source is intentionally excluded
+   * from passive detection: it downloads on demand and can hang, which would
+   * block the panel at startup. Absence is a valid state — never a thrown error.
    */
   private async _detectCli(): Promise<SquadCliInfo> {
-    const command = this._customCliPath ?? "squad";
-    const source: SquadCliSource = this._customCliPath ? SquadCliSource.Custom : SquadCliSource.Global;
-
-    for (const args of [["version"], ["--version"]]) {
-      let run: SquadCliRunResult;
+    for (const source of CLI_PROBE_SOURCES) {
+      let probe: SquadResult<{ version: string; source: SquadCliSource }>;
       try {
-        run = await this._cliRunner(command, args, this._cliTimeoutMs);
+        probe = await this._probeWithGuard(source);
       } catch (error) {
-        this._logger.warn(`Squad CLI invocation failed for "${command} ${args.join(" ")}"`, error);
+        this._logger.warn(`Squad CLI probe threw for source "${source}".`, error);
         continue;
       }
 
-      if (!run.found) {
-        break;
-      }
-
-      if (run.timedOut) {
-        this._logger.warn(`Squad CLI call "${command} ${args.join(" ")}" timed out.`);
-        continue;
-      }
-
-      const cliVersion = parseCliVersion(run.stdout);
-      if (cliVersion) {
+      if (probe.ok) {
         return {
           installed: true,
-          source,
-          cliVersion,
-          versionStatus: this._resolveVersionStatus(cliVersion, this._latestCliVersion),
+          source: probe.value.source,
+          cliVersion: probe.value.version,
+          versionStatus: this._resolveVersionStatus(probe.value.version, this._latestCliVersion),
         };
       }
     }
@@ -221,6 +222,41 @@ export class SquadDetectionService {
       cliVersion: null,
       versionStatus: SquadVersionStatus.Unknown,
     };
+  }
+
+  /**
+   * Probe a single source with a hard wall-clock guard. The process runner has
+   * its own timeout, but a spawned CLI could in theory fail to terminate (e.g.
+   * a child holding an inherited pipe on Windows). This guard guarantees
+   * detection — and therefore the panel — never blocks: if a probe overruns its
+   * budget it is abandoned and reported as `cli-not-found`.
+   */
+  private async _probeWithGuard(
+    source: SquadCliSource,
+  ): Promise<SquadResult<{ version: string; source: SquadCliSource }>> {
+    const guardMs = this._cliTimeoutMs + 2000;
+    let timer: NodeJS.Timeout | undefined;
+    const guard = new Promise<SquadResult<{ version: string; source: SquadCliSource }>>((resolve) => {
+      timer = setTimeout(() => {
+        this._logger.warn(`Squad CLI probe for source "${source}" exceeded ${guardMs}ms; treating as not found.`);
+        resolve(
+          squadErr({
+            code: "cli-not-found",
+            message: "The Squad CLI probe did not complete in time.",
+            remediation: "Verify the Squad CLI is installed and responsive, then retry.",
+          }),
+        );
+      }, guardMs);
+      timer.unref?.();
+    });
+
+    try {
+      return await Promise.race([this._cliService.probeCli({ timeoutMs: this._cliTimeoutMs, source }), guard]);
+    } finally {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    }
   }
 
   /**
@@ -287,12 +323,6 @@ function joinRelative(root: vscode.Uri, relative: string): vscode.Uri {
   return vscode.Uri.joinPath(root, ...relative.split("/"));
 }
 
-/** Extract a semver-like token from CLI output, or `null`. */
-function parseCliVersion(output: string): string | null {
-  const match = CLI_VERSION_PATTERN.exec(output);
-  return match ? match[1] : null;
-}
-
 /**
  * Compare two dotted numeric versions. Returns a negative number when `a` is
  * older, a positive number when newer, `0` when equal, or `null` when either
@@ -338,24 +368,3 @@ function createDefaultFileReader(): SquadFileReader {
     },
   };
 }
-
-/** Default `execFile`-backed CLI runner with a hard timeout (FR-003). */
-const defaultCliRunner: SquadCliRunner = (command, args, timeoutMs) =>
-  new Promise<SquadCliRunResult>((resolve) => {
-    execFile(command, args, { timeout: timeoutMs, windowsHide: true }, (error, stdout, stderr) => {
-      if (error) {
-        const err = error as NodeJS.ErrnoException & { killed?: boolean; signal?: NodeJS.Signals };
-        if (err.code === "ENOENT") {
-          resolve({ found: false, stdout: "", timedOut: false });
-          return;
-        }
-        if (err.killed || err.signal === "SIGTERM") {
-          resolve({ found: true, stdout: stdout ?? "", timedOut: true });
-          return;
-        }
-        resolve({ found: true, stdout: stdout || stderr || "", timedOut: false });
-        return;
-      }
-      resolve({ found: true, stdout: stdout ?? "", timedOut: false });
-    });
-  });

@@ -1,4 +1,5 @@
 import { useState } from "preact/hooks";
+import { SkeletonList } from "../atoms/Skeleton";
 import { useVSCodeAPI } from "../../hooks/useVSCodeAPI";
 import { useAppState } from "../../hooks/useAppState";
 import { WorkflowInfo } from "../../../../github-workflow-runner/githubWorkflowRunnerService";
@@ -51,7 +52,7 @@ export function WorkflowRunnerTool() {
   };
 
   if (!workflows.isReady) {
-    return <p class="loading">Loading workflows...</p>;
+    return <SkeletonList label="Loading workflows" rows={2} />;
   }
 
   if (workflows.list.length === 0) {

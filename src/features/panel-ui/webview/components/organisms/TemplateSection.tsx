@@ -2,6 +2,7 @@ import { useMemo, useState } from "preact/hooks";
 import { useDebounce } from "../../hooks/useDebounce";
 import { SearchBar } from "../atoms/SearchBar";
 import { useTemplateData } from "../../hooks/useTemplateData";
+import { SkeletonList } from "../atoms/Skeleton";
 import { TemplateMetadataProvider } from "../../contexts/TemplateMetadataContext";
 import { TypeSection } from "../molecules/TypeSection";
 import { useVSCodeAPI } from "../../hooks/useVSCodeAPI";
@@ -258,7 +259,7 @@ export function TemplateSection() {
 
   return (
     <>
-      {!isReady && <p class="loading">Loading templates...</p>}
+      {!isReady && <SkeletonList label="Loading templates" rows={6} withHeader />}
       {isReady && (
         <div class="template-section">
           {installedTemplatesCount > 0 && (

@@ -9,25 +9,45 @@
 **Owner:** Eric Decarufel
 
 **My domain — webview architecture:**
-
-- Components live in `src/features/panel-ui/webview/components/` (atoms / molecules / organisms)
-- Hooks in `src/features/panel-ui/webview/hooks/`
+- Components: `src/features/panel-ui/webview/components/` (atoms / molecules / organisms)
+- Hooks: `src/features/panel-ui/webview/hooks/`
 - Central state: `AppState` in `src/features/panel-ui/webview/types/appState.ts`
 - Message handling: `src/features/panel-ui/webview/contexts/AppStateContext.tsx`
 - Root app: `src/features/panel-ui/webview/components/App.tsx`
 
-**Critical:** This uses Preact, not React. `class` not `className`. Import from `'preact'` and `'preact/hooks'`.
+## Summary of Prior Learnings
 
-**Build:** `npm run compile` | Tests: `npm test` | Lint: `npm run lint`
+- **Preact specifics:** Use `class` (not `className`) for DOM elements. Import from `'preact'` and `'preact/hooks'`, not React.
+- **Component architecture:** Atoms (button/input/label), molecules (form fields), organisms (sections). All purely presentational; state reads from selector hooks.
+- **Message boundary:** All mutations dispatch actions to host. Central handler in `AppStateContext.tsx` is single source of truth for message routing.
+- **Form patterns:** Re-validate on keystroke (debounce with cleanup on unmount). Modal confirmations use vscode dialogs (host-driven).
+- **Error handling:** Shared error slice per feature; all errors render via ErrorNotice component. Never silent failures.
+- **RTF Converter architecture (2026-07-10):** Client-side in `webview/main.tsx`; isolated component state; markdown-it requires @types/markdown-it.
 
-## Learnings
+## 2026-09-28 — Squad Webview Development (SQD-009 through SQD-025)
 
-- 2026-07-10: The standalone RTF converter is fully client-side in `src/features/rtf-converter/webview/main.tsx`; its host-side panel test suite only verifies HTML injection and panel lifecycle. A rendered Markdown mode can remain local Preact state while `handleCopy` continues to copy the shared raw `markdownValue`. `markdown-it` requires `@types/markdown-it` for strict TypeScript compilation and is imported as `import MarkdownIt = require("markdown-it")` under this project's compiler settings.
+Implemented 5 major SQD webview tickets (see `.squad/decisions.md` for full details):
 
-## Team update — 2026-07-20 (RTF converter to markitdown migration)
+- **SQD-009 (#287):** Squad tab in NexKit panel — on-activation data fetch, detected/not-detected branches, collapsible sections, error de-duplication
 
-Shared context (see decisions.md "Replace custom RTF/DOCX/HTML to Markdown conversion with microsoft/markitdown"): conversion moved host-side via microsoft/markitdown (Python child process). Message contract lives in src/features/rtf-converter/messages.ts (convert-paste-html | convert-file | recheck-availability -> conversion-result | conversion-error | availability-status). markdown-it preview retained; deps mammoth/turndown/turndown-plugin-gfm/rtf.js/@types/turndown removed; type shims rtfJsBundle.d.ts + turndownPluginGfm.d.ts deleted. Security: argv array + sandboxed temp file, shell:false, 10MB cap, two-layer timeout. Suite 382 passing / 0 failing. Open follow-up: add clean/rimraf out step before test-compile (stale out/ artifacts can abort npm test).
+- **SQD-010 (#288):** Status & diagnostics — version classification (pinned/source/unknown), Doctor diagnostics rendering, CLI-missing notice with chooser slot
 
-## Team update — 2026-07-20 (Convert to Markdown — full migration complete and merged)
+- **SQD-012/013/014 (#284):** Read-only panel views — SquadRosterSection, SquadGovernanceSection, SquadLogSection, SquadMarkdownView, SquadErrorNotice. Safe markdown (escaped text, zero script risk). Truncation at 256KB with "open file" affordance. All purely presentational.
 
-Rebuilt `src/features/convert-to-markdown/webview/` (index.html + main.tsx) as a thin message-passing Preact UI driven entirely by Link's `messages.ts` contract — no client-side conversion logic remains. Paste handler calls `event.preventDefault()` before reading clipboard data so pasted HTML is never inserted into the DOM. Availability gating disables (not hides) inputs with a banner + Recheck button. `ToolsSection.tsx` renamed `openRtfConverter` → `openConvertToMarkdown`. `npm run check:types` clean; merged into decisions.md.
+- **SQD-019 (#293):** Preset picker UI — listSquadPresets discovery, initSquadFromPreset request. New dedicated SquadState.presetPicker slice. Init handler "not available yet" stub (Link #235 fills real flow).
+
+- **SQD-025 (#292):** CLI-missing diagnostics & chooser — setSquadCliInvocation (global/npx/custom), installSquadCli (modal, terminal, never silent). Component presentational; all side effects in host handler.
+
+**Patterns established:**
+- Selector hooks re-filter/re-map on every render (lightweight, deterministic)
+- All errors bubble to shared slice + ErrorNotice component
+- Modal dialogs host-driven; webview sends request, host shows vscode dialog
+- Truncated content shows "open file" affordance
+- All component state reads from AppState via hooks
+
+## 2026-09-28 — Follow-up issues (SQD-R1, SQD-R2)
+
+**Issue #297 (SQD-R1: Dead legacy preset path):** Morpheus identified that after merging SQD-019 (#293) and SQD-020 (#294), the SQD-007 `selectPreset`/`applyPreset` hook actions and their host stubs are superseded by the dedicated `presetPicker` slice. Cross-team cleanup needed: Ghost removes legacy actions + `squad.presets`/`selectedPresetId` fields from webview state and AppState; Link removes corresponding dead host cases and union members. Both are return actionable errors (not silent), so removal is safe. Tracked as issue #297 for post-MVP cleanup.
+
+**Issue #298 (SQD-R2: Service folder inconsistency):** SQD-005 files (`squadCliService.ts`, `squadProcessRunner.ts`, `squadDetectionService.ts`, `squadProjectVersionReader.ts`, `squadDoctorParser.ts`) sit at `src/features/squad/` root while SQD-011/016/017/018/020 use `src/features/squad/services/`. Link to consolidate under `services/` (pure move + import fixups, low risk). Tracked as issue #298.
+
