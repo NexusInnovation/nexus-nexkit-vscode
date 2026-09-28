@@ -232,4 +232,28 @@ suite("Unit: SquadFileService", () => {
     assert.ok(isSquadErr(result));
     assert.strictEqual(result.error.code, "parse-failed");
   });
+
+  test("readUpstreams fails with parse-failed when the manifest shape is unsupported", async () => {
+    writeFile(".squad/upstream.json", JSON.stringify({ upstreams: [] }));
+    const result = await service.readUpstreams();
+    assert.ok(isSquadErr(result));
+    assert.strictEqual(result.error.code, "parse-failed");
+    assert.ok(result.error.remediation && result.error.remediation.length > 0);
+  });
+
+  test("readUpstreams fails with parse-failed when a source is incomplete", async () => {
+    writeFile(".squad/upstream.json", JSON.stringify({ sources: [{ id: "org", kind: "git" }] }));
+    const result = await service.readUpstreams();
+    assert.ok(isSquadErr(result));
+    assert.strictEqual(result.error.code, "parse-failed");
+    assert.ok(result.error.detail?.includes("index 0"));
+  });
+
+  test("readUpstreams fails with parse-failed when a source kind is unsupported", async () => {
+    writeFile(".squad/upstream.json", JSON.stringify({ sources: [{ id: "org", kind: "svn", reference: "repo" }] }));
+    const result = await service.readUpstreams();
+    assert.ok(isSquadErr(result));
+    assert.strictEqual(result.error.code, "parse-failed");
+    assert.ok(result.error.detail?.includes("unsupported kind"));
+  });
 });

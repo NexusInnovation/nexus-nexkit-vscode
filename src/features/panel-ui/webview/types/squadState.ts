@@ -21,6 +21,7 @@ import type {
   SquadError,
   SquadMarkdownDoc,
   SquadPluginRef,
+  SquadPreset,
   SquadRosterMember,
   SquadUpstreamSource,
   UnreachableSquadSource,
