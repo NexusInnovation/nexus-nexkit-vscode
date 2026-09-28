@@ -48,6 +48,9 @@ interface SquadStubs {
   listInstalledPlugins: sinon.SinonStub;
   runDoctor: sinon.SinonStub;
   exportSquad: sinon.SinonStub;
+  previewImport: sinon.SinonStub;
+  applyImport: sinon.SinonStub;
+  discardPreview: sinon.SinonStub;
 }
 
 function createStubs(): SquadStubs {
@@ -83,6 +86,9 @@ function createStubs(): SquadStubs {
     listInstalledPlugins: sinon.stub().resolves(squadOk([])),
     runDoctor: sinon.stub(),
     exportSquad: sinon.stub(),
+    previewImport: sinon.stub(),
+    applyImport: sinon.stub(),
+    discardPreview: sinon.stub(),
   };
 }
 
@@ -146,6 +152,11 @@ function createServices(stubs: SquadStubs, hasWorkspace = true): ServiceContaine
     },
     squadExport: {
       exportSquad: stubs.exportSquad,
+    },
+    squadImport: {
+      previewImport: stubs.previewImport,
+      applyImport: stubs.applyImport,
+      discardPreview: stubs.discardPreview,
     },
     squadFile,
     squadWrite,
@@ -505,6 +516,99 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
     assert.deepStrictEqual(commands(), ["squadLoading", "squadError", "squadLoading"]);
     assert.strictEqual(find("squadError")?.error.code, "cli-execution-failed");
     assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
+  });
+
+  test("previewSquadImport emits squadImportPreview and clears loading on success", async () => {
+    const stubs = createStubs();
+    const preview = {
+      previewId: "p1",
+      source: { kind: "file" as const, uri: "file:///ws/squad-export.json" },
+      sourceLabel: "squad-export.json",
+      manifestVersion: "1.0",
+      squadDirectory: ".squad",
+      hasExistingSquad: false,
+      agents: [],
+      skills: [],
+      castingKeys: [],
+      files: [{ relativePath: ".squad/team.md", change: "create" as const }],
+      warnings: [],
+      createdAt: 1,
+    };
+    stubs.previewImport.resolves(squadOk(preview));
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "previewSquadImport" });
+
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadImportPreview", "squadLoading"]);
+    assert.deepStrictEqual(find("squadImportPreview")?.preview, preview);
+    assert.ok(stubs.previewImport.calledOnceWithExactly({}));
+    assert.ok(stubs.applyImport.notCalled);
+  });
+
+  test("previewSquadImport emits squadError on failure", async () => {
+    const stubs = createStubs();
+    stubs.previewImport.resolves(squadErr({ code: "parse-failed", message: "bad export", remediation: "fix" }));
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "previewSquadImport" });
+
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadError", "squadLoading"]);
+    assert.strictEqual(find("squadError")?.error.code, "parse-failed");
+  });
+
+  test("applySquadImport emits squadImportResult on success", async () => {
+    const stubs = createStubs();
+    const outcome = {
+      previewId: "p1",
+      source: { kind: "file" as const, uri: "file:///ws/squad-export.json" },
+      importedAt: 2,
+      agentCount: 1,
+      skillCount: 0,
+      backupCreated: true,
+      stdout: "",
+      stderr: "",
+      durationMs: 5,
+    };
+    stubs.applyImport.resolves(squadOk(outcome));
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "applySquadImport", request: { previewId: "p1" } });
+
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadImportResult", "squadLoading"]);
+    assert.deepStrictEqual(find("squadImportResult")?.import, outcome);
+    assert.ok(stubs.applyImport.calledOnceWithExactly({ previewId: "p1" }));
+  });
+
+  test("applySquadImport emits squadError without success when the import fails", async () => {
+    const stubs = createStubs();
+    stubs.applyImport.resolves(squadErr({ code: "backup-failed", message: "no backup", remediation: "free space" }));
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "applySquadImport", request: { previewId: "p1" } });
+
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadError", "squadLoading"]);
+    assert.strictEqual(find("squadImportResult"), undefined);
+  });
+
+  test("applySquadImport without a preview id is rejected before calling the service", async () => {
+    const stubs = createStubs();
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "applySquadImport", request: { previewId: "" } });
+
+    assert.deepStrictEqual(commands(), ["squadError"]);
+    assert.ok(find("squadError")?.error.remediation);
+    assert.ok(stubs.applyImport.notCalled);
+  });
+
+  test("discardSquadImportPreview drops the staged preview", async () => {
+    const stubs = createStubs();
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "discardSquadImportPreview" });
+
+    assert.ok(stubs.discardPreview.calledOnce);
+    assert.strictEqual(posted.length, 0);
   });
 
   test("unknown command is ignored without posting a message", async () => {

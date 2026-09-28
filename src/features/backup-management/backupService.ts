@@ -219,8 +219,33 @@ export class GitHubTemplateBackupService {
    * @returns Absolute path to the created backup directory, or `null`.
    */
   public async backupSquadArtifacts(workspaceRoot: string): Promise<string | null> {
+    return this.backupWorkspaceArtifacts(workspaceRoot, SQUAD_ARTIFACTS, "squad");
+  }
+
+  /**
+   * Back up an explicit set of workspace-relative files/directories into a
+   * fresh `<label>-<ts>` folder in the user backup directory (FR-006). Used by
+   * flows such as Squad import that overwrite artifacts beyond `.squad/`.
+   *
+   * Paths that do not exist are skipped. Returns `null` when none exist.
+   *
+   * @param workspaceRoot Absolute path to the workspace root.
+   * @param relativePaths Workspace-relative paths; must stay inside the root.
+   * @param label Backup folder prefix (safe single path segment).
+   * @throws Error when a path escapes the workspace root or the label is unsafe.
+   */
+  public async backupWorkspaceArtifacts(
+    workspaceRoot: string,
+    relativePaths: readonly string[],
+    label: string
+  ): Promise<string | null> {
+    if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(label)) {
+      throw new Error(`Invalid backup label: ${label}`);
+    }
+
     const present: string[] = [];
-    for (const relative of SQUAD_ARTIFACTS) {
+    for (const relative of relativePaths) {
+      this._assertInsideRoot(workspaceRoot, relative);
       if (await fileExists(path.join(workspaceRoot, relative))) {
         present.push(relative);
       }
@@ -232,7 +257,7 @@ export class GitHubTemplateBackupService {
 
     const timestamp = new Date().toISOString().slice(0, 19).replace(/T/g, "_").replace(/:/g, "-");
     const backupDir = this._userDirectoryService.getUserBackupDir();
-    const backupPath = path.join(backupDir, `squad-${timestamp}`);
+    const backupPath = path.join(backupDir, `${label}-${timestamp}`);
     await fs.promises.mkdir(backupPath, { recursive: true });
 
     for (const relative of present) {
@@ -254,18 +279,53 @@ export class GitHubTemplateBackupService {
    * @param backupPath Absolute path returned by {@link backupSquadArtifacts}.
    */
   public async restoreSquadArtifacts(workspaceRoot: string, backupPath: string): Promise<void> {
-    for (const relative of SQUAD_ARTIFACTS) {
+    await this.restoreWorkspaceArtifacts(workspaceRoot, backupPath, SQUAD_ARTIFACTS);
+  }
+
+  /**
+   * Restore an explicit set of workspace-relative paths from a backup created
+   * by {@link backupWorkspaceArtifacts}. Each listed path is removed first, then
+   * copied back when present in the backup, so paths that did not exist at
+   * backup time end up absent again.
+   *
+   * @throws Error when a path escapes the workspace root.
+   */
+  public async restoreWorkspaceArtifacts(
+    workspaceRoot: string,
+    backupPath: string,
+    relativePaths: readonly string[]
+  ): Promise<void> {
+    for (const relative of relativePaths) {
+      this._assertInsideRoot(workspaceRoot, relative);
+    }
+
+    for (const relative of relativePaths) {
       const current = path.join(workspaceRoot, relative);
       if (await fileExists(current)) {
         await fs.promises.rm(current, { recursive: true, force: true });
       }
     }
 
-    for (const relative of SQUAD_ARTIFACTS) {
+    for (const relative of relativePaths) {
       const source = path.join(backupPath, relative);
       if (await fileExists(source)) {
         await this._copyArtifact(source, path.join(workspaceRoot, relative));
       }
+    }
+  }
+
+  private _assertInsideRoot(workspaceRoot: string, relative: string): void {
+    const resolved = path.resolve(workspaceRoot, relative);
+    const fromRoot = path.relative(path.resolve(workspaceRoot), resolved);
+    if (
+      relative.length === 0 ||
+      path.isAbsolute(relative) ||
+      fromRoot === "" ||
+      fromRoot === ".." ||
+      fromRoot.startsWith(`..${path.sep}`) ||
+      path.isAbsolute(fromRoot)
+    ) {
+      throw new Error(`Backup path escapes the workspace root: ${relative}`);
     }
   }
 

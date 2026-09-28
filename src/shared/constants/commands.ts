@@ -38,6 +38,7 @@ export const Commands = {
 
   // Squad commands
   EXPORT_SQUAD: "nexus-nexkit-vscode.squad.export",
+  IMPORT_SQUAD: "nexus-nexkit-vscode.squad.import",
 } as const;
 
 // Type-safe command names

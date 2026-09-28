@@ -14,6 +14,10 @@ import type {
   SquadError,
   SquadExportOutcome,
   SquadExportRequest,
+  SquadImportApplyRequest,
+  SquadImportOutcome,
+  SquadImportPreview,
+  SquadImportPreviewRequest,
   SquadMarkdownDoc,
   SquadMarketplaceRef,
   SquadPluginRef,
@@ -74,6 +78,10 @@ export type WebviewMessage =
   | { command: "saveSquadDoc"; kind: SquadDocKind; content: string }
   | { command: "runSquadDoctor" }
   | { command: "exportSquad"; request?: SquadExportRequest }
+  // Squad import (SQD-034): preview first, then apply the previewed import by id
+  | { command: "previewSquadImport"; request?: SquadImportPreviewRequest }
+  | { command: "applySquadImport"; request: SquadImportApplyRequest }
+  | { command: "discardSquadImportPreview" }
   | { command: "refreshSquadPlugins" }
   // Squad preset selection screen (SQD-019 / #234)
   | { command: "listSquadPresets" }
@@ -181,6 +189,14 @@ export type ExtensionMessage =
   | {
       command: "squadExportResult";
       export: SquadExportOutcome;
+    }
+  | {
+      command: "squadImportPreview";
+      preview: SquadImportPreview;
+    }
+  | {
+      command: "squadImportResult";
+      import: SquadImportOutcome;
     }
   | {
       command: "squadCharterSaved";

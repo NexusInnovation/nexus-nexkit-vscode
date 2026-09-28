@@ -145,6 +145,11 @@
         "command": "nexus-nexkit-vscode.squad.export",
         "title": "Nexkit: Export Squad",
         "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.squad.import",
+        "title": "Nexkit: Import Squad",
+        "category": "Nexkit"
       }
     ],
     "menus": {

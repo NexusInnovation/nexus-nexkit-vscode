@@ -78,6 +78,15 @@ export class SquadPanelMessageHandler {
       case "exportSquad":
         await this.handleExportSquad(message);
         return true;
+      case "previewSquadImport":
+        await this.handlePreviewSquadImport(message);
+        return true;
+      case "applySquadImport":
+        await this.handleApplySquadImport(message);
+        return true;
+      case "discardSquadImportPreview":
+        this._services.squadImport.discardPreview();
+        return true;
       case "refreshSquadPlugins":
         await this.handleRefreshSquadPlugins();
         return true;
@@ -253,6 +262,56 @@ export class SquadPanelMessageHandler {
         return;
       }
       this._postMessage({ command: "squadExportResult", export: result.value });
+    } finally {
+      this._setLoading(false);
+    }
+  }
+
+  /**
+   * Preview a Squad import (SQD-034, FR-062). Reads and validates the export
+   * and reports every path the import would write; nothing is modified.
+   */
+  private async handlePreviewSquadImport(
+    message: Extract<WebviewMessage, { command: "previewSquadImport" }>
+  ): Promise<void> {
+    this._setLoading(true);
+    try {
+      const result = await this._services.squadImport.previewImport(message.request ?? {});
+      if (isSquadErr(result)) {
+        this._emitError(result.error);
+        return;
+      }
+      this._postMessage({ command: "squadImportPreview", preview: result.value });
+    } finally {
+      this._setLoading(false);
+    }
+  }
+
+  /**
+   * Apply a previewed Squad import (SQD-034, FR-062/FR-006). The service asks
+   * for explicit confirmation and backs up existing artifacts before the CLI
+   * runs. The webview should request `getSquadState` after a result.
+   */
+  private async handleApplySquadImport(
+    message: Extract<WebviewMessage, { command: "applySquadImport" }>
+  ): Promise<void> {
+    if (!message.request?.previewId) {
+      this._emitError({
+        code: "cancelled",
+        message: "No Squad import preview was selected, so nothing was imported.",
+        remediation: "Preview the import first, review the changes, then apply it.",
+      });
+      return;
+    }
+
+    this._setLoading(true);
+    try {
+      const result = await this._services.squadImport.applyImport(message.request);
+      if (isSquadErr(result)) {
+        this._emitError(result.error);
+        return;
+      }
+      this._postMessage({ command: "squadImportResult", import: result.value });
     } finally {
       this._setLoading(false);
     }

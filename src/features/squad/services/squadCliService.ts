@@ -135,7 +135,7 @@ export const SQUAD_CLI_COMMAND_SPECS: Readonly<Record<SquadCliCommand, SquadCliC
   },
   [SquadCliCommand.Import]: {
     argv: ["import"],
-    allowedFlags: ["--yes"],
+    allowedFlags: ["--yes", "--force"],
     allowsOperands: true,
     defaultTimeoutMs: SQUAD_CLI_TIMEOUTS_MS.standard,
   },
