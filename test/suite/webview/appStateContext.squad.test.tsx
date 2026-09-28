@@ -176,6 +176,52 @@ suite("AppStateContext — Squad messages", () => {
     assert.strictEqual(state.routing, null);
   });
 
+  test("squadModelConfigUpdate stores the model config document (including invalid raw content)", () => {
+    const squad = renderProbe();
+    assert.strictEqual(squad().modelConfig, null);
+
+    send({
+      command: "squadModelConfigUpdate",
+      modelConfig: { relativePath: ".squad/model-config.json", exists: true, content: "{", config: null },
+    });
+
+    const state = squad();
+    assert.strictEqual(state.modelConfig?.content, "{");
+    assert.strictEqual(state.modelConfig?.config, null);
+  });
+
+  test("squadModelConfigSaved replaces the document and clears loading/error", () => {
+    const squad = renderProbe();
+    send({ command: "squadError", error: makeError({ code: "parse-failed" }) });
+    send({ command: "squadLoading", isLoading: true });
+
+    const config = { defaultModel: "gpt-5.6-terra", overrides: [{ agentId: "neo", model: "gpt-5.6-sol" }] };
+    send({
+      command: "squadModelConfigSaved",
+      modelConfig: { relativePath: ".squad/model-config.json", exists: true, content: "{}", config },
+      result: { relativePath: ".squad/model-config.json", created: false, backupCreated: true, bytesWritten: 2 },
+    });
+
+    const state = squad();
+    assert.strictEqual(state.isLoading, false);
+    assert.strictEqual(state.error, null);
+    assert.deepStrictEqual(state.modelConfig?.config, config);
+  });
+
+  test("a failed model config save keeps the previous document and surfaces the error", () => {
+    const squad = renderProbe();
+    const previous = { relativePath: ".squad/model-config.json", exists: true, content: "{}", config: { overrides: [] } };
+    send({ command: "squadModelConfigUpdate", modelConfig: previous });
+    send({ command: "squadLoading", isLoading: true });
+
+    send({ command: "squadError", error: makeError({ code: "parse-failed", message: "invalid" }) });
+
+    const state = squad();
+    assert.deepStrictEqual(state.modelConfig, previous);
+    assert.strictEqual(state.error?.code, "parse-failed");
+    assert.strictEqual(state.isLoading, false);
+  });
+
   test("squadLogsUpdate preserves the per-document truncation flag and size", () => {
     const squad = renderProbe();
     send({

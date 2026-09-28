@@ -6,3 +6,4 @@
  */
 
 export * from "./squadPresetValidator";
+export * from "./squadModelConfigValidator";
