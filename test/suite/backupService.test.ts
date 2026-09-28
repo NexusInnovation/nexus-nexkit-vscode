@@ -44,6 +44,32 @@ suite("Unit: GitHubTemplateBackupService", () => {
     assert.ok(service);
   });
 
+  suite("Squad upstream manifest (SQD-036)", () => {
+    test("returns null when there is no upstream.json", async () => {
+      const workspace = path.join(tempDir, "ws-empty");
+      fs.mkdirSync(path.join(workspace, ".squad"), { recursive: true });
+      assert.strictEqual(await service.backupSquadUpstreamManifest(workspace), null);
+    });
+
+    test("backs up only upstream.json and restores it", async () => {
+      const workspace = path.join(tempDir, "ws");
+      const manifest = path.join(workspace, ".squad", "upstream.json");
+      fs.mkdirSync(path.join(workspace, ".squad", "_upstream_repos", "org"), { recursive: true });
+      fs.writeFileSync(manifest, '{"upstreams":[]}');
+
+      const backupPath = await service.backupSquadUpstreamManifest(workspace);
+
+      assert.ok(backupPath);
+      assert.ok(backupPath.startsWith(userBackupDir));
+      assert.ok(fs.existsSync(path.join(backupPath, ".squad", "upstream.json")));
+      assert.ok(!fs.existsSync(path.join(backupPath, ".squad", "_upstream_repos")), "clones are not backed up");
+
+      fs.writeFileSync(manifest, "clobbered");
+      await service.restoreSquadUpstreamManifest(workspace, backupPath);
+      assert.strictEqual(fs.readFileSync(manifest, "utf8"), '{"upstreams":[]}');
+    });
+  });
+
   test("Should have backup methods", () => {
     assert.strictEqual(typeof service.backupTemplates, "function");
     assert.strictEqual(typeof service.deleteTemplateFolders, "function");

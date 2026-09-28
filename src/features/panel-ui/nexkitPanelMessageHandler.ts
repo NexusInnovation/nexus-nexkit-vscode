@@ -7,6 +7,7 @@ import { getApmAgentDiagnostics } from "./utils/templateDiagnostics";
 import { SquadPanelMessageHandler } from "./squadPanelMessageHandler";
 import { SquadPresetMessageHandler } from "./squadPresetMessageHandler";
 import { SquadCliSetupMessageHandler } from "./squadCliSetupMessageHandler";
+import { SquadUpstreamMessageHandler } from "./squadUpstreamMessageHandler";
 import { SquadPluginActionMessageHandler } from "./squadPluginActionMessageHandler";
 
 /**
@@ -26,6 +27,7 @@ export class NexkitPanelMessageHandler {
   private readonly _squadHandler: SquadPanelMessageHandler;
   private readonly _squadPresetHandler: SquadPresetMessageHandler;
   private readonly _squadCliSetupHandler: SquadCliSetupMessageHandler;
+  private readonly _squadUpstreamHandler: SquadUpstreamMessageHandler;
   private readonly _squadPluginActionHandler: SquadPluginActionMessageHandler;
   private _lastApmEmptySignature: string | undefined;
 
@@ -35,6 +37,7 @@ export class NexkitPanelMessageHandler {
   ) {
     this._squadHandler = new SquadPanelMessageHandler(_services, (message) => this.sendToWebview(message));
     this._squadPresetHandler = new SquadPresetMessageHandler(_services, (message) => this.sendToWebview(message));
+    this._squadUpstreamHandler = new SquadUpstreamMessageHandler(_services, (message) => this.sendToWebview(message));
     this._squadCliSetupHandler = new SquadCliSetupMessageHandler(
       (message) => this.sendToWebview(message),
       async () => {
@@ -110,6 +113,9 @@ export class NexkitPanelMessageHandler {
       return;
     }
     if (await this._squadCliSetupHandler.handle(message)) {
+      return;
+    }
+    if (await this._squadUpstreamHandler.handle(message)) {
       return;
     }
     if (await this._squadPluginActionHandler.handle(message)) {

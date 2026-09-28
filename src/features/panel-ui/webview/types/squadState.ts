@@ -28,6 +28,7 @@ import type {
   SquadUpstreamRecommendations,
   SquadUpdatesResult,
   SquadUpstreamSource,
+  SquadUpstreamOperation,
   UnreachableSquadSource,
 } from "../../../squad/models";
 
@@ -224,6 +225,27 @@ export interface SquadState {
 
   /** Preset selection screen sub-state (SQD-019, FR-010/FR-014/FR-015). */
   presetPicker: SquadPresetPickerState;
+
+  /**
+   * Latest upstream add/sync/remove/list operation (SQD-036, FR-031/FR-032),
+   * or `null` before the first one. Failures carry an actionable error.
+   */
+  upstreamOperation: SquadUpstreamOperationState | null;
+}
+
+/** Progress / outcome of the latest `squad upstream` operation (SQD-036). */
+export interface SquadUpstreamOperationState {
+  /** Operation that ran. */
+  operation: SquadUpstreamOperation;
+
+  /** Targeted upstream, when applicable. */
+  name?: string;
+
+  /** Running, or finished with success / failure. */
+  status: "running" | "succeeded" | "failed";
+
+  /** Actionable error when {@link status} is `failed`. */
+  error: SquadError | null;
 }
 
 /** Initial Squad state — empty and not ready until the host responds. */
@@ -245,4 +267,5 @@ export const initialSquadState: SquadState = {
   doctor: null,
   updates: null,
   presetPicker: initialSquadPresetPickerState,
+  upstreamOperation: null,
 };
