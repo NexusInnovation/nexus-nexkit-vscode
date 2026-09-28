@@ -129,7 +129,7 @@ export const SQUAD_CLI_COMMAND_SPECS: Readonly<Record<SquadCliCommand, SquadCliC
   },
   [SquadCliCommand.Export]: {
     argv: ["export"],
-    allowedFlags: ["--output"],
+    allowedFlags: ["--output", "--ref", "--path"],
     allowsOperands: true,
     defaultTimeoutMs: SQUAD_CLI_TIMEOUTS_MS.standard,
   },

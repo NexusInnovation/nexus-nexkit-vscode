@@ -75,6 +75,9 @@ export class SquadPanelMessageHandler {
       case "runSquadDoctor":
         await this.handleRunSquadDoctor();
         return true;
+      case "exportSquad":
+        await this.handleExportSquad(message);
+        return true;
       case "refreshSquadPlugins":
         await this.handleRefreshSquadPlugins();
         return true;
@@ -231,6 +234,25 @@ export class SquadPanelMessageHandler {
         return;
       }
       this._postMessage({ command: "squadDoctorUpdate", doctor: result.value });
+    } finally {
+      this._setLoading(false);
+    }
+  }
+
+  /**
+   * Export Squad via the dedicated service (SQD-033, FR-061). The service owns
+   * the CLI invocation and any file picker; this host layer only preserves the
+   * central webview message contract and visible error/loading behavior.
+   */
+  private async handleExportSquad(message: Extract<WebviewMessage, { command: "exportSquad" }>): Promise<void> {
+    this._setLoading(true);
+    try {
+      const result = await this._services.squadExport.exportSquad(message.request ?? {});
+      if (isSquadErr(result)) {
+        this._emitError(result.error);
+        return;
+      }
+      this._postMessage({ command: "squadExportResult", export: result.value });
     } finally {
       this._setLoading(false);
     }
