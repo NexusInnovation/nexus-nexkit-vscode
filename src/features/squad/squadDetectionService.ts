@@ -3,28 +3,20 @@ import { execFile } from "child_process";
 import { LoggingService } from "../../shared/services/loggingService";
 import {
   SQUAD_MARKER_FILES,
+  SQUAD_SOURCE_VERSION,
   SquadCliInfo,
   SquadCliSource,
   SquadDetectionResult,
   SquadInstallState,
   SquadMarkerPresence,
   SquadProjectInfo,
+  SquadProjectVersion,
   SquadVersionStatus,
   SquadResult,
   squadErr,
   squadOk,
 } from "./models";
-
-/**
- * Marker file that carries the project Squad version comment (FR-002).
- */
-const SQUAD_AGENT_MARKER = ".github/agents/squad.agent.md";
-
-/**
- * Matches the `<!-- version: x -->` comment used to declare the project Squad
- * version (FR-002).
- */
-const VERSION_COMMENT_PATTERN = /<!--\s*version:\s*([^\s>]+)\s*-->/i;
+import { SQUAD_AGENT_MARKER, parseSquadProjectVersion } from "./squadProjectVersionReader";
 
 /**
  * Matches a semver-like version token in arbitrary CLI output (FR-003).
@@ -171,10 +163,18 @@ export class SquadDetectionService {
     }
 
     const installState = this._deriveInstallState(markers);
-    const projectVersion = markers[SQUAD_AGENT_MARKER]
+    const parsedVersion = markers[SQUAD_AGENT_MARKER]
       ? await this._readProjectVersion(joinRelative(root, SQUAD_AGENT_MARKER))
       : null;
-    const versionStatus = this._resolveVersionStatus(projectVersion, this._latestProjectVersion);
+
+    const projectVersion = parsedVersion?.isSource
+      ? SQUAD_SOURCE_VERSION
+      : (parsedVersion?.version ?? null);
+
+    // Only a pinned semver is comparable; source builds and missing/malformed
+    // stamps stay `unknown` (FR-002).
+    const comparableVersion = parsedVersion && !parsedVersion.isSource ? parsedVersion.version : null;
+    const versionStatus = this._resolveVersionStatus(comparableVersion, this._latestProjectVersion);
 
     return { installState, markers, projectVersion, versionStatus };
   }
@@ -224,18 +224,29 @@ export class SquadDetectionService {
   }
 
   /**
-   * Read and parse the `<!-- version: x -->` comment (FR-002).
-   * Returns `null` when the file cannot be read or the comment is absent.
+   * Read and parse the `<!-- version: x -->` stamp via the shared parser
+   * (FR-002, SQD-006). Returns `null` when the file cannot be read or the
+   * stamp is malformed — detection degrades to `unknown` rather than failing,
+   * while direct callers use {@link SquadProjectVersionReader} for actionable
+   * errors.
    */
-  private async _readProjectVersion(uri: vscode.Uri): Promise<string | null> {
+  private async _readProjectVersion(uri: vscode.Uri): Promise<SquadProjectVersion | null> {
+    let content: string;
     try {
-      const content = await this._fileReader.readFile(uri);
-      const match = VERSION_COMMENT_PATTERN.exec(content);
-      return match ? match[1] : null;
+      content = await this._fileReader.readFile(uri);
     } catch (error) {
       this._logger.warn("Failed to read Squad project version comment.", error);
       return null;
     }
+
+    const parsed = parseSquadProjectVersion(content);
+    if (!parsed.ok) {
+      this._logger.warn(
+        `Squad project version stamp could not be parsed: ${parsed.error.detail ?? parsed.error.message}`,
+      );
+      return null;
+    }
+    return parsed.value;
   }
 
   /** Derive the aggregate install state from marker presence (FR-001). */

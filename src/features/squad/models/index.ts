@@ -8,6 +8,7 @@
 
 export * from "./squadResult";
 export * from "./squadDetection";
+export * from "./squadProjectVersion";
 export * from "./squadRoster";
 export * from "./squadDocs";
 export * from "./squadPreset";
