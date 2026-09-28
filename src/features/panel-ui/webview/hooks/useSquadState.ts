@@ -80,8 +80,12 @@ export interface UseSquadStateResult {
   /** Persist an edited agent charter (host backs up before writing). */
   saveCharter: (agentId: string, content: string) => void;
 
-  /** Persist an edited governance document (decisions/routing). */
-  saveDoc: (kind: SquadDocKind, content: string) => void;
+  /**
+   * Persist an edited governance document (decisions/routing). Pass the
+   * `contentHash` of the doc the edit started from so the host can reject the
+   * save with a `write-conflict` error if the file changed on disk meanwhile.
+   */
+  saveDoc: (kind: SquadDocKind, content: string, baseContentHash?: string | null) => void;
 
   /** Run Squad Doctor diagnostics. */
   runDoctor: () => void;
@@ -126,8 +130,12 @@ export function useSquadState(): UseSquadStateResult {
     messenger.sendMessage({ command: "saveSquadCharter", agentId, content });
   };
 
-  const saveDoc = (kind: SquadDocKind, content: string) => {
-    messenger.sendMessage({ command: "saveSquadDoc", kind, content });
+  const saveDoc = (kind: SquadDocKind, content: string, baseContentHash?: string | null) => {
+    messenger.sendMessage(
+      baseContentHash === undefined
+        ? { command: "saveSquadDoc", kind, content }
+        : { command: "saveSquadDoc", kind, content, baseContentHash }
+    );
   };
 
   const runDoctor = () => {
