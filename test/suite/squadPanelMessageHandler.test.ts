@@ -284,6 +284,21 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
     assert.strictEqual(error?.error.code, "file-read-failed");
   });
 
+  test("getSquadState surfaces an upstream read failure and does not hide it as success", async () => {
+    const stubs = createStubs();
+    stubs.readUpstreams.resolves(squadErr({ code: "parse-failed", message: "bad upstreams", remediation: "fix JSON" }));
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "getSquadState" });
+
+    const status = find("squadStatusUpdate");
+    assert.ok(status, "status is still emitted for other Squad state");
+    assert.deepStrictEqual(status.upstreams, []);
+    const error = find("squadError");
+    assert.strictEqual(error?.error.code, "parse-failed");
+    assert.strictEqual(error?.error.remediation, "fix JSON");
+  });
+
   test("getSquadState without a workspace folder emits only status", async () => {
     const stubs = createStubs();
     const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs, false));
@@ -313,6 +328,18 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
     await handler.handleMessage({ command: "refreshSquadDetection" });
 
     assert.deepStrictEqual(commands(), ["squadLoading", "squadError", "squadLoading"]);
+    assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
+  });
+
+  test("refreshSquadDetection surfaces upstream read errors after status update", async () => {
+    const stubs = createStubs();
+    stubs.readUpstreams.resolves(squadErr({ code: "parse-failed", message: "bad upstreams" }));
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "refreshSquadDetection" });
+
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadStatusUpdate", "squadError", "squadLoading"]);
+    assert.strictEqual(find("squadError")?.error.code, "parse-failed");
     assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
   });
 
