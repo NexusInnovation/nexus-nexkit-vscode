@@ -12,6 +12,7 @@ import { useAppState } from "./useAppState";
 import { useVSCodeAPI } from "./useVSCodeAPI";
 import type {
   SquadCharter,
+  SquadCliSource,
   SquadDetectionResult,
   SquadDocKind,
   SquadDoctorReport,
@@ -93,6 +94,20 @@ export interface UseSquadStateResult {
 
   /** Run Squad Doctor diagnostics. */
   runDoctor: () => void;
+
+  /**
+   * Persist how the Squad CLI is invoked (FR-004): install globally via npm,
+   * run on demand with npx, or use a custom executable path. The host writes
+   * the choice through SettingsManager and re-runs detection.
+   */
+  setCliInvocation: (source: SquadCliSource, cliPath?: string) => void;
+
+  /**
+   * Install the Squad CLI globally via npm. The host asks for explicit
+   * confirmation, then runs the install command in a VS Code terminal and
+   * re-runs detection — it never installs silently.
+   */
+  installCli: () => void;
 }
 
 /**
@@ -135,6 +150,14 @@ export function useSquadState(): UseSquadStateResult {
     messenger.sendMessage({ command: "runSquadDoctor" });
   };
 
+  const setCliInvocation = (source: SquadCliSource, cliPath?: string) => {
+    messenger.sendMessage({ command: "setSquadCliInvocation", source, cliPath });
+  };
+
+  const installCli = () => {
+    messenger.sendMessage({ command: "installSquadCli" });
+  };
+
   return {
     isReady: squad.isReady,
     isLoading: squad.isLoading,
@@ -158,5 +181,7 @@ export function useSquadState(): UseSquadStateResult {
     selectPreset,
     applyPreset,
     runDoctor,
+    setCliInvocation,
+    installCli,
   };
 }

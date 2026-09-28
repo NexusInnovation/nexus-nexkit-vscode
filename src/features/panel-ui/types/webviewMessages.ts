@@ -6,6 +6,7 @@ import { DevOpsConnection } from "../../apm-devops/models/devOpsConnection";
 import { WorkflowInfo } from "../../github-workflow-runner/githubWorkflowRunnerService";
 import type {
   SquadCharter,
+  SquadCliSource,
   SquadDetectionResult,
   SquadDoctorReport,
   SquadDocKind,
@@ -50,7 +51,10 @@ export type WebviewMessage =
   | { command: "saveSquadDoc"; kind: SquadDocKind; content: string }
   | { command: "selectSquadPreset"; presetId: string }
   | { command: "applySquadPreset"; presetId: string }
-  | { command: "runSquadDoctor" };
+  | { command: "runSquadDoctor" }
+  // Squad CLI setup (SQD-025 / #240): choose npm-global / npx / custom path, or install the CLI
+  | { command: "setSquadCliInvocation"; source: SquadCliSource; cliPath?: string }
+  | { command: "installSquadCli" };
 
 /**
  * Messages sent FROM the extension TO the webview
