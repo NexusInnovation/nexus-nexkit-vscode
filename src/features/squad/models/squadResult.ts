@@ -21,6 +21,7 @@ export const SQUAD_ERROR_CODES = [
   "preset-invalid",
   "file-read-failed",
   "file-write-failed",
+  "write-conflict",
   "parse-failed",
   "doctor-failed",
   "update-check-failed",

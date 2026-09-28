@@ -74,7 +74,17 @@ export type WebviewMessage =
   | { command: "refreshSquadDetection" }
   | { command: "checkSquadUpdates" }
   | { command: "saveSquadCharter"; agentId: string; content: string }
-  | { command: "saveSquadDoc"; kind: SquadDocKind; content: string }
+  | {
+      command: "saveSquadDoc";
+      kind: SquadDocKind;
+      content: string;
+      /**
+       * `contentHash` of the doc the edit started from (SQD-027). When present,
+       * the host rejects the save with `write-conflict` if the file changed on
+       * disk since; omit only to force-overwrite.
+       */
+      baseContentHash?: string | null;
+    }
   | { command: "runSquadDoctor" }
   | { command: "exportSquad"; request?: SquadExportRequest }
   | { command: "refreshSquadPlugins" }

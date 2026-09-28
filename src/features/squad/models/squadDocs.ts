@@ -31,4 +31,19 @@ export interface SquadMarkdownDoc {
 
   /** Raw markdown content, or an empty string when {@link exists} is false. */
   content: string;
+
+  /**
+   * Version token for optimistic concurrency (SQD-027): SHA-256 hex digest of
+   * the full on-disk bytes when read, or `null` when the document is absent.
+   * Echo it back as `baseContentHash` on save so the host can reject writes
+   * that would clobber changes made on disk since the panel loaded the doc.
+   */
+  contentHash?: string | null;
+
+  /**
+   * True when {@link content} was cut at the panel read limit. Truncated
+   * documents must not be saved from the panel (the tail would be lost); the
+   * host refuses such saves with an actionable error.
+   */
+  truncated?: boolean;
 }
