@@ -1522,6 +1522,7 @@ details[open] > .type-header::before {
    ============================================================================ */
 
 .squad-roster,
+.squad-upstreams,
 .squad-governance,
 .squad-logs {
   display: flex;
@@ -1529,14 +1530,16 @@ details[open] > .type-header::before {
   gap: 8px;
 }
 
-/* Roster table (SQD-012) */
-.squad-roster-table {
+/* Roster / upstream tables (SQD-012 / SQD-035) */
+.squad-roster-table,
+.squad-upstream-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9em;
 }
 
-.squad-roster-table th {
+.squad-roster-table th,
+.squad-upstream-table th {
   text-align: left;
   font-weight: 600;
   color: var(--vscode-descriptionForeground);
@@ -1544,7 +1547,8 @@ details[open] > .type-header::before {
   padding: 4px 6px;
 }
 
-.squad-roster-table td {
+.squad-roster-table td,
+.squad-upstream-table td {
   padding: 6px;
   border-bottom: 1px solid var(--vscode-panel-border);
   vertical-align: top;
@@ -1576,6 +1580,23 @@ details[open] > .type-header::before {
 
 .squad-no-charter {
   color: var(--vscode-descriptionForeground);
+}
+
+.squad-upstream-id {
+  font-weight: 600;
+}
+
+.squad-upstream-kind {
+  display: inline-flex;
+  padding: 1px 6px;
+  border-radius: 9px;
+  font-size: 0.8em;
+  background-color: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+}
+
+.squad-upstream-reference {
+  word-break: break-all;
 }
 
 /* Charter / document / log content */
