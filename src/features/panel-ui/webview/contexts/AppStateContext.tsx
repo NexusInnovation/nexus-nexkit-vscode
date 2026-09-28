@@ -156,6 +156,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
               ...prev.squad,
               detection: message.detection,
               upstreams: message.upstreams,
+              upstreamRecommendations: message.upstreamRecommendations ?? null,
               plugins: message.plugins,
               isReady: true,
               isLoading: false,

@@ -19,6 +19,7 @@ import type {
   SquadMarkdownDoc,
   SquadPluginRef,
   SquadRosterMember,
+  SquadUpstreamRecommendations,
   SquadUpstreamSource,
 } from "../../../squad/models";
 import type { SquadLogDocument } from "../types/squadState";
@@ -56,6 +57,9 @@ export interface UseSquadStateResult {
 
   /** Upstream inheritance sources. */
   upstreams: SquadUpstreamSource[];
+
+  /** Org → team → project recommendations and upstream warnings, when evaluated. */
+  upstreamRecommendations: SquadUpstreamRecommendations | null;
 
   /** Installed plugins. */
   plugins: SquadPluginRef[];
@@ -139,6 +143,7 @@ export function useSquadState(): UseSquadStateResult {
     routing: squad.routing,
     logs: squad.logs,
     upstreams: squad.upstreams,
+    upstreamRecommendations: squad.upstreamRecommendations,
     plugins: squad.plugins,
     doctor: squad.doctor,
     refresh,

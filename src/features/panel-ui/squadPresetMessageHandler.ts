@@ -122,6 +122,8 @@ export class SquadPresetMessageHandler {
         command: "squadStatusUpdate",
         detection: result.value.detection,
         upstreams: [],
+        // Upstreams are not re-read here; the next getSquadState evaluates them.
+        upstreamRecommendations: null,
         plugins: [],
       });
     }

@@ -9,6 +9,7 @@ import {
   SquadPluginRef,
   SquadResult,
   SquadRosterMember,
+  SquadUpstreamRecommendations,
   SquadUpstreamSource,
   isSquadErr,
 } from "../squad/models";
@@ -16,7 +17,14 @@ import {
   SquadFileService,
   SquadLogKind as SquadFileLogKind,
 } from "../squad/services/squadFileService";
+import { SquadUpstreamRecommendationService } from "../squad/services/squadUpstreamRecommendationService";
 import { SquadLogDocument, SquadLogKind } from "./webview/types/squadState";
+
+/** Upstream sources plus their recommendations; `null` recommendations mean "not evaluated". */
+interface SquadUpstreamSnapshot {
+  upstreams: SquadUpstreamSource[];
+  recommendations: SquadUpstreamRecommendations | null;
+}
 
 /**
  * Routes Squad webview requests (SQD-007 contract) to the Squad detection and
@@ -39,7 +47,8 @@ export class SquadPanelMessageHandler {
 
   constructor(
     private readonly _services: ServiceContainer,
-    private readonly _postMessage: (message: ExtensionMessage) => void
+    private readonly _postMessage: (message: ExtensionMessage) => void,
+    private readonly _upstreamRecommender: SquadUpstreamRecommendationService = new SquadUpstreamRecommendationService()
   ) {
     this._logger = _services.logging;
   }
@@ -86,7 +95,7 @@ export class SquadPanelMessageHandler {
 
     const fileService = this._services.squadFile;
     let firstError: SquadError | undefined;
-    const upstreams = fileService ? await this._readUpstreams(fileService, (error) => (firstError ??= error)) : [];
+    const upstreams = await this._readUpstreams(fileService, (error) => (firstError ??= error));
     this._emitStatus(detection.value, upstreams, []);
 
     if (!fileService) {
@@ -120,7 +129,7 @@ export class SquadPanelMessageHandler {
       }
       const fileService = this._services.squadFile;
       let upstreamError: SquadError | undefined;
-      const upstreams = fileService ? await this._readUpstreams(fileService, (error) => (upstreamError = error)) : [];
+      const upstreams = await this._readUpstreams(fileService, (error) => (upstreamError = error));
       this._emitStatus(detection.value, upstreams, []);
       if (upstreamError) {
         this._emitError(upstreamError);
@@ -170,17 +179,25 @@ export class SquadPanelMessageHandler {
 
   // --- helpers ----------------------------------------------------------
 
+  /**
+   * Read upstream sources and evaluate the org → team → project
+   * recommendations (SQD-037). A read failure yields `null` recommendations so
+   * the webview never renders an error as a clean recommendation state.
+   */
   private async _readUpstreams(
-    fileService: SquadFileService,
+    fileService: SquadFileService | undefined,
     onError: (error: SquadError) => void
-  ): Promise<SquadUpstreamSource[]> {
+  ): Promise<SquadUpstreamSnapshot> {
+    if (!fileService) {
+      return { upstreams: [], recommendations: null };
+    }
     const result = await fileService.readUpstreams();
     if (isSquadErr(result)) {
       this._logger.warn("Squad: failed to read upstream sources", result.error);
       onError(result.error);
-      return [];
+      return { upstreams: [], recommendations: null };
     }
-    return result.value;
+    return { upstreams: result.value, recommendations: this._upstreamRecommender.recommend(result.value) };
   }
 
   private async _readCharters(
@@ -259,10 +276,16 @@ export class SquadPanelMessageHandler {
 
   private _emitStatus(
     detection: SquadDetectionResult,
-    upstreams: SquadUpstreamSource[],
+    { upstreams, recommendations }: SquadUpstreamSnapshot,
     plugins: SquadPluginRef[]
   ): void {
-    this._postMessage({ command: "squadStatusUpdate", detection, upstreams, plugins });
+    this._postMessage({
+      command: "squadStatusUpdate",
+      detection,
+      upstreams,
+      upstreamRecommendations: recommendations,
+      plugins,
+    });
   }
 
   private _emitError(error: SquadError): void {

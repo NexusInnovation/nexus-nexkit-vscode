@@ -16,6 +16,7 @@ import type {
   SquadPluginRef,
   SquadPreset,
   SquadRosterMember,
+  SquadUpstreamRecommendations,
   SquadUpstreamSource,
   UnreachableSquadSource,
 } from "../../squad/models";
@@ -129,6 +130,13 @@ export type ExtensionMessage =
       command: "squadStatusUpdate";
       detection: SquadDetectionResult;
       upstreams: SquadUpstreamSource[];
+      /**
+       * Org → team → project recommendations and upstream warnings
+       * (SQD-037, FR-033/034/035). `null` when the upstreams could not be
+       * evaluated (e.g. `.squad/upstream.json` failed to parse) so a failure
+       * is never rendered as a clean recommendation state.
+       */
+      upstreamRecommendations: SquadUpstreamRecommendations | null;
       plugins: SquadPluginRef[];
     }
   | {
