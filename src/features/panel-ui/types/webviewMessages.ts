@@ -14,6 +14,7 @@ import type {
   SquadError,
   SquadMarkdownDoc,
   SquadMarketplaceRef,
+  SquadPluginAction,
   SquadPluginRef,
   SquadPreset,
   SquadRosterMember,
@@ -54,6 +55,9 @@ export type WebviewMessage =
   | { command: "saveSquadDoc"; kind: SquadDocKind; content: string }
   | { command: "runSquadDoctor" }
   | { command: "refreshSquadPlugins" }
+  // Squad plugin marketplace + lifecycle actions (SQD-039 / #254). `target` is optional for
+  // actions whose operand the host can prompt for (marketplace source, plugin directory).
+  | { command: "runSquadPluginAction"; action: SquadPluginAction; target?: string }
   // Squad preset selection screen (SQD-019 / #234)
   | { command: "listSquadPresets" }
   | { command: "initSquadFromPreset"; presetId: string }
@@ -138,6 +142,16 @@ export type ExtensionMessage =
       command: "squadPluginsUpdate";
       marketplaces: SquadMarketplaceRef[];
       plugins: SquadPluginRef[];
+    }
+  // Squad plugin action outcome (SQD-039 / #254). `ok: false` always carries an actionable error.
+  | {
+      command: "squadPluginActionResult";
+      action: SquadPluginAction;
+      target?: string;
+      ok: boolean;
+      changed?: boolean;
+      output?: string;
+      error?: SquadError;
     }
   | {
       command: "squadRosterUpdate";

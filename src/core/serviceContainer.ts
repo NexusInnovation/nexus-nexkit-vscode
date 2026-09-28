@@ -41,6 +41,7 @@ import { ExternalRepoPresetProvider } from "../features/squad/services/externalR
 import { SquadPresetDownloadService } from "../features/squad/services/squadPresetDownloadService";
 import { SquadInitService } from "../features/squad/services/squadInitService";
 import { SquadPluginService } from "../features/squad/services/squadPluginService";
+import { SquadPluginActionService } from "../features/squad/services/squadPluginActionService";
 
 /**
  * Service container for dependency injection
@@ -98,6 +99,12 @@ export interface ServiceContainer {
    * CLI when available.
    */
   squadPlugins?: SquadPluginService;
+
+  /**
+   * Squad plugin marketplace and lifecycle actions (SQD-039, FR-040/041/044):
+   * confirmed, backed-up `squad plugin` writes. Undefined without a workspace.
+   */
+  squadPluginActions?: SquadPluginActionService;
 
   /**
    * Aggregated Squad preset source (SQD-019). Lazily constructed on first
@@ -174,6 +181,9 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   // CLI is found across platforms (npm `squad.cmd`/`squad.ps1` shims on Windows).
   const squadDetection = new SquadDetectionService({ cliService: squadCli });
   const squadPlugins = squadFile ? new SquadPluginService({ fileService: squadFile, cli: squadCli }) : undefined;
+  const squadPluginActions = squadPlugins
+    ? new SquadPluginActionService({ cli: squadCli, plugins: squadPlugins, backup })
+    : undefined;
 
   // Preset discovery (SQD-017/018) aggregated behind one provider (SQD-019).
   // Built lazily so no preset listing or network work happens during activation.
@@ -253,6 +263,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     squadCli,
     squadFile,
     squadPlugins,
+    squadPluginActions,
     get squadPresets(): SquadPresetProvider {
       return getSquadPresets();
     },

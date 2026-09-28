@@ -8,7 +8,7 @@
 
 import * as assert from "assert";
 import { useSquadState } from "../../../src/features/panel-ui/webview/hooks/useSquadState";
-import { SquadCliSource } from "../../../src/features/squad/models";
+import { SquadCliSource, SquadPluginAction } from "../../../src/features/squad/models";
 import { renderWithAppState, fireEvent, cleanup } from "./harness/renderSquad";
 import { lastPostedMessage, postedMessagesOfCommand, resetVsCodeApiMock } from "./harness/vscodeApiMock";
 
@@ -22,6 +22,8 @@ function ActionProbe() {
       <button data-testid="save-doc" onClick={() => squad.saveDoc("decisions", "# Decisions")} />
       <button data-testid="run-doctor" onClick={() => squad.runDoctor()} />
       <button data-testid="refresh-plugins" onClick={() => squad.refreshPlugins()} />
+      <button data-testid="plugin-enable" onClick={() => squad.runPluginAction(SquadPluginAction.Enable, "team")} />
+      <button data-testid="plugin-add-nexus" onClick={() => squad.runPluginAction(SquadPluginAction.AddNexusMarketplace)} />
       <button data-testid="install-cli" onClick={() => squad.installCli()} />
       <button data-testid="use-npx" onClick={() => squad.setCliInvocation(SquadCliSource.Npx)} />
       <button data-testid="use-custom" onClick={() => squad.setCliInvocation(SquadCliSource.Custom, "/opt/squad")} />
@@ -81,6 +83,26 @@ suite("useSquadState — actions", () => {
     const view = renderWithAppState(<ActionProbe />);
     click(view, "refresh-plugins");
     assert.deepStrictEqual(lastPostedMessage(), { command: "refreshSquadPlugins" });
+  });
+
+  test("runPluginAction posts runSquadPluginAction with action and target", () => {
+    const view = renderWithAppState(<ActionProbe />);
+    click(view, "plugin-enable");
+    assert.deepStrictEqual(lastPostedMessage(), {
+      command: "runSquadPluginAction",
+      action: SquadPluginAction.Enable,
+      target: "team",
+    });
+  });
+
+  test("runPluginAction without a target lets the host resolve it", () => {
+    const view = renderWithAppState(<ActionProbe />);
+    click(view, "plugin-add-nexus");
+    assert.deepStrictEqual(lastPostedMessage(), {
+      command: "runSquadPluginAction",
+      action: SquadPluginAction.AddNexusMarketplace,
+      target: undefined,
+    });
   });
 
   test("installCli posts installSquadCli", () => {
