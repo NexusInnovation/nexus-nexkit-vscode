@@ -51,6 +51,7 @@ interface SquadStubs {
   listInstalledPlugins: sinon.SinonStub;
   runDoctor: sinon.SinonStub;
   checkUpdates: sinon.SinonStub;
+  exportSquad: sinon.SinonStub;
 }
 
 function createStubs(): SquadStubs {
@@ -90,6 +91,7 @@ function createStubs(): SquadStubs {
     listInstalledPlugins: sinon.stub().resolves(squadOk([])),
     runDoctor: sinon.stub(),
     checkUpdates: sinon.stub().resolves(squadOk(updatesResult())),
+    exportSquad: sinon.stub(),
   };
 }
 
@@ -194,6 +196,9 @@ function createServices(stubs: SquadStubs, hasWorkspace = true): ServiceContaine
     },
     squadUpdates: {
       checkUpdates: stubs.checkUpdates,
+    },
+    squadExport: {
+      exportSquad: stubs.exportSquad,
     },
     squadFile,
     squadWrite,
@@ -329,9 +334,7 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
     stubs.readMarketplaces.resolves(
       squadOk([{ id: "core", source: "NexusInnovation/nexus-plugin-marketplace", kind: "github", enabled: true }])
     );
-    stubs.listInstalledPlugins.resolves(
-      squadOk([{ id: "team-plugin", marketplace: "core", enabled: true, status: "enabled" }])
-    );
+    stubs.listInstalledPlugins.resolves(squadOk([{ id: "team-plugin", marketplace: "core", enabled: true, status: "enabled" }]));
     const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
 
     await handler.handleMessage({ command: "getSquadState" });
@@ -476,9 +479,7 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
 
   test("saveSquadDoc surfaces write failures and clears loading", async () => {
     const stubs = createStubs();
-    stubs.saveMarkdownDoc.resolves(
-      squadErr({ code: "backup-failed", message: "backup failed", remediation: "check disk" })
-    );
+    stubs.saveMarkdownDoc.resolves(squadErr({ code: "backup-failed", message: "backup failed", remediation: "check disk" }));
     const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
 
     await handler.handleMessage({ command: "saveSquadDoc", kind: SquadDocKind.Routing, content: "# Routing" });
@@ -545,6 +546,43 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
 
     assert.deepStrictEqual(commands(), ["squadLoading", "squadError", "squadLoading"]);
     assert.strictEqual(find("squadError")?.error.code, "update-check-failed");
+    assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
+  });
+
+  test("exportSquad emits squadExportResult and clears loading on success", async () => {
+    const stubs = createStubs();
+    const outcome = {
+      target: { kind: "file" as const, uri: "file:///tmp/squad-export.json" },
+      exportedAt: 123,
+      stdout: "ok",
+      stderr: "",
+      durationMs: 10,
+    };
+    stubs.exportSquad.resolves(squadOk(outcome));
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({
+      command: "exportSquad",
+      request: { target: { kind: "file", uri: "file:///tmp/squad-export.json" } },
+    });
+
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadExportResult", "squadLoading"]);
+    const update = find("squadExportResult");
+    assert.ok(update);
+    assert.deepStrictEqual(update.export, outcome);
+    assert.ok(stubs.exportSquad.calledOnce);
+    assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
+  });
+
+  test("exportSquad emits squadError and clears loading on failure", async () => {
+    const stubs = createStubs();
+    stubs.exportSquad.resolves(squadErr({ code: "cli-execution-failed", message: "export failed", remediation: "retry" }));
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "exportSquad" });
+
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadError", "squadLoading"]);
+    assert.strictEqual(find("squadError")?.error.code, "cli-execution-failed");
     assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
   });
 
