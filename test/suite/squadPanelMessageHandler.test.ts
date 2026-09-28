@@ -41,6 +41,7 @@ interface SquadStubs {
   listLogs: sinon.SinonStub;
   readLog: sinon.SinonStub;
   readUpstreams: sinon.SinonStub;
+  runDoctor: sinon.SinonStub;
 }
 
 function createStubs(): SquadStubs {
@@ -54,6 +55,7 @@ function createStubs(): SquadStubs {
     listLogs: sinon.stub().resolves(squadOk([])),
     readLog: sinon.stub(),
     readUpstreams: sinon.stub().resolves(squadOk([])),
+    runDoctor: sinon.stub(),
   };
 }
 
@@ -99,6 +101,9 @@ function createServices(stubs: SquadStubs, hasWorkspace = true): ServiceContaine
     },
     squadDetection: {
       detect: stubs.detect,
+    },
+    squadCli: {
+      runDoctor: stubs.runDoctor,
     },
     squadFile,
   } as unknown as ServiceContainer;
@@ -295,14 +300,37 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
     assert.strictEqual(find("squadError")?.error.code, "preset-fetch-failed");
   });
 
-  test("runSquadDoctor responds with a not-available squadError around loading", async () => {
+  test("runSquadDoctor emits squadDoctorUpdate with the parsed report", async () => {
     const stubs = createStubs();
+    const report = {
+      overall: "warning",
+      checks: [{ label: "CLI", severity: "warning", message: "update available" }],
+      structured: true,
+      generatedAt: 123,
+    };
+    stubs.runDoctor.resolves(squadOk(report));
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "runSquadDoctor" });
+
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadDoctorUpdate", "squadLoading"]);
+    const update = find("squadDoctorUpdate");
+    assert.ok(update);
+    assert.deepStrictEqual(update.doctor, report);
+    assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
+    assert.ok(stubs.runDoctor.calledOnce);
+  });
+
+  test("runSquadDoctor emits squadError and clears loading on CLI failure", async () => {
+    const stubs = createStubs();
+    stubs.runDoctor.resolves(squadErr({ code: "cli-not-found", message: "no cli", remediation: "install it" }));
     const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
 
     await handler.handleMessage({ command: "runSquadDoctor" });
 
     assert.deepStrictEqual(commands(), ["squadLoading", "squadError", "squadLoading"]);
-    assert.strictEqual(find("squadError")?.error.code, "doctor-failed");
+    assert.strictEqual(find("squadError")?.error.code, "cli-not-found");
+    assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
   });
 
   test("unknown command is ignored without posting a message", async () => {

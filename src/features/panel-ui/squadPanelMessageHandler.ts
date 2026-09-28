@@ -29,10 +29,11 @@ import { SquadLogDocument, SquadLogKind } from "./webview/types/squadState";
  * response types; failures always surface as a structured, actionable
  * {@link SquadError} via `squadError` — never a silent success.
  *
- * Write-back flows (`saveSquadCharter`, `saveSquadDoc`) and CLI-backed flows
- * (`applySquadPreset`, `runSquadDoctor`) depend on services still in flight
- * (SquadCliService / a write service); they respond with a clear
- * "not available yet" {@link SquadError} rather than faking success.
+ * Write-back flows (`saveSquadCharter`, `saveSquadDoc`) and the CLI-backed
+ * preset flow (`applySquadPreset`) depend on services still in flight (a write
+ * service / preset source); they respond with a clear "not available yet"
+ * {@link SquadError} rather than faking success. Squad Doctor (`runSquadDoctor`)
+ * is wired to {@link SquadCliService} (SQD-021).
  */
 export class SquadPanelMessageHandler {
   private readonly _logger: LoggingService;
@@ -173,15 +174,21 @@ export class SquadPanelMessageHandler {
     }
   }
 
-  /** Squad Doctor is CLI-backed and not available yet (SQD-005 in flight). */
+  /**
+   * Run Squad Doctor via the CLI service (SQD-021, FR-060). Emits
+   * `squadDoctorUpdate` with the parsed report on success, or a structured,
+   * actionable `squadError` (CLI missing, timeout, cancellation, non-zero
+   * exit) on failure — never a silent success.
+   */
   private async handleRunSquadDoctor(): Promise<void> {
     this._setLoading(true);
     try {
-      this._emitError({
-        code: "doctor-failed",
-        message: "Squad Doctor is not available yet.",
-        remediation: "Running Squad Doctor will be enabled once the Squad CLI integration ships.",
-      });
+      const result = await this._services.squadCli.runDoctor({ cwd: this._workspaceRoot() });
+      if (isSquadErr(result)) {
+        this._emitError(result.error);
+        return;
+      }
+      this._postMessage({ command: "squadDoctorUpdate", doctor: result.value });
     } finally {
       this._setLoading(false);
     }
