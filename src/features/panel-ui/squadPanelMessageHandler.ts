@@ -239,7 +239,9 @@ export class SquadPanelMessageHandler {
 
     this._setLoading(true);
     try {
-      const result = await writer.saveMarkdownDoc(message.kind, message.content);
+      const result = await writer.saveMarkdownDoc(message.kind, message.content, {
+        baseContentHash: message.baseContentHash,
+      });
       if (isSquadErr(result)) {
         this._emitError(result.error);
         return;
