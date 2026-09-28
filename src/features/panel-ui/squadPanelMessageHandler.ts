@@ -11,13 +11,21 @@ import {
   SquadPluginRef,
   SquadResult,
   SquadRosterMember,
+  SquadUpstreamRecommendations,
   SquadUpstreamSource,
   isSquadErr,
 } from "../squad/models";
 import { SquadFileService, SquadLogKind as SquadFileLogKind } from "../squad/services/squadFileService";
 import { SquadControlledWriteOutcome } from "../squad/services/squadFileWriteService";
 import { SquadPluginService } from "../squad/services/squadPluginService";
+import { SquadUpstreamRecommendationService } from "../squad/services/squadUpstreamRecommendationService";
 import { SquadLogDocument, SquadLogKind } from "./webview/types/squadState";
+
+/** Upstream sources plus their recommendations; `null` recommendations mean "not evaluated". */
+interface SquadUpstreamSnapshot {
+  upstreams: SquadUpstreamSource[];
+  recommendations: SquadUpstreamRecommendations | null;
+}
 
 interface SquadPluginInventory {
   marketplaces: SquadMarketplaceRef[];
@@ -46,7 +54,8 @@ export class SquadPanelMessageHandler {
 
   constructor(
     private readonly _services: ServiceContainer,
-    private readonly _postMessage: (message: ExtensionMessage) => void
+    private readonly _postMessage: (message: ExtensionMessage) => void,
+    private readonly _upstreamRecommender: SquadUpstreamRecommendationService = new SquadUpstreamRecommendationService()
   ) {
     this._logger = _services.logging;
   }
@@ -105,7 +114,7 @@ export class SquadPanelMessageHandler {
 
     let firstError: SquadError | undefined;
     const fileService = this._services.squadFile;
-    const upstreams = fileService ? await this._readUpstreams(fileService, (error) => (firstError ??= error)) : [];
+    const upstreams = await this._readUpstreams(fileService, (error) => (firstError ??= error));
     const pluginInventory = await this._readPluginInventory(this._services.squadPlugins);
     if (pluginInventory.error) {
       firstError ??= pluginInventory.error;
@@ -146,7 +155,7 @@ export class SquadPanelMessageHandler {
       }
       let upstreamError: SquadError | undefined;
       const fileService = this._services.squadFile;
-      const upstreams = fileService ? await this._readUpstreams(fileService, (error) => (upstreamError = error)) : [];
+      const upstreams = await this._readUpstreams(fileService, (error) => (upstreamError = error));
       const pluginInventory = await this._readPluginInventory(this._services.squadPlugins);
       this._emitStatus(detection.value, upstreams, pluginInventory.marketplaces, pluginInventory.plugins);
       const error = upstreamError ?? pluginInventory.error;
@@ -174,7 +183,7 @@ export class SquadPanelMessageHandler {
 
       const fileService = this._services.squadFile;
       let upstreamError: SquadError | undefined;
-      const upstreams = fileService ? await this._readUpstreams(fileService, (error) => (upstreamError = error)) : [];
+      const upstreams = await this._readUpstreams(fileService, (error) => (upstreamError = error));
       const pluginInventory = await this._readPluginInventory(this._services.squadPlugins);
       this._emitStatus(updates.value.detection, upstreams, pluginInventory.marketplaces, pluginInventory.plugins);
       this._postMessage({ command: "squadUpdatesUpdate", updates: updates.value });
@@ -327,7 +336,7 @@ export class SquadPanelMessageHandler {
       let refreshError: SquadError | undefined;
       if (outcome.detection) {
         const fileService = this._services.squadFile;
-        const upstreams = fileService ? await this._readUpstreams(fileService, (error) => (refreshError = error)) : [];
+        const upstreams = await this._readUpstreams(fileService, (error) => (refreshError = error));
         const pluginInventory = await this._readPluginInventory(this._services.squadPlugins);
         refreshError ??= pluginInventory.error;
         this._emitStatus(outcome.detection, upstreams, pluginInventory.marketplaces, pluginInventory.plugins);
@@ -353,17 +362,25 @@ export class SquadPanelMessageHandler {
 
   // --- helpers ----------------------------------------------------------
 
+  /**
+   * Read upstream sources and evaluate the org → team → project
+   * recommendations (SQD-037). A read failure yields `null` recommendations so
+   * the webview never renders an error as a clean recommendation state.
+   */
   private async _readUpstreams(
-    fileService: SquadFileService,
+    fileService: SquadFileService | undefined,
     onError: (error: SquadError) => void
-  ): Promise<SquadUpstreamSource[]> {
+  ): Promise<SquadUpstreamSnapshot> {
+    if (!fileService) {
+      return { upstreams: [], recommendations: null };
+    }
     const result = await fileService.readUpstreams();
     if (isSquadErr(result)) {
       this._logger.warn("Squad: failed to read upstream sources", result.error);
       onError(result.error);
-      return [];
+      return { upstreams: [], recommendations: null };
     }
-    return result.value;
+    return { upstreams: result.value, recommendations: this._upstreamRecommender.recommend(result.value) };
   }
 
   private async _readPluginInventory(pluginService: SquadPluginService | undefined): Promise<SquadPluginInventory> {
@@ -466,11 +483,18 @@ export class SquadPanelMessageHandler {
 
   private _emitStatus(
     detection: SquadDetectionResult,
-    upstreams: SquadUpstreamSource[],
+    { upstreams, recommendations }: SquadUpstreamSnapshot,
     marketplaces: SquadMarketplaceRef[],
     plugins: SquadPluginRef[]
   ): void {
-    this._postMessage({ command: "squadStatusUpdate", detection, upstreams, marketplaces, plugins });
+    this._postMessage({
+      command: "squadStatusUpdate",
+      detection,
+      upstreams,
+      upstreamRecommendations: recommendations,
+      marketplaces,
+      plugins,
+    });
   }
 
   private _emitError(error: SquadError): void {

@@ -377,7 +377,9 @@ export class SquadFileService {
   private _normalizeUpstreams(parsed: unknown): SquadResult<SquadUpstreamSource[]> {
     const list = this._upstreamList(parsed);
     if (list === undefined) {
-      return this._upstreamParseError("Expected .squad/upstream.json to be an array or an object with a sources array.");
+      return this._upstreamParseError(
+        "Expected .squad/upstream.json to be an array or an object with an upstreams (or sources) array."
+      );
     }
 
     const sources: SquadUpstreamSource[] = [];
@@ -386,10 +388,19 @@ export class SquadFileService {
         return this._upstreamParseError(`Source at index ${index} must be an object.`);
       }
       const id = this._asString(entry.id) ?? this._asString(entry.name);
+      // The Squad CLI manifest stores the location in `source` and the git
+      // branch in `ref`, so `source` wins over `ref` as the location.
+      const cliSource = this._asString(entry.source);
       const reference =
-        this._asString(entry.reference) ?? this._asString(entry.ref) ?? this._asString(entry.url) ?? this._asString(entry.path);
+        this._asString(entry.reference) ??
+        cliSource ??
+        this._asString(entry.ref) ??
+        this._asString(entry.url) ??
+        this._asString(entry.path);
       if (id === undefined || reference === undefined) {
-        return this._upstreamParseError(`Source at index ${index} must include an id/name and reference/ref/url/path.`);
+        return this._upstreamParseError(
+          `Source at index ${index} must include an id/name and source/reference/ref/url/path.`
+        );
       }
       const kind = this._toUpstreamKind(entry.kind ?? entry.type);
       if (kind === undefined) {
@@ -401,9 +412,15 @@ export class SquadFileService {
         kind,
         reference,
       };
-      const lastSyncedAt = this._toEpochMillis(entry.lastSyncedAt ?? entry.lastSync ?? entry.syncedAt);
+      const lastSyncedAt = this._toEpochMillis(
+        entry.lastSyncedAt ?? entry.lastSync ?? entry.syncedAt ?? entry.last_synced
+      );
       if (lastSyncedAt !== undefined) {
         source.lastSyncedAt = lastSyncedAt;
+      }
+      const gitRef = cliSource !== undefined ? this._asString(entry.ref) : undefined;
+      if (gitRef !== undefined) {
+        source.gitRef = gitRef;
       }
       sources.push(source);
     }
@@ -521,6 +538,9 @@ export class SquadFileService {
     if (Array.isArray(parsed)) {
       return parsed;
     }
+    if (this._isRecord(parsed) && Array.isArray(parsed.upstreams)) {
+      return parsed.upstreams;
+    }
     if (this._isRecord(parsed) && Array.isArray(parsed.sources)) {
       return parsed.sources;
     }
@@ -531,7 +551,8 @@ export class SquadFileService {
     return squadErr({
       code: "parse-failed",
       message: "The Squad upstream manifest (.squad/upstream.json) has an unsupported shape.",
-      remediation: "Use an array of upstream sources, or an object with a sources array. Each source needs an id, kind and reference.",
+      remediation:
+        "Use the Squad CLI format ({ \"upstreams\": [...] }), an array of upstream sources, or an object with a sources array. Each source needs a name, type and source.",
       detail,
     });
   }

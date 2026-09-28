@@ -32,7 +32,23 @@ export interface SquadUpstreamSource {
 
   /** Last successful sync time (epoch milliseconds), when known. */
   lastSyncedAt?: number;
+
+  /** Git branch/tag tracked by a git upstream (`ref` in the CLI manifest). */
+  gitRef?: string;
 }
+
+/**
+ * Upstream operations NexKit runs through `squad upstream` (FR-031/FR-032).
+ * Used by the host service and the webview message contract.
+ */
+export const SquadUpstreamOperation = {
+  List: "list",
+  Add: "add",
+  Sync: "sync",
+  Remove: "remove",
+} as const;
+
+export type SquadUpstreamOperation = (typeof SquadUpstreamOperation)[keyof typeof SquadUpstreamOperation];
 
 /** Kind of marketplace source read from `.squad/plugins/marketplaces.json` (FR-042). */
 export const SquadMarketplaceKind = {

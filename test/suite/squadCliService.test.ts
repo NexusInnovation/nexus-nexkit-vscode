@@ -153,6 +153,22 @@ suite("Unit: SquadCliService", () => {
       assert.deepStrictEqual(captured.request?.args, ["upstream", "add", "team", "--yes"]);
     });
 
+    test("Should allow --name and --ref for upstream add (SQD-036)", async () => {
+      const captured: { request?: SquadSpawnRequest } = {};
+      const service = new SquadCliService({
+        runner: fakeRunner({}, captured),
+        logger: silentLogger,
+        cliSource: SquadCliSource.Global,
+      });
+
+      const result = await service.execute(SquadCliCommand.Upstream, {
+        args: ["add", "org/repo", "--name", "org", "--ref", "main"],
+      });
+
+      assert.strictEqual(result.ok, true);
+      assert.deepStrictEqual(captured.request?.args, ["upstream", "add", "org/repo", "--name", "org", "--ref", "main"]);
+    });
+
     test("Should allow plugin list JSON output for inventory reads", async () => {
       const captured: { request?: SquadSpawnRequest } = {};
       const service = new SquadCliService({

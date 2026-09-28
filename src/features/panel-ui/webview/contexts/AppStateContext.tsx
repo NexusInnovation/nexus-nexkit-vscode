@@ -156,6 +156,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
               ...prev.squad,
               detection: message.detection,
               upstreams: message.upstreams,
+              upstreamRecommendations: message.upstreamRecommendations ?? null,
               marketplaces: message.marketplaces,
               plugins: message.plugins,
               isReady: true,
@@ -174,6 +175,23 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
               plugins: message.plugins,
               isLoading: false,
               error: null,
+            },
+          }));
+          break;
+
+        case "squadPluginActionResult":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              lastPluginAction: {
+                action: message.action,
+                target: message.target,
+                ok: message.ok,
+                changed: message.changed,
+                output: message.output,
+                error: message.error,
+              },
             },
           }));
           break;
@@ -359,6 +377,37 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
             },
           }));
           break;
+
+        case "squadUpstreamOperationStarted":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              upstreamOperation: {
+                operation: message.operation,
+                name: message.name,
+                status: "running",
+                error: null,
+              },
+            },
+          }));
+          break;
+
+        case "squadUpstreamOperationResult":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              upstreams: message.upstreams,
+              upstreamOperation: {
+                operation: message.operation,
+                name: message.name,
+                status: message.ok ? "succeeded" : "failed",
+                error: message.ok ? null : message.error ?? null,
+              },
+            },
+          }));
+          break;
       }
     };
 
@@ -376,6 +425,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     const unsubscribeUpdatesAvailable = messenger.onMessage("templateUpdatesAvailable", handleMessage);
     const unsubscribeSquadStatus = messenger.onMessage("squadStatusUpdate", handleMessage);
     const unsubscribeSquadPlugins = messenger.onMessage("squadPluginsUpdate", handleMessage);
+    const unsubscribeSquadPluginAction = messenger.onMessage("squadPluginActionResult", handleMessage);
     const unsubscribeSquadRoster = messenger.onMessage("squadRosterUpdate", handleMessage);
     const unsubscribeSquadDocs = messenger.onMessage("squadDocsUpdate", handleMessage);
     const unsubscribeSquadLogs = messenger.onMessage("squadLogsUpdate", handleMessage);
@@ -390,6 +440,8 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     const unsubscribeSquadPresetsLoading = messenger.onMessage("squadPresetsLoading", handleMessage);
     const unsubscribeSquadPresetsError = messenger.onMessage("squadPresetsError", handleMessage);
     const unsubscribeSquadInitResult = messenger.onMessage("squadInitResult", handleMessage);
+    const unsubscribeSquadUpstreamStarted = messenger.onMessage("squadUpstreamOperationStarted", handleMessage);
+    const unsubscribeSquadUpstreamResult = messenger.onMessage("squadUpstreamOperationResult", handleMessage);
 
     // Request initial state from extension
     messenger.sendMessage({ command: "webviewReady" });
@@ -409,6 +461,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       unsubscribeUpdatesAvailable();
       unsubscribeSquadStatus();
       unsubscribeSquadPlugins();
+      unsubscribeSquadPluginAction();
       unsubscribeSquadRoster();
       unsubscribeSquadDocs();
       unsubscribeSquadLogs();
@@ -423,6 +476,8 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       unsubscribeSquadPresetsLoading();
       unsubscribeSquadPresetsError();
       unsubscribeSquadInitResult();
+      unsubscribeSquadUpstreamStarted();
+      unsubscribeSquadUpstreamResult();
     };
   }, [messenger]);
 

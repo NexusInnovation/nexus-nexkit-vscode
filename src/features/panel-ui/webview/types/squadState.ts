@@ -21,11 +21,14 @@ import type {
   SquadError,
   SquadMarkdownDoc,
   SquadMarketplaceRef,
+  SquadPluginAction,
   SquadPreset,
   SquadPluginRef,
   SquadRosterMember,
+  SquadUpstreamRecommendations,
   SquadUpdatesResult,
   SquadUpstreamSource,
+  SquadUpstreamOperation,
   UnreachableSquadSource,
 } from "../../../squad/models";
 
@@ -133,6 +136,30 @@ export const initialSquadPresetPickerState: SquadPresetPickerState = {
 };
 
 /**
+ * Outcome of the most recent plugin marketplace / lifecycle action (SQD-039,
+ * FR-040/FR-041/FR-044). ok: false always carries an actionable error.
+ */
+export interface SquadPluginActionResultState {
+  /** The action that ran. */
+  action: SquadPluginAction;
+
+  /** Resolved operand, when any. */
+  target?: string;
+
+  /** Whether the action succeeded. */
+  ok: boolean;
+
+  /** Whether the Squad state changed (false for validate/dry-run or no-ops). */
+  changed?: boolean;
+
+  /** CLI output (e.g. validation messages or the dry-run plan). */
+  output?: string;
+
+  /** Actionable error when {@link ok} is false. */
+  error?: SquadError;
+}
+
+/**
  * Squad state slice held in the global {@link AppState}.
  * A single source of truth for the Squad tab; populated exclusively through
  * messages handled in `AppStateContext` (never per-component listeners).
@@ -174,11 +201,21 @@ export interface SquadState {
   /** Upstream inheritance sources shown in the status area (FR-021). */
   upstreams: SquadUpstreamSource[];
 
+  /**
+   * Org → team → project recommendations and upstream warnings (SQD-037,
+   * FR-033/034/035). `null` until evaluated or when the upstream manifest
+   * could not be read.
+   */
+  upstreamRecommendations: SquadUpstreamRecommendations | null;
+
   /** Plugin marketplaces read from `.squad/plugins/marketplaces.json` (FR-042). */
   marketplaces: SquadMarketplaceRef[];
 
   /** Installed plugins shown in the status area (FR-021). */
   plugins: SquadPluginRef[];
+
+  /** Result of the most recent plugin action (SQD-039), or `null` before any. */
+  lastPluginAction: SquadPluginActionResultState | null;
 
   /** Latest Squad Doctor report (FR-060), when one has been produced. */
   doctor: SquadDoctorReport | null;
@@ -188,6 +225,27 @@ export interface SquadState {
 
   /** Preset selection screen sub-state (SQD-019, FR-010/FR-014/FR-015). */
   presetPicker: SquadPresetPickerState;
+
+  /**
+   * Latest upstream add/sync/remove/list operation (SQD-036, FR-031/FR-032),
+   * or `null` before the first one. Failures carry an actionable error.
+   */
+  upstreamOperation: SquadUpstreamOperationState | null;
+}
+
+/** Progress / outcome of the latest `squad upstream` operation (SQD-036). */
+export interface SquadUpstreamOperationState {
+  /** Operation that ran. */
+  operation: SquadUpstreamOperation;
+
+  /** Targeted upstream, when applicable. */
+  name?: string;
+
+  /** Running, or finished with success / failure. */
+  status: "running" | "succeeded" | "failed";
+
+  /** Actionable error when {@link status} is `failed`. */
+  error: SquadError | null;
 }
 
 /** Initial Squad state — empty and not ready until the host responds. */
@@ -202,9 +260,12 @@ export const initialSquadState: SquadState = {
   routing: null,
   logs: [],
   upstreams: [],
+  upstreamRecommendations: null,
   marketplaces: [],
   plugins: [],
+  lastPluginAction: null,
   doctor: null,
   updates: null,
   presetPicker: initialSquadPresetPickerState,
+  upstreamOperation: null,
 };
