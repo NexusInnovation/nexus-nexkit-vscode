@@ -1711,3 +1711,205 @@ details[open] > .type-header::before {
   font-style: italic;
   color: var(--vscode-descriptionForeground);
 }
+
+/* Squad status versions & update hints (SQD-010) */
+.squad-version {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+
+.squad-version-value {
+  font-size: 0.9em;
+  color: var(--vscode-foreground);
+}
+
+.squad-version-unknown .squad-version-value,
+.squad-version-source .squad-version-value {
+  font-style: italic;
+  color: var(--vscode-descriptionForeground);
+}
+
+.squad-version-hint {
+  font-size: 0.75em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.squad-update-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.72em;
+  font-weight: 600;
+  padding: 0 6px;
+  border-radius: 8px;
+  background-color: var(--vscode-editorWarning-foreground, var(--vscode-badge-background));
+  color: var(--vscode-editor-background, var(--vscode-badge-foreground));
+}
+
+.squad-update-pill .codicon {
+  font-size: 12px;
+}
+
+/* Squad CLI-missing notice (SQD-010, FR-004; chooser slot for #240) */
+.squad-cli-missing {
+  margin: 0;
+}
+
+.squad-cli-options {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: 0.85em;
+}
+
+.squad-cli-options li {
+  margin: 2px 0;
+}
+
+.squad-cli-options code {
+  font-size: 0.9em;
+}
+
+/* Squad Doctor diagnostics (SQD-010, FR-060) */
+.squad-diagnostics {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px;
+  border-top: 1px solid var(--vscode-panel-border);
+}
+
+.squad-diagnostics-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.squad-diagnostics-title {
+  font-size: 0.75em;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.squad-doctor-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border: 1px solid var(--vscode-button-border, transparent);
+  border-radius: 4px;
+  background-color: var(--vscode-button-secondaryBackground, transparent);
+  color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+  cursor: pointer;
+  font-size: 0.85em;
+}
+
+.squad-doctor-button:hover:not(:disabled) {
+  background-color: var(--vscode-button-secondaryHoverBackground, var(--vscode-list-hoverBackground));
+}
+
+.squad-doctor-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.squad-diagnostics-empty {
+  margin: 0;
+  font-size: 0.85em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.squad-doctor-summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+}
+
+.squad-doctor-fallback {
+  font-weight: 400;
+  font-style: italic;
+  color: var(--vscode-descriptionForeground);
+}
+
+.squad-doctor-ok .codicon-pass {
+  color: var(--vscode-testing-iconPassed, var(--vscode-foreground));
+}
+
+.squad-diagnostics-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.squad-diagnostic {
+  padding: 6px 8px;
+  border-radius: 4px;
+  border-left: 3px solid var(--vscode-panel-border);
+  background-color: var(--vscode-editorWidget-background, transparent);
+}
+
+.squad-diagnostic-ok {
+  border-left-color: var(--vscode-testing-iconPassed, var(--vscode-panel-border));
+}
+
+.squad-diagnostic-warning {
+  border-left-color: var(--vscode-editorWarning-foreground, var(--vscode-panel-border));
+}
+
+.squad-diagnostic-error {
+  border-left-color: var(--vscode-errorForeground, var(--vscode-panel-border));
+}
+
+.squad-diagnostic-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.squad-diagnostic-ok .squad-diagnostic-head .codicon {
+  color: var(--vscode-testing-iconPassed, var(--vscode-foreground));
+}
+
+.squad-diagnostic-warning .squad-diagnostic-head .codicon {
+  color: var(--vscode-editorWarning-foreground);
+}
+
+.squad-diagnostic-error .squad-diagnostic-head .codicon {
+  color: var(--vscode-errorForeground);
+}
+
+.squad-diagnostic-label {
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+}
+
+.squad-diagnostic-severity {
+  margin-left: auto;
+  font-size: 0.7em;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.squad-diagnostic-message {
+  margin: 4px 0 0;
+  font-size: 0.85em;
+  color: var(--vscode-foreground);
+}
+
+.squad-diagnostic-remediation {
+  margin: 4px 0 0;
+  font-size: 0.8em;
+  color: var(--vscode-descriptionForeground);
+}
