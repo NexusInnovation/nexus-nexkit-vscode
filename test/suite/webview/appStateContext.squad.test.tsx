@@ -110,6 +110,26 @@ suite("AppStateContext — Squad messages", () => {
     assert.strictEqual(state.plugins[0].enabled, false);
   });
 
+  test("squadPluginActionResult stores the latest plugin action outcome", () => {
+    const squad = renderProbe();
+    assert.strictEqual(squad().lastPluginAction, null);
+
+    send({ command: "squadPluginActionResult", action: "dry-run", target: "./plugin", ok: true, changed: false, output: "plan" });
+    assert.deepStrictEqual(squad().lastPluginAction, {
+      action: "dry-run",
+      target: "./plugin",
+      ok: true,
+      changed: false,
+      output: "plan",
+    });
+
+    const error = makeError();
+    send({ command: "squadPluginActionResult", action: "install", target: "./plugin", ok: false, error });
+    const state = squad();
+    assert.strictEqual(state.lastPluginAction?.ok, false);
+    assert.strictEqual(state.lastPluginAction?.error?.code, error.code);
+  });
+
   test("squadLoading toggles the in-flight flag both ways", () => {
     const squad = renderProbe();
     send({ command: "squadLoading", isLoading: true });

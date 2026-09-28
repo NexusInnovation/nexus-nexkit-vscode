@@ -179,6 +179,23 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
           }));
           break;
 
+        case "squadPluginActionResult":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              lastPluginAction: {
+                action: message.action,
+                target: message.target,
+                ok: message.ok,
+                changed: message.changed,
+                output: message.output,
+                error: message.error,
+              },
+            },
+          }));
+          break;
+
         case "squadRosterUpdate":
           setState((prev) => ({
             ...prev,
@@ -364,6 +381,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     const unsubscribeUpdatesAvailable = messenger.onMessage("templateUpdatesAvailable", handleMessage);
     const unsubscribeSquadStatus = messenger.onMessage("squadStatusUpdate", handleMessage);
     const unsubscribeSquadPlugins = messenger.onMessage("squadPluginsUpdate", handleMessage);
+    const unsubscribeSquadPluginAction = messenger.onMessage("squadPluginActionResult", handleMessage);
     const unsubscribeSquadRoster = messenger.onMessage("squadRosterUpdate", handleMessage);
     const unsubscribeSquadDocs = messenger.onMessage("squadDocsUpdate", handleMessage);
     const unsubscribeSquadLogs = messenger.onMessage("squadLogsUpdate", handleMessage);
@@ -396,6 +414,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       unsubscribeUpdatesAvailable();
       unsubscribeSquadStatus();
       unsubscribeSquadPlugins();
+      unsubscribeSquadPluginAction();
       unsubscribeSquadRoster();
       unsubscribeSquadDocs();
       unsubscribeSquadLogs();

@@ -21,6 +21,7 @@ import type {
   SquadError,
   SquadMarkdownDoc,
   SquadMarketplaceRef,
+  SquadPluginAction,
   SquadPreset,
   SquadPluginRef,
   SquadRosterMember,
@@ -134,6 +135,30 @@ export const initialSquadPresetPickerState: SquadPresetPickerState = {
 };
 
 /**
+ * Outcome of the most recent plugin marketplace / lifecycle action (SQD-039,
+ * FR-040/FR-041/FR-044). ok: false always carries an actionable error.
+ */
+export interface SquadPluginActionResultState {
+  /** The action that ran. */
+  action: SquadPluginAction;
+
+  /** Resolved operand, when any. */
+  target?: string;
+
+  /** Whether the action succeeded. */
+  ok: boolean;
+
+  /** Whether the Squad state changed (false for validate/dry-run or no-ops). */
+  changed?: boolean;
+
+  /** CLI output (e.g. validation messages or the dry-run plan). */
+  output?: string;
+
+  /** Actionable error when {@link ok} is false. */
+  error?: SquadError;
+}
+
+/**
  * Squad state slice held in the global {@link AppState}.
  * A single source of truth for the Squad tab; populated exclusively through
  * messages handled in `AppStateContext` (never per-component listeners).
@@ -188,6 +213,9 @@ export interface SquadState {
   /** Installed plugins shown in the status area (FR-021). */
   plugins: SquadPluginRef[];
 
+  /** Result of the most recent plugin action (SQD-039), or `null` before any. */
+  lastPluginAction: SquadPluginActionResultState | null;
+
   /** Latest Squad Doctor report (FR-060), when one has been produced. */
   doctor: SquadDoctorReport | null;
 
@@ -213,6 +241,7 @@ export const initialSquadState: SquadState = {
   upstreamRecommendations: null,
   marketplaces: [],
   plugins: [],
+  lastPluginAction: null,
   doctor: null,
   updates: null,
   presetPicker: initialSquadPresetPickerState,
