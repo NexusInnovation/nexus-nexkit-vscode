@@ -17,3 +17,5 @@ export * from "./squadPresetProvider";
 export * from "./squadDoctor";
 export * from "./squadConfig";
 export * from "./squadProfileConfig";
+export * from "./squadUpdates";
+export * from "./squadTransfer";

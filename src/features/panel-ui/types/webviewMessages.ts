@@ -12,15 +12,37 @@ import type {
   SquadDoctorReport,
   SquadDocKind,
   SquadError,
+  SquadExportOutcome,
+  SquadExportRequest,
   SquadMarkdownDoc,
+  SquadMarketplaceRef,
   SquadPluginRef,
   SquadPreset,
   SquadRosterMember,
+  SquadUpdatesResult,
   SquadUpstreamSource,
   SquadUpstreamOperation,
   UnreachableSquadSource,
 } from "../../squad/models";
 import type { SquadLogDocument } from "../webview/types/squadState";
+
+/**
+ * Sanitized write result sent to the webview after a controlled Squad edit.
+ * Does not expose the absolute backup path; the host/service logs retain that.
+ */
+export interface SquadWriteSummary {
+  /** Workspace-root-relative POSIX path that was written. */
+  relativePath: string;
+
+  /** True when the target did not exist before this save. */
+  created: boolean;
+
+  /** True when BackupService captured existing Squad artifacts. */
+  backupCreated: boolean;
+
+  /** UTF-8 byte count written. */
+  bytesWritten: number;
+}
 
 /**
  * Messages sent FROM the webview TO the extension
@@ -50,9 +72,22 @@ export type WebviewMessage =
   // Squad management messages (SQD-007; host routing implemented in #223)
   | { command: "getSquadState" }
   | { command: "refreshSquadDetection" }
+  | { command: "checkSquadUpdates" }
   | { command: "saveSquadCharter"; agentId: string; content: string }
-  | { command: "saveSquadDoc"; kind: SquadDocKind; content: string }
+  | {
+      command: "saveSquadDoc";
+      kind: SquadDocKind;
+      content: string;
+      /**
+       * `contentHash` of the doc the edit started from (SQD-027). When present,
+       * the host rejects the save with `write-conflict` if the file changed on
+       * disk since; omit only to force-overwrite.
+       */
+      baseContentHash?: string | null;
+    }
   | { command: "runSquadDoctor" }
+  | { command: "exportSquad"; request?: SquadExportRequest }
+  | { command: "refreshSquadPlugins" }
   // Squad preset selection screen (SQD-019 / #234)
   | { command: "listSquadPresets" }
   | { command: "initSquadFromPreset"; presetId: string }
@@ -135,6 +170,12 @@ export type ExtensionMessage =
       command: "squadStatusUpdate";
       detection: SquadDetectionResult;
       upstreams: SquadUpstreamSource[];
+      marketplaces: SquadMarketplaceRef[];
+      plugins: SquadPluginRef[];
+    }
+  | {
+      command: "squadPluginsUpdate";
+      marketplaces: SquadMarketplaceRef[];
       plugins: SquadPluginRef[];
     }
   | {
@@ -154,6 +195,24 @@ export type ExtensionMessage =
   | {
       command: "squadDoctorUpdate";
       doctor: SquadDoctorReport;
+    }
+  | {
+      command: "squadUpdatesUpdate";
+      updates: SquadUpdatesResult;
+    }
+  | {
+      command: "squadExportResult";
+      export: SquadExportOutcome;
+    }
+  | {
+      command: "squadCharterSaved";
+      charter: SquadCharter;
+      result: SquadWriteSummary;
+    }
+  | {
+      command: "squadDocSaved";
+      doc: SquadMarkdownDoc;
+      result: SquadWriteSummary;
     }
   | {
       command: "squadLoading";

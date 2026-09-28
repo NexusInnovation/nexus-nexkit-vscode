@@ -156,6 +156,19 @@ suite("Unit: SquadCliService", () => {
       assert.deepStrictEqual(captured.request?.args, ["upstream", "add", "org/repo", "--name", "org", "--ref", "main"]);
     });
 
+    test("Should allow plugin list JSON output for inventory reads", async () => {
+      const captured: { request?: SquadSpawnRequest } = {};
+      const service = new SquadCliService({
+        runner: fakeRunner({ stdout: "[]" }, captured),
+        logger: silentLogger,
+        cliSource: SquadCliSource.Global,
+      });
+
+      await service.execute(SquadCliCommand.Plugin, { args: ["list", "--json"] });
+
+      assert.deepStrictEqual(captured.request?.args, ["plugin", "list", "--json"]);
+    });
+
     test("Should pass cwd fsPath to the runner", async () => {
       const captured: { request?: SquadSpawnRequest } = {};
       const service = new SquadCliService({

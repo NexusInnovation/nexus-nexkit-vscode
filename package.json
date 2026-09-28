@@ -140,6 +140,11 @@
         "command": "nexus-nexkit-vscode.openConvertToMarkdown",
         "title": "Nexkit: Convert to Markdown",
         "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.squad.export",
+        "title": "Nexkit: Export Squad",
+        "category": "Nexkit"
       }
     ],
     "menus": {

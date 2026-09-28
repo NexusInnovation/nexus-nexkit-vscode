@@ -2,8 +2,8 @@
  * useSquadState (SQD-007) — selectors + action message plumbing.
  *
  * Verifies each action posts exactly the message the host expects (with its
- * payload). The VS Code bridge is mocked; only the posted messages are asserted
- * (components stay purely presentational).
+ * payload). Preset selection is covered by useSquadPresets; this suite only
+ * asserts the host messages exposed by the Squad state hook.
  */
 
 import * as assert from "assert";
@@ -20,7 +20,11 @@ function ActionProbe() {
       <button data-testid="refresh-detection" onClick={() => squad.refreshDetection()} />
       <button data-testid="save-charter" onClick={() => squad.saveCharter("trinity", "# Charter")} />
       <button data-testid="save-doc" onClick={() => squad.saveDoc("decisions", "# Decisions")} />
+      <button data-testid="save-doc-hash" onClick={() => squad.saveDoc("routing", "# Routing", "abc123")} />
+      <button data-testid="save-doc-new" onClick={() => squad.saveDoc("routing", "# Routing", null)} />
       <button data-testid="run-doctor" onClick={() => squad.runDoctor()} />
+      <button data-testid="check-updates" onClick={() => squad.checkUpdates()} />
+      <button data-testid="refresh-plugins" onClick={() => squad.refreshPlugins()} />
       <button data-testid="install-cli" onClick={() => squad.installCli()} />
       <button data-testid="use-npx" onClick={() => squad.setCliInvocation(SquadCliSource.Npx)} />
       <button data-testid="use-custom" onClick={() => squad.setCliInvocation(SquadCliSource.Custom, "/opt/squad")} />
@@ -74,10 +78,44 @@ suite("useSquadState — actions", () => {
     });
   });
 
+  test("saveDoc forwards the baseContentHash for stale-write detection (SQD-027)", () => {
+    const view = renderWithAppState(<ActionProbe />);
+    click(view, "save-doc-hash");
+    assert.deepStrictEqual(lastPostedMessage(), {
+      command: "saveSquadDoc",
+      kind: "routing",
+      content: "# Routing",
+      baseContentHash: "abc123",
+    });
+  });
+
+  test("saveDoc forwards a null baseContentHash for docs absent on load", () => {
+    const view = renderWithAppState(<ActionProbe />);
+    click(view, "save-doc-new");
+    assert.deepStrictEqual(lastPostedMessage(), {
+      command: "saveSquadDoc",
+      kind: "routing",
+      content: "# Routing",
+      baseContentHash: null,
+    });
+  });
+
   test("runDoctor posts runSquadDoctor", () => {
     const view = renderWithAppState(<ActionProbe />);
     click(view, "run-doctor");
     assert.deepStrictEqual(lastPostedMessage(), { command: "runSquadDoctor" });
+  });
+
+  test("checkUpdates posts checkSquadUpdates", () => {
+    const view = renderWithAppState(<ActionProbe />);
+    click(view, "check-updates");
+    assert.deepStrictEqual(lastPostedMessage(), { command: "checkSquadUpdates" });
+  });
+
+  test("refreshPlugins posts refreshSquadPlugins", () => {
+    const view = renderWithAppState(<ActionProbe />);
+    click(view, "refresh-plugins");
+    assert.deepStrictEqual(lastPostedMessage(), { command: "refreshSquadPlugins" });
   });
 
   test("installCli posts installSquadCli", () => {
