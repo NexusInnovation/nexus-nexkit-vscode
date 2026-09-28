@@ -16,7 +16,7 @@
  * The runner reports process-level failures (missing executable, non-zero exit,
  * timeout, cancellation) as structured fields on {@link SquadSpawnResult} and
  * never throws for them, so the service layer can map them to actionable
- * {@link import("./models").SquadError} values.
+ * {@link import("../models").SquadError} values.
  */
 
 import { spawn } from "child_process";

@@ -12,12 +12,12 @@ import { SquadCliSource } from "../../src/features/squad/models";
 import {
   SquadCliCommand,
   SquadCliService,
-} from "../../src/features/squad/squadCliService";
+} from "../../src/features/squad/services/squadCliService";
 import type {
   SquadProcessRunner,
   SquadSpawnRequest,
   SquadSpawnResult,
-} from "../../src/features/squad/squadProcessRunner";
+} from "../../src/features/squad/services/squadProcessRunner";
 
 /** Build a fake runner resolving a canned result and recording the request. */
 function fakeRunner(

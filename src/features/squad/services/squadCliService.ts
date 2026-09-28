@@ -24,9 +24,9 @@
  */
 
 import type * as vscode from "vscode";
-import { SettingsManager } from "../../core/settingsManager";
-import { LoggingService } from "../../shared/services/loggingService";
-import { SquadCliSource, squadErr, squadOk, type SquadDoctorReport, type SquadResult } from "./models";
+import { SettingsManager } from "../../../core/settingsManager";
+import { LoggingService } from "../../../shared/services/loggingService";
+import { SquadCliSource, squadErr, squadOk, type SquadDoctorReport, type SquadResult } from "../models";
 import { ChildProcessSquadRunner, type SquadProcessRunner } from "./squadProcessRunner";
 import { parseSquadDoctorReport } from "./squadDoctorParser";
 

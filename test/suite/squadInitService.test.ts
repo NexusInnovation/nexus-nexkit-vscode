@@ -7,8 +7,8 @@ import {
   SquadInitFileSystem,
   SquadInitService,
 } from "../../src/features/squad/services/squadInitService";
-import { SquadCliService } from "../../src/features/squad/squadCliService";
-import { SquadDetectionService } from "../../src/features/squad/squadDetectionService";
+import { SquadCliService } from "../../src/features/squad/services/squadCliService";
+import { SquadDetectionService } from "../../src/features/squad/services/squadDetectionService";
 import { SquadPresetDownloadService } from "../../src/features/squad/services/squadPresetDownloadService";
 import {
   SquadPreset,

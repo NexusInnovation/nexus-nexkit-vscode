@@ -20,7 +20,7 @@ import {
   SquadDoctorCheck,
   SquadDoctorReport,
   SquadDoctorSeverity,
-} from "./models";
+} from "../models";
 
 /** Severity ordering used to compute the overall report severity. */
 const SEVERITY_RANK: Record<SquadDoctorSeverity, number> = {
