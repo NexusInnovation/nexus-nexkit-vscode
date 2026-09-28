@@ -17,6 +17,7 @@ import type {
   SquadDoctorReport,
   SquadError,
   SquadMarkdownDoc,
+  SquadMarketplaceRef,
   SquadPluginRef,
   SquadRosterMember,
   SquadUpstreamSource,
@@ -57,6 +58,9 @@ export interface UseSquadStateResult {
   /** Upstream inheritance sources. */
   upstreams: SquadUpstreamSource[];
 
+  /** Plugin marketplaces. */
+  marketplaces: SquadMarketplaceRef[];
+
   /** Installed plugins. */
   plugins: SquadPluginRef[];
 
@@ -77,6 +81,9 @@ export interface UseSquadStateResult {
 
   /** Run Squad Doctor diagnostics. */
   runDoctor: () => void;
+
+  /** Re-read Squad plugin marketplaces and installed plugins. */
+  refreshPlugins: () => void;
 
   /**
    * Persist how the Squad CLI is invoked (FR-004): install globally via npm,
@@ -120,6 +127,10 @@ export function useSquadState(): UseSquadStateResult {
     messenger.sendMessage({ command: "runSquadDoctor" });
   };
 
+  const refreshPlugins = () => {
+    messenger.sendMessage({ command: "refreshSquadPlugins" });
+  };
+
   const setCliInvocation = (source: SquadCliSource, cliPath?: string) => {
     messenger.sendMessage({ command: "setSquadCliInvocation", source, cliPath });
   };
@@ -139,6 +150,7 @@ export function useSquadState(): UseSquadStateResult {
     routing: squad.routing,
     logs: squad.logs,
     upstreams: squad.upstreams,
+    marketplaces: squad.marketplaces,
     plugins: squad.plugins,
     doctor: squad.doctor,
     refresh,
@@ -146,6 +158,7 @@ export function useSquadState(): UseSquadStateResult {
     saveCharter,
     saveDoc,
     runDoctor,
+    refreshPlugins,
     setCliInvocation,
     installCli,
   };

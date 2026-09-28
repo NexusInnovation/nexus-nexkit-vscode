@@ -7,6 +7,7 @@ import {
   SquadDetectionResult,
   SquadDocKind,
   SquadError,
+  SquadMarketplaceRef,
   SquadPluginRef,
   SquadResult,
   SquadRosterMember,
@@ -18,7 +19,14 @@ import {
   SquadLogKind as SquadFileLogKind,
 } from "../squad/services/squadFileService";
 import { SquadControlledWriteOutcome } from "../squad/services/squadFileWriteService";
+import { SquadPluginService } from "../squad/services/squadPluginService";
 import { SquadLogDocument, SquadLogKind } from "./webview/types/squadState";
+
+interface SquadPluginInventory {
+  marketplaces: SquadMarketplaceRef[];
+  plugins: SquadPluginRef[];
+  error?: SquadError;
+}
 
 /**
  * Routes Squad webview requests (SQD-007 contract) to the Squad detection and
@@ -67,6 +75,9 @@ export class SquadPanelMessageHandler {
       case "runSquadDoctor":
         await this.handleRunSquadDoctor();
         return true;
+      case "refreshSquadPlugins":
+        await this.handleRefreshSquadPlugins();
+        return true;
       default:
         return false;
     }
@@ -86,12 +97,19 @@ export class SquadPanelMessageHandler {
       return;
     }
 
-    const fileService = this._services.squadFile;
     let firstError: SquadError | undefined;
+    const fileService = this._services.squadFile;
     const upstreams = fileService ? await this._readUpstreams(fileService, (error) => (firstError ??= error)) : [];
-    this._emitStatus(detection.value, upstreams, []);
+    const pluginInventory = await this._readPluginInventory(this._services.squadPlugins);
+    if (pluginInventory.error) {
+      firstError ??= pluginInventory.error;
+    }
+    this._emitStatus(detection.value, upstreams, pluginInventory.marketplaces, pluginInventory.plugins);
 
     if (!fileService) {
+      if (firstError) {
+        this._emitError(firstError);
+      }
       return;
     }
 
@@ -120,12 +138,14 @@ export class SquadPanelMessageHandler {
         this._emitError(detection.error);
         return;
       }
-      const fileService = this._services.squadFile;
       let upstreamError: SquadError | undefined;
+      const fileService = this._services.squadFile;
       const upstreams = fileService ? await this._readUpstreams(fileService, (error) => (upstreamError = error)) : [];
-      this._emitStatus(detection.value, upstreams, []);
-      if (upstreamError) {
-        this._emitError(upstreamError);
+      const pluginInventory = await this._readPluginInventory(this._services.squadPlugins);
+      this._emitStatus(detection.value, upstreams, pluginInventory.marketplaces, pluginInventory.plugins);
+      const error = upstreamError ?? pluginInventory.error;
+      if (error) {
+        this._emitError(error);
       }
     } finally {
       this._setLoading(false);
@@ -216,6 +236,24 @@ export class SquadPanelMessageHandler {
     }
   }
 
+  /** Refresh plugin marketplaces and installed plugins without re-running full detection. */
+  private async handleRefreshSquadPlugins(): Promise<void> {
+    this._setLoading(true);
+    try {
+      const inventory = await this._readPluginInventory(this._services.squadPlugins);
+      this._postMessage({
+        command: "squadPluginsUpdate",
+        marketplaces: inventory.marketplaces,
+        plugins: inventory.plugins,
+      });
+      if (inventory.error) {
+        this._emitError(inventory.error);
+      }
+    } finally {
+      this._setLoading(false);
+    }
+  }
+
   // --- helpers ----------------------------------------------------------
 
   private async _readUpstreams(
@@ -229,6 +267,28 @@ export class SquadPanelMessageHandler {
       return [];
     }
     return result.value;
+  }
+
+  private async _readPluginInventory(pluginService: SquadPluginService | undefined): Promise<SquadPluginInventory> {
+    if (!pluginService) {
+      return { marketplaces: [], plugins: [] };
+    }
+
+    let firstError: SquadError | undefined;
+
+    const marketplacesResult = await pluginService.readMarketplaces();
+    const marketplaces = this._unwrap(marketplacesResult, (error) => {
+      this._logger.warn("Squad: failed to read plugin marketplaces", error);
+      firstError ??= error;
+    }) ?? [];
+
+    const pluginsResult = await pluginService.listInstalledPlugins({ cwd: this._workspaceRoot() });
+    const plugins = this._unwrap(pluginsResult, (error) => {
+      this._logger.warn("Squad: failed to list installed plugins", error);
+      firstError ??= error;
+    }) ?? [];
+
+    return { marketplaces, plugins, error: firstError };
   }
 
   private async _readCharters(
@@ -308,9 +368,10 @@ export class SquadPanelMessageHandler {
   private _emitStatus(
     detection: SquadDetectionResult,
     upstreams: SquadUpstreamSource[],
+    marketplaces: SquadMarketplaceRef[],
     plugins: SquadPluginRef[]
   ): void {
-    this._postMessage({ command: "squadStatusUpdate", detection, upstreams, plugins });
+    this._postMessage({ command: "squadStatusUpdate", detection, upstreams, marketplaces, plugins });
   }
 
   private _emitError(error: SquadError): void {

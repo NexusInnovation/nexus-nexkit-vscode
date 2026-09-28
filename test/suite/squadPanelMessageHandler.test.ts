@@ -44,6 +44,8 @@ interface SquadStubs {
   readUpstreams: sinon.SinonStub;
   saveCharter: sinon.SinonStub;
   saveMarkdownDoc: sinon.SinonStub;
+  readMarketplaces: sinon.SinonStub;
+  listInstalledPlugins: sinon.SinonStub;
   runDoctor: sinon.SinonStub;
 }
 
@@ -76,6 +78,8 @@ function createStubs(): SquadStubs {
         doc: { kind: SquadDocKind.Decisions, relativePath: ".squad/decisions.md", exists: true, content: "# Decisions" },
       })
     ),
+    readMarketplaces: sinon.stub().resolves(squadOk([])),
+    listInstalledPlugins: sinon.stub().resolves(squadOk([])),
     runDoctor: sinon.stub(),
   };
 }
@@ -97,6 +101,12 @@ function createServices(stubs: SquadStubs, hasWorkspace = true): ServiceContaine
     ? {
         saveCharter: stubs.saveCharter,
         saveMarkdownDoc: stubs.saveMarkdownDoc,
+      }
+    : undefined;
+  const squadPlugins = hasWorkspace
+    ? {
+        readMarketplaces: stubs.readMarketplaces,
+        listInstalledPlugins: stubs.listInstalledPlugins,
       }
     : undefined;
 
@@ -134,6 +144,7 @@ function createServices(stubs: SquadStubs, hasWorkspace = true): ServiceContaine
     },
     squadFile,
     squadWrite,
+    squadPlugins,
   } as unknown as ServiceContainer;
 }
 
@@ -184,6 +195,7 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
     const status = find("squadStatusUpdate");
     assert.ok(status, "expected squadStatusUpdate");
     assert.strictEqual(status.detection.project.installState, SquadInstallState.Installed);
+    assert.deepStrictEqual(status.marketplaces, []);
     assert.deepStrictEqual(status.plugins, []);
 
     const roster = find("squadRosterUpdate");
@@ -252,6 +264,53 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
     assert.ok(find("squadStatusUpdate"), "status still emitted");
     const error = find("squadError");
     assert.strictEqual(error?.error.code, "file-read-failed");
+  });
+
+  test("getSquadState includes plugin marketplaces and installed plugins", async () => {
+    const stubs = createStubs();
+    stubs.readMarketplaces.resolves(
+      squadOk([{ id: "core", source: "NexusInnovation/nexus-plugin-marketplace", kind: "github", enabled: true }])
+    );
+    stubs.listInstalledPlugins.resolves(
+      squadOk([{ id: "team-plugin", marketplace: "core", enabled: true, status: "enabled" }])
+    );
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "getSquadState" });
+
+    const status = find("squadStatusUpdate");
+    assert.strictEqual(status?.marketplaces.length, 1);
+    assert.strictEqual(status?.plugins[0].id, "team-plugin");
+  });
+
+  test("refreshSquadPlugins emits plugin inventory and clears loading", async () => {
+    const stubs = createStubs();
+    stubs.readMarketplaces.resolves(
+      squadOk([{ id: "core", source: "NexusInnovation/nexus-plugin-marketplace", kind: "github", enabled: true }])
+    );
+    stubs.listInstalledPlugins.resolves(squadOk([{ id: "greffondors", enabled: false, status: "disabled" }]));
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "refreshSquadPlugins" });
+
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadPluginsUpdate", "squadLoading"]);
+    const update = find("squadPluginsUpdate");
+    assert.strictEqual(update?.marketplaces[0].id, "core");
+    assert.strictEqual(update?.plugins[0].enabled, false);
+    assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
+  });
+
+  test("refreshSquadPlugins surfaces plugin read failures after the inventory response", async () => {
+    const stubs = createStubs();
+    stubs.listInstalledPlugins.resolves(
+      squadErr({ code: "plugin-list-failed", message: "bad json", remediation: "Update Squad CLI." })
+    );
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "refreshSquadPlugins" });
+
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadPluginsUpdate", "squadError", "squadLoading"]);
+    assert.strictEqual(find("squadError")?.error.code, "plugin-list-failed");
   });
 
   test("getSquadState surfaces an upstream read failure and does not hide it as success", async () => {
