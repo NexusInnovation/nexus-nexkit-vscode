@@ -5,6 +5,7 @@ import { Profile } from "../../profile-management/models/profile";
 import { DevOpsConnection } from "../../apm-devops/models/devOpsConnection";
 import { WorkflowInfo } from "../../github-workflow-runner/githubWorkflowRunnerService";
 import type {
+  RejectedSquadPreset,
   SquadCharter,
   SquadDetectionResult,
   SquadDoctorReport,
@@ -15,6 +16,7 @@ import type {
   SquadPreset,
   SquadRosterMember,
   SquadUpstreamSource,
+  UnreachableSquadSource,
 } from "../../squad/models";
 import type { SquadLogDocument } from "../webview/types/squadState";
 
@@ -50,7 +52,10 @@ export type WebviewMessage =
   | { command: "saveSquadDoc"; kind: SquadDocKind; content: string }
   | { command: "selectSquadPreset"; presetId: string }
   | { command: "applySquadPreset"; presetId: string }
-  | { command: "runSquadDoctor" };
+  | { command: "runSquadDoctor" }
+  // Squad preset selection screen (SQD-019 / #234)
+  | { command: "listSquadPresets" }
+  | { command: "initSquadFromPreset"; presetId: string };
 
 /**
  * Messages sent FROM the extension TO the webview
@@ -154,4 +159,25 @@ export type ExtensionMessage =
   | {
       command: "squadError";
       error: SquadError;
+    }
+  // Squad preset selection screen (SQD-019 / #234)
+  | {
+      command: "squadPresetsDiscovered";
+      presets: SquadPreset[];
+      rejected: RejectedSquadPreset[];
+      unreachable: UnreachableSquadSource[];
+    }
+  | {
+      command: "squadPresetsLoading";
+      isLoading: boolean;
+    }
+  | {
+      command: "squadPresetsError";
+      error: SquadError;
+    }
+  | {
+      command: "squadInitResult";
+      presetId: string;
+      ok: boolean;
+      error?: SquadError;
     };
