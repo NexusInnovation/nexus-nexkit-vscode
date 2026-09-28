@@ -418,9 +418,49 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
     const status = find("squadStatusUpdate");
     assert.ok(status, "status is still emitted for other Squad state");
     assert.deepStrictEqual(status.upstreams, []);
+    assert.strictEqual(status.upstreamRecommendations, null, "a failed read must not produce recommendations");
     const error = find("squadError");
     assert.strictEqual(error?.error.code, "parse-failed");
     assert.strictEqual(error?.error.remediation, "fix JSON");
+  });
+
+  test("getSquadState emits org → team → project recommendations with a sub-path warning (SQD-037)", async () => {
+    const stubs = createStubs();
+    stubs.readUpstreams.resolves(
+      squadOk([
+        { id: "platform-team", kind: "git", reference: "https://github.com/acme/squad/tree/main/team" },
+        { id: "nexus-org", kind: "local", reference: "../org" },
+      ])
+    );
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "getSquadState" });
+
+    const recommendations = find("squadStatusUpdate")?.upstreamRecommendations;
+    assert.ok(recommendations, "recommendations are evaluated from the upstream manifest");
+    assert.deepStrictEqual(
+      recommendations.levels.map((level) => [level.level, level.status]),
+      [
+        ["org", "configured"],
+        ["team", "configured"],
+        ["project", "missing"],
+      ]
+    );
+    const codes = recommendations.warnings.map((warning) => warning.code);
+    assert.ok(codes.includes("subpath-unsupported"));
+    assert.ok(codes.includes("hierarchy-order"));
+    assert.strictEqual(find("squadError"), undefined, "warnings are not errors");
+  });
+
+  test("refreshSquadDetection re-evaluates upstream recommendations", async () => {
+    const stubs = createStubs();
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "refreshSquadDetection" });
+
+    const recommendations = find("squadStatusUpdate")?.upstreamRecommendations;
+    assert.ok(recommendations);
+    assert.strictEqual(recommendations.levels.length, 3);
   });
 
   test("getSquadState without a workspace folder emits only status", async () => {

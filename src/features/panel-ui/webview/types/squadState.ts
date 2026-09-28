@@ -26,6 +26,7 @@ import type {
   SquadPreset,
   SquadPluginRef,
   SquadRosterMember,
+  SquadUpstreamRecommendations,
   SquadUpdatesResult,
   SquadUpstreamSource,
   UnreachableSquadSource,
@@ -207,6 +208,13 @@ export interface SquadState {
   /** Upstream inheritance sources shown in the status area (FR-021). */
   upstreams: SquadUpstreamSource[];
 
+  /**
+   * Org → team → project recommendations and upstream warnings (SQD-037,
+   * FR-033/034/035). `null` until evaluated or when the upstream manifest
+   * could not be read.
+   */
+  upstreamRecommendations: SquadUpstreamRecommendations | null;
+
   /** Plugin marketplaces read from `.squad/plugins/marketplaces.json` (FR-042). */
   marketplaces: SquadMarketplaceRef[];
 
@@ -239,6 +247,7 @@ export const initialSquadState: SquadState = {
   modelConfig: null,
   logs: [],
   upstreams: [],
+  upstreamRecommendations: null,
   marketplaces: [],
   plugins: [],
   lastPluginAction: null,
