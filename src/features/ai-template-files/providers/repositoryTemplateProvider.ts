@@ -3,6 +3,7 @@ import { AITemplateFile, AITemplateFileType } from "../models/aiTemplateFile";
 import { RepositoryConfig } from "../models/repositoryConfig";
 import { GitHubAuthHelper } from "../../../shared/utils/githubAuthHelper";
 import { LoggingService } from "../../../shared/services/loggingService";
+import { GitHubRecursiveDownloader } from "../../../shared/utils/githubRecursiveDownloader";
 
 /**
  * GitHub API content item
@@ -399,103 +400,30 @@ export class RepositoryTemplateProvider {
       sourcePath: templateFile.sourcePath,
     });
 
-    const fileContents = new Map<string, string>();
     const { owner, repo } = this.parseGitHubUrl();
-    const headers = await this.getAuthHeaders();
     const branch = this.config.branch ?? "main";
-    let filesDownloaded = 0;
-    let directoriesProcessed = 0;
 
-    const downloadRecursive = async (path: string, basePath: string): Promise<void> => {
-      const apiUrl = `${RepositoryTemplateProvider.GITHUB_API_BASE}/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
+    // Reuse the generalized recursive downloader (also used by Squad presets).
+    const downloader = new GitHubRecursiveDownloader({
+      getHeaders: () => this.getAuthHeaders(),
+      logging: this._logging,
+    });
 
-      this._logging.debug(`[Templates] Fetching directory listing`, {
-        repository: templateFile.repository,
-        path,
-      });
-
-      const requestStart = Date.now();
-      const response = await fetch(apiUrl, { headers });
-      const requestDuration = Date.now() - requestStart;
-
-      const rateLimitInfo = {
-        remaining: response.headers.get("x-ratelimit-remaining"),
-        limit: response.headers.get("x-ratelimit-limit"),
-      };
-
-      this._logging.debug(`[Templates] Directory listing response`, {
-        repository: templateFile.repository,
-        path,
-        status: response.status,
-        durationMs: requestDuration,
-        rateLimit: rateLimitInfo,
-      });
-
-      if (!response.ok) {
-        this._logging.error(`[Templates] Failed to fetch directory contents`, {
-          repository: templateFile.repository,
-          path,
-          status: response.status,
-          statusText: response.statusText,
-          rateLimit: rateLimitInfo,
-        });
-        throw new Error(`Failed to fetch directory contents: ${response.status} ${response.statusText}`);
-      }
-
-      const contents = (await response.json()) as GitHubContentItem[];
-      directoriesProcessed++;
-
-      for (const item of contents) {
-        if (item.type === "file") {
-          // Download file content
-          this._logging.debug(`[Templates] Downloading directory file`, {
-            repository: templateFile.repository,
-            filePath: item.path,
-          });
-
-          const fileStart = Date.now();
-          const fileResponse = await fetch(item.download_url, { headers });
-          const fileDuration = Date.now() - fileStart;
-
-          if (!fileResponse.ok) {
-            this._logging.error(`[Templates] Failed to download directory file`, {
-              repository: templateFile.repository,
-              filePath: item.path,
-              status: fileResponse.status,
-            });
-            throw new Error(`Failed to download file: ${item.path}`);
-          }
-
-          const content = await fileResponse.text();
-          filesDownloaded++;
-
-          this._logging.debug(`[Templates] Directory file downloaded`, {
-            repository: templateFile.repository,
-            filePath: item.path,
-            durationMs: fileDuration,
-            contentSize: content.length,
-          });
-
-          // Store with relative path (remove the base skill folder path)
-          const relativePath = item.path.replace(basePath + "/", "");
-          fileContents.set(relativePath, content);
-        } else if (item.type === "dir") {
-          // Recursively download subdirectory
-          await downloadRecursive(item.path, basePath);
-        }
-      }
-    };
-
-    await downloadRecursive(templateFile.sourcePath, templateFile.sourcePath);
+    const result = await downloader.downloadFolder({
+      owner,
+      repo,
+      path: templateFile.sourcePath,
+      branch,
+    });
 
     this._logging.info(`[Templates] Directory contents downloaded successfully`, {
       repository: templateFile.repository,
       name: templateFile.name,
-      filesDownloaded,
-      directoriesProcessed,
+      filesDownloaded: result.fileCount,
+      directoriesProcessed: result.directoryCount,
     });
 
-    return fileContents;
+    return result.files;
   }
 
   /**
