@@ -13,6 +13,7 @@ import { TemplateMetadataEntry } from "../../../ai-template-files/services/templ
 import { Profile } from "../../../profile-management/models/profile";
 import { DevOpsConnection } from "../../../apm-devops/models/devOpsConnection";
 import { WorkflowInfo } from "../../../github-workflow-runner/githubWorkflowRunnerService";
+import { SquadState, initialSquadState } from "./squadState";
 
 /**
  * Complete application state
@@ -81,6 +82,11 @@ export interface AppState {
     /** The metadata index built by the scan, for fuzzy search */
     index: TemplateMetadataEntry[];
   };
+
+  /**
+   * Squad management state (SQD-007)
+   */
+  squad: SquadState;
 }
 
 /**
@@ -128,4 +134,5 @@ export const initialAppState: AppState = {
     isComplete: false,
     index: [],
   },
+  squad: initialSquadState,
 };
