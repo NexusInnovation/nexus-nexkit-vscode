@@ -15,8 +15,6 @@ How to decide who handles what.
 | TypeScript & VS Code extension | Link | Extension services, VS Code API, commands, settings, ServiceContainer, SettingsManager, unit tests for extension layer |
 | Preact & webview UI       | Ghost    | Preact components, hooks, AppState, webview message handling, TSX, webview CSS                                          |
 | CI/CD & deployment        | Tank     | GitHub Actions workflows, build pipelines, multi-env deployment                                                        |
-| SharePoint & Graph API    | Switch   | `SharePointClient`, `GraphServiceClient` DI, upload logic, metadata, `Sites.Selected` permissions                      |
-| Twilio & SMS              | Mouse    | `TwilioSmsClient`, `SendEmergencySmsFunction`, `TwilioInboundWebhookFunction`, opt-out, idempotency, audit, compliance |
 | Bicep & Azure IaC         | Dozer    | Bicep templates, Azure resource design, `infra/main.bicep`, `.bicepparam` files                                        |
 | Azure Functions config    | Dozer    | `host.json`, function bindings, app settings, managed identity, Key Vault references, App Configuration                |
 | Budget & planning         | Oracle   | Hour tracking, work breakdown, risk management, priorities                                                             |

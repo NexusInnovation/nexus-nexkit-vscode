@@ -17,9 +17,6 @@
 | Trinity  | Tester / QA                       | `.squad/agents/trinity/charter.md`  | 🟢 Active  |
 | Tank     | DevOps                            | `.squad/agents/tank/charter.md`     | 🟢 Active  |
 | Dozer    | Azure Engineer                    | `.squad/agents/dozer/charter.md`    | 🟢 Active  |
-| Cypher   | Nethris API Specialist            | `.squad/agents/cypher/charter.md`   | 🟢 Active  |
-| Switch   | SharePoint & Graph API Specialist | `.squad/agents/switch/charter.md`   | 🟢 Active  |
-| Mouse    | Twilio Integration Specialist     | `.squad/agents/mouse/charter.md`    | 🟢 Active  |
 | Oracle   | Project Manager                   | `.squad/agents/oracle/charter.md`   | 🟢 Active  |
 | Link | TypeScript & VS Code Extension Dev | `.squad/agents/link/charter.md` | 🟢 Active |
 | Ghost | Preact & Webview UI Dev | `.squad/agents/ghost/charter.md` | 🟢 Active |
