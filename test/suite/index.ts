@@ -26,7 +26,10 @@ export function run(): Promise<void> {
     // Find all test files
     // Only load tests from the suite folder. This avoids picking up stray compiled
     // test artifacts (e.g., out/test/*.test.js) that may remain after refactors.
-    glob("suite/**/*.test.js", { cwd: testsRoot })
+    // The `suite/webview/**` DOM tests run in their own Node + happy-dom runner
+    // (test/runWebviewTest.ts) and must NOT load in the Electron host, which has
+    // no DOM — so they are ignored here.
+    glob("suite/**/*.test.js", { cwd: testsRoot, ignore: "suite/webview/**" })
       .then((files) => {
         const currentTestFiles = files.filter((file) => {
           const sourcePath = path.resolve(__dirname, "../../../test", file.replace(/\.js$/, ".ts"));
