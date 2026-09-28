@@ -31,6 +31,8 @@ import { HooksConfigDeployer } from "../features/initialization/hooksConfigDeplo
 import { UserDirectoryService } from "../features/ai-template-files/services/userDirectoryService";
 import { ConvertToMarkdownPanelService } from "../features/convert-to-markdown/convertToMarkdownPanelService";
 import { MarkitdownConversionService } from "../features/convert-to-markdown/markitdownConversionService";
+import { SquadDetectionService } from "../features/squad/squadDetectionService";
+import { SquadFileService } from "../features/squad/services/squadFileService";
 
 /**
  * Service container for dependency injection
@@ -69,6 +71,12 @@ export interface ServiceContainer {
   userDirectory: UserDirectoryService;
   convertToMarkdown: ConvertToMarkdownPanelService;
   markitdownConversion: MarkitdownConversionService;
+  squadDetection: SquadDetectionService;
+  /**
+   * Read-only accessor for the workspace `.squad/` directory. Undefined when no
+   * workspace folder is open, since the service is bound to a folder root.
+   */
+  squadFile?: SquadFileService;
 }
 
 /**
@@ -122,6 +130,14 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const markitdownConversion = new MarkitdownConversionService(logging);
   const convertToMarkdown = new ConvertToMarkdownPanelService(context.extensionUri, markitdownConversion);
 
+  // Squad services (SQD-003) — lazy, non-blocking construction, no activation work.
+  // Detection resolves the workspace root on demand; the file service is bound to
+  // the first open workspace folder when one exists.
+  const squadDetection = new SquadDetectionService();
+  const squadWorkspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri;
+  const squadFile = squadWorkspaceRoot ? new SquadFileService(squadWorkspaceRoot) : undefined;
+  // NOTE: SquadCliService (SQD-005, #220) will be registered here in a follow-up.
+
   // Register for disposal
   context.subscriptions.push(logging);
   context.subscriptions.push(aiTemplateData);
@@ -166,5 +182,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     userDirectory,
     convertToMarkdown,
     markitdownConversion,
+    squadDetection,
+    squadFile,
   };
 }
