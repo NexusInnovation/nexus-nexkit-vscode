@@ -14,6 +14,7 @@ import { ToolsSection } from "./organisms/ToolsSection";
 import { SquadSection } from "./organisms/SquadSection";
 import { TabBar, TabDefinition } from "./molecules/TabBar";
 import { InitializationBanner } from "./molecules/InitializationBanner";
+import { PanelSkeleton } from "./molecules/PanelSkeleton";
 
 const TAB_DEFINITIONS: Record<string, TabDefinition> = {
   template: { id: "template", icon: "file-code", label: "Templates" },
@@ -91,7 +92,7 @@ export function App() {
   }, [isDevelopersMode, workspace.isInitialized, workspace.isInitRefused, profiles.isReady, profiles.list.length, activeTab]);
 
   if (!workspace.isReady) {
-    return null;
+    return <PanelSkeleton />;
   }
 
   if (!workspace.hasWorkspace) {

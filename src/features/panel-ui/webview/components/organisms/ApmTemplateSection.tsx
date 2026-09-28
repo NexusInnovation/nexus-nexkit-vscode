@@ -2,6 +2,7 @@ import { useMemo, useState } from "preact/hooks";
 import { useDebounce } from "../../hooks/useDebounce";
 import { SearchBar } from "../atoms/SearchBar";
 import { useTemplateData } from "../../hooks/useTemplateData";
+import { SkeletonList } from "../atoms/Skeleton";
 import { TemplateMetadataProvider } from "../../contexts/TemplateMetadataContext";
 import { TemplateItem } from "../atoms/TemplateItem";
 import { AITemplateFile, OperationMode } from "../../../../ai-template-files/models/aiTemplateFile";
@@ -80,7 +81,7 @@ export function ApmTemplateSection() {
 
   return (
     <>
-      {!isReady && <p class="loading">Loading agent templates...</p>}
+      {!isReady && <SkeletonList label="Loading agent templates" rows={5} withHeader />}
       {isReady && (
         <div class="template-section">
         {installedAgentsCount > 0 && state.templates.updatesAvailable && (

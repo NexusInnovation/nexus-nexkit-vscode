@@ -1,4 +1,5 @@
 import { useSquadState } from "../../hooks/useSquadState";
+import { SkeletonList } from "../atoms/Skeleton";
 import { CollapsibleSection } from "../molecules/CollapsibleSection";
 import { SquadErrorNotice } from "../molecules/SquadErrorNotice";
 import { SquadMarkdownView } from "../molecules/SquadMarkdownView";
@@ -41,7 +42,7 @@ export function SquadGovernanceSection() {
     <div class="squad-governance">
       {error && <SquadErrorNotice error={error} />}
 
-      {!isReady && !error && <p class="loading">Loading governance documents…</p>}
+      {!isReady && !error && <SkeletonList label="Loading governance documents" rows={3} />}
 
       {isReady && isLoading && <p class="loading">Refreshing governance documents…</p>}
 

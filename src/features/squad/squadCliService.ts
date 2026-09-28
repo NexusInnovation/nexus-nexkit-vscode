@@ -154,6 +154,14 @@ export interface SquadCliExecuteOptions {
 
   /** Cancellation token; cancelling kills the process and yields `cancelled`. */
   token?: vscode.CancellationToken;
+
+  /**
+   * Override for the CLI source to resolve for this single call (FR-004).
+   * When omitted, the source configured on the service / settings is used.
+   * Lets callers (e.g. detection) probe a specific location without mutating
+   * the shared service configuration.
+   */
+  source?: SquadCliSource;
 }
 
 /** Successful execution details returned on a zero exit code. */
@@ -253,7 +261,7 @@ export class SquadCliService {
       return argValidation;
     }
 
-    const invocation = this._resolveInvocation();
+    const invocation = this._resolveInvocation(options.source);
     if (!invocation.ok) {
       return invocation;
     }
@@ -331,11 +339,19 @@ export class SquadCliService {
   }
 
   /**
-   * Probe the CLI version (FR-003). Runs `squad version` non-interactively and
-   * parses the first semver token from stdout. Returns `version-unknown` when
-   * the CLI ran but no version could be parsed.
+   * Probe the CLI version and resolved source (FR-003, FR-004). Runs
+   * `squad version` non-interactively and parses the first semver token from
+   * stdout/stderr. Returns `version-unknown` when the CLI ran but no version
+   * could be parsed.
+   *
+   * Pass {@link SquadCliExecuteOptions.source} to probe a specific location
+   * (global / npx / custom) without mutating the shared service configuration —
+   * used by {@link import("./squadDetectionService").SquadDetectionService} to
+   * look across every possible install location on Windows and Linux.
    */
-  public async getCliVersion(options: SquadCliExecuteOptions = {}): Promise<SquadResult<string>> {
+  public async probeCli(
+    options: SquadCliExecuteOptions = {}
+  ): Promise<SquadResult<{ version: string; source: SquadCliSource }>> {
     const result = await this.execute(SquadCliCommand.Version, options);
     if (!result.ok) {
       return result;
@@ -350,7 +366,21 @@ export class SquadCliService {
       });
     }
 
-    return squadOk(version);
+    const resolved = this._resolveInvocation(options.source);
+    const source = resolved.ok ? resolved.value.source : options.source ?? SquadCliSource.Npx;
+    return squadOk({ version, source });
+  }
+
+  /**
+   * Probe the CLI version (FR-003). Thin wrapper over {@link probeCli} that
+   * collapses the result to the version string.
+   */
+  public async getCliVersion(options: SquadCliExecuteOptions = {}): Promise<SquadResult<string>> {
+    const result = await this.probeCli(options);
+    if (!result.ok) {
+      return result;
+    }
+    return squadOk(result.value.version);
   }
 
   /**
@@ -434,8 +464,8 @@ export class SquadCliService {
   }
 
   /** Resolve how the CLI should be invoked from the configured source (FR-004). */
-  private _resolveInvocation(): SquadResult<ResolvedInvocation> {
-    const source = this._cliSourceOverride ?? SettingsManager.getSquadCliSource();
+  private _resolveInvocation(sourceOverride?: SquadCliSource): SquadResult<ResolvedInvocation> {
+    const source = sourceOverride ?? this._cliSourceOverride ?? SettingsManager.getSquadCliSource();
 
     switch (source) {
       case SquadCliSource.Custom: {

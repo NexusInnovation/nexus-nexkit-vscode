@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { SettingsManager } from "./core/settingsManager";
-import { initializeServices } from "./core/serviceContainer";
+import { initializeServices, ServiceContainer } from "./core/serviceContainer";
 import { NexkitPanelViewProvider } from "./features/panel-ui/nexkitPanelViewProvider";
 import {
   registerGoToModeSelectionCommand,
@@ -33,7 +33,7 @@ import { registerOpenConvertToMarkdownCommand } from "./features/convert-to-mark
 export async function activate(context: vscode.ExtensionContext) {
   // Initialize core settings manager
   SettingsManager.initialize(context);
-  await updateModeSelectedContext();
+  void updateModeSelectedContext();
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("nexkit.mode")) {
@@ -42,10 +42,13 @@ export async function activate(context: vscode.ExtensionContext) {
     })
   );
 
-  // Initialize all services
+  // Initialize all services (construction only — no network or heavy I/O)
   const services = await initializeServices(context);
 
-  services.logging.info("Nexkit extension activated successfully");
+  // Register the webview panel as early as possible so it can render its
+  // skeleton immediately while data loads in the background.
+  const nexkitPanelProvider = new NexkitPanelViewProvider();
+  nexkitPanelProvider.initialize(context, services);
 
   // Set up global error handler to track Nexkit-owned unhandled errors
   setupGlobalErrorHandling(services, context.extensionUri.fsPath);
@@ -71,62 +74,77 @@ export async function activate(context: vscode.ExtensionContext) {
   registerGenerateCommitMessageCommand(context, services);
   registerOpenConvertToMarkdownCommand(context, services);
 
-  // Register webview panel
-  const nexkitPanelProvider = new NexkitPanelViewProvider();
-  nexkitPanelProvider.initialize(context, services);
-
-  // Check for extension updates on activation & cleanup old .vsix files
-  services.extensionUpdate.checkForExtensionUpdatesOnActivation();
-  services.extensionUpdate.cleanupOldVsixFilesOnActivation();
-
-  // Initialize status bar
-  services.updateStatusBar.initializeUpdateStatusBar();
-
-  // Check for required MCP servers on activation
-  services.mcpConfig.promptInstallRequiredMCPsOnActivation();
-
-  // Run startup verification checks (settings, gitignore, file migration, auth)
-  services.startupVerification.verifyOnStartup().catch((error) => {
-    services.logging.error("Failed to run startup verification", error);
-    services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
-      context: "startupVerification.verifyOnStartup",
-    });
-  });
-
-  // Initialize AI template data asynchronously (don't block extension activation)
-  services.aiTemplateData
-    .initialize()
-    .then(() => {
-      // Start background metadata scan after templates are loaded
-      services.templateMetadataScanner.startScan().catch((error) => {
-        services.logging.error("Failed to complete metadata scan", error);
-        services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
-          context: "templateMetadataScanner.startScan",
-        });
-      });
-    })
-    .catch((error) => {
-      services.logging.error("Failed to initialize AI template data", error);
-      // Track initialization errors
-      services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
-        context: "aiTemplateData.initialize",
-      });
-    });
-
-  // Sync installed templates state with filesystem on activation
-  services.aiTemplateData.syncInstalledTemplates();
-
-  // Start watching .nexkit/ directory for external changes
-  services.nexkitFileWatcher.startWatching().catch((error) => {
-    services.logging.error("Failed to start .nexkit file watcher", error);
-  });
-
-  // Watch for template repository configuration changes (to refetch templates)
+  // Lightweight watchers: register synchronously so no change event is missed
   services.aiTemplateData.setupConfigurationWatcher();
-
-  // Periodically check remote GitHub repos for new commits and auto-refresh templates
   services.aiTemplateData.setupRemoteAutoRefresh();
 
+  scheduleBackgroundStartup(context, services);
+
+  services.logging.info("Nexkit extension activated successfully");
+}
+
+/**
+ * Delay before non-essential startup work (update checks, prompts, cleanup) so
+ * it does not compete with the panel's first data load.
+ */
+const DEFERRED_STARTUP_DELAY_MS = 3000;
+
+/**
+ * Run every initialization task in the background, off the activation path.
+ *
+ * - Essential data (templates, installed state, startup verification, file
+ *   watcher) starts on the next tick so activation returns immediately.
+ * - Non-essential work (extension update check, status bar, MCP prompt, .vsix
+ *   cleanup) starts after {@link DEFERRED_STARTUP_DELAY_MS}.
+ *
+ * Each task is isolated: a failure is logged and never blocks the others.
+ */
+function scheduleBackgroundStartup(context: vscode.ExtensionContext, services: ServiceContainer): void {
+  const runTask = (name: string, task: () => Promise<unknown> | void): void => {
+    Promise.resolve()
+      .then(task)
+      .catch((error) => {
+        services.logging.error(`Background startup task failed: ${name}`, error);
+        services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), { context: name });
+      });
+  };
+
+  const essentialHandle = setImmediate(() => {
+    // Run startup verification checks (settings, gitignore, file migration, auth)
+    runTask("startupVerification.verifyOnStartup", () => services.startupVerification.verifyOnStartup());
+
+    // Initialize AI template data, then build the metadata index for fuzzy search
+    runTask("aiTemplateData.initialize", async () => {
+      await services.aiTemplateData.initialize();
+      runTask("templateMetadataScanner.startScan", () => services.templateMetadataScanner.startScan());
+    });
+
+    // Sync installed templates state with filesystem
+    runTask("aiTemplateData.syncInstalledTemplates", () => services.aiTemplateData.syncInstalledTemplates());
+
+    // Start watching .nexkit/ directory for external changes
+    runTask("nexkitFileWatcher.startWatching", () => services.nexkitFileWatcher.startWatching());
+  });
+
+  const deferredHandle = setTimeout(() => {
+    runTask("extensionUpdate.checkForExtensionUpdatesOnActivation", () =>
+      services.extensionUpdate.checkForExtensionUpdatesOnActivation()
+    );
+    runTask("extensionUpdate.cleanupOldVsixFilesOnActivation", () =>
+      services.extensionUpdate.cleanupOldVsixFilesOnActivation()
+    );
+    runTask("updateStatusBar.initializeUpdateStatusBar", () => services.updateStatusBar.initializeUpdateStatusBar());
+    runTask("mcpConfig.promptInstallRequiredMCPsOnActivation", () =>
+      services.mcpConfig.promptInstallRequiredMCPsOnActivation()
+    );
+  }, DEFERRED_STARTUP_DELAY_MS);
+
+  context.subscriptions.push({
+    dispose: () => {
+      clearImmediate(essentialHandle);
+      clearTimeout(deferredHandle);
+    },
+  });
 }
 
 async function updateModeSelectedContext(): Promise<void> {

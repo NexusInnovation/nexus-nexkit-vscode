@@ -110,16 +110,32 @@ export class NexkitPanelMessageHandler {
     console.warn(`[Nexkit] Unknown webview command: ${message.command}`);
   }
 
+  /**
+   * Push the full panel state to the webview.
+   *
+   * Cheap, in-memory state is sent first so the webview can replace its
+   * skeleton immediately. Slow sources (GitHub template fetch, filesystem sync,
+   * DevOps config, workflow listing) then load concurrently and each posts its
+   * update as soon as it is ready — a slow source never delays the others.
+   */
   public async initialize(): Promise<void> {
     this.sendWorkspaceState();
-    await this.sendTemplateData();
-    await this._services.aiTemplateData.syncInstalledTemplates();
     this.sendInstalledTemplates();
     this.sendUpdatesAvailable();
     this.sendProfilesData();
-    this.sendDevOpsConnections();
     this.sendMetadataScanState();
-    this.sendWorkflowList();
+
+    await Promise.allSettled([
+      this.sendTemplateData(),
+      this.syncAndSendInstalledTemplates(),
+      this.sendDevOpsConnections(),
+      this.sendWorkflowList(),
+    ]);
+  }
+
+  private async syncAndSendInstalledTemplates(): Promise<void> {
+    await this._services.aiTemplateData.syncInstalledTemplates();
+    this.sendInstalledTemplates();
   }
 
   // ============================================================================

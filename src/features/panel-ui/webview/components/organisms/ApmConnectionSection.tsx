@@ -1,5 +1,6 @@
 import { useState } from "preact/hooks";
 import { useDevOpsConnections } from "../../hooks/useDevOpsConnections";
+import { SkeletonList } from "../atoms/Skeleton";
 
 /**
  * ApmConnectionSection Component
@@ -65,7 +66,7 @@ export function ApmConnectionSection() {
 
   return (
     <>
-      {!isReady && <p class="loading">Loading projects...</p>}
+      {!isReady && <SkeletonList label="Loading projects" rows={3} />}
 
       {isReady && (
         <>

@@ -93,10 +93,7 @@ export class ChildProcessSquadRunner implements SquadProcessRunner {
     return new Promise<SquadSpawnResult>((resolve) => {
       const { command, args, cwd, timeoutMs, token } = request;
 
-      const useCmdShell = process.platform === "win32" && this._needsCmdShell(command);
-      const comSpec = process.env.ComSpec || "cmd.exe";
-      const spawnCommand = useCmdShell ? comSpec : command;
-      const spawnArgs = useCmdShell ? ["/d", "/s", "/c", command, ...args] : args;
+      const launch = this._resolveLaunch(command, args);
 
       let stdout = "";
       let stderr = "";
@@ -104,7 +101,7 @@ export class ChildProcessSquadRunner implements SquadProcessRunner {
       let cancelled = false;
       let settled = false;
 
-      const child = spawn(spawnCommand, spawnArgs, {
+      const child = spawn(launch.command, launch.args, {
         cwd,
         shell: false,
         windowsHide: true,
@@ -171,19 +168,69 @@ export class ChildProcessSquadRunner implements SquadProcessRunner {
     });
   }
 
-  /**
-   * Whether a Windows executable must be launched through `cmd.exe`. True for
-   * `.cmd`/`.bat` shims and for bare command names (which resolve to `.cmd`
-   * shims on Windows). Absolute `.exe` paths are spawned directly.
-   */
-  private _needsCmdShell(command: string): boolean {
-    const lower = command.toLowerCase();
-    if (lower.endsWith(".cmd") || lower.endsWith(".bat")) {
-      return true;
-    }
-    if (lower.endsWith(".exe")) {
-      return false;
-    }
-    return !path.isAbsolute(command);
+  /** Resolve the concrete executable + argv for the current platform. */
+  private _resolveLaunch(command: string, args: string[]): { command: string; args: string[] } {
+    return resolveSquadLaunch(command, args, {
+      platform: process.platform,
+      comSpec: process.env.ComSpec,
+    });
   }
+}
+
+/**
+ * Pure, cross-platform resolution of the concrete executable + argv used to
+ * launch a Squad CLI command across platforms and shim types ("all possible
+ * locations"). Exported for unit testing without spawning real processes.
+ *
+ * - Non-Windows: spawn the command directly; `spawn` resolves bare names via
+ *   `PATH` (`execvp`).
+ * - Windows PowerShell shims (`.ps1`, e.g. an npm global `squad.ps1`): run
+ *   through `powershell.exe -File`, since a `.ps1` cannot be spawned as a
+ *   process directly.
+ * - Windows `.cmd`/`.bat` shims and bare command names (which resolve to
+ *   `.cmd` shims via `PATHEXT`): run through `cmd.exe /d /s /c` so PATH and
+ *   PATHEXT resolution applies. Each argument is passed as a separate argv
+ *   entry, so no user input is interpolated into a shell command line.
+ * - Absolute Windows `.exe` paths: spawn directly.
+ */
+export function resolveSquadLaunch(
+  command: string,
+  args: string[],
+  options: { platform: NodeJS.Platform; comSpec?: string }
+): { command: string; args: string[] } {
+  if (options.platform !== "win32") {
+    return { command, args };
+  }
+
+  const lower = command.toLowerCase();
+
+  if (lower.endsWith(".ps1")) {
+    return {
+      command: "powershell.exe",
+      args: ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", command, ...args],
+    };
+  }
+
+  if (needsCmdShell(command)) {
+    const comSpec = options.comSpec || "cmd.exe";
+    return { command: comSpec, args: ["/d", "/s", "/c", command, ...args] };
+  }
+
+  return { command, args };
+}
+
+/**
+ * Whether a Windows executable must be launched through `cmd.exe`. True for
+ * `.cmd`/`.bat` shims and for bare command names (which resolve to `.cmd`
+ * shims on Windows). Absolute `.exe` paths are spawned directly.
+ */
+function needsCmdShell(command: string): boolean {
+  const lower = command.toLowerCase();
+  if (lower.endsWith(".cmd") || lower.endsWith(".bat")) {
+    return true;
+  }
+  if (lower.endsWith(".exe")) {
+    return false;
+  }
+  return !path.isAbsolute(command);
 }

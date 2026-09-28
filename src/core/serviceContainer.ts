@@ -113,10 +113,10 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const logging = LoggingService.getInstance();
   logging.info("Initializing Nexkit extension services...");
 
-  // Initialize telemetry service
+  // Telemetry setup performs a network lookup (public IP, up to 5s). Run it in
+  // the background so activation — and the Nexkit panel — never wait on it.
   const telemetry = new TelemetryService();
-  await telemetry.initialize();
-  telemetry.trackActivation();
+  void telemetry.initialize().then(() => telemetry.trackActivation());
 
   // Initialize other services
   const extensionUpdate = new ExtensionUpdateService();
@@ -159,11 +159,13 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   // Squad services (SQD-003) — lazy, non-blocking construction, no activation work.
   // Detection resolves the workspace root on demand; the file service is bound to
   // the first open workspace folder when one exists.
-  const squadDetection = new SquadDetectionService();
   const squadWorkspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri;
   const squadFile = squadWorkspaceRoot ? new SquadFileService(squadWorkspaceRoot) : undefined;
   // SquadCliService (SQD-005, #220) — no work runs until a command is invoked.
   const squadCli = new SquadCliService();
+  // Detection delegates CLI probing to SquadCliService so a globally-installed
+  // CLI is found across platforms (npm `squad.cmd`/`squad.ps1` shims on Windows).
+  const squadDetection = new SquadDetectionService({ cliService: squadCli });
 
   // Preset discovery (SQD-017/018) aggregated behind one provider (SQD-019).
   // Built lazily so no preset listing or network work happens during activation.

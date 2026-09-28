@@ -1,5 +1,6 @@
 import { useState } from "preact/hooks";
 import { useSquadState } from "../../hooks/useSquadState";
+import { SkeletonList } from "../atoms/Skeleton";
 import { SquadErrorNotice } from "../molecules/SquadErrorNotice";
 import { SquadMarkdownView } from "../molecules/SquadMarkdownView";
 
@@ -32,7 +33,7 @@ export function SquadRosterSection() {
     <div class="squad-roster">
       {error && <SquadErrorNotice error={error} />}
 
-      {!isReady && !error && <p class="loading">Loading roster…</p>}
+      {!isReady && !error && <SkeletonList label="Loading roster" rows={4} />}
 
       {isReady && isLoading && <p class="loading">Refreshing roster…</p>}
 
