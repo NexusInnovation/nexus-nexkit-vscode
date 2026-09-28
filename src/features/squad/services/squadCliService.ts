@@ -123,7 +123,7 @@ export const SQUAD_CLI_COMMAND_SPECS: Readonly<Record<SquadCliCommand, SquadCliC
   },
   [SquadCliCommand.Plugin]: {
     argv: ["plugin"],
-    allowedFlags: ["--yes"],
+    allowedFlags: ["--yes", "--json"],
     allowsOperands: true,
     defaultTimeoutMs: SQUAD_CLI_TIMEOUTS_MS.standard,
   },
