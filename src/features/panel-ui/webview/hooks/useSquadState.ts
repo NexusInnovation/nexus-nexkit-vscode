@@ -21,6 +21,7 @@ import type {
   SquadPluginAction,
   SquadPluginRef,
   SquadRosterMember,
+  SquadUpstreamRecommendations,
   SquadUpdatesResult,
   SquadUpstreamSource,
 } from "../../../squad/models";
@@ -59,6 +60,9 @@ export interface UseSquadStateResult {
 
   /** Upstream inheritance sources. */
   upstreams: SquadUpstreamSource[];
+
+  /** Org → team → project recommendations and upstream warnings, when evaluated. */
+  upstreamRecommendations: SquadUpstreamRecommendations | null;
 
   /** Plugin marketplaces. */
   marketplaces: SquadMarketplaceRef[];
@@ -215,6 +219,7 @@ export function useSquadState(): UseSquadStateResult {
     routing: squad.routing,
     logs: squad.logs,
     upstreams: squad.upstreams,
+    upstreamRecommendations: squad.upstreamRecommendations,
     marketplaces: squad.marketplaces,
     plugins: squad.plugins,
     lastPluginAction: squad.lastPluginAction,

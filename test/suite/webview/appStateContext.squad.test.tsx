@@ -14,6 +14,7 @@ import type { SquadState } from "../../../src/features/panel-ui/webview/types/sq
 import { SquadLogKind } from "../../../src/features/panel-ui/webview/types/squadState";
 import { renderWithProvider, act, cleanup, makeDetection, makeError, makePreset, makeRejectedPreset, makeUnreachableSource, makeDoctorReport } from "./harness/renderSquad";
 import { dispatchExtensionMessage, resetVsCodeApiMock, postedMessagesOfCommand } from "./harness/vscodeApiMock";
+import { SquadUpstreamRecommendationService } from "../../../src/features/squad/services/squadUpstreamRecommendationService";
 
 function SquadProbe() {
   const { squad } = useAppState();
@@ -75,6 +76,20 @@ suite("AppStateContext — Squad messages", () => {
     assert.strictEqual(state.upstreams.length, 1);
     assert.strictEqual(state.marketplaces.length, 1);
     assert.strictEqual(state.plugins.length, 1);
+    assert.strictEqual(state.upstreamRecommendations, null, "absent recommendations stay explicitly unevaluated");
+  });
+
+  test("squadStatusUpdate stores upstream recommendations and replaces them with null on a failed read", () => {
+    const squad = renderProbe();
+    const recommendations = new SquadUpstreamRecommendationService().recommend([
+      { id: "nexus-org", kind: "git", reference: "https://github.com/acme/squad/tree/main/org" },
+    ]);
+    send({ command: "squadStatusUpdate", detection: makeDetection(), upstreams: [], upstreamRecommendations: recommendations, plugins: [] });
+
+    assert.deepStrictEqual(squad().upstreamRecommendations, recommendations);
+
+    send({ command: "squadStatusUpdate", detection: makeDetection(), upstreams: [], upstreamRecommendations: null, plugins: [] });
+    assert.strictEqual(squad().upstreamRecommendations, null);
   });
 
   test("squadPluginsUpdate stores marketplaces and plugins while clearing loading/error", () => {

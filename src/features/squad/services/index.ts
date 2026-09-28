@@ -14,6 +14,7 @@ export * from "./squadDetectionService";
 export * from "./squadProjectVersionReader";
 export * from "./squadDoctorParser";
 export * from "./squadUpstreamService";
+export * from "./squadUpstreamRecommendationService";
 export * from "./squadPluginService";
 export * from "./squadPluginActionService";
 export * from "./squadPluginActionConfirmer";
