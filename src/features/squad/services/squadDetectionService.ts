@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { LoggingService } from "../../shared/services/loggingService";
+import { LoggingService } from "../../../shared/services/loggingService";
 import {
   SQUAD_MARKER_FILES,
   SQUAD_SOURCE_VERSION,
@@ -14,7 +14,7 @@ import {
   SquadResult,
   squadErr,
   squadOk,
-} from "./models";
+} from "../models";
 import { SquadCliService } from "./squadCliService";
 import { SQUAD_AGENT_MARKER, parseSquadProjectVersion } from "./squadProjectVersionReader";
 

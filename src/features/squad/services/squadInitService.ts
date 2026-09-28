@@ -32,8 +32,8 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { LoggingService } from "../../../shared/services/loggingService";
 import { fileExists } from "../../../shared/utils/fileHelper";
-import { SquadCliCommand, SquadCliService } from "../squadCliService";
-import { SquadDetectionService } from "../squadDetectionService";
+import { SquadCliCommand, SquadCliService } from "./squadCliService";
+import { SquadDetectionService } from "./squadDetectionService";
 import {
   SquadDetectionResult,
   SquadError,

@@ -31,8 +31,8 @@ import { HooksConfigDeployer } from "../features/initialization/hooksConfigDeplo
 import { UserDirectoryService } from "../features/ai-template-files/services/userDirectoryService";
 import { ConvertToMarkdownPanelService } from "../features/convert-to-markdown/convertToMarkdownPanelService";
 import { MarkitdownConversionService } from "../features/convert-to-markdown/markitdownConversionService";
-import { SquadDetectionService } from "../features/squad/squadDetectionService";
-import { SquadCliService } from "../features/squad/squadCliService";
+import { SquadDetectionService } from "../features/squad/services/squadDetectionService";
+import { SquadCliService } from "../features/squad/services/squadCliService";
 import { SquadFileService } from "../features/squad/services/squadFileService";
 import { SquadPresetProvider } from "../features/squad/models";
 import { CompositeSquadPresetProvider } from "../features/squad/services/compositeSquadPresetProvider";

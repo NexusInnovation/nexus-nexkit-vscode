@@ -15,7 +15,7 @@ import {
   SquadProjectFileReader,
   SquadProjectVersionReader,
   parseSquadProjectVersion,
-} from "../../src/features/squad/squadProjectVersionReader";
+} from "../../src/features/squad/services/squadProjectVersionReader";
 import {
   SQUAD_SOURCE_VERSION,
   SquadProjectVersionKind,

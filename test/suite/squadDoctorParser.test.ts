@@ -4,7 +4,7 @@
  */
 
 import * as assert from "assert";
-import { parseSquadDoctorReport } from "../../src/features/squad/squadDoctorParser";
+import { parseSquadDoctorReport } from "../../src/features/squad/services/squadDoctorParser";
 import { SquadDoctorSeverity } from "../../src/features/squad/models";
 
 suite("Unit: parseSquadDoctorReport", () => {

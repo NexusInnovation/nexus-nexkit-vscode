@@ -9,7 +9,7 @@
  */
 
 import * as assert from "assert";
-import { resolveSquadLaunch } from "../../src/features/squad/squadProcessRunner";
+import { resolveSquadLaunch } from "../../src/features/squad/services/squadProcessRunner";
 
 suite("Unit: resolveSquadLaunch", () => {
   suite("POSIX", () => {
