@@ -95,19 +95,21 @@ export class SquadPanelMessageHandler {
       return;
     }
 
+    let firstError: SquadError | undefined;
     const fileService = this._services.squadFile;
-    const upstreams = fileService ? await this._readUpstreams(fileService) : [];
+    const upstreams = fileService ? await this._readUpstreams(fileService, (error) => (firstError ??= error)) : [];
     const pluginInventory = await this._readPluginInventory(this._services.squadPlugins);
+    if (pluginInventory.error) {
+      firstError ??= pluginInventory.error;
+    }
     this._emitStatus(detection.value, upstreams, pluginInventory.marketplaces, pluginInventory.plugins);
 
     if (!fileService) {
-      if (pluginInventory.error) {
-        this._emitError(pluginInventory.error);
+      if (firstError) {
+        this._emitError(firstError);
       }
       return;
     }
-
-    let firstError: SquadError | undefined = pluginInventory.error;
 
     const roster = this._unwrap(await fileService.readRoster(), (error) => (firstError ??= error)) ?? [];
     const charters = await this._readCharters(fileService, roster, (error) => (firstError ??= error));
@@ -134,12 +136,14 @@ export class SquadPanelMessageHandler {
         this._emitError(detection.error);
         return;
       }
+      let upstreamError: SquadError | undefined;
       const fileService = this._services.squadFile;
-      const upstreams = fileService ? await this._readUpstreams(fileService) : [];
+      const upstreams = fileService ? await this._readUpstreams(fileService, (error) => (upstreamError = error)) : [];
       const pluginInventory = await this._readPluginInventory(this._services.squadPlugins);
       this._emitStatus(detection.value, upstreams, pluginInventory.marketplaces, pluginInventory.plugins);
-      if (pluginInventory.error) {
-        this._emitError(pluginInventory.error);
+      const error = upstreamError ?? pluginInventory.error;
+      if (error) {
+        this._emitError(error);
       }
     } finally {
       this._setLoading(false);
@@ -204,10 +208,14 @@ export class SquadPanelMessageHandler {
 
   // --- helpers ----------------------------------------------------------
 
-  private async _readUpstreams(fileService: SquadFileService): Promise<SquadUpstreamSource[]> {
+  private async _readUpstreams(
+    fileService: SquadFileService,
+    onError: (error: SquadError) => void
+  ): Promise<SquadUpstreamSource[]> {
     const result = await fileService.readUpstreams();
     if (isSquadErr(result)) {
       this._logger.warn("Squad: failed to read upstream sources", result.error);
+      onError(result.error);
       return [];
     }
     return result.value;

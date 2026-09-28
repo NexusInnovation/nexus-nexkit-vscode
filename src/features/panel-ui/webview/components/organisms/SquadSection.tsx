@@ -8,6 +8,7 @@ import { SquadRosterSection } from "./SquadRosterSection";
 import { SquadGovernanceSection } from "./SquadGovernanceSection";
 import { SquadLogSection } from "./SquadLogSection";
 import { SquadPresetPicker } from "./SquadPresetPicker";
+import { SquadUpstreamSection } from "./SquadUpstreamSection";
 import { SquadInstallState } from "../../../../squad/models";
 
 /**
@@ -80,6 +81,9 @@ export function SquadSection() {
         <>
           <CollapsibleSection id="squad-roster-section" title="Roster" defaultExpanded>
             <SquadRosterSection />
+          </CollapsibleSection>
+          <CollapsibleSection id="squad-upstreams-section" title="Upstreams" defaultExpanded>
+            <SquadUpstreamSection />
           </CollapsibleSection>
           <CollapsibleSection id="squad-governance-section" title="Governance">
             <SquadGovernanceSection />
