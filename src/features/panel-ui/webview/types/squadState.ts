@@ -55,8 +55,17 @@ export interface SquadLogDocument {
   /** Workspace-root-relative path to the log file. */
   relativePath: string;
 
-  /** Raw text content of the log. */
+  /** Raw text content of the log (truncated to the read cap when large). */
   content: string;
+
+  /**
+   * True when {@link content} was truncated to the read cap. The viewer shows
+   * a size notice and an "open full file" affordance when set (FR-025).
+   */
+  truncated?: boolean;
+
+  /** Total size of the file on disk in bytes, when known. */
+  sizeBytes?: number;
 }
 
 /**

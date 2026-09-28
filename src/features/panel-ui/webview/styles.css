@@ -1417,3 +1417,189 @@ details[open] > .type-header::before {
 .mode-selection-note .codicon {
   font-size: 14px;
 }
+
+/* ============================================================================
+   SQUAD (read-only roster, governance and log views — SQD-012/013/014)
+   ============================================================================ */
+
+.squad-roster,
+.squad-governance,
+.squad-logs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Roster table (SQD-012) */
+.squad-roster-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.squad-roster-table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--vscode-descriptionForeground);
+  border-bottom: 1px solid var(--vscode-panel-border);
+  padding: 4px 6px;
+}
+
+.squad-roster-table td {
+  padding: 6px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  vertical-align: top;
+}
+
+.squad-roster-row.has-charter {
+  cursor: pointer;
+}
+
+.squad-roster-row.has-charter:hover {
+  background-color: var(--vscode-list-hoverBackground);
+}
+
+.squad-roster-row.selected {
+  background-color: var(--vscode-list-activeSelectionBackground);
+  color: var(--vscode-list-activeSelectionForeground);
+}
+
+.squad-member-name {
+  font-weight: 600;
+  color: var(--vscode-foreground);
+}
+
+.squad-member-summary {
+  font-size: 0.85em;
+  color: var(--vscode-descriptionForeground);
+  margin-top: 2px;
+}
+
+.squad-no-charter {
+  color: var(--vscode-descriptionForeground);
+}
+
+/* Charter / document / log content */
+.squad-charter-detail {
+  margin-top: 8px;
+  border-top: 1px solid var(--vscode-panel-border);
+  padding-top: 8px;
+}
+
+.squad-charter-title,
+.squad-log-group-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95em;
+  font-weight: 600;
+  margin: 8px 0 4px;
+  color: var(--vscode-foreground);
+}
+
+.squad-markdown {
+  margin: 0;
+  padding: 8px;
+  max-height: 420px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 0.85em;
+  line-height: 1.4;
+  color: var(--vscode-foreground);
+  background-color: var(--vscode-textCodeBlock-background);
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 4px;
+}
+
+/* Log viewer (SQD-014) */
+.squad-log-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.squad-log-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 4px 6px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--vscode-foreground);
+  font-size: 0.9em;
+}
+
+.squad-log-header:hover {
+  background-color: var(--vscode-list-hoverBackground);
+}
+
+.squad-log-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.squad-log-size {
+  font-size: 0.8em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.squad-log-badge {
+  font-size: 0.75em;
+  padding: 0 4px;
+  border-radius: 3px;
+  background-color: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+}
+
+.squad-log-body {
+  padding: 4px 0 8px 18px;
+}
+
+.squad-truncation-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0 0 6px;
+  padding: 6px 8px;
+  font-size: 0.85em;
+  border-radius: 4px;
+  color: var(--vscode-inputValidation-warningForeground, var(--vscode-foreground));
+  background-color: var(--vscode-inputValidation-warningBackground, var(--vscode-editorWarning-background));
+  border: 1px solid var(--vscode-inputValidation-warningBorder, var(--vscode-editorWarning-foreground));
+}
+
+/* Error notice */
+.squad-error {
+  margin: 8px 0;
+  padding: 8px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--vscode-inputValidation-errorBorder, var(--vscode-errorForeground));
+  background-color: var(--vscode-inputValidation-errorBackground, transparent);
+}
+
+.squad-error-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--vscode-errorForeground);
+}
+
+.squad-error-remediation {
+  margin: 6px 0 0;
+  font-size: 0.9em;
+  color: var(--vscode-foreground);
+}
+
+.squad-error-detail {
+  margin: 4px 0 0;
+  font-size: 0.8em;
+  color: var(--vscode-descriptionForeground);
+}
