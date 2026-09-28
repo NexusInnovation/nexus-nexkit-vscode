@@ -462,6 +462,34 @@
           "scope": "application",
           "editPresentation": "multilineText",
           "markdownDescription": "System prompt template used to generate commit messages. Use `{{diff}}` as a placeholder for the staged git diff. Customise this to enforce your team's commit message conventions."
+        },
+        "nexkit.squad.cliSource": {
+          "type": "string",
+          "enum": [
+            "global",
+            "npx",
+            "custom"
+          ],
+          "enumItemLabels": [
+            "Global install (npm install -g @bradygaster/squad-cli)",
+            "npx (@bradygaster/squad-cli)",
+            "Custom path"
+          ],
+          "default": "npx",
+          "scope": "application",
+          "markdownDescription": "How the Squad CLI is invoked. **Global** uses a globally installed `squad` executable, **npx** runs `npx @bradygaster/squad-cli` on demand, and **Custom** uses the executable configured in `#nexkit.squad.cliPath#`."
+        },
+        "nexkit.squad.cliPath": {
+          "type": "string",
+          "default": "",
+          "scope": "application",
+          "markdownDescription": "Path to a custom Squad CLI executable. Used only when `#nexkit.squad.cliSource#` is set to `custom`. Leave empty to rely on the selected CLI source."
+        },
+        "nexkit.squad.telemetry.enabled": {
+          "type": "boolean",
+          "default": true,
+          "scope": "application",
+          "description": "Enable anonymous Squad usage telemetry to help improve Nexkit's Squad integration. Respects VS Code's global telemetry setting and nexkit.telemetry.enabled. No file names, paths, workspace names, user content, or secrets are collected."
         }
       }
     }

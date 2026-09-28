@@ -288,6 +288,15 @@ Utilisez des dossiers locaux pour des templates internes personnalisés, le dév
 - **`nexkit.telemetry.enabled`** - Activer la télémétrie anonyme d'utilisation (par défaut : `true`, respecte le paramètre global de télémétrie de VS Code)
 - **`nexkit.telemetry.connectionString`** - Chaîne de connexion Azure Application Insights (optionnel, pour un endpoint de télémétrie personnalisé)
 
+### Squad
+
+- **`nexkit.squad.cliSource`** - Comment le CLI Squad est invoqué (par défaut : `npx`)
+  - **`global`** : utilise un exécutable `squad` installé globalement (`npm install -g @bradygaster/squad-cli`)
+  - **`npx`** : exécute `npx @bradygaster/squad-cli` à la demande
+  - **`custom`** : utilise l'exécutable configuré dans `nexkit.squad.cliPath`
+- **`nexkit.squad.cliPath`** - Chemin vers un exécutable CLI Squad personnalisé (par défaut : `""`, utilisé uniquement lorsque `nexkit.squad.cliSource` est `custom`)
+- **`nexkit.squad.telemetry.enabled`** - Activer la télémétrie anonyme de parcours Squad (par défaut : `true`, respecte le paramètre global de télémétrie de VS Code et `nexkit.telemetry.enabled` ; aucun nom de fichier, chemin, nom de workspace, contenu utilisateur ou secret n'est collecté)
+
 ## 🔧 Fonctionnement
 
 ### Comment NexKit fonctionne — Stockage workspace-first
