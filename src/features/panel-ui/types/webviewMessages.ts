@@ -14,6 +14,7 @@ import type {
   SquadError,
   SquadMarkdownDoc,
   SquadMarketplaceRef,
+  SquadModelConfigDocument,
   SquadPluginRef,
   SquadPreset,
   SquadRosterMember,
@@ -70,6 +71,8 @@ export type WebviewMessage =
   | { command: "refreshSquadDetection" }
   | { command: "saveSquadCharter"; agentId: string; content: string }
   | { command: "saveSquadDoc"; kind: SquadDocKind; content: string }
+  // Squad model configuration editing (SQD-028 / #243, FR-063): raw JSON, validated host-side
+  | { command: "saveSquadModelConfig"; content: string }
   | { command: "runSquadDoctor" }
   | { command: "refreshSquadPlugins" }
   // Squad preset selection screen (SQD-019 / #234)
@@ -183,6 +186,15 @@ export type ExtensionMessage =
   | {
       command: "squadDocSaved";
       doc: SquadMarkdownDoc;
+      result: SquadWriteSummary;
+    }
+  | {
+      command: "squadModelConfigUpdate";
+      modelConfig: SquadModelConfigDocument | null;
+    }
+  | {
+      command: "squadModelConfigSaved";
+      modelConfig: SquadModelConfigDocument;
       result: SquadWriteSummary;
     }
   | {

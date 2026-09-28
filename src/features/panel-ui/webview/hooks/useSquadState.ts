@@ -18,6 +18,7 @@ import type {
   SquadError,
   SquadMarkdownDoc,
   SquadMarketplaceRef,
+  SquadModelConfigDocument,
   SquadPluginRef,
   SquadRosterMember,
   SquadUpstreamSource,
@@ -52,6 +53,9 @@ export interface UseSquadStateResult {
   /** Editable `.squad/routing.md`, when present. */
   routing: SquadMarkdownDoc | null;
 
+  /** Editable `.squad/model-config.json` document (FR-063), once read. */
+  modelConfig: SquadModelConfigDocument | null;
+
   /** Read-only agent histories, logs and orchestration logs. */
   logs: SquadLogDocument[];
 
@@ -78,6 +82,12 @@ export interface UseSquadStateResult {
 
   /** Persist an edited governance document (decisions/routing). */
   saveDoc: (kind: SquadDocKind, content: string) => void;
+
+  /**
+   * Persist edited `.squad/model-config.json` JSON (FR-063). The host validates
+   * JSON/schema, backs up, then writes; invalid content surfaces a squadError.
+   */
+  saveModelConfig: (content: string) => void;
 
   /** Run Squad Doctor diagnostics. */
   runDoctor: () => void;
@@ -123,6 +133,10 @@ export function useSquadState(): UseSquadStateResult {
     messenger.sendMessage({ command: "saveSquadDoc", kind, content });
   };
 
+  const saveModelConfig = (content: string) => {
+    messenger.sendMessage({ command: "saveSquadModelConfig", content });
+  };
+
   const runDoctor = () => {
     messenger.sendMessage({ command: "runSquadDoctor" });
   };
@@ -148,6 +162,7 @@ export function useSquadState(): UseSquadStateResult {
     charters: squad.charters,
     decisions: squad.decisions,
     routing: squad.routing,
+    modelConfig: squad.modelConfig,
     logs: squad.logs,
     upstreams: squad.upstreams,
     marketplaces: squad.marketplaces,
@@ -157,6 +172,7 @@ export function useSquadState(): UseSquadStateResult {
     refreshDetection,
     saveCharter,
     saveDoc,
+    saveModelConfig,
     runDoctor,
     refreshPlugins,
     setCliInvocation,

@@ -34,7 +34,10 @@ import {
   SquadUpstreamKind,
   SquadMarketplaceKind,
   SquadMarketplaceRef,
+  SquadModelConfigDocument,
+  SQUAD_MODEL_CONFIG_RELATIVE_PATH,
 } from "../models";
+import { parseSquadModelConfig } from "../validation/squadModelConfigValidator";
 
 /** Root folder that holds all Squad configuration. */
 const SQUAD_DIR = ".squad";
@@ -103,6 +106,20 @@ const DOC_RELATIVE_PATH: Record<SquadDocKind, string> = {
   [SquadDocKind.Decisions]: `${SQUAD_DIR}/decisions.md`,
   [SquadDocKind.Routing]: `${SQUAD_DIR}/routing.md`,
 };
+
+/**
+ * Result of reading `.squad/model-config.json` (FR-063). The document is
+ * always returned so an invalid file can still be displayed and fixed; when
+ * the content fails validation, {@link validationError} carries the visible,
+ * actionable error and `document.config` is `null`.
+ */
+export interface SquadModelConfigRead {
+  /** Raw document plus validated config (when valid). */
+  document: SquadModelConfigDocument;
+
+  /** JSON/schema validation failure, when the existing file is invalid. */
+  validationError?: SquadError;
+}
 
 /**
  * Read-only accessor for the workspace `.squad/` directory.
@@ -345,6 +362,47 @@ export class SquadFileService {
     }
 
     return squadOk(this._normalizeMarketplaces(parsed));
+  }
+
+  /**
+   * Read `.squad/model-config.json` (FR-063). A missing file is not an error
+   * (per-agent model overrides are optional). An existing file that is not
+   * valid JSON or does not match the Squad shape is returned with its raw
+   * content plus a `parse-failed` {@link SquadModelConfigRead.validationError}
+   * so the panel can show the problem and let the user fix it.
+   */
+  public async readModelConfig(): Promise<SquadResult<SquadModelConfigRead>> {
+    const relativePath = SQUAD_MODEL_CONFIG_RELATIVE_PATH;
+    const uri = this._joinRelative(relativePath);
+
+    let raw: SquadTextFile;
+    try {
+      raw = await this._readText(uri, relativePath);
+    } catch (error) {
+      if (this._isNotFound(error)) {
+        return squadOk({ document: { relativePath, exists: false, content: "", config: null } });
+      }
+      return this._readError(relativePath, error, "the Squad model configuration");
+    }
+
+    if (raw.truncated) {
+      return squadErr({
+        code: "file-read-failed",
+        message: "The Squad model configuration (.squad/model-config.json) is too large to load.",
+        remediation: `Reduce ${relativePath} below ${SQUAD_MAX_READ_BYTES} bytes and refresh the Squad panel.`,
+        detail: relativePath,
+      });
+    }
+
+    const parsed = parseSquadModelConfig(raw.content);
+    if (!parsed.ok) {
+      return squadOk({
+        document: { relativePath, exists: true, content: raw.content, config: null },
+        validationError: parsed.error,
+      });
+    }
+
+    return squadOk({ document: { relativePath, exists: true, content: raw.content, config: parsed.value } });
   }
 
   // --- internal helpers -------------------------------------------------

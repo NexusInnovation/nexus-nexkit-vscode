@@ -21,6 +21,7 @@ import type {
   SquadError,
   SquadMarkdownDoc,
   SquadMarketplaceRef,
+  SquadModelConfigDocument,
   SquadPluginRef,
   SquadPreset,
   SquadRosterMember,
@@ -167,6 +168,13 @@ export interface SquadState {
   /** Editable `.squad/routing.md` document (FR-024), when present. */
   routing: SquadMarkdownDoc | null;
 
+  /**
+   * Editable `.squad/model-config.json` document (FR-063). `null` until read;
+   * `exists: false` when absent; `config: null` when the file is invalid (a
+   * `squadError` is emitted alongside).
+   */
+  modelConfig: SquadModelConfigDocument | null;
+
   /** Read-only agent histories, logs and orchestration logs (FR-025). */
   logs: SquadLogDocument[];
 
@@ -196,6 +204,7 @@ export const initialSquadState: SquadState = {
   charters: [],
   decisions: null,
   routing: null,
+  modelConfig: null,
   logs: [],
   upstreams: [],
   marketplaces: [],

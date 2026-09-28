@@ -144,4 +144,94 @@ suite("Unit: SquadFileWriteService (SQD-026 controlled writes)", () => {
     assert.ok(deps.backupSquadArtifacts.notCalled);
     assert.ok(deps.writeFile.notCalled);
   });
+
+  test("saveModelConfig validates, backs up, then writes .squad/model-config.json verbatim", async () => {
+    const deps = createDeps();
+    const service = createService(deps);
+    const content = '{\n  "default": "gpt-5.6-terra",\n  "overrides": { "link": "claude-opus-5.5" }\n}\n';
+
+    const result = await service.saveModelConfig(content);
+
+    assert.ok(isSquadOk(result));
+    assert.strictEqual(result.value.relativePath, ".squad/model-config.json");
+    assert.strictEqual(result.value.created, false);
+    assert.deepStrictEqual(result.value.document, {
+      relativePath: ".squad/model-config.json",
+      exists: true,
+      content,
+      config: { defaultModel: "gpt-5.6-terra", overrides: [{ agentId: "link", model: "claude-opus-5.5" }] },
+    });
+    assert.ok(deps.backupSquadArtifacts.calledBefore(deps.writeFile));
+    const target = deps.writeFile.firstCall.args[0] as vscode.Uri;
+    assert.ok(target.path.endsWith("/.squad/model-config.json"));
+    assert.strictEqual(new TextDecoder().decode(deps.writeFile.firstCall.args[1]), content);
+  });
+
+  test("saveModelConfig creates an absent model config", async () => {
+    const deps = createDeps();
+    deps.stat.rejects({ code: "FileNotFound" });
+    deps.backupSquadArtifacts.resolves(null);
+    const service = createService(deps);
+
+    const result = await service.saveModelConfig('{ "overrides": {} }');
+
+    assert.ok(isSquadOk(result));
+    assert.strictEqual(result.value.created, true);
+    assert.strictEqual(result.value.backupPath, null);
+    assert.deepStrictEqual(result.value.document.config, { overrides: [] });
+  });
+
+  test("saveModelConfig rejects invalid JSON before backup or write", async () => {
+    const deps = createDeps();
+    const service = createService(deps);
+
+    const result = await service.saveModelConfig('{ "default": ');
+
+    assert.ok(isSquadErr(result));
+    assert.strictEqual(result.error.code, "parse-failed");
+    assert.ok(result.error.message.includes("not saved"));
+    assert.ok(result.error.remediation);
+    assert.ok(deps.stat.notCalled);
+    assert.ok(deps.backupSquadArtifacts.notCalled);
+    assert.ok(deps.writeFile.notCalled);
+  });
+
+  test("saveModelConfig rejects schema violations before backup or write", async () => {
+    const deps = createDeps();
+    const service = createService(deps);
+
+    const result = await service.saveModelConfig('{ "default": 42, "overrides": { "../x": "m" } }');
+
+    assert.ok(isSquadErr(result));
+    assert.strictEqual(result.error.code, "parse-failed");
+    assert.ok(result.error.detail?.includes('"default"'));
+    assert.ok(result.error.detail?.includes("../x"));
+    assert.ok(deps.backupSquadArtifacts.notCalled);
+    assert.ok(deps.writeFile.notCalled);
+  });
+
+  test("saveModelConfig rejects oversized content without touching the file system", async () => {
+    const deps = createDeps();
+    const service = createService(deps);
+    const huge = `{ "default": "m", "padding": "${"x".repeat(300 * 1024)}" }`;
+
+    const result = await service.saveModelConfig(huge);
+
+    assert.ok(isSquadErr(result));
+    assert.strictEqual(result.error.code, "file-write-failed");
+    assert.ok(deps.backupSquadArtifacts.notCalled);
+    assert.ok(deps.writeFile.notCalled);
+  });
+
+  test("saveModelConfig propagates backup failures and writes nothing", async () => {
+    const deps = createDeps();
+    deps.backupSquadArtifacts.rejects(new Error("disk full"));
+    const service = createService(deps);
+
+    const result = await service.saveModelConfig('{ "default": "gpt-5.6-luna" }');
+
+    assert.ok(isSquadErr(result));
+    assert.strictEqual(result.error.code, "backup-failed");
+    assert.ok(deps.writeFile.notCalled);
+  });
 });
