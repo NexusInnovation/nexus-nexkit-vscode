@@ -398,11 +398,67 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
     await handler.handleMessage({ command: "saveSquadDoc", kind: SquadDocKind.Decisions, content: "# Decisions" });
 
     assert.deepStrictEqual(commands(), ["squadLoading", "squadDocSaved", "squadLoading"]);
-    assert.ok(stubs.saveMarkdownDoc.calledOnceWithExactly(SquadDocKind.Decisions, "# Decisions"));
+    assert.ok(
+      stubs.saveMarkdownDoc.calledOnceWithExactly(SquadDocKind.Decisions, "# Decisions", {
+        baseContentHash: undefined,
+      })
+    );
     const saved = find("squadDocSaved");
     assert.ok(saved);
     assert.strictEqual(saved.doc.kind, SquadDocKind.Decisions);
     assert.strictEqual(saved.result.backupCreated, true);
+  });
+
+  test("saveSquadDoc forwards baseContentHash for stale-write detection (SQD-027)", async () => {
+    const stubs = createStubs();
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({
+      command: "saveSquadDoc",
+      kind: SquadDocKind.Routing,
+      content: "# Routing",
+      baseContentHash: "abc123",
+    });
+
+    assert.ok(
+      stubs.saveMarkdownDoc.calledOnceWithExactly(SquadDocKind.Routing, "# Routing", { baseContentHash: "abc123" })
+    );
+  });
+
+  test("saveSquadDoc surfaces write-conflict as an actionable error, never a saved result", async () => {
+    const stubs = createStubs();
+    stubs.saveMarkdownDoc.resolves(
+      squadErr({
+        code: "write-conflict",
+        message: ".squad/decisions.md changed on disk since you opened it, so your edit was not saved.",
+        remediation: "Refresh the Squad panel and re-apply your edit.",
+      })
+    );
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({
+      command: "saveSquadDoc",
+      kind: SquadDocKind.Decisions,
+      content: "# Decisions",
+      baseContentHash: "stale",
+    });
+
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadError", "squadLoading"]);
+    const error = find("squadError");
+    assert.strictEqual(error?.error.code, "write-conflict");
+    assert.ok(error.error.remediation);
+    assert.strictEqual(find("squadDocSaved"), undefined);
+  });
+
+  test("saveSquadDoc rejects unsupported doc kinds without calling the writer", async () => {
+    const stubs = createStubs();
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "saveSquadDoc", kind: "team" as SquadDocKind, content: "# Team" });
+
+    assert.deepStrictEqual(commands(), ["squadError"]);
+    assert.strictEqual(find("squadError")?.error.code, "file-write-failed");
+    assert.ok(stubs.saveMarkdownDoc.notCalled);
   });
 
   test("saveSquadCharter emits an actionable error when no workspace writer is available", async () => {

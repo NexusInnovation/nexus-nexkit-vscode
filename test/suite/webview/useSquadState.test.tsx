@@ -20,6 +20,8 @@ function ActionProbe() {
       <button data-testid="refresh-detection" onClick={() => squad.refreshDetection()} />
       <button data-testid="save-charter" onClick={() => squad.saveCharter("trinity", "# Charter")} />
       <button data-testid="save-doc" onClick={() => squad.saveDoc("decisions", "# Decisions")} />
+      <button data-testid="save-doc-hash" onClick={() => squad.saveDoc("routing", "# Routing", "abc123")} />
+      <button data-testid="save-doc-new" onClick={() => squad.saveDoc("routing", "# Routing", null)} />
       <button data-testid="run-doctor" onClick={() => squad.runDoctor()} />
       <button data-testid="refresh-plugins" onClick={() => squad.refreshPlugins()} />
       <button data-testid="install-cli" onClick={() => squad.installCli()} />
@@ -68,6 +70,28 @@ suite("useSquadState — actions", () => {
       command: "saveSquadDoc",
       kind: "decisions",
       content: "# Decisions",
+    });
+  });
+
+  test("saveDoc forwards the baseContentHash for stale-write detection (SQD-027)", () => {
+    const view = renderWithAppState(<ActionProbe />);
+    click(view, "save-doc-hash");
+    assert.deepStrictEqual(lastPostedMessage(), {
+      command: "saveSquadDoc",
+      kind: "routing",
+      content: "# Routing",
+      baseContentHash: "abc123",
+    });
+  });
+
+  test("saveDoc forwards a null baseContentHash for docs absent on load", () => {
+    const view = renderWithAppState(<ActionProbe />);
+    click(view, "save-doc-new");
+    assert.deepStrictEqual(lastPostedMessage(), {
+      command: "saveSquadDoc",
+      kind: "routing",
+      content: "# Routing",
+      baseContentHash: null,
     });
   });
 
