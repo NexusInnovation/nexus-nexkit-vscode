@@ -1705,10 +1705,9 @@ details[open] > .type-header::before {
   font-size: 0.85em;
 }
 
-.squad-init-slot-note {
-  margin: 8px 0 0;
-  font-size: 0.85em;
-  font-style: italic;
+.squad-not-detected-markers {
+  margin: 0 0 12px;
+  font-size: 0.9em;
   color: var(--vscode-descriptionForeground);
 }
 
@@ -1912,4 +1911,197 @@ details[open] > .type-header::before {
   margin: 4px 0 0;
   font-size: 0.8em;
   color: var(--vscode-descriptionForeground);
+}
+
+/* --- Squad preset selection screen (SQD-019) --- */
+.squad-preset-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.squad-preset-picker-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.squad-preset-picker-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.squad-preset-picker-subtitle {
+  margin: 4px 0 0;
+  font-size: 0.85em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.squad-refresh-button,
+.squad-preset-init-button,
+.squad-preset-cancel-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 0.85em;
+}
+
+.squad-refresh-button {
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+  white-space: nowrap;
+}
+
+.squad-refresh-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.squad-preset-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.squad-preset-group-title {
+  margin: 4px 0;
+  font-size: 0.8em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.squad-preset-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 8px 10px;
+  text-align: left;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 4px;
+  background: var(--vscode-editor-background);
+  color: var(--vscode-foreground);
+  cursor: pointer;
+}
+
+.squad-preset-card:hover:not(.rejected) {
+  border-color: var(--vscode-focusBorder);
+}
+
+.squad-preset-card.selected {
+  border-color: var(--vscode-focusBorder);
+  background: var(--vscode-list-activeSelectionBackground);
+}
+
+.squad-preset-card.rejected {
+  cursor: default;
+  opacity: 0.75;
+  border-style: dashed;
+}
+
+.squad-preset-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.squad-preset-card-name {
+  font-weight: 600;
+}
+
+.squad-preset-card-desc {
+  margin: 0;
+  font-size: 0.85em;
+}
+
+.squad-preset-card-meta {
+  margin: 0;
+  font-size: 0.78em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.squad-preset-card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.75em;
+  color: var(--vscode-errorForeground);
+}
+
+.squad-preset-diagnostics {
+  margin: 4px 0 0;
+  padding-left: 16px;
+  font-size: 0.8em;
+}
+
+.squad-preset-diagnostic {
+  margin-bottom: 4px;
+}
+
+.squad-preset-diagnostic-remediation {
+  display: block;
+  color: var(--vscode-descriptionForeground);
+}
+
+.squad-preset-unreachable {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.squad-preset-unreachable-title {
+  margin: 0;
+  font-size: 0.85em;
+  color: var(--vscode-editorWarning-foreground, var(--vscode-descriptionForeground));
+}
+
+.squad-preset-unreachable-label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.8em;
+}
+
+.squad-preset-confirm {
+  margin-top: 4px;
+  padding: 10px;
+  border: 1px solid var(--vscode-focusBorder);
+  border-radius: 4px;
+  background: var(--vscode-editorWidget-background);
+}
+
+.squad-preset-confirm-title {
+  margin: 0 0 6px;
+}
+
+.squad-preset-confirm-desc {
+  margin: 0 0 4px;
+  font-size: 0.85em;
+}
+
+.squad-preset-confirm-meta {
+  margin: 0 0 8px;
+  font-size: 0.78em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.squad-preset-confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.squad-preset-init-button {
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+}
+
+.squad-preset-cancel-button {
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
 }

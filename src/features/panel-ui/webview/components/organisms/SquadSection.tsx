@@ -6,25 +6,24 @@ import { SquadStatusSection } from "./SquadStatusSection";
 import { SquadRosterSection } from "./SquadRosterSection";
 import { SquadGovernanceSection } from "./SquadGovernanceSection";
 import { SquadLogSection } from "./SquadLogSection";
+import { SquadPresetPicker } from "./SquadPresetPicker";
 import { SquadInstallState } from "../../../../squad/models";
 
 /**
  * Guidance shown when no Squad markers are present in the workspace.
  *
- * The "initialise from a preset" action is delivered separately (#234 / #235);
- * a slot is reserved here without faking a non-functional control.
+ * Presents the {@link SquadPresetPicker} (SQD-019 / #234) so the user can
+ * initialise Squad from a team preset, alongside a short note about the marker
+ * files NexKit looks for.
  */
 function SquadNotDetectedNotice() {
   return (
-    <div class="squad-not-detected info-message">
-      <p>
-        <i class="codicon codicon-info" aria-hidden="true"></i> Squad is not initialised in this workspace.
+    <div class="squad-not-detected">
+      <p class="squad-not-detected-markers">
+        <i class="codicon codicon-info" aria-hidden="true"></i> NexKit looks for markers such as{" "}
+        <code>.squad/team.md</code>, <code>.squad/config.json</code> or <code>.github/agents/squad.agent.md</code>.
       </p>
-      <p>
-        NexKit looks for markers such as <code>.squad/team.md</code>, <code>.squad/config.json</code> or{" "}
-        <code>.github/agents/squad.agent.md</code>. Add these files to manage your team, roster and governance here.
-      </p>
-      <p class="squad-init-slot-note">Initialise from a preset — coming soon.</p>
+      <SquadPresetPicker />
     </div>
   );
 }

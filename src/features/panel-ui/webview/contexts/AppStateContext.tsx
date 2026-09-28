@@ -239,6 +239,66 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
             },
           }));
           break;
+
+        case "squadPresetsDiscovered":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              presetPicker: {
+                ...prev.squad.presetPicker,
+                loading: false,
+                loaded: true,
+                presets: message.presets,
+                rejected: message.rejected,
+                unreachable: message.unreachable,
+                error: null,
+              },
+            },
+          }));
+          break;
+
+        case "squadPresetsLoading":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              presetPicker: {
+                ...prev.squad.presetPicker,
+                loading: message.isLoading,
+              },
+            },
+          }));
+          break;
+
+        case "squadPresetsError":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              presetPicker: {
+                ...prev.squad.presetPicker,
+                loading: false,
+                loaded: true,
+                error: message.error,
+              },
+            },
+          }));
+          break;
+
+        case "squadInitResult":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              presetPicker: {
+                ...prev.squad.presetPicker,
+                initResultPresetId: message.presetId,
+                initError: message.error ?? null,
+              },
+            },
+          }));
+          break;
       }
     };
 
@@ -262,6 +322,10 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     const unsubscribeSquadDoctor = messenger.onMessage("squadDoctorUpdate", handleMessage);
     const unsubscribeSquadLoading = messenger.onMessage("squadLoading", handleMessage);
     const unsubscribeSquadError = messenger.onMessage("squadError", handleMessage);
+    const unsubscribeSquadPresetsDiscovered = messenger.onMessage("squadPresetsDiscovered", handleMessage);
+    const unsubscribeSquadPresetsLoading = messenger.onMessage("squadPresetsLoading", handleMessage);
+    const unsubscribeSquadPresetsError = messenger.onMessage("squadPresetsError", handleMessage);
+    const unsubscribeSquadInitResult = messenger.onMessage("squadInitResult", handleMessage);
 
     // Request initial state from extension
     messenger.sendMessage({ command: "webviewReady" });
@@ -287,6 +351,10 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       unsubscribeSquadDoctor();
       unsubscribeSquadLoading();
       unsubscribeSquadError();
+      unsubscribeSquadPresetsDiscovered();
+      unsubscribeSquadPresetsLoading();
+      unsubscribeSquadPresetsError();
+      unsubscribeSquadInitResult();
     };
   }, [messenger]);
 

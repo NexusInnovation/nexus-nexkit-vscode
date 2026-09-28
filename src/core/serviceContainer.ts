@@ -34,6 +34,10 @@ import { MarkitdownConversionService } from "../features/convert-to-markdown/mar
 import { SquadDetectionService } from "../features/squad/squadDetectionService";
 import { SquadCliService } from "../features/squad/squadCliService";
 import { SquadFileService } from "../features/squad/services/squadFileService";
+import { SquadPresetProvider } from "../features/squad/models";
+import { CompositeSquadPresetProvider } from "../features/squad/services/compositeSquadPresetProvider";
+import { NexusMarketplacePresetProvider } from "../features/squad/services/nexusMarketplacePresetProvider";
+import { ExternalRepoPresetProvider } from "../features/squad/services/externalRepoPresetProvider";
 
 /**
  * Service container for dependency injection
@@ -84,6 +88,13 @@ export interface ServiceContainer {
    * workspace folder is open, since the service is bound to a folder root.
    */
   squadFile?: SquadFileService;
+
+  /**
+   * Aggregated Squad preset source (SQD-019). Lazily constructed on first
+   * access so activation performs no preset discovery or network work; the
+   * discovery itself only runs when the panel requests the preset list.
+   */
+  readonly squadPresets: SquadPresetProvider;
 }
 
 /**
@@ -146,6 +157,19 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   // SquadCliService (SQD-005, #220) — no work runs until a command is invoked.
   const squadCli = new SquadCliService();
 
+  // Preset discovery (SQD-017/018) aggregated behind one provider (SQD-019).
+  // Built lazily so no preset listing or network work happens during activation.
+  let squadPresetsProvider: SquadPresetProvider | undefined;
+  const getSquadPresets = (): SquadPresetProvider => {
+    if (!squadPresetsProvider) {
+      squadPresetsProvider = new CompositeSquadPresetProvider([
+        new NexusMarketplacePresetProvider(),
+        new ExternalRepoPresetProvider(),
+      ]);
+    }
+    return squadPresetsProvider;
+  };
+
   // Register for disposal
   context.subscriptions.push(logging);
   context.subscriptions.push(aiTemplateData);
@@ -193,5 +217,8 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     squadDetection,
     squadCli,
     squadFile,
+    get squadPresets(): SquadPresetProvider {
+      return getSquadPresets();
+    },
   };
 }

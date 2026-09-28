@@ -14,6 +14,7 @@
  */
 
 import type {
+  RejectedSquadPreset,
   SquadCharter,
   SquadDetectionResult,
   SquadDoctorReport,
@@ -23,6 +24,7 @@ import type {
   SquadPreset,
   SquadRosterMember,
   SquadUpstreamSource,
+  UnreachableSquadSource,
 } from "../../../squad/models";
 
 /**
@@ -67,6 +69,66 @@ export interface SquadLogDocument {
   /** Total size of the file on disk in bytes, when known. */
   sizeBytes?: number;
 }
+
+/**
+ * Preset selection screen sub-state (SQD-019 / #234, FR-010/FR-014/FR-015).
+ *
+ * Drives the "Squad not detected" preset picker: the presets discovered from
+ * every source, per-preset validation rejections and per-source unreachable
+ * errors, plus loading and hard-failure states. Populated exclusively through
+ * the `squadPresets*` messages handled in `AppStateContext`.
+ */
+export interface SquadPresetPickerState {
+  /** True while a preset discovery is in flight. */
+  loading: boolean;
+
+  /** True once a discovery response (success or failure) has been received. */
+  loaded: boolean;
+
+  /** Valid, contract-passing presets ready to offer (FR-010). */
+  presets: SquadPreset[];
+
+  /**
+   * Presets that were found but failed the SQD-015 contract, with actionable
+   * diagnostics. Rendered as disabled entries so they are visible, never hidden.
+   */
+  rejected: RejectedSquadPreset[];
+
+  /**
+   * Sources that could not be reached or read (e.g. a private external repo or
+   * a failing child provider). Surfaced per-source so one failure never hides
+   * the healthy presets.
+   */
+  unreachable: UnreachableSquadSource[];
+
+  /**
+   * Source-level hard failure (whole discovery could not run), or `null` when
+   * healthy. Always visible and actionable.
+   */
+  error: SquadError | null;
+
+  /**
+   * Result of the most recent "initialise from preset" request (FR-014). The
+   * actual initialisation ships in #235; until then the host replies with a
+   * clear "not available yet" error surfaced in the confirmation panel.
+   */
+  initError: SquadError | null;
+
+  /** Preset id the {@link initError} (or last init result) applies to. */
+  initResultPresetId: string | null;
+}
+
+/** Initial preset picker state — empty and not yet loaded. */
+export const initialSquadPresetPickerState: SquadPresetPickerState = {
+  loading: false,
+  loaded: false,
+  presets: [],
+  rejected: [],
+  unreachable: [],
+  error: null,
+  initError: null,
+  initResultPresetId: null,
+};
 
 /**
  * Squad state slice held in the global {@link AppState}.
@@ -121,6 +183,9 @@ export interface SquadState {
 
   /** Latest Squad Doctor report (FR-060), when one has been produced. */
   doctor: SquadDoctorReport | null;
+
+  /** Preset selection screen sub-state (SQD-019, FR-010/FR-014/FR-015). */
+  presetPicker: SquadPresetPickerState;
 }
 
 /** Initial Squad state — empty and not ready until the host responds. */
@@ -139,4 +204,5 @@ export const initialSquadState: SquadState = {
   presets: [],
   selectedPresetId: null,
   doctor: null,
+  presetPicker: initialSquadPresetPickerState,
 };
