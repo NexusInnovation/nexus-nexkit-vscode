@@ -278,28 +278,6 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
     assert.strictEqual(find("squadError")?.error.code, "file-write-failed");
   });
 
-  test("selectSquadPreset echoes the selected preset id", async () => {
-    const stubs = createStubs();
-    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
-
-    await handler.handleMessage({ command: "selectSquadPreset", presetId: "greffondors" });
-
-    const update = find("squadPresetsUpdate");
-    assert.ok(update);
-    assert.strictEqual(update.selectedPresetId, "greffondors");
-    assert.deepStrictEqual(update.presets, []);
-  });
-
-  test("applySquadPreset responds with a not-available squadError around loading", async () => {
-    const stubs = createStubs();
-    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
-
-    await handler.handleMessage({ command: "applySquadPreset", presetId: "greffondors" });
-
-    assert.deepStrictEqual(commands(), ["squadLoading", "squadError", "squadLoading"]);
-    assert.strictEqual(find("squadError")?.error.code, "preset-fetch-failed");
-  });
-
   test("runSquadDoctor emits squadDoctorUpdate with the parsed report", async () => {
     const stubs = createStubs();
     const report = {

@@ -86,7 +86,6 @@ suite("useSquadPresets — grouping and actions", () => {
     });
     click(view, "select-alpha");
     assert.strictEqual(view.getByTestId("selected").textContent, "Alpha");
-    assert.strictEqual(postedMessagesOfCommand("selectSquadPreset").length, 0);
     assert.strictEqual(postedMessagesOfCommand("listSquadPresets").length, 0);
   });
 

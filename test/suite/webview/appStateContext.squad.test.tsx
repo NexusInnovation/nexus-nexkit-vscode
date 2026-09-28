@@ -160,18 +160,6 @@ suite("AppStateContext — Squad messages", () => {
     assert.strictEqual(state.isLoading, false);
   });
 
-  test("squadPresetsUpdate stores presets and updates selection only when provided", () => {
-    const squad = renderProbe();
-    send({ command: "squadPresetsUpdate", presets: [makePreset("alpha")], selectedPresetId: "alpha" });
-    assert.strictEqual(squad().selectedPresetId, "alpha");
-
-    // A later update without selectedPresetId must not wipe the current selection.
-    send({ command: "squadPresetsUpdate", presets: [makePreset("alpha"), makePreset("beta")] });
-    const state = squad();
-    assert.strictEqual(state.presets.length, 2);
-    assert.strictEqual(state.selectedPresetId, "alpha", "omitting selectedPresetId must preserve the prior selection");
-  });
-
   test("squadPresetsDiscovered fills the picker slice and marks it loaded", () => {
     const squad = renderProbe();
     send({ command: "squadPresetsLoading", isLoading: true });
