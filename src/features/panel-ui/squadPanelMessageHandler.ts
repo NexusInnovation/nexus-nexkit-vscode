@@ -145,9 +145,13 @@ export class SquadPanelMessageHandler {
       }
 
       const fileService = this._services.squadFile;
-      const upstreams = fileService ? await this._readUpstreams(fileService) : [];
+      let upstreamError: SquadError | undefined;
+      const upstreams = fileService ? await this._readUpstreams(fileService, (error) => (upstreamError = error)) : [];
       this._emitStatus(updates.value.detection, upstreams, []);
       this._postMessage({ command: "squadUpdatesUpdate", updates: updates.value });
+      if (upstreamError) {
+        this._emitError(upstreamError);
+      }
     } finally {
       this._setLoading(false);
     }
