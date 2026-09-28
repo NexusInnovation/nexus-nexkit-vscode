@@ -85,7 +85,7 @@ suite("Integration: User Directory Deployment Flow", () => {
       sandbox.stub(vscode.workspace, "getConfiguration").returns(fakeConfig as any);
 
       const deployer = new RecommendedSettingsConfigDeployer();
-      await deployer.deployVscodeSettings(tempDir);
+      await deployer.deployVscodeSettings(tempDir, "initialization");
 
       // Verify workspace-relative paths are registered in global settings
       const agentCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "agentFilesLocations");

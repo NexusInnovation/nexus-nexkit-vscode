@@ -45,8 +45,22 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     assert.ok(deployer);
   });
 
+  test("Should reject deployment from an unsanctioned caller", async () => {
+    await assert.rejects(
+      () => deployer.deployVscodeSettings(tempDir, "startup" as any),
+      /unsanctioned caller/,
+      "Should throw when called from a caller other than initialization or migration"
+    );
+    assert.strictEqual(updateStub.callCount, 0, "Should not write any settings when caller is unsanctioned");
+  });
+
+  test("Should accept the migration caller as a sanctioned entry point", async () => {
+    await deployer.deployVscodeSettings(tempDir, "migration");
+    assert.ok(updateStub.called, "Migration is a sanctioned settings-write entry point");
+  });
+
   test("Should write workspace-relative chat location settings to user-level (Global) scope", async () => {
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const updateCalls = updateStub.getCalls();
     const agentCall = updateCalls.find((c: sinon.SinonSpyCall) => c.args[0] === "agentFilesLocations");
@@ -77,7 +91,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
       return { globalValue: undefined };
     });
 
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const promptCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "promptFilesLocations");
     assert.ok(promptCall, "Should update promptFilesLocations");
@@ -93,7 +107,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
       return { globalValue: undefined };
     });
 
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const useHooksCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "useHooks");
     assert.ok(!useHooksCall, "Should NOT update useHooks when already true");
@@ -120,7 +134,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
       return { globalValue: settingMap[key] };
     });
 
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     assert.strictEqual(updateStub.callCount, 0, "Should not write unchanged user-level settings");
   });
@@ -139,7 +153,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     };
     fs.writeFileSync(path.join(settingsDir, "settings.json"), JSON.stringify(existingSettings, null, 2), "utf8");
 
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const content = JSON.parse(fs.readFileSync(path.join(settingsDir, "settings.json"), "utf8"));
     assert.strictEqual(content["editor.fontSize"], 14);
@@ -158,7 +172,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     };
     fs.writeFileSync(path.join(settingsDir, "settings.json"), JSON.stringify(existingSettings, null, 2), "utf8");
 
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     assert.ok(!fs.existsSync(path.join(settingsDir, "settings.json")), "Empty settings.json should be removed");
   });
@@ -176,7 +190,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     };
     fs.writeFileSync(path.join(settingsDir, "settings.json"), JSON.stringify(existingSettings, null, 2), "utf8");
 
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const content = JSON.parse(fs.readFileSync(path.join(settingsDir, "settings.json"), "utf8"));
     assert.deepStrictEqual(content["chat.plugins.marketplaces"], [
@@ -186,7 +200,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
   });
 
   test("Should handle missing workspace settings.json gracefully", async () => {
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
     assert.ok(updateStub.called, "Should still write user-level settings");
   });
 
@@ -195,12 +209,12 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     fs.mkdirSync(settingsDir, { recursive: true });
     fs.writeFileSync(path.join(settingsDir, "settings.json"), "invalid json {{{", "utf8");
 
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
     assert.ok(updateStub.called, "Should still write user-level settings despite invalid workspace file");
   });
 
   test("Should add official marketplace as first entry when list is empty", async () => {
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const call = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "plugins.marketplaces");
     assert.ok(call, "Should update plugins.marketplaces");
@@ -225,7 +239,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     const executeCommand = sandbox.stub(vscode.commands, "executeCommand").resolves();
     const migrationDeployer = new RecommendedSettingsConfigDeployer(installedPath);
 
-    await migrationDeployer.deployVscodeSettings(tempDir);
+    await migrationDeployer.deployVscodeSettings(tempDir, "initialization");
 
     assert.ok(showWarningMessage.calledOnce, "Should warn the user about legacy plugins");
     assert.ok(executeCommand.calledWith("workbench.agentPlugins.browse"), "Should offer to open Agent Plugins");
@@ -239,7 +253,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
       return { globalValue: undefined };
     });
 
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const call = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "plugins.marketplaces");
     assert.ok(call, "Should update plugins.marketplaces");
@@ -259,7 +273,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
       return { globalValue: undefined };
     });
 
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const calls = updateStub.getCalls().filter((c: sinon.SinonSpyCall) => c.args[0] === "plugins.marketplaces");
     assert.strictEqual(calls.length, 0, "Should NOT update plugins.marketplaces when already first");
@@ -273,7 +287,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
       return { globalValue: undefined };
     });
 
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const call = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "plugins.marketplaces");
     assert.ok(call, "Should update plugins.marketplaces");
@@ -292,7 +306,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
       return { globalValue: undefined };
     });
 
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const call = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "plugins.marketplaces");
     assert.ok(call, "Should update plugins.marketplaces");
@@ -313,7 +327,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
       return { globalValue: undefined };
     });
 
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const call = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "plugins.marketplaces");
     assert.ok(call, "Should update plugins.marketplaces");
@@ -356,7 +370,7 @@ suite("Unit: RecommendedSettingsConfigDeployer — Workspace Paths", () => {
   });
 
   test("Should add relative workspace paths to global chat settings", async () => {
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const agentCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "agentFilesLocations");
     assert.ok(agentCall, "Should update agentFilesLocations");
@@ -368,7 +382,7 @@ suite("Unit: RecommendedSettingsConfigDeployer — Workspace Paths", () => {
   test("Should always add workspace paths even if deploy mode remains user", async () => {
     sandbox.stub(SettingsManager, "getTemplateDeployMode").returns("user");
 
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const agentCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "agentFilesLocations");
     assert.ok(agentCall, "Should update agentFilesLocations");
@@ -378,7 +392,7 @@ suite("Unit: RecommendedSettingsConfigDeployer — Workspace Paths", () => {
   });
 
   test("Should add relative workspace paths for all template types", async () => {
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const settingKeys = [
       "agentFilesLocations",
@@ -406,7 +420,7 @@ suite("Unit: RecommendedSettingsConfigDeployer — Workspace Paths", () => {
       return { globalValue: undefined };
     });
 
-    await deployer.deployVscodeSettings(tempDir);
+    await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const promptCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "promptFilesLocations");
     assert.ok(promptCall, "Should update promptFilesLocations");

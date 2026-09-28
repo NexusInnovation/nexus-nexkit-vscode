@@ -32,6 +32,17 @@ export class WorkspaceInitializationService {
     // Backup and delete existing .nexkit template folders if they exist
     const backupPath = await services.backup.backupTemplates(workspaceFolder.uri.fsPath);
 
+    // Deploy recommended user-level chat settings — sanctioned settings.json write entry point.
+    // Gated behind the confirmation dialog (see #162): only writes when the user accepts.
+    const chatSettingsConfirmation = await services.confirmation.confirm(
+      "Nexkit wants to update your VS Code chat settings",
+      "Nexkit will update your user-level (global) VS Code chat settings to point to your NexKit template directories. Your workspace settings.json is never modified.",
+      SettingsManager.CONFIRMATION_KEYS.CHAT_SETTINGS
+    );
+    if (chatSettingsConfirmation === "accepted") {
+      await services.recommendedSettingsConfigDeployer.deployVscodeSettings(workspaceFolder.uri.fsPath, "initialization");
+    }
+
     // Deploy init-only workspace configuration files only in workspace mode
     if (!SettingsManager.isUserDeployMode()) {
       await services.recommendedExtensionsConfigDeployer.deployVscodeExtensions(workspaceFolder.uri.fsPath);

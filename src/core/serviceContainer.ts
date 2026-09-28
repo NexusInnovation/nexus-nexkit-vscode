@@ -146,7 +146,6 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const hooksConfigDeployer = new HooksConfigDeployer();
   const startupVerification = new StartupVerificationService(
     gitExcludeConfigDeployer,
-    recommendedSettingsConfigDeployer,
     hooksConfigDeployer,
     nexkitFileMigration,
     githubAuthPrompt
