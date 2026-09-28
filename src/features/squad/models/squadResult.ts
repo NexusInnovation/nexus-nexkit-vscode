@@ -28,6 +28,7 @@ export const SQUAD_ERROR_CODES = [
   "invalid-input",
   "update-check-failed",
   "plugin-list-failed",
+  "plugin-action-failed",
   "backup-failed",
   "not-a-workspace",
   "cancelled",

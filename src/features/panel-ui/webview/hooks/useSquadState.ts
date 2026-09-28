@@ -18,12 +18,13 @@ import type {
   SquadError,
   SquadMarkdownDoc,
   SquadMarketplaceRef,
+  SquadPluginAction,
   SquadPluginRef,
   SquadRosterMember,
   SquadUpdatesResult,
   SquadUpstreamSource,
 } from "../../../squad/models";
-import type { SquadLogDocument, SquadUpstreamOperationState } from "../types/squadState";
+import type { SquadLogDocument, SquadPluginActionResultState, SquadUpstreamOperationState } from "../types/squadState";
 
 /**
  * Hook result for Squad state and actions.
@@ -65,6 +66,9 @@ export interface UseSquadStateResult {
   /** Installed plugins. */
   plugins: SquadPluginRef[];
 
+  /** Result of the most recent plugin action, or `null`. */
+  lastPluginAction: SquadPluginActionResultState | null;
+
   /** Latest Squad Doctor report, when produced. */
   doctor: SquadDoctorReport | null;
 
@@ -95,6 +99,13 @@ export interface UseSquadStateResult {
 
   /** Re-read Squad plugin marketplaces and installed plugins. */
   refreshPlugins: () => void;
+
+  /**
+   * Run a plugin marketplace / lifecycle action (FR-040/FR-041/FR-044). The
+   * host confirms and backs up before any write, and prompts for the operand
+   * (marketplace source or plugin folder) when `target` is omitted.
+   */
+  runPluginAction: (action: SquadPluginAction, target?: string) => void;
 
   /**
    * Persist how the Squad CLI is invoked (FR-004): install globally via npm,
@@ -165,6 +176,10 @@ export function useSquadState(): UseSquadStateResult {
     messenger.sendMessage({ command: "refreshSquadPlugins" });
   };
 
+  const runPluginAction = (action: SquadPluginAction, target?: string) => {
+    messenger.sendMessage({ command: "runSquadPluginAction", action, target });
+  };
+
   const setCliInvocation = (source: SquadCliSource, cliPath?: string) => {
     messenger.sendMessage({ command: "setSquadCliInvocation", source, cliPath });
   };
@@ -202,6 +217,7 @@ export function useSquadState(): UseSquadStateResult {
     upstreams: squad.upstreams,
     marketplaces: squad.marketplaces,
     plugins: squad.plugins,
+    lastPluginAction: squad.lastPluginAction,
     doctor: squad.doctor,
     updates: squad.updates,
     refresh,
@@ -211,6 +227,7 @@ export function useSquadState(): UseSquadStateResult {
     runDoctor,
     checkUpdates,
     refreshPlugins,
+    runPluginAction,
     setCliInvocation,
     installCli,
     upstreamOperation: squad.upstreamOperation,

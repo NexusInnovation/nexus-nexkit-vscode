@@ -8,6 +8,7 @@ import { SquadPanelMessageHandler } from "./squadPanelMessageHandler";
 import { SquadPresetMessageHandler } from "./squadPresetMessageHandler";
 import { SquadCliSetupMessageHandler } from "./squadCliSetupMessageHandler";
 import { SquadUpstreamMessageHandler } from "./squadUpstreamMessageHandler";
+import { SquadPluginActionMessageHandler } from "./squadPluginActionMessageHandler";
 
 /**
  * Handles message processing and business logic for the Nexkit panel webview
@@ -27,6 +28,7 @@ export class NexkitPanelMessageHandler {
   private readonly _squadPresetHandler: SquadPresetMessageHandler;
   private readonly _squadCliSetupHandler: SquadCliSetupMessageHandler;
   private readonly _squadUpstreamHandler: SquadUpstreamMessageHandler;
+  private readonly _squadPluginActionHandler: SquadPluginActionMessageHandler;
   private _lastApmEmptySignature: string | undefined;
 
   constructor(
@@ -42,6 +44,9 @@ export class NexkitPanelMessageHandler {
         await this._squadHandler.handle({ command: "refreshSquadDetection" });
       },
       _services.logging
+    );
+    this._squadPluginActionHandler = new SquadPluginActionMessageHandler(_services, (message) =>
+      this.sendToWebview(message)
     );
     this._messageHandlers = new Map([
       ["webviewReady", this.handleWebviewReady.bind(this)],
@@ -111,6 +116,9 @@ export class NexkitPanelMessageHandler {
       return;
     }
     if (await this._squadUpstreamHandler.handle(message)) {
+      return;
+    }
+    if (await this._squadPluginActionHandler.handle(message)) {
       return;
     }
     console.warn(`[Nexkit] Unknown webview command: ${message.command}`);
