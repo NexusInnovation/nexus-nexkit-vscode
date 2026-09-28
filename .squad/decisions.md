@@ -564,3 +564,59 @@ Medium. Extension-host auth-path logs still produce repeated blocked-dialog nois
 ### Why
 
 QA classification separates transient environment noise from actionable product/test regressions while documenting concrete hardening work.
+
+---
+
+## Decision: Squad-in-NexKit Integration PRD — Hybrid Approach
+
+**Date:** 2026-09-28
+**Agent:** Orchestrator (Eric De Carufel)
+**Classification:** Project-specific — nexus-nexkit-vscode Squad-in-NexKit feature roadmap
+
+### Context
+
+Squad management capability integration into Nexus NexKit. Three concurrent research agents (Morpheus, Link, Oracle) gathered requirements, authored PRD documentation, and created epic/issue backlog.
+
+### Decision
+
+Hybrid integration model for Squad management in NexKit:
+
+1. **Presets location:** Squad presets live in `plugins/<team>/squad/` within nexus-plugin-marketplace. Authoring presets is out of scope for NexKit itself.
+
+2. **Read-only `.squad` support:** NexKit will read and respect `.squad` files at workspace root for team/project/profile configuration. CLI operations (squad commands) are user-initiated via terminal.
+
+3. **Hybrid CLI/GUI:** CLI operations handled by squad CLI; users are prompted before installing CLI tools. NexKit integration asks before running squad CLI commands.
+
+4. **UI placement:** Dedicated "Squad" tab in the existing NexKit webview sidebar panel, alongside existing features.
+
+5. **Updates:** Auto-detect Squad config updates, notify user, confirm before applying. Automated backup before any destructive operations (BackupService).
+
+6. **Upstream promotion:** Team↔Project↔Org promotion strategy: store in nexus-plugin-marketplace by preference; create new repo only if marketplace is unavailable. Nexus marketplace is preregistered.
+
+7. **Backlog source:** MVP phase uses GitHub Issues + Azure DevOps work items. Jira integration deferred to v2+.
+
+8. **Phasing:** MVP-first approach; features staged incrementally.
+
+### Verification
+
+PRD document written and committed to `docs/prd/squad-management.md` (Morpheus); epics #212–#215 created with 55 linked sub-issues (SQD-001..055) (Oracle); marketplace research completed (Link).
+
+### Follow-up
+
+Next phase: implementation planning and prototype development.
+
+---
+
+## Decision: Marketplace identifier normalized, legacy suffix deduped
+
+**Date:** 2026-08-26
+**Agent:** Link
+**Classification:** Project-specific — NexKit marketplace settings handling
+
+### Context
+
+`OFFICIAL_PLUGIN_MARKETPLACE` in `recommendedSettingsConfigDeployer.ts` changed from `NexusInnovation/nexus-plugin-marketplace#main` to the bare `NexusInnovation/nexus-plugin-marketplace`. The `chat.plugins.marketplaces` ensure-first logic now normalizes on a `#ref`-stripped key, so any existing `#main`-suffixed entry is recognized as the same marketplace, deduped against the bare key, and rewritten to the bare key (first in the list). The "skip write if unchanged" optimization still applies.
+
+### Why
+
+The `#main` suffix was unnecessary and caused a mismatch between the constant and a bare-key entry a user might already have, risking duplicate marketplace entries.
