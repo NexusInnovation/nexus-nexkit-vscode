@@ -34,16 +34,71 @@ export interface SquadUpstreamSource {
   lastSyncedAt?: number;
 }
 
-/** Reference to an installed Squad plugin (FR-042/FR-043). */
+/** Kind of marketplace source read from `.squad/plugins/marketplaces.json` (FR-042). */
+export const SquadMarketplaceKind = {
+  GitHub: "github",
+  Local: "local",
+  Url: "url",
+  Unknown: "unknown",
+} as const;
+
+export type SquadMarketplaceKind = (typeof SquadMarketplaceKind)[keyof typeof SquadMarketplaceKind];
+
+/** Reference to a Squad plugin marketplace (FR-042). */
+export interface SquadMarketplaceRef {
+  /** Stable marketplace identifier. */
+  id: string;
+
+  /** Optional display label supplied by the manifest. */
+  displayName?: string;
+
+  /** Source reference (repository, URL, or local path). */
+  source: string;
+
+  /** Source kind, normalised for the webview. */
+  kind: SquadMarketplaceKind;
+
+  /** Whether this marketplace is enabled. Defaults to true when omitted. */
+  enabled: boolean;
+
+  /** Optional branch/ref/revision associated with the source. */
+  ref?: string;
+
+  /** Last successful refresh/sync time (epoch milliseconds), when known. */
+  lastRefreshedAt?: number;
+}
+
+/** Lifecycle status for an installed Squad plugin (FR-043). */
+export const SquadPluginStatus = {
+  Enabled: "enabled",
+  Disabled: "disabled",
+  Unknown: "unknown",
+} as const;
+
+export type SquadPluginStatus = (typeof SquadPluginStatus)[keyof typeof SquadPluginStatus];
+
+/** Reference to an installed Squad plugin (FR-043). */
 export interface SquadPluginRef {
   /** Plugin identifier. */
   id: string;
+
+  /** Optional display label supplied by `squad plugin list --json`. */
+  displayName?: string;
 
   /** Marketplace the plugin was resolved from, when applicable. */
   marketplace?: string;
 
   /** Whether the plugin is currently enabled. */
   enabled: boolean;
+
+  /** Normalised lifecycle status for downstream UI/actions. */
+  status?: SquadPluginStatus;
+
+  /** Installed plugin version, when reported by the CLI. */
+  version?: string;
+
+  /** Optional user-facing description. */
+  description?: string;
 }
 
 /**

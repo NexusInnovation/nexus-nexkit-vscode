@@ -20,7 +20,9 @@ import type {
   SquadDoctorReport,
   SquadError,
   SquadMarkdownDoc,
+  SquadMarketplaceRef,
   SquadPluginRef,
+  SquadPreset,
   SquadRosterMember,
   SquadUpstreamSource,
   UnreachableSquadSource,
@@ -171,6 +173,9 @@ export interface SquadState {
   /** Upstream inheritance sources shown in the status area (FR-021). */
   upstreams: SquadUpstreamSource[];
 
+  /** Plugin marketplaces read from `.squad/plugins/marketplaces.json` (FR-042). */
+  marketplaces: SquadMarketplaceRef[];
+
   /** Installed plugins shown in the status area (FR-021). */
   plugins: SquadPluginRef[];
 
@@ -193,6 +198,7 @@ export const initialSquadState: SquadState = {
   routing: null,
   logs: [],
   upstreams: [],
+  marketplaces: [],
   plugins: [],
   doctor: null,
   presetPicker: initialSquadPresetPickerState,

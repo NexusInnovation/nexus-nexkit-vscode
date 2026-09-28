@@ -32,6 +32,8 @@ import {
   SquadDocKind,
   SquadUpstreamSource,
   SquadUpstreamKind,
+  SquadMarketplaceKind,
+  SquadMarketplaceRef,
 } from "../models";
 
 /** Root folder that holds all Squad configuration. */
@@ -310,6 +312,41 @@ export class SquadFileService {
     return squadOk(this._normalizeUpstreams(parsed));
   }
 
+  /**
+   * Read and parse `.squad/plugins/marketplaces.json` into marketplace
+   * references (FR-042). Returns an empty list when the file does not exist,
+   * since Squad plugins are optional; malformed JSON is a visible parse error.
+   */
+  public async readPluginMarketplaces(): Promise<SquadResult<SquadMarketplaceRef[]>> {
+    const relativePath = `${SQUAD_DIR}/plugins/marketplaces.json`;
+    const uri = this._join(SQUAD_DIR, "plugins", "marketplaces.json");
+
+    let raw: SquadTextFile;
+    try {
+      raw = await this._readText(uri, relativePath);
+    } catch (error) {
+      if (this._isNotFound(error)) {
+        return squadOk([]);
+      }
+      return this._readError(relativePath, error, "the Squad plugin marketplaces manifest");
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw.content);
+    } catch (error) {
+      return squadErr({
+        code: "parse-failed",
+        message: "The Squad plugin marketplaces manifest (.squad/plugins/marketplaces.json) is not valid JSON.",
+        remediation: "Fix the JSON syntax in .squad/plugins/marketplaces.json, or run 'squad plugin marketplace refresh'.",
+        detail: relativePath,
+        cause: error,
+      });
+    }
+
+    return squadOk(this._normalizeMarketplaces(parsed));
+  }
+
   // --- internal helpers -------------------------------------------------
 
   private async _readMarkdownDoc(kind: SquadDocKind): Promise<SquadResult<SquadMarkdownDoc>> {
@@ -353,6 +390,113 @@ export class SquadFileService {
       sources.push(source);
     }
     return sources;
+  }
+
+  private _normalizeMarketplaces(parsed: unknown): SquadMarketplaceRef[] {
+    const list =
+      Array.isArray(parsed)
+        ? parsed
+        : this._isRecord(parsed) && Array.isArray(parsed.marketplaces)
+          ? parsed.marketplaces
+          : this._isRecord(parsed) && Array.isArray(parsed.sources)
+            ? parsed.sources
+            : [];
+
+    const marketplaces: SquadMarketplaceRef[] = [];
+    for (const entry of list) {
+      if (typeof entry === "string") {
+        const marketplace = this._marketplaceFromString(entry);
+        if (marketplace) {
+          marketplaces.push(marketplace);
+        }
+        continue;
+      }
+      if (!this._isRecord(entry)) {
+        continue;
+      }
+      const marketplace = this._marketplaceFromRecord(entry);
+      if (marketplace) {
+        marketplaces.push(marketplace);
+      }
+    }
+    return marketplaces;
+  }
+
+  private _marketplaceFromString(value: string): SquadMarketplaceRef | undefined {
+    const source = value.trim();
+    if (source.length === 0) {
+      return undefined;
+    }
+    return {
+      id: this._marketplaceIdFromSource(source),
+      source,
+      kind: this._inferMarketplaceKind(source),
+      enabled: true,
+    };
+  }
+
+  private _marketplaceFromRecord(entry: Record<string, unknown>): SquadMarketplaceRef | undefined {
+    const source =
+      this._asString(entry.source) ??
+      this._asString(entry.repository) ??
+      this._asString(entry.repo) ??
+      this._asString(entry.url) ??
+      this._asString(entry.path) ??
+      this._asString(entry.reference) ??
+      this._asString(entry.id) ??
+      this._asString(entry.name);
+    if (source === undefined) {
+      return undefined;
+    }
+
+    const id = this._asString(entry.id) ?? this._asString(entry.name) ?? this._marketplaceIdFromSource(source);
+    const marketplace: SquadMarketplaceRef = {
+      id,
+      displayName: this._asString(entry.displayName) ?? this._asString(entry.title),
+      source,
+      kind: this._toMarketplaceKind(entry.kind ?? entry.type, source),
+      enabled: this._asBoolean(entry.enabled) ?? !this._asBoolean(entry.disabled),
+    };
+    const ref = this._asString(entry.ref) ?? this._asString(entry.branch) ?? this._asString(entry.revision);
+    if (ref !== undefined) {
+      marketplace.ref = ref;
+    }
+    const lastRefreshedAt = this._toEpochMillis(entry.lastRefreshedAt ?? entry.lastRefresh ?? entry.refreshedAt);
+    if (lastRefreshedAt !== undefined) {
+      marketplace.lastRefreshedAt = lastRefreshedAt;
+    }
+    return marketplace;
+  }
+
+  private _marketplaceIdFromSource(source: string): string {
+    const withoutRef = source.split("#", 1)[0].trim();
+    const parts = withoutRef.split(/[\\/]/).filter((part) => part.length > 0);
+    return parts.length > 0 ? parts[parts.length - 1].replace(/\.git$/i, "") : withoutRef;
+  }
+
+  private _toMarketplaceKind(value: unknown, source: string): SquadMarketplaceKind {
+    switch (this._asString(value)?.toLowerCase()) {
+      case SquadMarketplaceKind.GitHub:
+        return SquadMarketplaceKind.GitHub;
+      case SquadMarketplaceKind.Local:
+        return SquadMarketplaceKind.Local;
+      case SquadMarketplaceKind.Url:
+        return SquadMarketplaceKind.Url;
+      case SquadMarketplaceKind.Unknown:
+        return SquadMarketplaceKind.Unknown;
+      default:
+        return this._inferMarketplaceKind(source);
+    }
+  }
+
+  private _inferMarketplaceKind(source: string): SquadMarketplaceKind {
+    if (/^https?:\/\//i.test(source)) {
+      return source.includes("github.com") ? SquadMarketplaceKind.GitHub : SquadMarketplaceKind.Url;
+    }
+    if (/^[^/\s]+\/[^/\s]+(?:#.+)?$/i.test(source)) {
+      return SquadMarketplaceKind.GitHub;
+    }
+    return SquadMarketplaceKind.Local;
   }
 
   private _toUpstreamKind(value: unknown): SquadUpstreamKind {
@@ -542,5 +686,9 @@ export class SquadFileService {
 
   private _asString(value: unknown): string | undefined {
     return typeof value === "string" && value.trim().length > 0 ? value.trim() : undefined;
+  }
+
+  private _asBoolean(value: unknown): boolean | undefined {
+    return typeof value === "boolean" ? value : undefined;
   }
 }

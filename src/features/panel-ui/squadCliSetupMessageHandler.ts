@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { SettingsManager } from "../../core/settingsManager";
 import { LoggingService } from "../../shared/services/loggingService";
 import { SquadCliSource } from "../squad/models";
-import { SQUAD_CLI_NPX_PACKAGE } from "../squad/squadCliService";
+import { SQUAD_CLI_NPX_PACKAGE } from "../squad/services/squadCliService";
 import { ExtensionMessage, WebviewMessage } from "./types/webviewMessages";
 
 /**
