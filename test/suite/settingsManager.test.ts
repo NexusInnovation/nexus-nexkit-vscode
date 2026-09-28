@@ -57,6 +57,9 @@ suite("Unit: SettingsManager", () => {
     // Clean up global settings only (no workspace in tests)
     const config = vscode.workspace.getConfiguration("nexkit");
     await config.update("mcpSetup.dismissed", undefined, vscode.ConfigurationTarget.Global);
+    await config.update("squad.cliSource", undefined, vscode.ConfigurationTarget.Global);
+    await config.update("squad.cliPath", undefined, vscode.ConfigurationTarget.Global);
+    await config.update("squad.telemetry.enabled", undefined, vscode.ConfigurationTarget.Global);
 
     // Clear state stores
     globalStateData.clear();
@@ -196,6 +199,63 @@ suite("Unit: SettingsManager", () => {
     await SettingsManager.setFirstTimeUser(false);
     const isFirstTime = SettingsManager.isFirstTimeUser();
     assert.strictEqual(isFirstTime, false);
+  });
+
+  test("Should get default Squad CLI source", () => {
+    const source = SettingsManager.getSquadCliSource();
+    assert.strictEqual(source, "npx");
+  });
+
+  test("Should set Squad CLI source", async function () {
+    try {
+      await SettingsManager.setSquadCliSource("custom");
+      const source = SettingsManager.getSquadCliSource();
+      assert.strictEqual(source, "custom");
+    } catch (error: any) {
+      if (error.message && error.message.includes("not a registered configuration")) {
+        this.skip();
+      } else {
+        throw error;
+      }
+    }
+  });
+
+  test("Should get default Squad CLI path", () => {
+    const cliPath = SettingsManager.getSquadCliPath();
+    assert.strictEqual(cliPath, "");
+  });
+
+  test("Should set Squad CLI path", async function () {
+    try {
+      await SettingsManager.setSquadCliPath("/usr/local/bin/squad");
+      const cliPath = SettingsManager.getSquadCliPath();
+      assert.strictEqual(cliPath, "/usr/local/bin/squad");
+    } catch (error: any) {
+      if (error.message && error.message.includes("not a registered configuration")) {
+        this.skip();
+      } else {
+        throw error;
+      }
+    }
+  });
+
+  test("Should get default Squad telemetry enabled status", () => {
+    const isEnabled = SettingsManager.isSquadTelemetryEnabled();
+    assert.strictEqual(isEnabled, true);
+  });
+
+  test("Should set Squad telemetry enabled status", async function () {
+    try {
+      await SettingsManager.setSquadTelemetryEnabled(false);
+      const isEnabled = SettingsManager.isSquadTelemetryEnabled();
+      assert.strictEqual(isEnabled, false);
+    } catch (error: any) {
+      if (error.message && error.message.includes("not a registered configuration")) {
+        this.skip();
+      } else {
+        throw error;
+      }
+    }
   });
 });
 

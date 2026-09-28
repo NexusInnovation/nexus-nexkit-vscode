@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { OperationMode } from "../features/ai-template-files/models/aiTemplateFile";
+import { SquadCliSource } from "../features/squad/models";
 
 /**
  * Centralized manager for all Nexkit extension settings and workspace state
@@ -37,6 +38,11 @@ export class SettingsManager {
 
   // Convert to Markdown settings
   private static readonly CONVERT_TO_MARKDOWN_PYTHON_PATH = "convertToMarkdown.pythonPath";
+
+  // Squad settings
+  private static readonly SQUAD_CLI_SOURCE = "squad.cliSource";
+  private static readonly SQUAD_CLI_PATH = "squad.cliPath";
+  private static readonly SQUAD_TELEMETRY_ENABLED = "squad.telemetry.enabled";
 
   // Template auto-refresh settings
   private static readonly TEMPLATES_AUTO_REFRESH_INTERVAL = "templates.autoRefreshIntervalMinutes";
@@ -179,6 +185,51 @@ export class SettingsManager {
     return vscode.workspace
       .getConfiguration(this.NEXKIT_SECTION)
       .get<string>(this.CONVERT_TO_MARKDOWN_PYTHON_PATH, "");
+  }
+
+  // Squad
+  /**
+   * How the Squad CLI is invoked (FR-004): global install, npx, or a custom path.
+   */
+  static getSquadCliSource(): SquadCliSource {
+    return vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .get<SquadCliSource>(this.SQUAD_CLI_SOURCE, SquadCliSource.Npx);
+  }
+
+  static async setSquadCliSource(source: SquadCliSource): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .update(this.SQUAD_CLI_SOURCE, source, vscode.ConfigurationTarget.Global);
+  }
+
+  /**
+   * Custom Squad CLI executable path (FR-004). Only meaningful when
+   * {@link getSquadCliSource} is `custom`.
+   */
+  static getSquadCliPath(): string {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<string>(this.SQUAD_CLI_PATH, "");
+  }
+
+  static async setSquadCliPath(cliPath: string): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .update(this.SQUAD_CLI_PATH, cliPath, vscode.ConfigurationTarget.Global);
+  }
+
+  /**
+   * Whether anonymous Squad usage telemetry is enabled (FR-066). Callers must
+   * still respect {@link isNexkitTelemetryEnabled} and VS Code's global
+   * telemetry setting.
+   */
+  static isSquadTelemetryEnabled(): boolean {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<boolean>(this.SQUAD_TELEMETRY_ENABLED, true);
+  }
+
+  static async setSquadTelemetryEnabled(value: boolean): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .update(this.SQUAD_TELEMETRY_ENABLED, value, vscode.ConfigurationTarget.Global);
   }
 
   // Extension Updates
