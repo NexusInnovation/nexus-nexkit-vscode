@@ -7,6 +7,7 @@ export * from "./nexusMarketplacePresetProvider";
 export * from "./externalRepoPresetProvider";
 export * from "./compositeSquadPresetProvider";
 export * from "./squadInitService";
+export * from "./squadExportService";
 export * from "./squadCliService";
 export * from "./squadProcessRunner";
 export * from "./squadDetectionService";

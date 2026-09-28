@@ -6,8 +6,12 @@ import { NexkitPanelMessageHandler } from "../../src/features/panel-ui/nexkitPan
 import { ExtensionMessage } from "../../src/features/panel-ui/types/webviewMessages";
 import {
   SquadDetectionResult,
+  SquadDocKind,
   SquadInstallState,
   SquadResult,
+  SquadUpdatesResult,
+  SquadUpdateTarget,
+  SquadUpgradeCommand,
   squadErr,
   squadOk,
   SquadVersionStatus,
@@ -41,9 +45,13 @@ interface SquadStubs {
   listLogs: sinon.SinonStub;
   readLog: sinon.SinonStub;
   readUpstreams: sinon.SinonStub;
+  saveCharter: sinon.SinonStub;
+  saveMarkdownDoc: sinon.SinonStub;
   readMarketplaces: sinon.SinonStub;
   listInstalledPlugins: sinon.SinonStub;
   runDoctor: sinon.SinonStub;
+  checkUpdates: sinon.SinonStub;
+  exportSquad: sinon.SinonStub;
 }
 
 function createStubs(): SquadStubs {
@@ -51,15 +59,80 @@ function createStubs(): SquadStubs {
     detect: sinon.stub().resolves(squadOk(detectionResult())),
     readRoster: sinon.stub().resolves(squadOk([])),
     readCharter: sinon.stub(),
-    readDecisions: sinon.stub().resolves(squadOk({ kind: "decisions", relativePath: ".squad/decisions.md", exists: true, content: "d" })),
-    readRouting: sinon.stub().resolves(squadOk({ kind: "routing", relativePath: ".squad/routing.md", exists: false, content: "" })),
+    readDecisions: sinon
+      .stub()
+      .resolves(squadOk({ kind: "decisions", relativePath: ".squad/decisions.md", exists: true, content: "d" })),
+    readRouting: sinon
+      .stub()
+      .resolves(squadOk({ kind: "routing", relativePath: ".squad/routing.md", exists: false, content: "" })),
     readAgentHistory: sinon.stub(),
     listLogs: sinon.stub().resolves(squadOk([])),
     readLog: sinon.stub(),
     readUpstreams: sinon.stub().resolves(squadOk([])),
+    saveCharter: sinon.stub().resolves(
+      squadOk({
+        relativePath: ".squad/agents/link/charter.md",
+        created: false,
+        backupPath: "backup",
+        bytesWritten: 9,
+        charter: { agentId: "link", relativePath: ".squad/agents/link/charter.md", content: "# Charter" },
+      })
+    ),
+    saveMarkdownDoc: sinon.stub().resolves(
+      squadOk({
+        relativePath: ".squad/decisions.md",
+        created: false,
+        backupPath: "backup",
+        bytesWritten: 11,
+        doc: { kind: SquadDocKind.Decisions, relativePath: ".squad/decisions.md", exists: true, content: "# Decisions" },
+      })
+    ),
     readMarketplaces: sinon.stub().resolves(squadOk([])),
     listInstalledPlugins: sinon.stub().resolves(squadOk([])),
     runDoctor: sinon.stub(),
+    checkUpdates: sinon.stub().resolves(squadOk(updatesResult())),
+    exportSquad: sinon.stub(),
+  };
+}
+
+function updatesResult(): SquadUpdatesResult {
+  const detection = detectionResult();
+  detection.cli = {
+    installed: true,
+    source: "global",
+    cliVersion: "1.0.0",
+    versionStatus: SquadVersionStatus.UpdateAvailable,
+  };
+  detection.project = {
+    ...detection.project,
+    projectVersion: "1.0.0",
+    versionStatus: SquadVersionStatus.UpdateAvailable,
+  };
+  return {
+    detection,
+    cli: {
+      target: SquadUpdateTarget.Cli,
+      currentVersion: "1.0.0",
+      latestVersion: "1.2.0",
+      status: SquadVersionStatus.UpdateAvailable,
+      updateAvailable: true,
+      upgradeCommand: SquadUpgradeCommand.CliSelf,
+      requiresConfirmation: true,
+      requiresBackup: false,
+      message: "Squad CLI update available: 1.0.0 -> 1.2.0.",
+    },
+    project: {
+      target: SquadUpdateTarget.Project,
+      currentVersion: "1.0.0",
+      latestVersion: "1.2.0",
+      status: SquadVersionStatus.UpdateAvailable,
+      updateAvailable: true,
+      upgradeCommand: SquadUpgradeCommand.Project,
+      requiresConfirmation: true,
+      requiresBackup: true,
+      message: "Squad project update available: 1.0.0 -> 1.2.0.",
+    },
+    checkedAt: 123,
   };
 }
 
@@ -74,6 +147,12 @@ function createServices(stubs: SquadStubs, hasWorkspace = true): ServiceContaine
         listLogs: stubs.listLogs,
         readLog: stubs.readLog,
         readUpstreams: stubs.readUpstreams,
+      }
+    : undefined;
+  const squadWrite = hasWorkspace
+    ? {
+        saveCharter: stubs.saveCharter,
+        saveMarkdownDoc: stubs.saveMarkdownDoc,
       }
     : undefined;
   const squadPlugins = hasWorkspace
@@ -115,7 +194,14 @@ function createServices(stubs: SquadStubs, hasWorkspace = true): ServiceContaine
     squadCli: {
       runDoctor: stubs.runDoctor,
     },
+    squadUpdates: {
+      checkUpdates: stubs.checkUpdates,
+    },
+    squadExport: {
+      exportSquad: stubs.exportSquad,
+    },
     squadFile,
+    squadWrite,
     squadPlugins,
   } as unknown as ServiceContainer;
 }
@@ -154,11 +240,14 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
   test("getSquadState emits status, roster, docs and logs", async () => {
     const stubs = createStubs();
     stubs.readRoster.resolves(
-      squadOk([{ id: "morpheus", name: "Morpheus", hasCharter: true }, { id: "link", name: "Link", hasCharter: false }])
+      squadOk([
+        { id: "morpheus", name: "Morpheus", hasCharter: true },
+        { id: "link", name: "Link", hasCharter: false },
+      ])
     );
-    stubs.readCharter.withArgs("morpheus").resolves(
-      squadOk({ agentId: "morpheus", relativePath: ".squad/agents/morpheus/charter.md", content: "c" })
-    );
+    stubs.readCharter
+      .withArgs("morpheus")
+      .resolves(squadOk({ agentId: "morpheus", relativePath: ".squad/agents/morpheus/charter.md", content: "c" }));
     stubs.readAgentHistory.resolves(squadErr({ code: "file-read-failed", message: "no history" }));
     const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
 
@@ -190,18 +279,20 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
     stubs.readAgentHistory.resolves(
       squadOk({ relativePath: ".squad/agents/morpheus/history.md", content: "h", sizeBytes: 1, truncated: false })
     );
-    stubs.listLogs.withArgs(SquadLogKind.Session).resolves(
-      squadOk([{ name: "s.md", kind: SquadLogKind.Session, relativePath: ".squad/log/s.md", sizeBytes: 1 }])
-    );
-    stubs.listLogs.withArgs(SquadLogKind.Orchestration).resolves(
-      squadOk([{ name: "o.md", kind: SquadLogKind.Orchestration, relativePath: ".squad/orchestration-log/o.md", sizeBytes: 1 }])
-    );
-    stubs.readLog.withArgs(SquadLogKind.Session, "s.md").resolves(
-      squadOk({ relativePath: ".squad/log/s.md", content: "sc", sizeBytes: 1, truncated: false })
-    );
-    stubs.readLog.withArgs(SquadLogKind.Orchestration, "o.md").resolves(
-      squadOk({ relativePath: ".squad/orchestration-log/o.md", content: "oc", sizeBytes: 1, truncated: false })
-    );
+    stubs.listLogs
+      .withArgs(SquadLogKind.Session)
+      .resolves(squadOk([{ name: "s.md", kind: SquadLogKind.Session, relativePath: ".squad/log/s.md", sizeBytes: 1 }]));
+    stubs.listLogs
+      .withArgs(SquadLogKind.Orchestration)
+      .resolves(
+        squadOk([{ name: "o.md", kind: SquadLogKind.Orchestration, relativePath: ".squad/orchestration-log/o.md", sizeBytes: 1 }])
+      );
+    stubs.readLog
+      .withArgs(SquadLogKind.Session, "s.md")
+      .resolves(squadOk({ relativePath: ".squad/log/s.md", content: "sc", sizeBytes: 1, truncated: false }));
+    stubs.readLog
+      .withArgs(SquadLogKind.Orchestration, "o.md")
+      .resolves(squadOk({ relativePath: ".squad/orchestration-log/o.md", content: "oc", sizeBytes: 1, truncated: false }));
     const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
 
     await handler.handleMessage({ command: "getSquadState" });
@@ -243,9 +334,7 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
     stubs.readMarketplaces.resolves(
       squadOk([{ id: "core", source: "NexusInnovation/nexus-plugin-marketplace", kind: "github", enabled: true }])
     );
-    stubs.listInstalledPlugins.resolves(
-      squadOk([{ id: "team-plugin", marketplace: "core", enabled: true, status: "enabled" }])
-    );
+    stubs.listInstalledPlugins.resolves(squadOk([{ id: "team-plugin", marketplace: "core", enabled: true, status: "enabled" }]));
     const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
 
     await handler.handleMessage({ command: "getSquadState" });
@@ -332,6 +421,25 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
     assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
   });
 
+  test("saveSquadCharter emits loading and a sanitized save result", async () => {
+    const stubs = createStubs();
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "saveSquadCharter", agentId: "link", content: "# Charter" });
+
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadCharterSaved", "squadLoading"]);
+    assert.ok(stubs.saveCharter.calledOnceWithExactly("link", "# Charter"));
+    const saved = find("squadCharterSaved");
+    assert.ok(saved);
+    assert.strictEqual(saved.charter.agentId, "link");
+    assert.deepStrictEqual(saved.result, {
+      relativePath: ".squad/agents/link/charter.md",
+      created: false,
+      backupCreated: true,
+      bytesWritten: 9,
+    });
+  });
+
   test("refreshSquadDetection surfaces upstream read errors after status update", async () => {
     const stubs = createStubs();
     stubs.readUpstreams.resolves(squadErr({ code: "parse-failed", message: "bad upstreams" }));
@@ -344,24 +452,41 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
     assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
   });
 
-  test("saveSquadCharter responds with a not-available squadError", async () => {
+  test("saveSquadDoc emits loading and a sanitized save result", async () => {
     const stubs = createStubs();
     const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
 
-    await handler.handleMessage({ command: "saveSquadCharter", agentId: "morpheus", content: "x" });
+    await handler.handleMessage({ command: "saveSquadDoc", kind: SquadDocKind.Decisions, content: "# Decisions" });
 
-    const error = find("squadError");
-    assert.strictEqual(error?.error.code, "file-write-failed");
-    assert.ok(error.error.remediation);
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadDocSaved", "squadLoading"]);
+    assert.ok(stubs.saveMarkdownDoc.calledOnceWithExactly(SquadDocKind.Decisions, "# Decisions"));
+    const saved = find("squadDocSaved");
+    assert.ok(saved);
+    assert.strictEqual(saved.doc.kind, SquadDocKind.Decisions);
+    assert.strictEqual(saved.result.backupCreated, true);
   });
 
-  test("saveSquadDoc responds with a not-available squadError", async () => {
+  test("saveSquadCharter emits an actionable error when no workspace writer is available", async () => {
     const stubs = createStubs();
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs, false));
+
+    await handler.handleMessage({ command: "saveSquadCharter", agentId: "link", content: "x" });
+
+    assert.deepStrictEqual(commands(), ["squadError"]);
+    assert.strictEqual(find("squadError")?.error.code, "not-a-workspace");
+    assert.ok(stubs.saveCharter.notCalled);
+  });
+
+  test("saveSquadDoc surfaces write failures and clears loading", async () => {
+    const stubs = createStubs();
+    stubs.saveMarkdownDoc.resolves(squadErr({ code: "backup-failed", message: "backup failed", remediation: "check disk" }));
     const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
 
-    await handler.handleMessage({ command: "saveSquadDoc", kind: "decisions", content: "x" });
+    await handler.handleMessage({ command: "saveSquadDoc", kind: SquadDocKind.Routing, content: "# Routing" });
 
-    assert.strictEqual(find("squadError")?.error.code, "file-write-failed");
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadError", "squadLoading"]);
+    assert.strictEqual(find("squadError")?.error.code, "backup-failed");
+    assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
   });
 
   test("runSquadDoctor emits squadDoctorUpdate with the parsed report", async () => {
@@ -394,6 +519,70 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
 
     assert.deepStrictEqual(commands(), ["squadLoading", "squadError", "squadLoading"]);
     assert.strictEqual(find("squadError")?.error.code, "cli-not-found");
+    assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
+  });
+
+  test("checkSquadUpdates emits status and the reusable update contract", async () => {
+    const stubs = createStubs();
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "checkSquadUpdates" });
+
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadStatusUpdate", "squadUpdatesUpdate", "squadLoading"]);
+    const update = find("squadUpdatesUpdate");
+    assert.ok(update);
+    assert.strictEqual(update.updates.cli.updateAvailable, true);
+    assert.strictEqual(update.updates.cli.upgradeCommand, SquadUpgradeCommand.CliSelf);
+    assert.strictEqual(update.updates.project.requiresBackup, true);
+    assert.ok(stubs.checkUpdates.calledOnce);
+  });
+
+  test("checkSquadUpdates emits squadError and clears loading on lookup failure", async () => {
+    const stubs = createStubs();
+    stubs.checkUpdates.resolves(squadErr({ code: "update-check-failed", message: "offline", remediation: "connect" }));
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "checkSquadUpdates" });
+
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadError", "squadLoading"]);
+    assert.strictEqual(find("squadError")?.error.code, "update-check-failed");
+    assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
+  });
+
+  test("exportSquad emits squadExportResult and clears loading on success", async () => {
+    const stubs = createStubs();
+    const outcome = {
+      target: { kind: "file" as const, uri: "file:///tmp/squad-export.json" },
+      exportedAt: 123,
+      stdout: "ok",
+      stderr: "",
+      durationMs: 10,
+    };
+    stubs.exportSquad.resolves(squadOk(outcome));
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({
+      command: "exportSquad",
+      request: { target: { kind: "file", uri: "file:///tmp/squad-export.json" } },
+    });
+
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadExportResult", "squadLoading"]);
+    const update = find("squadExportResult");
+    assert.ok(update);
+    assert.deepStrictEqual(update.export, outcome);
+    assert.ok(stubs.exportSquad.calledOnce);
+    assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
+  });
+
+  test("exportSquad emits squadError and clears loading on failure", async () => {
+    const stubs = createStubs();
+    stubs.exportSquad.resolves(squadErr({ code: "cli-execution-failed", message: "export failed", remediation: "retry" }));
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "exportSquad" });
+
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadError", "squadLoading"]);
+    assert.strictEqual(find("squadError")?.error.code, "cli-execution-failed");
     assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
   });
 
