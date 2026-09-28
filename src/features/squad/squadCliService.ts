@@ -26,8 +26,9 @@
 import type * as vscode from "vscode";
 import { SettingsManager } from "../../core/settingsManager";
 import { LoggingService } from "../../shared/services/loggingService";
-import { SquadCliSource, squadErr, squadOk, type SquadResult } from "./models";
+import { SquadCliSource, squadErr, squadOk, type SquadDoctorReport, type SquadResult } from "./models";
 import { ChildProcessSquadRunner, type SquadProcessRunner } from "./squadProcessRunner";
+import { parseSquadDoctorReport } from "./squadDoctorParser";
 
 /** npm package that provides the `squad` executable (FR-004). */
 export const SQUAD_CLI_NPX_PACKAGE = "@bradygaster/squad-cli";
@@ -359,6 +360,41 @@ export class SquadCliService {
   public async isCliAvailable(options: SquadCliExecuteOptions = {}): Promise<boolean> {
     const result = await this.getCliVersion(options);
     return result.ok;
+  }
+
+  /**
+   * Run Squad Doctor diagnostics (SQD-021, FR-060). Executes the allowlisted
+   * `doctor` command (requesting structured `--json` output) and parses the
+   * result into a {@link SquadDoctorReport}.
+   *
+   * Failures stay visible and actionable: a missing CLI, timeout or
+   * cancellation are surfaced unchanged, while a non-zero exit is re-mapped to
+   * a doctor-scoped `doctor-failed` error so the UI shows relevant remediation.
+   */
+  public async runDoctor(
+    options: SquadCliExecuteOptions = {}
+  ): Promise<SquadResult<SquadDoctorReport>> {
+    const result = await this.execute(SquadCliCommand.Doctor, {
+      ...options,
+      args: options.args ?? ["--json"],
+    });
+
+    if (!result.ok) {
+      if (result.error.code === "cli-execution-failed") {
+        return squadErr({
+          code: "doctor-failed",
+          message: "Squad Doctor reported a problem.",
+          remediation:
+            "Review the Squad Doctor output, resolve the reported issues, then run it again.",
+          detail: result.error.detail,
+          cause: result.error.cause,
+        });
+      }
+      return result;
+    }
+
+    const report = parseSquadDoctorReport(result.value.stdout, result.value.stderr, this._now());
+    return squadOk(report);
   }
 
   /** Validate caller-supplied arguments against the command's allowlist. */

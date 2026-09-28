@@ -358,4 +358,73 @@ suite("Unit: SquadCliService", () => {
       assert.strictEqual(captured.request?.timeoutMs, 42);
     });
   });
+
+  suite("runDoctor (SQD-021, FR-060)", () => {
+    test("Should request --json and parse a structured report on success", async () => {
+      const captured: { request?: SquadSpawnRequest } = {};
+      const service = new SquadCliService({
+        runner: fakeRunner(
+          { stdout: JSON.stringify([{ label: "Node", severity: "ok" }]) },
+          captured
+        ),
+        logger: silentLogger,
+        cliSource: SquadCliSource.Global,
+      });
+
+      const result = await service.runDoctor();
+
+      assert.strictEqual(result.ok, true);
+      assert.deepStrictEqual(captured.request?.args, ["doctor", "--json"]);
+      if (result.ok) {
+        assert.strictEqual(result.value.structured, true);
+        assert.strictEqual(result.value.checks[0].label, "Node");
+      }
+    });
+
+    test("Should map a non-zero exit to a doctor-failed error", async () => {
+      const service = new SquadCliService({
+        runner: fakeRunner({ exitCode: 1, stderr: "boom" }),
+        logger: silentLogger,
+        cliSource: SquadCliSource.Global,
+      });
+
+      const result = await service.runDoctor();
+
+      assert.strictEqual(result.ok, false);
+      if (!result.ok) {
+        assert.strictEqual(result.error.code, "doctor-failed");
+        assert.ok(result.error.remediation);
+      }
+    });
+
+    test("Should surface a missing CLI unchanged", async () => {
+      const service = new SquadCliService({
+        runner: fakeRunner({ spawnErrorCode: "ENOENT" }),
+        logger: silentLogger,
+        cliSource: SquadCliSource.Global,
+      });
+
+      const result = await service.runDoctor();
+
+      assert.strictEqual(result.ok, false);
+      if (!result.ok) {
+        assert.strictEqual(result.error.code, "cli-not-found");
+      }
+    });
+
+    test("Should surface a timeout unchanged", async () => {
+      const service = new SquadCliService({
+        runner: fakeRunner({ timedOut: true }),
+        logger: silentLogger,
+        cliSource: SquadCliSource.Global,
+      });
+
+      const result = await service.runDoctor();
+
+      assert.strictEqual(result.ok, false);
+      if (!result.ok) {
+        assert.strictEqual(result.error.code, "cli-timeout");
+      }
+    });
+  });
 });
