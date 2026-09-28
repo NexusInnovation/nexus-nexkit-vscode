@@ -12,10 +12,7 @@ import {
   SquadUpstreamSource,
   isSquadErr,
 } from "../squad/models";
-import {
-  SquadFileService,
-  SquadLogKind as SquadFileLogKind,
-} from "../squad/services/squadFileService";
+import { SquadFileService, SquadLogKind as SquadFileLogKind } from "../squad/services/squadFileService";
 import { SquadLogDocument, SquadLogKind } from "./webview/types/squadState";
 
 /**
@@ -55,6 +52,9 @@ export class SquadPanelMessageHandler {
         return true;
       case "refreshSquadDetection":
         await this.handleRefreshSquadDetection();
+        return true;
+      case "checkSquadUpdates":
+        await this.handleCheckSquadUpdates();
         return true;
       case "saveSquadCharter":
         await this.handleSaveSquadCharter();
@@ -122,6 +122,29 @@ export class SquadPanelMessageHandler {
       const fileService = this._services.squadFile;
       const upstreams = fileService ? await this._readUpstreams(fileService) : [];
       this._emitStatus(detection.value, upstreams, []);
+    } finally {
+      this._setLoading(false);
+    }
+  }
+
+  /**
+   * Check for CLI/project updates without executing upgrades (SQD-030,
+   * FR-005). The returned contract is reusable by the follow-up confirmed
+   * upgrade flows; failures surface as `squadError`, never as empty success.
+   */
+  private async handleCheckSquadUpdates(): Promise<void> {
+    this._setLoading(true);
+    try {
+      const updates = await this._services.squadUpdates.checkUpdates(this._workspaceRoot());
+      if (isSquadErr(updates)) {
+        this._emitError(updates.error);
+        return;
+      }
+
+      const fileService = this._services.squadFile;
+      const upstreams = fileService ? await this._readUpstreams(fileService) : [];
+      this._emitStatus(updates.value.detection, upstreams, []);
+      this._postMessage({ command: "squadUpdatesUpdate", updates: updates.value });
     } finally {
       this._setLoading(false);
     }
@@ -250,11 +273,7 @@ export class SquadPanelMessageHandler {
     }
   }
 
-  private _emitStatus(
-    detection: SquadDetectionResult,
-    upstreams: SquadUpstreamSource[],
-    plugins: SquadPluginRef[]
-  ): void {
+  private _emitStatus(detection: SquadDetectionResult, upstreams: SquadUpstreamSource[], plugins: SquadPluginRef[]): void {
     this._postMessage({ command: "squadStatusUpdate", detection, upstreams, plugins });
   }
 

@@ -40,6 +40,7 @@ import { NexusMarketplacePresetProvider } from "../features/squad/services/nexus
 import { ExternalRepoPresetProvider } from "../features/squad/services/externalRepoPresetProvider";
 import { SquadPresetDownloadService } from "../features/squad/services/squadPresetDownloadService";
 import { SquadInitService } from "../features/squad/services/squadInitService";
+import { SquadUpdateService } from "../features/squad/services/squadUpdateService";
 
 /**
  * Service container for dependency injection
@@ -103,6 +104,12 @@ export interface ServiceContainer {
    * FR-014/FR-006). Lazily constructed on first access — no activation work.
    */
   readonly squadInit: SquadInitService;
+
+  /**
+   * Detects available Squad CLI/project updates (SQD-030, FR-005). Lazily
+   * performs npm/detection work only when requested by the panel/command.
+   */
+  squadUpdates: SquadUpdateService;
 }
 
 /**
@@ -165,6 +172,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   // Detection delegates CLI probing to SquadCliService so a globally-installed
   // CLI is found across platforms (npm `squad.cmd`/`squad.ps1` shims on Windows).
   const squadDetection = new SquadDetectionService({ cliService: squadCli });
+  const squadUpdates = new SquadUpdateService({ detectionService: squadDetection });
 
   // Preset discovery (SQD-017/018) aggregated behind one provider (SQD-019).
   // Built lazily so no preset listing or network work happens during activation.
@@ -243,6 +251,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     squadDetection,
     squadCli,
     squadFile,
+    squadUpdates,
     get squadPresets(): SquadPresetProvider {
       return getSquadPresets();
     },

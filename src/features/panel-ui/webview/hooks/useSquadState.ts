@@ -19,6 +19,7 @@ import type {
   SquadMarkdownDoc,
   SquadPluginRef,
   SquadRosterMember,
+  SquadUpdatesResult,
   SquadUpstreamSource,
 } from "../../../squad/models";
 import type { SquadLogDocument } from "../types/squadState";
@@ -63,6 +64,9 @@ export interface UseSquadStateResult {
   /** Latest Squad Doctor report, when produced. */
   doctor: SquadDoctorReport | null;
 
+  /** Latest Squad CLI/project update-check result, when requested. */
+  updates: SquadUpdatesResult | null;
+
   /** Request the initial Squad state / refresh everything. */
   refresh: () => void;
 
@@ -77,6 +81,9 @@ export interface UseSquadStateResult {
 
   /** Run Squad Doctor diagnostics. */
   runDoctor: () => void;
+
+  /** Check for available Squad CLI/project updates without running upgrades. */
+  checkUpdates: () => void;
 
   /**
    * Persist how the Squad CLI is invoked (FR-004): install globally via npm,
@@ -120,6 +127,10 @@ export function useSquadState(): UseSquadStateResult {
     messenger.sendMessage({ command: "runSquadDoctor" });
   };
 
+  const checkUpdates = () => {
+    messenger.sendMessage({ command: "checkSquadUpdates" });
+  };
+
   const setCliInvocation = (source: SquadCliSource, cliPath?: string) => {
     messenger.sendMessage({ command: "setSquadCliInvocation", source, cliPath });
   };
@@ -141,11 +152,13 @@ export function useSquadState(): UseSquadStateResult {
     upstreams: squad.upstreams,
     plugins: squad.plugins,
     doctor: squad.doctor,
+    updates: squad.updates,
     refresh,
     refreshDetection,
     saveCharter,
     saveDoc,
     runDoctor,
+    checkUpdates,
     setCliInvocation,
     installCli,
   };

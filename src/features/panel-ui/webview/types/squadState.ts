@@ -21,7 +21,9 @@ import type {
   SquadError,
   SquadMarkdownDoc,
   SquadPluginRef,
+  SquadPreset,
   SquadRosterMember,
+  SquadUpdatesResult,
   SquadUpstreamSource,
   UnreachableSquadSource,
 } from "../../../squad/models";
@@ -177,6 +179,9 @@ export interface SquadState {
   /** Latest Squad Doctor report (FR-060), when one has been produced. */
   doctor: SquadDoctorReport | null;
 
+  /** Latest Squad CLI/project update-check result (FR-005), when requested. */
+  updates: SquadUpdatesResult | null;
+
   /** Preset selection screen sub-state (SQD-019, FR-010/FR-014/FR-015). */
   presetPicker: SquadPresetPickerState;
 }
@@ -195,5 +200,6 @@ export const initialSquadState: SquadState = {
   upstreams: [],
   plugins: [],
   doctor: null,
+  updates: null,
   presetPicker: initialSquadPresetPickerState,
 };
