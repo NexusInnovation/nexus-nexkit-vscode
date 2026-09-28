@@ -307,7 +307,7 @@ export class SquadFileService {
       });
     }
 
-    return squadOk(this._normalizeUpstreams(parsed));
+    return this._normalizeUpstreams(parsed);
   }
 
   // --- internal helpers -------------------------------------------------
@@ -327,23 +327,31 @@ export class SquadFileService {
     }
   }
 
-  private _normalizeUpstreams(parsed: unknown): SquadUpstreamSource[] {
-    const list = Array.isArray(parsed) ? parsed : this._isRecord(parsed) && Array.isArray(parsed.sources) ? parsed.sources : [];
+  private _normalizeUpstreams(parsed: unknown): SquadResult<SquadUpstreamSource[]> {
+    const list = this._upstreamList(parsed);
+    if (list === undefined) {
+      return this._upstreamParseError("Expected .squad/upstream.json to be an array or an object with a sources array.");
+    }
 
     const sources: SquadUpstreamSource[] = [];
-    for (const entry of list) {
+    for (const [index, entry] of list.entries()) {
       if (!this._isRecord(entry)) {
-        continue;
+        return this._upstreamParseError(`Source at index ${index} must be an object.`);
       }
       const id = this._asString(entry.id) ?? this._asString(entry.name);
       const reference =
         this._asString(entry.reference) ?? this._asString(entry.ref) ?? this._asString(entry.url) ?? this._asString(entry.path);
       if (id === undefined || reference === undefined) {
-        continue;
+        return this._upstreamParseError(`Source at index ${index} must include an id/name and reference/ref/url/path.`);
       }
+      const kind = this._toUpstreamKind(entry.kind ?? entry.type);
+      if (kind === undefined) {
+        return this._upstreamParseError(`Source "${id}" has an unsupported kind. Use local, git or export.`);
+      }
+
       const source: SquadUpstreamSource = {
         id,
-        kind: this._toUpstreamKind(entry.kind ?? entry.type),
+        kind,
         reference,
       };
       const lastSyncedAt = this._toEpochMillis(entry.lastSyncedAt ?? entry.lastSync ?? entry.syncedAt);
@@ -352,11 +360,31 @@ export class SquadFileService {
       }
       sources.push(source);
     }
-    return sources;
+    return squadOk(sources);
   }
 
-  private _toUpstreamKind(value: unknown): SquadUpstreamKind {
-    switch (this._asString(value)?.toLowerCase()) {
+  private _upstreamList(parsed: unknown): unknown[] | undefined {
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+    if (this._isRecord(parsed) && Array.isArray(parsed.sources)) {
+      return parsed.sources;
+    }
+    return undefined;
+  }
+
+  private _upstreamParseError(detail: string): SquadResult<never> {
+    return squadErr({
+      code: "parse-failed",
+      message: "The Squad upstream manifest (.squad/upstream.json) has an unsupported shape.",
+      remediation: "Use an array of upstream sources, or an object with a sources array. Each source needs an id, kind and reference.",
+      detail,
+    });
+  }
+
+  private _toUpstreamKind(value: unknown): SquadUpstreamKind | undefined {
+    const kind = this._asString(value)?.toLowerCase() ?? SquadUpstreamKind.Local;
+    switch (kind) {
       case SquadUpstreamKind.Git:
         return SquadUpstreamKind.Git;
       case SquadUpstreamKind.Export:
@@ -364,7 +392,7 @@ export class SquadFileService {
       case SquadUpstreamKind.Local:
         return SquadUpstreamKind.Local;
       default:
-        return SquadUpstreamKind.Local;
+        return undefined;
     }
   }
 
