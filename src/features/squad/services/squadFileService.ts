@@ -38,6 +38,7 @@ import {
   SQUAD_MODEL_CONFIG_RELATIVE_PATH,
 } from "../models";
 import { parseSquadModelConfig } from "../validation/squadModelConfigValidator";
+import { computeSquadContentHash } from "./squadContentHash";
 
 /** Root folder that holds all Squad configuration. */
 const SQUAD_DIR = ".squad";
@@ -412,11 +413,20 @@ export class SquadFileService {
     const uri = this._joinRelative(relativePath);
 
     try {
-      const raw = await this._readText(uri, relativePath);
-      return squadOk({ kind, relativePath, exists: true, content: raw.content });
+      const bytes = await vscode.workspace.fs.readFile(uri);
+      const truncated = bytes.byteLength > SQUAD_MAX_READ_BYTES;
+      const slice = truncated ? bytes.subarray(0, SQUAD_MAX_READ_BYTES) : bytes;
+      return squadOk({
+        kind,
+        relativePath,
+        exists: true,
+        content: this._decoder.decode(slice),
+        contentHash: computeSquadContentHash(bytes),
+        truncated,
+      });
     } catch (error) {
       if (this._isNotFound(error)) {
-        return squadOk({ kind, relativePath, exists: false, content: "" });
+        return squadOk({ kind, relativePath, exists: false, content: "", contentHash: null, truncated: false });
       }
       return this._readError(relativePath, error, `the ${kind} document`);
     }

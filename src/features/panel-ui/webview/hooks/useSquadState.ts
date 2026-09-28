@@ -21,6 +21,7 @@ import type {
   SquadModelConfigDocument,
   SquadPluginRef,
   SquadRosterMember,
+  SquadUpdatesResult,
   SquadUpstreamSource,
 } from "../../../squad/models";
 import type { SquadLogDocument } from "../types/squadState";
@@ -71,6 +72,9 @@ export interface UseSquadStateResult {
   /** Latest Squad Doctor report, when produced. */
   doctor: SquadDoctorReport | null;
 
+  /** Latest Squad CLI/project update-check result, when requested. */
+  updates: SquadUpdatesResult | null;
+
   /** Request the initial Squad state / refresh everything. */
   refresh: () => void;
 
@@ -80,8 +84,12 @@ export interface UseSquadStateResult {
   /** Persist an edited agent charter (host backs up before writing). */
   saveCharter: (agentId: string, content: string) => void;
 
-  /** Persist an edited governance document (decisions/routing). */
-  saveDoc: (kind: SquadDocKind, content: string) => void;
+  /**
+   * Persist an edited governance document (decisions/routing). Pass the
+   * `contentHash` of the doc the edit started from so the host can reject the
+   * save with a `write-conflict` error if the file changed on disk meanwhile.
+   */
+  saveDoc: (kind: SquadDocKind, content: string, baseContentHash?: string | null) => void;
 
   /**
    * Persist edited `.squad/model-config.json` JSON (FR-063). The host validates
@@ -91,6 +99,9 @@ export interface UseSquadStateResult {
 
   /** Run Squad Doctor diagnostics. */
   runDoctor: () => void;
+
+  /** Check for available Squad CLI/project updates without running upgrades. */
+  checkUpdates: () => void;
 
   /** Re-read Squad plugin marketplaces and installed plugins. */
   refreshPlugins: () => void;
@@ -129,8 +140,12 @@ export function useSquadState(): UseSquadStateResult {
     messenger.sendMessage({ command: "saveSquadCharter", agentId, content });
   };
 
-  const saveDoc = (kind: SquadDocKind, content: string) => {
-    messenger.sendMessage({ command: "saveSquadDoc", kind, content });
+  const saveDoc = (kind: SquadDocKind, content: string, baseContentHash?: string | null) => {
+    messenger.sendMessage(
+      baseContentHash === undefined
+        ? { command: "saveSquadDoc", kind, content }
+        : { command: "saveSquadDoc", kind, content, baseContentHash }
+    );
   };
 
   const saveModelConfig = (content: string) => {
@@ -139,6 +154,10 @@ export function useSquadState(): UseSquadStateResult {
 
   const runDoctor = () => {
     messenger.sendMessage({ command: "runSquadDoctor" });
+  };
+
+  const checkUpdates = () => {
+    messenger.sendMessage({ command: "checkSquadUpdates" });
   };
 
   const refreshPlugins = () => {
@@ -168,12 +187,14 @@ export function useSquadState(): UseSquadStateResult {
     marketplaces: squad.marketplaces,
     plugins: squad.plugins,
     doctor: squad.doctor,
+    updates: squad.updates,
     refresh,
     refreshDetection,
     saveCharter,
     saveDoc,
     saveModelConfig,
     runDoctor,
+    checkUpdates,
     refreshPlugins,
     setCliInvocation,
     installCli,

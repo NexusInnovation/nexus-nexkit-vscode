@@ -21,6 +21,7 @@ import {
   squadOk,
 } from "../models";
 import { parseSquadModelConfig } from "../validation/squadModelConfigValidator";
+import { computeSquadContentHash } from "./squadContentHash";
 import { SQUAD_MAX_READ_BYTES } from "./squadFileService";
 import { SquadArtifactBackup } from "./squadInitService";
 
@@ -103,6 +104,16 @@ export interface SquadModelConfigWriteOutcome extends SquadControlledWriteOutcom
   document: SquadModelConfigDocument;
 }
 
+/** Optional guards for a governance-doc save (SQD-027). */
+export interface SquadMarkdownDocSaveOptions {
+  /**
+   * {@link SquadMarkdownDoc.contentHash} the edit was based on. A string means
+   * "the file must still have these bytes", `null` means "the file must still
+   * be absent", and `undefined` skips the stale-write check.
+   */
+  baseContentHash?: string | null;
+}
+
 interface ResolvedWriteTarget {
   relativePath: string;
   uri: vscode.Uri;
@@ -112,6 +123,9 @@ interface ResolvedWriteTarget {
 export interface SquadWriteFileSystem {
   /** Return file metadata or throw a VS Code-style FileNotFound error. */
   stat(uri: vscode.Uri): Thenable<vscode.FileStat>;
+
+  /** Read the raw bytes of an existing file. */
+  readFile(uri: vscode.Uri): Thenable<Uint8Array>;
 
   /** Create a directory and any missing parents. */
   createDirectory(uri: vscode.Uri): Thenable<void>;
@@ -161,15 +175,30 @@ export class SquadFileWriteService {
     });
   }
 
-  /** Save `.squad/decisions.md` or `.squad/routing.md` with a prior BackupService call. */
+  /**
+   * Save `.squad/decisions.md` or `.squad/routing.md` with a prior BackupService call.
+   *
+   * Governance docs are shared with Squad agents that append to them (e.g.
+   * Scribe merging the decisions inbox), so before backing up and writing this
+   * refuses stale edits when `baseContentHash` no longer matches disk, refuses
+   * documents too large to round-trip through the panel, and preserves the
+   * existing file's CRLF line endings (SQD-027, FR-006/FR-024).
+   */
   public async saveMarkdownDoc(
     kind: SquadDocKind,
-    content: string
+    content: string,
+    options: SquadMarkdownDocSaveOptions = {}
   ): Promise<SquadResult<SquadMarkdownDocWriteOutcome>> {
+    const preparedResult = await this._prepareMarkdownDoc(kind, content, options);
+    if (!preparedResult.ok) {
+      return preparedResult;
+    }
+    const prepared = preparedResult.value;
+
     const writeResult = await this.saveControlledFile({
       kind: SquadWritableFileKind.MarkdownDoc,
       docKind: kind,
-      content,
+      content: prepared,
     });
     if (!writeResult.ok) {
       return writeResult;
@@ -181,7 +210,9 @@ export class SquadFileWriteService {
         kind,
         relativePath: writeResult.value.relativePath,
         exists: true,
-        content,
+        content: prepared,
+        contentHash: computeSquadContentHash(this._encoder.encode(prepared)),
+        truncated: false,
       },
     });
   }
@@ -274,6 +305,92 @@ export class SquadFileWriteService {
       created: !existed,
       backupPath,
       bytesWritten: bytes.byteLength,
+    });
+  }
+
+  private async _prepareMarkdownDoc(
+    kind: SquadDocKind,
+    content: string,
+    options: SquadMarkdownDocSaveOptions
+  ): Promise<SquadResult<string>> {
+    const relativePath = Object.prototype.hasOwnProperty.call(DOC_RELATIVE_PATH, kind)
+      ? DOC_RELATIVE_PATH[kind]
+      : undefined;
+    if (relativePath === undefined) {
+      return squadErr({
+        code: "file-write-failed",
+        message: "Unsupported Squad document type.",
+        remediation: "Only .squad/decisions.md and .squad/routing.md can be edited from the Squad panel.",
+        detail: String(kind),
+      });
+    }
+    if (typeof content !== "string") {
+      return squadErr({
+        code: "file-write-failed",
+        message: `The edited content for ${relativePath} is invalid, so nothing was saved.`,
+        remediation: "Refresh the Squad panel and re-apply your edit.",
+        detail: typeof content,
+      });
+    }
+
+    const uri = vscode.Uri.joinPath(this._workspaceRoot, ...relativePath.split("/"));
+    let existing: Uint8Array | undefined;
+    try {
+      existing = await this._readExisting(uri);
+    } catch (error) {
+      return this._writeError(relativePath, "Could not read the current Squad document before saving.", error);
+    }
+
+    if (existing !== undefined && existing.byteLength > SQUAD_MAX_READ_BYTES) {
+      return this._tooLargeError(relativePath, existing.byteLength);
+    }
+
+    if (options.baseContentHash !== undefined) {
+      const currentHash = existing === undefined ? null : computeSquadContentHash(existing);
+      if (currentHash !== options.baseContentHash) {
+        return squadErr({
+          code: "write-conflict",
+          message: `${relativePath} changed on disk since you opened it, so your edit was not saved.`,
+          remediation:
+            "Copy your changes, refresh the Squad panel to load the latest version, then re-apply your edit and save again.",
+          detail: currentHash === null ? "deleted-on-disk" : "modified-on-disk",
+        });
+      }
+    }
+
+    const prepared =
+      existing !== undefined && this._usesCrlf(existing) ? content.replace(/\r?\n/g, "\r\n") : content;
+    const preparedBytes = this._encoder.encode(prepared).byteLength;
+    if (preparedBytes > SQUAD_MAX_READ_BYTES) {
+      return this._tooLargeError(relativePath, preparedBytes);
+    }
+
+    return squadOk(prepared);
+  }
+
+  private async _readExisting(uri: vscode.Uri): Promise<Uint8Array | undefined> {
+    try {
+      return await this._fileSystem.readFile(uri);
+    } catch (error) {
+      if (this._isNotFound(error)) {
+        return undefined;
+      }
+      throw error;
+    }
+  }
+
+  private _usesCrlf(bytes: Uint8Array): boolean {
+    const newline = bytes.indexOf(0x0a);
+    return newline > 0 && bytes[newline - 1] === 0x0d;
+  }
+
+  private _tooLargeError(relativePath: string, sizeBytes: number): SquadResult<never> {
+    const limitKb = Math.floor(SQUAD_MAX_READ_BYTES / 1024);
+    return squadErr({
+      code: "file-write-failed",
+      message: `${relativePath} is larger than the ${limitKb} KB Squad panel editing limit, so it was not saved from the panel.`,
+      remediation: `Open ${relativePath} in the VS Code editor to edit it, or archive older entries to bring it under ${limitKb} KB.`,
+      detail: `${sizeBytes} bytes`,
     });
   }
 

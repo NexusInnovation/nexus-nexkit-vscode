@@ -221,16 +221,25 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
           }));
           break;
 
+        case "squadUpdatesUpdate":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              updates: message.updates,
+              detection: message.updates.detection,
+              isLoading: false,
+              error: null,
+            },
+          }));
+          break;
+
         case "squadCharterSaved":
           setState((prev) => {
-            const existingIndex = prev.squad.charters.findIndex(
-              (charter) => charter.agentId === message.charter.agentId
-            );
+            const existingIndex = prev.squad.charters.findIndex((charter) => charter.agentId === message.charter.agentId);
             const charters =
               existingIndex >= 0
-                ? prev.squad.charters.map((charter, index) =>
-                    index === existingIndex ? message.charter : charter
-                  )
+                ? prev.squad.charters.map((charter, index) => (index === existingIndex ? message.charter : charter))
                 : [...prev.squad.charters, message.charter];
             return {
               ...prev,
@@ -380,6 +389,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     const unsubscribeSquadDocs = messenger.onMessage("squadDocsUpdate", handleMessage);
     const unsubscribeSquadLogs = messenger.onMessage("squadLogsUpdate", handleMessage);
     const unsubscribeSquadDoctor = messenger.onMessage("squadDoctorUpdate", handleMessage);
+    const unsubscribeSquadUpdates = messenger.onMessage("squadUpdatesUpdate", handleMessage);
     const unsubscribeSquadCharterSaved = messenger.onMessage("squadCharterSaved", handleMessage);
     const unsubscribeSquadDocSaved = messenger.onMessage("squadDocSaved", handleMessage);
     const unsubscribeSquadModelConfig = messenger.onMessage("squadModelConfigUpdate", handleMessage);
@@ -413,6 +423,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       unsubscribeSquadDocs();
       unsubscribeSquadLogs();
       unsubscribeSquadDoctor();
+      unsubscribeSquadUpdates();
       unsubscribeSquadCharterSaved();
       unsubscribeSquadDocSaved();
       unsubscribeSquadModelConfig();

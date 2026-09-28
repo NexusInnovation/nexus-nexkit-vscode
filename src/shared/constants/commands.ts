@@ -35,6 +35,9 @@ export const Commands = {
 
   // Developer tools
   OPEN_CONVERT_TO_MARKDOWN: "nexus-nexkit-vscode.openConvertToMarkdown",
+
+  // Squad commands
+  EXPORT_SQUAD: "nexus-nexkit-vscode.squad.export",
 } as const;
 
 // Type-safe command names

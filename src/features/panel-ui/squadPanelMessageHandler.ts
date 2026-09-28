@@ -15,10 +15,7 @@ import {
   SquadUpstreamSource,
   isSquadErr,
 } from "../squad/models";
-import {
-  SquadFileService,
-  SquadLogKind as SquadFileLogKind,
-} from "../squad/services/squadFileService";
+import { SquadFileService, SquadLogKind as SquadFileLogKind } from "../squad/services/squadFileService";
 import { SquadControlledWriteOutcome } from "../squad/services/squadFileWriteService";
 import { SquadPluginService } from "../squad/services/squadPluginService";
 import { SquadLogDocument, SquadLogKind } from "./webview/types/squadState";
@@ -68,6 +65,9 @@ export class SquadPanelMessageHandler {
       case "refreshSquadDetection":
         await this.handleRefreshSquadDetection();
         return true;
+      case "checkSquadUpdates":
+        await this.handleCheckSquadUpdates();
+        return true;
       case "saveSquadCharter":
         await this.handleSaveSquadCharter(message);
         return true;
@@ -79,6 +79,9 @@ export class SquadPanelMessageHandler {
         return true;
       case "runSquadDoctor":
         await this.handleRunSquadDoctor();
+        return true;
+      case "exportSquad":
+        await this.handleExportSquad(message);
         return true;
       case "refreshSquadPlugins":
         await this.handleRefreshSquadPlugins();
@@ -160,10 +163,37 @@ export class SquadPanelMessageHandler {
     }
   }
 
+  /**
+   * Check for CLI/project updates without executing upgrades (SQD-030,
+   * FR-005). The returned contract is reusable by the follow-up confirmed
+   * upgrade flows; failures surface as `squadError`, never as empty success.
+   */
+  private async handleCheckSquadUpdates(): Promise<void> {
+    this._setLoading(true);
+    try {
+      const updates = await this._services.squadUpdates.checkUpdates(this._workspaceRoot());
+      if (isSquadErr(updates)) {
+        this._emitError(updates.error);
+        return;
+      }
+
+      const fileService = this._services.squadFile;
+      let upstreamError: SquadError | undefined;
+      const upstreams = fileService ? await this._readUpstreams(fileService, (error) => (upstreamError = error)) : [];
+      const pluginInventory = await this._readPluginInventory(this._services.squadPlugins);
+      this._emitStatus(updates.value.detection, upstreams, pluginInventory.marketplaces, pluginInventory.plugins);
+      this._postMessage({ command: "squadUpdatesUpdate", updates: updates.value });
+      const error = upstreamError ?? pluginInventory.error;
+      if (error) {
+        this._emitError(error);
+      }
+    } finally {
+      this._setLoading(false);
+    }
+  }
+
   /** Save an edited charter through the backup-first controlled write service. */
-  private async handleSaveSquadCharter(
-    message: Extract<WebviewMessage, { command: "saveSquadCharter" }>
-  ): Promise<void> {
+  private async handleSaveSquadCharter(message: Extract<WebviewMessage, { command: "saveSquadCharter" }>): Promise<void> {
     const writer = this._services.squadWrite;
     if (!writer) {
       this._emitNoWorkspaceWriteError();
@@ -208,7 +238,9 @@ export class SquadPanelMessageHandler {
 
     this._setLoading(true);
     try {
-      const result = await writer.saveMarkdownDoc(message.kind, message.content);
+      const result = await writer.saveMarkdownDoc(message.kind, message.content, {
+        baseContentHash: message.baseContentHash,
+      });
       if (isSquadErr(result)) {
         this._emitError(result.error);
         return;
@@ -285,6 +317,25 @@ export class SquadPanelMessageHandler {
     }
   }
 
+  /**
+   * Export Squad via the dedicated service (SQD-033, FR-061). The service owns
+   * the CLI invocation and any file picker; this host layer only preserves the
+   * central webview message contract and visible error/loading behavior.
+   */
+  private async handleExportSquad(message: Extract<WebviewMessage, { command: "exportSquad" }>): Promise<void> {
+    this._setLoading(true);
+    try {
+      const result = await this._services.squadExport.exportSquad(message.request ?? {});
+      if (isSquadErr(result)) {
+        this._emitError(result.error);
+        return;
+      }
+      this._postMessage({ command: "squadExportResult", export: result.value });
+    } finally {
+      this._setLoading(false);
+    }
+  }
+
   /** Refresh plugin marketplaces and installed plugins without re-running full detection. */
   private async handleRefreshSquadPlugins(): Promise<void> {
     this._setLoading(true);
@@ -342,16 +393,18 @@ export class SquadPanelMessageHandler {
     let firstError: SquadError | undefined;
 
     const marketplacesResult = await pluginService.readMarketplaces();
-    const marketplaces = this._unwrap(marketplacesResult, (error) => {
-      this._logger.warn("Squad: failed to read plugin marketplaces", error);
-      firstError ??= error;
-    }) ?? [];
+    const marketplaces =
+      this._unwrap(marketplacesResult, (error) => {
+        this._logger.warn("Squad: failed to read plugin marketplaces", error);
+        firstError ??= error;
+      }) ?? [];
 
     const pluginsResult = await pluginService.listInstalledPlugins({ cwd: this._workspaceRoot() });
-    const plugins = this._unwrap(pluginsResult, (error) => {
-      this._logger.warn("Squad: failed to list installed plugins", error);
-      firstError ??= error;
-    }) ?? [];
+    const plugins =
+      this._unwrap(pluginsResult, (error) => {
+        this._logger.warn("Squad: failed to list installed plugins", error);
+        firstError ??= error;
+      }) ?? [];
 
     return { marketplaces, plugins, error: firstError };
   }

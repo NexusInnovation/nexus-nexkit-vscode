@@ -7,6 +7,7 @@ import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
+import { createHash } from "crypto";
 import * as vscode from "vscode";
 import { SquadFileService, SquadLogKind, SQUAD_MAX_READ_BYTES } from "../../src/features/squad/services/squadFileService";
 import { isSquadOk, isSquadErr, SquadDocKind, SquadMarketplaceKind, SquadUpstreamKind } from "../../src/features/squad/models";
@@ -129,6 +130,34 @@ suite("Unit: SquadFileService", () => {
     assert.strictEqual(result.value.kind, SquadDocKind.Routing);
     assert.strictEqual(result.value.exists, false);
     assert.strictEqual(result.value.content, "");
+  });
+
+  test("readDecisions exposes a SHA-256 contentHash of the on-disk bytes (SQD-027)", async () => {
+    writeFile(".squad/decisions.md", "# Decisions\r\n- one\r\n");
+    const result = await service.readDecisions();
+    assert.ok(isSquadOk(result));
+    assert.strictEqual(
+      result.value.contentHash,
+      createHash("sha256").update("# Decisions\r\n- one\r\n", "utf8").digest("hex")
+    );
+    assert.strictEqual(result.value.truncated, false);
+  });
+
+  test("readRouting reports a null contentHash when absent", async () => {
+    const result = await service.readRouting();
+    assert.ok(isSquadOk(result));
+    assert.strictEqual(result.value.contentHash, null);
+    assert.strictEqual(result.value.truncated, false);
+  });
+
+  test("readDecisions flags truncation and hashes the full file for large docs", async () => {
+    const big = "d".repeat(SQUAD_MAX_READ_BYTES + 10);
+    writeFile(".squad/decisions.md", big);
+    const result = await service.readDecisions();
+    assert.ok(isSquadOk(result));
+    assert.strictEqual(result.value.truncated, true);
+    assert.strictEqual(result.value.content.length, SQUAD_MAX_READ_BYTES);
+    assert.strictEqual(result.value.contentHash, createHash("sha256").update(big, "utf8").digest("hex"));
   });
 
   // --- histories & logs (FR-025) ---

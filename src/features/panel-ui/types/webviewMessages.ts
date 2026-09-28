@@ -12,12 +12,15 @@ import type {
   SquadDoctorReport,
   SquadDocKind,
   SquadError,
+  SquadExportOutcome,
+  SquadExportRequest,
   SquadMarkdownDoc,
   SquadMarketplaceRef,
   SquadModelConfigDocument,
   SquadPluginRef,
   SquadPreset,
   SquadRosterMember,
+  SquadUpdatesResult,
   SquadUpstreamSource,
   UnreachableSquadSource,
 } from "../../squad/models";
@@ -69,11 +72,23 @@ export type WebviewMessage =
   // Squad management messages (SQD-007; host routing implemented in #223)
   | { command: "getSquadState" }
   | { command: "refreshSquadDetection" }
+  | { command: "checkSquadUpdates" }
   | { command: "saveSquadCharter"; agentId: string; content: string }
-  | { command: "saveSquadDoc"; kind: SquadDocKind; content: string }
   // Squad model configuration editing (SQD-028 / #243, FR-063): raw JSON, validated host-side
   | { command: "saveSquadModelConfig"; content: string }
+  | {
+      command: "saveSquadDoc";
+      kind: SquadDocKind;
+      content: string;
+      /**
+       * `contentHash` of the doc the edit started from (SQD-027). When present,
+       * the host rejects the save with `write-conflict` if the file changed on
+       * disk since; omit only to force-overwrite.
+       */
+      baseContentHash?: string | null;
+    }
   | { command: "runSquadDoctor" }
+  | { command: "exportSquad"; request?: SquadExportRequest }
   | { command: "refreshSquadPlugins" }
   // Squad preset selection screen (SQD-019 / #234)
   | { command: "listSquadPresets" }
@@ -177,6 +192,14 @@ export type ExtensionMessage =
   | {
       command: "squadDoctorUpdate";
       doctor: SquadDoctorReport;
+    }
+  | {
+      command: "squadUpdatesUpdate";
+      updates: SquadUpdatesResult;
+    }
+  | {
+      command: "squadExportResult";
+      export: SquadExportOutcome;
     }
   | {
       command: "squadCharterSaved";
