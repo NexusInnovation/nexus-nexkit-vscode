@@ -33,6 +33,16 @@ const LEGACY_WORKSPACE_KEYS = [
 ];
 
 /**
+ * Identifies the sanctioned call site invoking {@link RecommendedSettingsConfigDeployer.deployVscodeSettings}.
+ * settings.json writes are only permitted from these two entry points:
+ * - "initialization": first-time workspace setup (WorkspaceInitializationService).
+ * - "migration": workspace-to-user migration.
+ */
+export type SettingsDeploymentCaller = "initialization" | "migration";
+
+const SANCTIONED_CALLERS: readonly SettingsDeploymentCaller[] = ["initialization", "migration"];
+
+/**
  * Service for deploying recommended VS Code chat settings to user-level (global) scope.
  * Uses workspace-relative paths for the active workspace.
  */
@@ -47,12 +57,22 @@ export class RecommendedSettingsConfigDeployer {
   /**
    * Deploy chat location settings to user-level VS Code configuration.
    * NON-DESTRUCTIVE: Merges NexKit paths with existing user entries — never overwrites.
+   * All writes target ConfigurationTarget.Global (user profile) — never the workspace.
    * Also cleans up legacy workspace-level settings previously created by NexKit.
    * Always adds workspace-relative .nexkit paths for the active workspace.
+   *
+   * This method must only be invoked from a sanctioned entry point (see {@link SettingsDeploymentCaller}).
+   * It is intentionally NOT called during startup verification.
+   *
    * @param workspaceRoot Root directory of the workspace (used for legacy cleanup and workspace paths)
+   * @param caller Sanctioned call site invoking the deployment, for auditability and guarding.
    */
-  async deployVscodeSettings(workspaceRoot: string): Promise<void> {
-    this._logging.info("Deploying chat settings to user-level configuration...");
+  async deployVscodeSettings(workspaceRoot: string, caller: SettingsDeploymentCaller): Promise<void> {
+    if (!SANCTIONED_CALLERS.includes(caller)) {
+      throw new Error(`deployVscodeSettings called from an unsanctioned caller: "${caller}". Settings may only be written during initialization or migration.`);
+    }
+
+    this._logging.info(`Deploying chat settings to user-level configuration (caller: ${caller})...`);
 
     await this._deployUserLevelChatSettings();
     await this._cleanupWorkspaceSettings(workspaceRoot);
