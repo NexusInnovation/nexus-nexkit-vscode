@@ -5,6 +5,9 @@ import { ServiceContainer } from "../../src/core/serviceContainer";
 import { NexkitPanelMessageHandler } from "../../src/features/panel-ui/nexkitPanelMessageHandler";
 import { ExtensionMessage } from "../../src/features/panel-ui/types/webviewMessages";
 import {
+  SquadBacklogDetection,
+  SquadBacklogDetectionSource,
+  SquadBacklogProviderId,
   SquadDetectionResult,
   SquadDocKind,
   SquadInstallState,
@@ -41,8 +44,26 @@ function detectionResult(): SquadDetectionResult {
   };
 }
 
+function backlogDetectionResult(): SquadBacklogDetection {
+  return {
+    status: "detected",
+    detectedAt: 0,
+    backlog: {
+      providerId: SquadBacklogProviderId.GitHub,
+      source: SquadBacklogDetectionSource.GitRemote,
+      displayName: "NexusInnovation/nexus-nexkit-vscode",
+      url: "https://github.com/NexusInnovation/nexus-nexkit-vscode",
+      remoteName: "origin",
+      readOnly: false,
+      itemCounts: { open: 10, squad: 4, untriaged: 1 },
+      github: { host: "github.com", owner: "NexusInnovation", repo: "nexus-nexkit-vscode" },
+    },
+  };
+}
+
 interface SquadStubs {
   detect: sinon.SinonStub;
+  detectBacklog: sinon.SinonStub;
   readRoster: sinon.SinonStub;
   readCharter: sinon.SinonStub;
   readDecisions: sinon.SinonStub;
@@ -69,6 +90,7 @@ interface SquadStubs {
 function createStubs(): SquadStubs {
   return {
     detect: sinon.stub().resolves(squadOk(detectionResult())),
+    detectBacklog: sinon.stub().resolves(squadOk(backlogDetectionResult())),
     readRoster: sinon.stub().resolves(squadOk([])),
     readCharter: sinon.stub(),
     readDecisions: sinon
@@ -233,6 +255,9 @@ function createServices(stubs: SquadStubs, hasWorkspace = true): ServiceContaine
     squadDetection: {
       detect: stubs.detect,
     },
+    squadBacklog: {
+      detect: stubs.detectBacklog,
+    },
     squadCli: {
       runDoctor: stubs.runDoctor,
     },
@@ -308,6 +333,10 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
     assert.strictEqual(status.detection.project.installState, SquadInstallState.Installed);
     assert.deepStrictEqual(status.marketplaces, []);
     assert.deepStrictEqual(status.plugins, []);
+
+    const backlog = find("squadBacklogUpdate");
+    assert.ok(backlog, "expected squadBacklogUpdate");
+    assert.strictEqual(backlog.backlog.status, "detected");
 
     const roster = find("squadRosterUpdate");
     assert.ok(roster);
@@ -479,13 +508,13 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
     assert.strictEqual(recommendations.levels.length, 3);
   });
 
-  test("getSquadState without a workspace folder emits only status", async () => {
+  test("getSquadState without a workspace folder emits status and backlog state without file reads", async () => {
     const stubs = createStubs();
     const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs, false));
 
     await handler.handleMessage({ command: "getSquadState" });
 
-    assert.deepStrictEqual(commands(), ["squadStatusUpdate"]);
+    assert.deepStrictEqual(commands(), ["squadStatusUpdate", "squadBacklogLoading", "squadBacklogUpdate", "squadBacklogLoading"]);
     assert.ok(stubs.readRoster.notCalled);
   });
 
@@ -495,7 +524,14 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
 
     await handler.handleMessage({ command: "refreshSquadDetection" });
 
-    assert.deepStrictEqual(commands(), ["squadLoading", "squadStatusUpdate", "squadLoading"]);
+    assert.deepStrictEqual(commands(), [
+      "squadLoading",
+      "squadStatusUpdate",
+      "squadBacklogLoading",
+      "squadBacklogUpdate",
+      "squadBacklogLoading",
+      "squadLoading",
+    ]);
     assert.strictEqual((find("squadLoading") as { isLoading: boolean }).isLoading, true);
     assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
   });
@@ -537,8 +573,44 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
 
     await handler.handleMessage({ command: "refreshSquadDetection" });
 
-    assert.deepStrictEqual(commands(), ["squadLoading", "squadStatusUpdate", "squadError", "squadLoading"]);
+    assert.deepStrictEqual(commands(), [
+      "squadLoading",
+      "squadStatusUpdate",
+      "squadBacklogLoading",
+      "squadBacklogUpdate",
+      "squadBacklogLoading",
+      "squadError",
+      "squadLoading",
+    ]);
     assert.strictEqual(find("squadError")?.error.code, "parse-failed");
+    assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
+  });
+
+  test("refreshSquadBacklog emits detected backlog status and clears backlog loading", async () => {
+    const stubs = createStubs();
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "refreshSquadBacklog" });
+
+    assert.deepStrictEqual(commands(), ["squadBacklogLoading", "squadBacklogUpdate", "squadBacklogLoading"]);
+    const update = find("squadBacklogUpdate");
+    assert.strictEqual(update?.backlog.status, "detected");
+    assert.ok(stubs.detectBacklog.calledOnce);
+    assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
+  });
+
+  test("refreshSquadBacklog emits actionable backlog errors without a success update", async () => {
+    const stubs = createStubs();
+    stubs.detectBacklog.resolves(
+      squadErr({ code: "backlog-auth-required", message: "gh is not authenticated", remediation: "Run gh auth login." })
+    );
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "refreshSquadBacklog" });
+
+    assert.deepStrictEqual(commands(), ["squadBacklogLoading", "squadBacklogError", "squadBacklogLoading"]);
+    assert.strictEqual(find("squadBacklogError")?.error.code, "backlog-auth-required");
+    assert.strictEqual(find("squadBacklogUpdate"), undefined);
     assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
   });
 

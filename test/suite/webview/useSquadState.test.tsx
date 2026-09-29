@@ -41,6 +41,7 @@ function ActionProbe() {
       <button data-testid="apply-import" onClick={() => squad.applyImport("preview-1")} />
       <button data-testid="discard-import" onClick={() => squad.discardImportPreview()} />
       <button data-testid="refresh-plugins" onClick={() => squad.refreshPlugins()} />
+      <button data-testid="refresh-backlog" onClick={() => squad.refreshBacklog()} />
       <button data-testid="plugin-enable" onClick={() => squad.runPluginAction(SquadPluginAction.Enable, "team")} />
       <button data-testid="plugin-add-nexus" onClick={() => squad.runPluginAction(SquadPluginAction.AddNexusMarketplace)} />
       <button data-testid="install-cli" onClick={() => squad.installCli()} />
@@ -178,6 +179,12 @@ suite("useSquadState — actions", () => {
     const view = renderWithAppState(<ActionProbe />);
     click(view, "refresh-plugins");
     assert.deepStrictEqual(lastPostedMessage(), { command: "refreshSquadPlugins" });
+  });
+
+  test("refreshBacklog posts refreshSquadBacklog", () => {
+    const view = renderWithAppState(<ActionProbe />);
+    click(view, "refresh-backlog");
+    assert.deepStrictEqual(lastPostedMessage(), { command: "refreshSquadBacklog" });
   });
 
   test("runPluginAction posts runSquadPluginAction with action and target", () => {

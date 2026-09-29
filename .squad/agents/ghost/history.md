@@ -92,3 +92,9 @@ Implemented 5 major SQD webview tickets (see `.squad/decisions.md` for full deta
 - Worktree UI needs its own top-level `AppState.squadWorktrees` slice instead of overloading the broader Squad detection slice; this keeps create/preview/cleanup pending state independent from Doctor/upstream/plugin operations.
 - Partial dependency setup failures are not errors in the reducer: `squadWorktreeCreated` stores the failed dependency outcome and the section renders an explicit retry action that calls a narrow host `retryDependencies(worktreeId)` service method.
 - Cleanup remains host-confirmed even when the webview shows a confirmation panel; the webview sends only `worktreeId` plus booleans, and the host re-lists candidates before showing the modal confirmation.
+
+## 2026-09-28 — SQD-044 (#259): Backlog status UI
+
+- Backlog provider state belongs in the Squad `AppState` slice as its own sub-state (`backlog`) rather than overloading the existing Squad detection snapshot; GitHub/ADO failures must render in the backlog card instead of becoming a success-shaped empty state.
+- The SQD-042/043 host contract is easiest to consume as dedicated `squadBacklogLoading` / `squadBacklogUpdate` / `squadBacklogError` messages, keeping all webview message handling centralized in `AppStateContext.tsx`.
+- When adding host messages to `SquadPanelMessageHandler`, update the older handler tests' service mocks at the same time; otherwise partial `ServiceContainer` fixtures will miss newly required services even though production DI is wired.

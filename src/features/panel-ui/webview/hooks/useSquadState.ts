@@ -35,6 +35,7 @@ import type {
   SquadPluginActionResultState,
   SquadUpstreamOperationState,
   SquadWriteOutcome,
+  SquadBacklogState,
 } from "../types/squadState";
 
 /**
@@ -88,6 +89,9 @@ export interface UseSquadStateResult {
 
   /** Result of the most recent plugin action, or `null`. */
   lastPluginAction: SquadPluginActionResultState | null;
+
+  /** GitHub Issues / Azure DevOps backlog status (FR-050/FR-051). */
+  backlog: SquadBacklogState;
 
   /** Latest Squad Doctor report, when produced. */
   doctor: SquadDoctorReport | null;
@@ -143,6 +147,9 @@ export interface UseSquadStateResult {
 
   /** Re-read Squad plugin marketplaces and installed plugins. */
   refreshPlugins: () => void;
+
+  /** Re-run backlog detection without refreshing the whole Squad panel. */
+  refreshBacklog: () => void;
 
   /**
    * Run a plugin marketplace / lifecycle action (FR-040/FR-041/FR-044). The
@@ -248,6 +255,10 @@ export function useSquadState(): UseSquadStateResult {
     messenger.sendMessage({ command: "refreshSquadPlugins" });
   };
 
+  const refreshBacklog = () => {
+    messenger.sendMessage({ command: "refreshSquadBacklog" });
+  };
+
   const runPluginAction = (action: SquadPluginAction, target?: string) => {
     messenger.sendMessage({ command: "runSquadPluginAction", action, target });
   };
@@ -301,6 +312,7 @@ export function useSquadState(): UseSquadStateResult {
     marketplaces: squad.marketplaces,
     plugins: squad.plugins,
     lastPluginAction: squad.lastPluginAction,
+    backlog: squad.backlog,
     doctor: squad.doctor,
     updates: squad.updates,
     cliUpgrade: squad.cliUpgrade,
@@ -317,6 +329,7 @@ export function useSquadState(): UseSquadStateResult {
     applyImport,
     discardImportPreview,
     refreshPlugins,
+    refreshBacklog,
     runPluginAction,
     setCliInvocation,
     installCli,

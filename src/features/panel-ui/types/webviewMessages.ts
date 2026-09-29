@@ -6,6 +6,7 @@ import { DevOpsConnection } from "../../apm-devops/models/devOpsConnection";
 import { WorkflowInfo } from "../../github-workflow-runner/githubWorkflowRunnerService";
 import type {
   RejectedSquadPreset,
+  SquadBacklogDetection,
   SquadCharter,
   SquadCliSource,
   SquadCliUpgradeSummary,
@@ -104,6 +105,7 @@ export type WebviewMessage =
   | { command: "applySquadImport"; request: SquadImportApplyRequest }
   | { command: "discardSquadImportPreview" }
   | { command: "refreshSquadPlugins" }
+  | { command: "refreshSquadBacklog" }
   // Squad plugin marketplace + lifecycle actions (SQD-039 / #254). `target` is optional for
   // actions whose operand the host can prompt for (marketplace source, plugin directory).
   | { command: "runSquadPluginAction"; action: SquadPluginAction; target?: string }
@@ -205,6 +207,18 @@ export type ExtensionMessage =
       command: "squadPluginsUpdate";
       marketplaces: SquadMarketplaceRef[];
       plugins: SquadPluginRef[];
+    }
+  | {
+      command: "squadBacklogUpdate";
+      backlog: SquadBacklogDetection;
+    }
+  | {
+      command: "squadBacklogLoading";
+      isLoading: boolean;
+    }
+  | {
+      command: "squadBacklogError";
+      error: SquadError;
     }
   // Squad plugin action outcome (SQD-039 / #254). `ok: false` always carries an actionable error.
   | {
