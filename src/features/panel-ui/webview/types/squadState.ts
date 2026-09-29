@@ -8,11 +8,12 @@
  * FR-060) while reusing the SQD-001 domain types.
  *
  * All types are serialisable and imported type-only from `../../../squad/models`
- * so the Preact webview bundle never pulls in extension-host code. Errors are
- * surfaced through {@link SquadState.error} as a structured, actionable
- * {@link SquadError} and never collapse into a success state.
+ * where possible so the Preact webview bundle never pulls in extension-host
+ * code. Errors are surfaced through {@link SquadState.error} as a structured,
+ * actionable {@link SquadError} and never collapse into a success state.
  */
 
+import { initialSquadWatchStatus } from "../../../squad/models";
 import type {
   RejectedSquadPreset,
   SquadCharter,
@@ -30,6 +31,7 @@ import type {
   SquadUpdatesResult,
   SquadUpstreamSource,
   SquadUpstreamOperation,
+  SquadWatchSnapshot,
   UnreachableSquadSource,
 } from "../../../squad/models";
 
@@ -231,6 +233,9 @@ export interface SquadState {
   /** Latest Squad CLI/project update-check result (FR-005), when requested. */
   updates: SquadUpdatesResult | null;
 
+  /** Latest `squad watch` status + bounded log snapshot (FR-054). */
+  watch: SquadWatchSnapshot;
+
   /** Preset selection screen sub-state (SQD-019, FR-010/FR-014/FR-015). */
   presetPicker: SquadPresetPickerState;
 
@@ -275,6 +280,10 @@ export const initialSquadState: SquadState = {
   lastPluginAction: null,
   doctor: null,
   updates: null,
+  watch: {
+    status: initialSquadWatchStatus,
+    logs: [],
+  },
   presetPicker: initialSquadPresetPickerState,
   upstreamOperation: null,
 };

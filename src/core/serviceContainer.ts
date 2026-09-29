@@ -46,6 +46,7 @@ import { SquadExportService } from "../features/squad/services/squadExportServic
 import { SquadFileWriteService } from "../features/squad/services/squadFileWriteService";
 import { SquadPluginService } from "../features/squad/services/squadPluginService";
 import { SquadPluginActionService } from "../features/squad/services/squadPluginActionService";
+import { SquadWatchService } from "../features/squad/services/squadWatchService";
 
 /**
  * Service container for dependency injection
@@ -146,6 +147,13 @@ export interface ServiceContainer {
    * prompts for a destination only when invoked.
    */
   squadExport: SquadExportService;
+
+  /**
+   * Lifecycle owner for the long-running `squad watch` process (SQD-045,
+   * FR-054). It starts only on explicit command/message request and is
+   * disposed with the extension so child processes are not orphaned.
+   */
+  squadWatch: SquadWatchService;
 }
 
 /**
@@ -207,6 +215,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   // SquadCliService (SQD-005, #220) — no work runs until a command is invoked.
   const squadCli = new SquadCliService();
   const squadExport = new SquadExportService({ cli: squadCli });
+  const squadWatch = new SquadWatchService({ cli: squadCli, logger: logging });
   // Detection delegates CLI probing to SquadCliService so a globally-installed
   // CLI is found across platforms (npm `squad.cmd`/`squad.ps1` shims on Windows).
   const squadDetection = new SquadDetectionService({ cliService: squadCli });
@@ -264,6 +273,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   context.subscriptions.push(templateMetadataScanner);
   context.subscriptions.push(nexkitFileWatcher);
   context.subscriptions.push(convertToMarkdown);
+  context.subscriptions.push(squadWatch);
 
   logging.info("All services initialized successfully");
 
@@ -303,6 +313,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     squadDetection,
     squadCli,
     squadExport,
+    squadWatch,
     squadFile,
     squadUpdates,
     squadWrite,

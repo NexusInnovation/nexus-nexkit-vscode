@@ -145,6 +145,16 @@
         "command": "nexus-nexkit-vscode.squad.export",
         "title": "Nexkit: Export Squad",
         "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.squad.startWatch",
+        "title": "Nexkit: Start Squad Watch",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.squad.stopWatch",
+        "title": "Nexkit: Stop Squad Watch",
+        "category": "Nexkit"
       }
     ],
     "menus": {
@@ -495,6 +505,14 @@
           "default": true,
           "scope": "application",
           "description": "Enable anonymous Squad usage telemetry to help improve Nexkit's Squad integration. Respects VS Code's global telemetry setting and nexkit.telemetry.enabled. No file names, paths, workspace names, user content, or secrets are collected."
+        },
+        "nexkit.squad.watch.defaultIntervalMinutes": {
+          "type": "number",
+          "default": 10,
+          "minimum": 1,
+          "maximum": 1440,
+          "scope": "application",
+          "markdownDescription": "Default polling interval, in minutes, used when starting `squad watch` from Nexkit. The value is passed to the Squad CLI as `--interval`."
         }
       }
     }

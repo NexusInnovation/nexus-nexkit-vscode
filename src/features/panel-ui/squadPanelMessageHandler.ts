@@ -60,6 +60,9 @@ export class SquadPanelMessageHandler {
     private readonly _upstreamRecommender: SquadUpstreamRecommendationService = new SquadUpstreamRecommendationService()
   ) {
     this._logger = _services.logging;
+    this._services.squadWatch?.onDidChangeSnapshot((snapshot) => {
+      this._postMessage({ command: "squadWatchUpdate", snapshot });
+    });
   }
 
   /**
@@ -94,6 +97,15 @@ export class SquadPanelMessageHandler {
         return true;
       case "refreshSquadPlugins":
         await this.handleRefreshSquadPlugins();
+        return true;
+      case "getSquadWatchStatus":
+        this.handleGetSquadWatchStatus();
+        return true;
+      case "startSquadWatch":
+        this.handleStartSquadWatch(message);
+        return true;
+      case "stopSquadWatch":
+        this.handleStopSquadWatch(message);
         return true;
       default:
         return false;
@@ -361,6 +373,36 @@ export class SquadPanelMessageHandler {
     } finally {
       this._setLoading(false);
     }
+  }
+
+  /** Emit the latest `squad watch` status/log snapshot (SQD-045, FR-054). */
+  private handleGetSquadWatchStatus(): void {
+    this._postMessage({ command: "squadWatchUpdate", snapshot: this._services.squadWatch.getSnapshot() });
+  }
+
+  /** Start `squad watch` and emit either the initial snapshot or an actionable error. */
+  private handleStartSquadWatch(message: Extract<WebviewMessage, { command: "startSquadWatch" }>): void {
+    const result = this._services.squadWatch.start({
+      cwd: this._workspaceRoot(),
+      intervalMinutes: message.intervalMinutes,
+    });
+    if (isSquadErr(result)) {
+      this._emitError(result.error);
+      this._postMessage({ command: "squadWatchUpdate", snapshot: this._services.squadWatch.getSnapshot() });
+      return;
+    }
+    this._postMessage({ command: "squadWatchUpdate", snapshot: result.value });
+  }
+
+  /** Stop `squad watch` and emit either the transition snapshot or an actionable error. */
+  private handleStopSquadWatch(message: Extract<WebviewMessage, { command: "stopSquadWatch" }>): void {
+    const result = this._services.squadWatch.stop({ force: message.force });
+    if (isSquadErr(result)) {
+      this._emitError(result.error);
+      this._postMessage({ command: "squadWatchUpdate", snapshot: this._services.squadWatch.getSnapshot() });
+      return;
+    }
+    this._postMessage({ command: "squadWatchUpdate", snapshot: result.value });
   }
 
   // --- helpers ----------------------------------------------------------

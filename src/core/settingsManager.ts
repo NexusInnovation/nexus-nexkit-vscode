@@ -43,6 +43,7 @@ export class SettingsManager {
   private static readonly SQUAD_CLI_SOURCE = "squad.cliSource";
   private static readonly SQUAD_CLI_PATH = "squad.cliPath";
   private static readonly SQUAD_TELEMETRY_ENABLED = "squad.telemetry.enabled";
+  private static readonly SQUAD_WATCH_DEFAULT_INTERVAL_MINUTES = "squad.watch.defaultIntervalMinutes";
 
   // Template auto-refresh settings
   private static readonly TEMPLATES_AUTO_REFRESH_INTERVAL = "templates.autoRefreshIntervalMinutes";
@@ -230,6 +231,22 @@ export class SettingsManager {
     await vscode.workspace
       .getConfiguration(this.NEXKIT_SECTION)
       .update(this.SQUAD_TELEMETRY_ENABLED, value, vscode.ConfigurationTarget.Global);
+  }
+
+  /**
+   * Default polling interval (minutes) used when starting `squad watch`
+   * without an explicit interval (FR-054).
+   */
+  static getSquadWatchDefaultIntervalMinutes(): number {
+    return vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .get<number>(this.SQUAD_WATCH_DEFAULT_INTERVAL_MINUTES, 10);
+  }
+
+  static async setSquadWatchDefaultIntervalMinutes(value: number): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .update(this.SQUAD_WATCH_DEFAULT_INTERVAL_MINUTES, value, vscode.ConfigurationTarget.Global);
   }
 
   // Extension Updates

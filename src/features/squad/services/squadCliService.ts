@@ -29,6 +29,12 @@ import { LoggingService } from "../../../shared/services/loggingService";
 import { SquadCliSource, squadErr, squadOk, type SquadDoctorReport, type SquadResult } from "../models";
 import { ChildProcessSquadRunner, type SquadProcessRunner } from "./squadProcessRunner";
 import { parseSquadDoctorReport } from "./squadDoctorParser";
+import {
+  ChildProcessSquadLongRunningLauncher,
+  type SquadLongRunningHandle,
+  type SquadLongRunningLauncher,
+  type SquadLongRunningListeners,
+} from "./squadLongRunningProcess";
 
 /** npm package that provides the `squad` executable (FR-004). */
 export const SQUAD_CLI_NPX_PACKAGE = "@bradygaster/squad-cli";
@@ -61,6 +67,8 @@ export const SquadCliCommand = {
   Plugin: "plugin",
   Export: "export",
   Import: "import",
+  /** Long-running Ralph monitor (SQD-045); only startable via {@link SquadCliService.spawnLongRunning}. */
+  Watch: "watch",
 } as const;
 
 export type SquadCliCommand = (typeof SquadCliCommand)[keyof typeof SquadCliCommand];
@@ -78,6 +86,20 @@ interface SquadCliCommandSpec {
 
   /** Default timeout in milliseconds for this command. */
   readonly defaultTimeoutMs: number;
+
+  /**
+   * When set, every positional operand must match this pattern (e.g. the
+   * numeric value following `--interval`).
+   */
+  readonly operandPattern?: RegExp;
+
+  /**
+   * Long-running commands (e.g. `watch`) never complete on their own. They are
+   * rejected by {@link SquadCliService.execute} and may only be started with
+   * {@link SquadCliService.spawnLongRunning}, which has no timeout and hands
+   * lifecycle ownership to the caller.
+   */
+  readonly longRunning?: boolean;
 }
 
 /**
@@ -139,6 +161,14 @@ export const SQUAD_CLI_COMMAND_SPECS: Readonly<Record<SquadCliCommand, SquadCliC
     allowsOperands: true,
     defaultTimeoutMs: SQUAD_CLI_TIMEOUTS_MS.standard,
   },
+  [SquadCliCommand.Watch]: {
+    argv: ["watch"],
+    allowedFlags: ["--interval"],
+    allowsOperands: true,
+    operandPattern: /^\d{1,4}$/,
+    defaultTimeoutMs: 0,
+    longRunning: true,
+  },
 };
 
 /** Options for a single {@link SquadCliService.execute} call. */
@@ -164,6 +194,18 @@ export interface SquadCliExecuteOptions {
   source?: SquadCliSource;
 }
 
+/** Options for a {@link SquadCliService.spawnLongRunning} call. */
+export interface SquadCliLongRunningOptions {
+  /** Extra arguments appended after the command's fixed argv (validated). */
+  args?: string[];
+
+  /** Working directory for the process (typically the workspace root). */
+  cwd?: vscode.Uri;
+
+  /** Override for the CLI source to resolve for this call (FR-004). */
+  source?: SquadCliSource;
+}
+
 /** Successful execution details returned on a zero exit code. */
 export interface SquadCliExecution {
   /** The command that was executed. */
@@ -186,6 +228,9 @@ export interface SquadCliExecution {
 export interface SquadCliServiceOptions {
   /** Process runner seam. Defaults to {@link ChildProcessSquadRunner}. */
   runner?: SquadProcessRunner;
+
+  /** Long-running process seam. Defaults to {@link ChildProcessSquadLongRunningLauncher}. */
+  longRunningLauncher?: SquadLongRunningLauncher;
 
   /** Logger. Defaults to the shared {@link LoggingService} singleton. */
   logger?: LoggingService;
@@ -224,6 +269,7 @@ interface ResolvedInvocation {
  */
 export class SquadCliService {
   private readonly _runner: SquadProcessRunner;
+  private readonly _longRunningLauncher: SquadLongRunningLauncher;
   private readonly _logger: LoggingService;
   private readonly _cliSourceOverride?: SquadCliSource;
   private readonly _customCliPathOverride?: string;
@@ -231,6 +277,7 @@ export class SquadCliService {
 
   constructor(options: SquadCliServiceOptions = {}) {
     this._runner = options.runner ?? new ChildProcessSquadRunner();
+    this._longRunningLauncher = options.longRunningLauncher ?? new ChildProcessSquadLongRunningLauncher();
     this._logger = options.logger ?? LoggingService.getInstance();
     this._cliSourceOverride = options.cliSource;
     this._customCliPathOverride = options.customCliPath;
@@ -252,6 +299,14 @@ export class SquadCliService {
         code: "cli-execution-failed",
         message: `Unknown Squad command: ${String(command)}.`,
         remediation: "Use one of the supported Squad commands.",
+      });
+    }
+
+    if (spec.longRunning) {
+      return squadErr({
+        code: "cli-execution-failed",
+        message: `The Squad "${command}" command is long-running and cannot be run to completion.`,
+        remediation: "Start it through its dedicated lifecycle service (e.g. Squad watch start/stop).",
       });
     }
 
@@ -336,6 +391,59 @@ export class SquadCliService {
       stderr: result.stderr,
       durationMs,
     });
+  }
+
+  /**
+   * Start an allowlisted **long-running** Squad command (SQD-045, `squad
+   * watch`). Arguments are validated against the same allowlist as
+   * {@link execute} and the CLI is resolved from the configured source, but no
+   * timeout applies: the caller owns the returned handle and must terminate it
+   * (including on extension deactivation). Process-level failures (missing
+   * executable, crash, exit) are reported asynchronously via `listeners`.
+   */
+  public spawnLongRunning(
+    command: SquadCliCommand,
+    options: SquadCliLongRunningOptions,
+    listeners: SquadLongRunningListeners
+  ): SquadResult<SquadLongRunningHandle> {
+    const spec = SQUAD_CLI_COMMAND_SPECS[command];
+    if (!spec || !spec.longRunning) {
+      return squadErr({
+        code: "cli-execution-failed",
+        message: `The Squad "${String(command)}" command cannot be started as a long-running process.`,
+        remediation: "Run it with a bounded execution instead.",
+      });
+    }
+
+    const extraArgs = options.args ?? [];
+    const argValidation = this._validateArgs(spec, extraArgs);
+    if (!argValidation.ok) {
+      return argValidation;
+    }
+
+    const invocation = this._resolveInvocation(options.source);
+    if (!invocation.ok) {
+      return invocation;
+    }
+
+    const { command: exe, prefixArgs, source } = invocation.value;
+    this._logger.debug(`Squad CLI: starting long-running "${command}" (source=${source})`);
+
+    try {
+      const handle = this._longRunningLauncher.launch(
+        { command: exe, args: [...prefixArgs, ...spec.argv, ...extraArgs], cwd: options.cwd?.fsPath },
+        listeners
+      );
+      return squadOk(handle);
+    } catch (error) {
+      this._logger.error(`Squad CLI: failed to start long-running "${command}"`, error);
+      return squadErr({
+        code: "cli-execution-failed",
+        message: `The Squad "${command}" command failed to start.`,
+        remediation: "Check the Nexkit output channel for details and try again.",
+        cause: error,
+      });
+    }
   }
 
   /**
@@ -443,7 +551,9 @@ export class SquadCliService {
 
       const isFlag = arg.startsWith("-");
       if (isFlag) {
-        const flagName = arg.split("=", 1)[0];
+        const equalsIndex = arg.indexOf("=");
+        const flagName = equalsIndex >= 0 ? arg.slice(0, equalsIndex) : arg;
+        const inlineValue = equalsIndex >= 0 ? arg.slice(equalsIndex + 1) : undefined;
         if (!spec.allowedFlags.includes(flagName)) {
           return squadErr({
             code: "cli-execution-failed",
@@ -451,11 +561,24 @@ export class SquadCliService {
             remediation: "Only allowlisted flags may be passed to the Squad CLI.",
           });
         }
+        if (spec.operandPattern && inlineValue !== undefined && !spec.operandPattern.test(inlineValue)) {
+          return squadErr({
+            code: "cli-execution-failed",
+            message: "A Squad command argument has an invalid value.",
+            remediation: "Use a value accepted by this Squad command and retry.",
+          });
+        }
       } else if (!spec.allowsOperands) {
         return squadErr({
           code: "cli-execution-failed",
           message: "This Squad command does not accept additional arguments.",
           remediation: "Remove the extra arguments and retry.",
+        });
+      } else if (spec.operandPattern && !spec.operandPattern.test(arg)) {
+        return squadErr({
+          code: "cli-execution-failed",
+          message: "A Squad command argument has an invalid value.",
+          remediation: "Use a value accepted by this Squad command and retry.",
         });
       }
     }

@@ -257,6 +257,25 @@ suite("Unit: SettingsManager", () => {
       }
     }
   });
+
+  test("Should get default Squad watch interval", () => {
+    const interval = SettingsManager.getSquadWatchDefaultIntervalMinutes();
+    assert.strictEqual(interval, 10);
+  });
+
+  test("Should set Squad watch interval", async function () {
+    try {
+      await SettingsManager.setSquadWatchDefaultIntervalMinutes(15);
+      const interval = SettingsManager.getSquadWatchDefaultIntervalMinutes();
+      assert.strictEqual(interval, 15);
+    } catch (error: any) {
+      if (error.message && error.message.includes("not a registered configuration")) {
+        this.skip();
+      } else {
+        throw error;
+      }
+    }
+  });
 });
 
 suite("Unit: SettingsManager — isWorkspaceOverrideActive", () => {
