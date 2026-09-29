@@ -36,8 +36,11 @@ import {
   SquadMarketplaceRef,
   SquadModelConfigDocument,
   SQUAD_MODEL_CONFIG_RELATIVE_PATH,
+  SquadCeremoniesDocument,
+  SQUAD_CEREMONIES_RELATIVE_PATH,
 } from "../models";
 import { parseSquadModelConfig } from "../validation/squadModelConfigValidator";
+import { parseSquadCeremonies } from "./squadCeremonyParser";
 import { computeSquadContentHash } from "./squadContentHash";
 
 /** Root folder that holds all Squad configuration. */
@@ -210,6 +213,30 @@ export class SquadFileService {
   /** Read `.squad/routing.md` as an editable governance document (FR-024). */
   public readRouting(): Promise<SquadResult<SquadMarkdownDoc>> {
     return this._readMarkdownDoc(SquadDocKind.Routing);
+  }
+
+  /**
+   * Read and parse `.squad/ceremonies.md` (SQD-047, FR-055). A missing file is
+   * not an error: it yields `exists: false` with no ceremonies so the panel can
+   * show an explicit empty state. Large files are parsed up to the read cap and
+   * flagged as truncated.
+   */
+  public async readCeremonies(): Promise<SquadResult<SquadCeremoniesDocument>> {
+    const relativePath = SQUAD_CEREMONIES_RELATIVE_PATH;
+    try {
+      const file = await this._readText(this._joinRelative(relativePath), relativePath);
+      return squadOk({
+        relativePath,
+        exists: true,
+        ceremonies: parseSquadCeremonies(file.content),
+        truncated: file.truncated,
+      });
+    } catch (error) {
+      if (this._isNotFound(error)) {
+        return squadOk({ relativePath, exists: false, ceremonies: [], truncated: false });
+      }
+      return this._readError(relativePath, error, "the Squad ceremonies file");
+    }
   }
 
   /**

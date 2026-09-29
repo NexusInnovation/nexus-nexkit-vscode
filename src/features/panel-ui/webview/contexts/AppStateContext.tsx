@@ -196,6 +196,70 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
           }));
           break;
 
+        case "squadCeremoniesLoading":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              ceremoniesLoading: message.isLoading,
+              ceremoniesError: message.isLoading ? null : prev.squad.ceremoniesError,
+            },
+          }));
+          break;
+
+        case "squadCeremoniesUpdate":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              ceremonies: message.ceremonies,
+              ceremoniesLoading: false,
+              ceremoniesError: null,
+            },
+          }));
+          break;
+
+        case "squadCeremoniesError":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              ceremoniesLoading: false,
+              ceremoniesError: message.error,
+            },
+          }));
+          break;
+
+        case "squadCeremonyActionStarted":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              runningCeremonyId: message.ceremonyId,
+              lastCeremonyAction: {
+                ceremonyId: message.ceremonyId,
+                status: "running",
+                error: null,
+              },
+            },
+          }));
+          break;
+
+        case "squadCeremonyActionResult":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              runningCeremonyId: prev.squad.runningCeremonyId === message.ceremonyId ? null : prev.squad.runningCeremonyId,
+              lastCeremonyAction: {
+                ceremonyId: message.ceremonyId,
+                status: message.ok ? "succeeded" : "failed",
+                error: message.ok ? null : message.error ?? null,
+              },
+            },
+          }));
+          break;
+
         case "squadRosterUpdate":
           setState((prev) => ({
             ...prev,
@@ -435,6 +499,11 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     const unsubscribeSquadStatus = messenger.onMessage("squadStatusUpdate", handleMessage);
     const unsubscribeSquadPlugins = messenger.onMessage("squadPluginsUpdate", handleMessage);
     const unsubscribeSquadPluginAction = messenger.onMessage("squadPluginActionResult", handleMessage);
+    const unsubscribeSquadCeremoniesLoading = messenger.onMessage("squadCeremoniesLoading", handleMessage);
+    const unsubscribeSquadCeremoniesUpdate = messenger.onMessage("squadCeremoniesUpdate", handleMessage);
+    const unsubscribeSquadCeremoniesError = messenger.onMessage("squadCeremoniesError", handleMessage);
+    const unsubscribeSquadCeremonyStarted = messenger.onMessage("squadCeremonyActionStarted", handleMessage);
+    const unsubscribeSquadCeremonyResult = messenger.onMessage("squadCeremonyActionResult", handleMessage);
     const unsubscribeSquadRoster = messenger.onMessage("squadRosterUpdate", handleMessage);
     const unsubscribeSquadDocs = messenger.onMessage("squadDocsUpdate", handleMessage);
     const unsubscribeSquadLogs = messenger.onMessage("squadLogsUpdate", handleMessage);
@@ -472,6 +541,11 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       unsubscribeSquadStatus();
       unsubscribeSquadPlugins();
       unsubscribeSquadPluginAction();
+      unsubscribeSquadCeremoniesLoading();
+      unsubscribeSquadCeremoniesUpdate();
+      unsubscribeSquadCeremoniesError();
+      unsubscribeSquadCeremonyStarted();
+      unsubscribeSquadCeremonyResult();
       unsubscribeSquadRoster();
       unsubscribeSquadDocs();
       unsubscribeSquadLogs();

@@ -30,6 +30,7 @@ export const SQUAD_ERROR_CODES = [
   "plugin-list-failed",
   "plugin-action-failed",
   "backup-failed",
+  "ceremony-failed",
   "not-a-workspace",
   "cancelled",
   "unknown",

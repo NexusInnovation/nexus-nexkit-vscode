@@ -6,6 +6,7 @@ import { DevOpsConnection } from "../../apm-devops/models/devOpsConnection";
 import { WorkflowInfo } from "../../github-workflow-runner/githubWorkflowRunnerService";
 import type {
   RejectedSquadPreset,
+  SquadCeremoniesDocument,
   SquadCharter,
   SquadCliSource,
   SquadDetectionResult,
@@ -106,7 +107,11 @@ export type WebviewMessage =
   | { command: "listSquadUpstreams" }
   | { command: "addSquadUpstream"; source: string; name?: string; ref?: string }
   | { command: "syncSquadUpstream"; name?: string }
-  | { command: "removeSquadUpstream"; name: string };
+  | { command: "removeSquadUpstream"; name: string }
+  // Squad ceremony quick actions (SQD-047 / #262, FR-055)
+  | { command: "getSquadCeremonies" }
+  | { command: "runSquadCeremony"; ceremonyId: string }
+  | { command: "openSquadCeremonies" };
 
 /**
  * Messages sent FROM the extension TO the webview
@@ -290,5 +295,29 @@ export type ExtensionMessage =
       ok: boolean;
       /** Upstreams re-read from `.squad/upstream.json` after the operation (also on failure). */
       upstreams: SquadUpstreamSource[];
+      error?: SquadError;
+    }
+  // Squad ceremony quick actions (SQD-047 / #262, FR-055)
+  | {
+      command: "squadCeremoniesLoading";
+      isLoading: boolean;
+    }
+  | {
+      command: "squadCeremoniesUpdate";
+      ceremonies: SquadCeremoniesDocument;
+    }
+  | {
+      command: "squadCeremoniesError";
+      error: SquadError;
+    }
+  | {
+      command: "squadCeremonyActionStarted";
+      ceremonyId: string;
+    }
+  | {
+      command: "squadCeremonyActionResult";
+      ceremonyId: string;
+      ok: boolean;
+      /** Actionable error; always present when `ok` is false. */
       error?: SquadError;
     };

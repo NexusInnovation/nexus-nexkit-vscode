@@ -16,6 +16,7 @@
 import type {
   RejectedSquadPreset,
   SquadCharter,
+  SquadCeremoniesDocument,
   SquadDetectionResult,
   SquadDoctorReport,
   SquadError,
@@ -160,6 +161,18 @@ export interface SquadPluginActionResultState {
   error?: SquadError;
 }
 
+/** Latest ceremony quick-action state (SQD-047, FR-055). */
+export interface SquadCeremonyActionState {
+  /** Ceremony id the action applies to. */
+  ceremonyId: string;
+
+  /** Running, or finished with success / failure. */
+  status: "running" | "succeeded" | "failed";
+
+  /** Actionable error when {@link status} is `failed`. */
+  error: SquadError | null;
+}
+
 /**
  * Squad state slice held in the global {@link AppState}.
  * A single source of truth for the Squad tab; populated exclusively through
@@ -225,6 +238,21 @@ export interface SquadState {
   /** Result of the most recent plugin action (SQD-039), or `null` before any. */
   lastPluginAction: SquadPluginActionResultState | null;
 
+  /** Read-only `.squad/ceremonies.md` quick-action model (FR-055). */
+  ceremonies: SquadCeremoniesDocument | null;
+
+  /** True while `.squad/ceremonies.md` is being read. */
+  ceremoniesLoading: boolean;
+
+  /** Last ceremony-listing/opening error, or `null` when healthy. */
+  ceremoniesError: SquadError | null;
+
+  /** Ceremony currently being launched, or `null` when none is in flight. */
+  runningCeremonyId: string | null;
+
+  /** Most recent ceremony launch result, or `null` before any action. */
+  lastCeremonyAction: SquadCeremonyActionState | null;
+
   /** Latest Squad Doctor report (FR-060), when one has been produced. */
   doctor: SquadDoctorReport | null;
 
@@ -273,6 +301,11 @@ export const initialSquadState: SquadState = {
   marketplaces: [],
   plugins: [],
   lastPluginAction: null,
+  ceremonies: null,
+  ceremoniesLoading: false,
+  ceremoniesError: null,
+  runningCeremonyId: null,
+  lastCeremonyAction: null,
   doctor: null,
   updates: null,
   presetPicker: initialSquadPresetPickerState,
