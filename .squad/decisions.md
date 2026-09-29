@@ -791,3 +791,135 @@ History records are permanent context. Accidental loss breaks the squad's instit
 Par défaut, les sous-agents utilisent le modèle claude-opus-5.5. En cas d'indisponibilité, rester dans la famille Claude (fallback Claude uniquement).
 
 Rationale: User request — captured for team memory and squad extraction.
+
+---
+
+# Decision: SQD-043 Azure DevOps backlog detection (Link, 2026-09-28)
+
+Issue: #258 / PR: #322
+
+Azure DevOps backlog support remains a provider added beside GitHub, not a change to `SquadBacklogService` orchestration:
+
+- `AzureDevOpsBacklogProvider` implements `SquadBacklogProvider` and is registered after `GitHubBacklogProvider`.
+- The shared backlog contract gains only optional provider metadata: `SquadBacklogInfo.azureDevOps?: SquadAzureDevOpsBacklogRef`.
+- The detected/not-detected/error envelope and `itemCounts` contract are unchanged for Ghost/#259.
+
+## ADO configuration contract
+
+Configured ADO detection requires `.squad/config.json`:
+
+```json
+{
+  "platform": "azure-devops",
+  "ado": {
+    "org": "contoso",
+    "project": "Nexkit",
+    "defaultWorkItemType": "User Story",
+    "areaPath": "Nexkit\\Squad",
+    "iterationPath": "Nexkit\\Sprint 1"
+  }
+}
+```
+
+- `ado.org` may be an organization name or an organization URL such as `https://dev.azure.com/contoso`.
+- `ado.project` is required when `platform` explicitly selects Azure DevOps.
+- `defaultWorkItemType`, `areaPath`, and `iterationPath` are optional metadata; area/iteration paths also scope count queries.
+- When no platform is configured, the provider can infer org/project from Azure DevOps git remotes.
+
+## Error semantics
+
+- Missing or malformed explicit ADO config returns `parse-failed`, never a success state.
+- Missing Azure CLI or Azure DevOps extension returns `backlog-tool-not-found`.
+- Azure CLI authentication/access failures return `backlog-auth-required`.
+- Azure DevOps throttling returns `backlog-rate-limited`.
+- Missing/inaccessible projects and transient `az boards query` failures return `backlog-unavailable`.
+
+## Verification approach
+
+The provider uses read-only `az boards query --organization <url> --project <project> --wiql <query> --output json` calls. Tests stub every process call through `SquadProcessRunner` and cover config-driven detection, remote inference, query shaping, and failure mapping.
+
+---
+
+# Decision: SQD-049 Anonymous Squad telemetry (Link, 2026-09-28)
+
+PR: #325
+Issue: #264
+Date: 2026-09-28
+
+Decision: centralize FR-066 telemetry behind `SquadTelemetryService` instead of calling `TelemetryService.trackEvent` directly from Squad feature handlers.
+
+Rationale:
+- The service enforces the extra `nexkit.squad.telemetry.enabled` opt-out in addition to VS Code global telemetry and `nexkit.telemetry.enabled`.
+- Events use one fixed event name, `squad.feature.used`, with feature/action/outcome/error-code classification and safe counts/booleans only.
+- Property keys are allowlisted and string values are redacted unless they match a short machine-readable token pattern, preventing file names, paths, workspace names, repo names, agent names, content, or secrets from being forwarded.
+- `TelemetryService` common properties were made anonymous by removing the legacy username/IP collection; otherwise Squad event properties could be sanitized while shared telemetry context still carried PII.
+
+Integration notes:
+- Host-side Squad handlers now track only at centralized result boundaries: state/detection/update refresh, write saves, doctor/export, preset list/init, upstream operations, plugin actions, and CLI setup.
+- Do not pass preset IDs, agent IDs, plugin IDs, marketplace names, upstream names, custom CLI paths, repository references, local paths, stdout, stderr, document content, or workspace names into telemetry.
+- Tests live in `test/suite/squadTelemetryService.test.ts` and assert opt-out behavior plus PII/path/content sanitization.
+
+---
+
+# Decision: SQD-052 Consult mode implementation (Link, 2026-09-28)
+
+Issue: #267
+PR: #326
+Stacked on: #321
+
+Decision:
+- Model consult mode as the workspace half of FR-064, separate from but gated by SQD-051 personal Squad detection.
+- Detect consult mode by reading `.squad/config.json` and requiring a boolean `"consult"` property; missing config or missing property is inactive, malformed JSON/shape is a visible `parse-failed` error.
+- Run `squad consult --yes` and `squad extract --yes` only through `SquadCliService` allowlisted commands, with all CLI calls stubbed in tests.
+- Confirm local/personal scope before writes and invoke `backupSquadArtifacts` before consult/extract CLI operations because consult mode can write workspace `.squad/` artifacts.
+- Surface status/result/loading/error through centralized panel messages and keep the UI in the existing Personal Squad card.
+
+Validation:
+- `pnpm --config.verifyDepsBeforeRun=false run check:types`
+- `pnpm --config.verifyDepsBeforeRun=false run lint`
+- `pnpm --config.verifyDepsBeforeRun=false run test-compile`
+- `pnpm --config.verifyDepsBeforeRun=false run test:unit` (997 passing, 11 pending)
+
+---
+
+# Decision: SQD-053 Worktree-per-issue design (Morpheus, 2026-09-28)
+
+Issue: #268 / PR: #269 (full design: https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/268#issuecomment-5882832050). Implementation: #269 (Link, + Ghost UI, + Trinity tests).
+
+• **Conventions (fixed, v1):** path `{repo-parent}/{repo-name}-{issue}` where the main root is derived from `git rev-parse --git-common-dir` (never the current, possibly linked, worktree); branch `squad/{issue}-{slug}`. The slug removes accents with NFKD, keeps only `[a-z0-9-]`, is at most 50 chars and is checked with `check-ref-format`. Existing work is matched by the prefix `squad/{issue}-`.
+• **Base branch:** resolved in this order: dialog choice → last base used for the repo (`workspaceState`) → `origin/HEAD` → `ls-remote --symref` → first of develop/main/master. The base is stored in local git config as `branch.<b>.nexkitBase`. New branches use `--no-track`. A failed fetch gives a "base may be stale" warning and is not treated as success.
+• **Backlog contract amendment (additive):** optional `SquadBacklogProvider.listItems` / `getWorkState`, and `SquadBacklogService.listItems/getItem/getWorkState`. These reuse detection's config/remote/provider selection. ADO WIQL never interpolates user text.
+• **Services:**
+  - `GitWorktreeClient`: git CLI through `SquadProcessRunner`, `shell:false`, no policy. It does not use the `vscode.git` API.
+  - `SquadWorktreeNaming`: pure functions.
+  - Dependency strategies.
+  - `WorktreeRemover`.
+  - `SquadWorktreeService`: the orchestrator, registered lazily, with a per-repo mutex.
+• **node_modules:** default `auto` = install with the package manager (pnpm `--frozen-lockfile --prefer-offline`; needs a trusted workspace). A **junction is refused for pnpm**. The lefthook/pnpm `ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY` abort protects the main checkout's `node_modules` from being purged through the junction. Never work around it with `CI=true` or `confirmModulesPurge=false`.
+• **Removal invariant:** unlink the junction/symlink first, then fall back in order: `git worktree remove` → `git -c core.longpaths=true …` → `fs.rm` → robocopy `/MIR /XJ` (exit code ≥ 8 = failure) → `prune`. It never reports `removed:true` on failure.
+• **Destructive safety:** BackupService is not used, because worktree creation is additive and overwrites no workspace files. Cleanup of a dirty worktree needs a host-side modal confirmation and runs `git stash push --include-untracked` first; the stash is kept in the common dir, so it can be recovered from the main repo. Branches are deleted with `branch -d` by default. The current-window worktree cannot be removed. An unknown PR/issue state is never counted as "merged".
+• **Partial success is explicit:** when the dependency install fails, the outcome includes `dependencies.state:"failed"` plus a Retry action. It is never shown as plain success.
+• **Settings (application scope, via SettingsManager):** `nexkit.squad.worktree.dependencies`, `.openInNewWindow`, `.parentDirectory` (also the long-path escape hatch), `.copyUntracked` (default `[".nexkit"]`, never `.env*`). `core.longpaths` is changed persistently only with the user's consent.
+• **Webview** sends only opaque ids, never paths. Telemetry carries no paths, names, issue ids, titles or stderr.
+• **Related bug for #269:** `GitExcludeConfigDeployer` writes the per-worktree `info/exclude`, but git only reads `$GIT_COMMON_DIR/info/exclude`.
+• **Team workflow:** stop junctioning agent worktrees and use `pnpm install --frozen-lockfile` in each worktree. Hooks then run without `--no-verify`.
+
+---
+
+# Decision: SQD-055 Squad CI guard contract (Tank, 2026-09-28)
+
+Issue: #270 / PR: #328
+
+Keep the Squad test guard in the normal lint/static-analysis path instead of adding a separate optional CI-only job.
+
+## Rationale
+
+- `pnpm run lint` already runs in CI static analysis and local hooks, so missing/skipped Squad tests fail before the OS test matrix starts.
+- The guard is deterministic and offline: it checks protected SQD-022/SQD-041/SQD-050 test artifacts, disallows skip/only, and blocks direct real CLI/network primitives in Squad test sources.
+- `lint:squad-tests` gives Squad test files explicit ESLint coverage without broadening unrelated source TSX lint warnings.
+- The CI test matrix now also runs `runWebviewTest.js`, so the webview Squad suites added by the happy-dom harness are exercised in CI.
+- PR triggers include `feature/squad-support` and `squad/**` bases so stacked Squad PRs receive CI without changing release/build gates, which remain scoped to `main`/`develop`.
+
+## Hook note
+
+Per Morpheus's #268 worktree design, the lefthook/pnpm failure with junctioned `node_modules` is intentional protection: pnpm is preventing the main checkout's dependency tree from being purged through the junction. Do not bypass it in hooks. The correct fix is real `pnpm install` per worktree, no junctions.
