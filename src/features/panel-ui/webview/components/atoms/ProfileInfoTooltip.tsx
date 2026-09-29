@@ -65,6 +65,19 @@ export function ProfileInfoTooltip({ profile }: ProfileInfoTooltipProps) {
             </div>
           );
         })}
+        {profile.squad && (
+          <div class="profile-tooltip-type">
+            <div class="profile-tooltip-type-header">Squad configuration</div>
+            <ul class="profile-tooltip-templates">
+              {profile.squad.presetId && <li>Preset: {profile.squad.presetId}</li>}
+              {profile.squad.upstreams && <li>Upstreams: {profile.squad.upstreams.length}</li>}
+              {profile.squad.pluginMarketplaces && <li>Plugin marketplaces: {profile.squad.pluginMarketplaces.length}</li>}
+              {profile.squad.plugins && <li>Plugins: {profile.squad.plugins.length}</li>}
+              {profile.squad.modelConfig && <li>Model configuration</li>}
+              {profile.squad.ralph && <li>Ralph preferences</li>}
+            </ul>
+          </div>
+        )}
       </div>
     </IconTooltip>
   );

@@ -57,6 +57,7 @@ import { WorktreeDependencyStrategy } from "../features/squad/services/worktreeD
 import { WorktreeRemover } from "../features/squad/services/worktreeRemover";
 import { SquadWorktreeService } from "../features/squad/services/squadWorktreeService";
 import { SquadWatchService } from "../features/squad/services/squadWatchService";
+import { SquadProfileService } from "../features/squad/services/squadProfileService";
 
 /**
  * Service container for dependency injection
@@ -139,6 +140,13 @@ export interface ServiceContainer {
    * constructed because it owns only seams until commands/panel request work.
    */
   readonly squadWorktrees: SquadWorktreeService;
+
+  /**
+   * Captures and applies Squad configuration embedded in NexKit profiles
+   * (SQD-048, FR-065). Undefined without a workspace because profile Squad
+   * state is workspace-bound.
+   */
+  squadProfiles?: SquadProfileService;
 
   /**
    * Aggregated Squad preset source (SQD-019). Lazily constructed on first
@@ -228,7 +236,6 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const workspaceInitPrompt = new WorkspaceInitPromptService();
   const modeSelectionPrompt = new ModeSelectionPromptService(telemetry);
   const workspaceInitialization = new WorkspaceInitializationService();
-  const profileService = new ProfileService(installedTemplatesState, aiTemplateData, backup);
   const modeSelection = new ModeSelectionService();
   const devOpsConfig = new DevOpsMcpConfigService();
   const nexkitFileMigration = new NexkitFileMigrationService();
@@ -276,6 +283,15 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const squadPluginActions = squadPlugins
     ? new SquadPluginActionService({ cli: squadCli, plugins: squadPlugins, backup })
     : undefined;
+  const squadProfiles = squadWorkspaceRoot
+    ? new SquadProfileService({
+        backup,
+        getWorkspaceRoot: () => vscode.workspace.workspaceFolders?.[0]?.uri,
+        createPluginService: (fileService) => new SquadPluginService({ fileService, cli: squadCli, logger: logging }),
+        logger: logging,
+      })
+    : undefined;
+  const profileService = new ProfileService(installedTemplatesState, aiTemplateData, backup, squadProfiles);
 
   // Preset discovery (SQD-017/018) aggregated behind one provider (SQD-019).
   // Built lazily so no preset listing or network work happens during activation.
@@ -392,6 +408,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     squadPlugins,
     squadProjectUpgrade,
     squadPluginActions,
+    squadProfiles,
     get squadPresets(): SquadPresetProvider {
       return getSquadPresets();
     },

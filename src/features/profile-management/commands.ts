@@ -54,9 +54,10 @@ export function registerSaveProfileCommand(context: vscode.ExtensionContext, ser
 
         const profile = services.profileService.getProfile(trimmedName);
         const templateCount = profile?.templates.length || 0;
+        const squadSuffix = profile?.squad ? " and Squad configuration" : "";
 
         vscode.window.showInformationMessage(
-          `Profile "${trimmedName}" saved successfully with ${templateCount} template${templateCount !== 1 ? "s" : ""}.`
+          `Profile "${trimmedName}" saved successfully with ${templateCount} template${templateCount !== 1 ? "s" : ""}${squadSuffix}.`
         );
       } catch (error) {
         console.error("Failed to save profile:", error);
@@ -223,6 +224,13 @@ export function registerApplyProfileCommand(context: vscode.ExtensionContext, se
 
         if (result.backupPath) {
           message += ` Backup created at: ${result.backupPath}`;
+        }
+
+        if (result.squad?.applied) {
+          message += ` Squad configuration applied.`;
+          if (result.squad.pluginCount > 0) {
+            message += ` ${result.squad.pluginCount} Squad plugin${result.squad.pluginCount !== 1 ? "s" : ""} recorded in the profile; manage plugin lifecycle from the Squad tab.`;
+          }
         }
 
         vscode.window.showInformationMessage(message);
