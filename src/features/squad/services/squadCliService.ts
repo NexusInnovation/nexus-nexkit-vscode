@@ -69,6 +69,8 @@ export const SquadCliCommand = {
   Import: "import",
   /** Long-running Ralph monitor (SQD-045); only startable via {@link SquadCliService.spawnLongRunning}. */
   Watch: "watch",
+  Consult: "consult",
+  Extract: "extract",
 } as const;
 
 export type SquadCliCommand = (typeof SquadCliCommand)[keyof typeof SquadCliCommand];
@@ -170,6 +172,18 @@ export const SQUAD_CLI_COMMAND_SPECS: Readonly<Record<SquadCliCommand, SquadCliC
     operandPattern: /^\d{1,4}$/,
     defaultTimeoutMs: 0,
     longRunning: true,
+  },
+  [SquadCliCommand.Consult]: {
+    argv: ["consult"],
+    allowedFlags: ["--yes"],
+    allowsOperands: false,
+    defaultTimeoutMs: SQUAD_CLI_TIMEOUTS_MS.standard,
+  },
+  [SquadCliCommand.Extract]: {
+    argv: ["extract"],
+    allowedFlags: ["--yes"],
+    allowsOperands: false,
+    defaultTimeoutMs: SQUAD_CLI_TIMEOUTS_MS.standard,
   },
 };
 
@@ -461,9 +475,7 @@ export class SquadCliService {
    * used by {@link import("./squadDetectionService").SquadDetectionService} to
    * look across every possible install location on Windows and Linux.
    */
-  public async probeCli(
-    options: SquadCliExecuteOptions = {}
-  ): Promise<SquadResult<{ version: string; source: SquadCliSource }>> {
+  public async probeCli(options: SquadCliExecuteOptions = {}): Promise<SquadResult<{ version: string; source: SquadCliSource }>> {
     const result = await this.execute(SquadCliCommand.Version, options);
     if (!result.ok) {
       return result;
@@ -479,7 +491,7 @@ export class SquadCliService {
     }
 
     const resolved = this._resolveInvocation(options.source);
-    const source = resolved.ok ? resolved.value.source : options.source ?? SquadCliSource.Npx;
+    const source = resolved.ok ? resolved.value.source : (options.source ?? SquadCliSource.Npx);
     return squadOk({ version, source });
   }
 
@@ -513,9 +525,7 @@ export class SquadCliService {
    * cancellation are surfaced unchanged, while a non-zero exit is re-mapped to
    * a doctor-scoped `doctor-failed` error so the UI shows relevant remediation.
    */
-  public async runDoctor(
-    options: SquadCliExecuteOptions = {}
-  ): Promise<SquadResult<SquadDoctorReport>> {
+  public async runDoctor(options: SquadCliExecuteOptions = {}): Promise<SquadResult<SquadDoctorReport>> {
     const result = await this.execute(SquadCliCommand.Doctor, {
       ...options,
       args: options.args ?? ["--json"],
@@ -526,8 +536,7 @@ export class SquadCliService {
         return squadErr({
           code: "doctor-failed",
           message: "Squad Doctor reported a problem.",
-          remediation:
-            "Review the Squad Doctor output, resolve the reported issues, then run it again.",
+          remediation: "Review the Squad Doctor output, resolve the reported issues, then run it again.",
           detail: result.error.detail,
           cause: result.error.cause,
         });
@@ -540,10 +549,7 @@ export class SquadCliService {
   }
 
   /** Validate caller-supplied arguments against the command's allowlist. */
-  private _validateArgs(
-    spec: SquadCliCommandSpec,
-    args: string[]
-  ): SquadResult<true> {
+  private _validateArgs(spec: SquadCliCommandSpec, args: string[]): SquadResult<true> {
     for (const arg of args) {
       if (arg.includes("\0") || /[\r\n]/.test(arg)) {
         return squadErr({
@@ -601,8 +607,7 @@ export class SquadCliService {
           return squadErr({
             code: "cli-not-found",
             message: "No custom Squad CLI path is configured.",
-            remediation:
-              "Set `nexkit.squad.cliPath`, or change `nexkit.squad.cliSource` to `npx` or `global`.",
+            remediation: "Set `nexkit.squad.cliPath`, or change `nexkit.squad.cliSource` to `npx` or `global`.",
           });
         }
         return squadOk({ command: customPath, prefixArgs: [], source });
@@ -622,7 +627,10 @@ export class SquadCliService {
   }
 
   /** Build a source-specific "CLI not found" error with actionable remediation. */
-  private _notFoundError(source: SquadCliSource, spawnErrorCode: string): {
+  private _notFoundError(
+    source: SquadCliSource,
+    spawnErrorCode: string
+  ): {
     code: "cli-not-found";
     message: string;
     remediation: string;
@@ -634,8 +642,7 @@ export class SquadCliService {
         remediation = `Install it with \`npm install -g ${SQUAD_CLI_NPX_PACKAGE}@latest\`, or switch \`nexkit.squad.cliSource\` to \`npx\`.`;
         break;
       case SquadCliSource.Custom:
-        remediation =
-          "Verify `nexkit.squad.cliPath` points to a valid Squad executable, or switch to `npx` or `global`.";
+        remediation = "Verify `nexkit.squad.cliPath` points to a valid Squad executable, or switch to `npx` or `global`.";
         break;
       case SquadCliSource.Npx:
       default:

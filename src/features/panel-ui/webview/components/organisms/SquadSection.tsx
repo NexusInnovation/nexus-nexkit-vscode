@@ -13,8 +13,9 @@ import { SquadPluginsSection } from "./SquadPluginsSection";
 import { SquadWorktreeSection } from "./SquadWorktreeSection";
 import { SquadWatchSection } from "./SquadWatchSection";
 import { SquadCeremonySection } from "./SquadCeremonySection";
-import { SquadInstallState, SquadPersonalSquadState } from "../../../../squad/models";
+import { SquadInstallState, SquadPersonalSquadState, SquadConsultModeState } from "../../../../squad/models";
 import { useSquadPersonalSquad } from "../../hooks/useSquadPersonalSquad";
+import { useSquadConsultMode } from "../../hooks/useSquadConsultMode";
 
 /**
  * Guidance shown when no Squad markers are present in the workspace.
@@ -39,14 +40,20 @@ function SquadNotDetectedNotice() {
 /** Personal/global Squad entry point shown beside workspace initialization choices. */
 function PersonalSquadCard() {
   const { loading, status, error, lastInitOk, refresh, initialize } = useSquadPersonalSquad();
+  const consult = useSquadConsultMode();
 
   useEffect(() => {
     if (!status && !loading) {
       refresh();
     }
+    if (!consult.status && !consult.loading) {
+      consult.refresh();
+    }
   }, []);
 
   const initialized = status?.state === SquadPersonalSquadState.Initialized;
+  const consultActive = consult.status?.state === SquadConsultModeState.Active;
+  const busy = loading || consult.loading;
 
   return (
     <div class="squad-personal-card info-message">
@@ -68,12 +75,40 @@ function PersonalSquadCard() {
       ) : null}
       {error ? <SquadErrorNotice error={error} /> : null}
       {lastInitOk ? <p class="success-message">Personal Squad is ready.</p> : null}
+      {consult.status ? (
+        <p>
+          Consult mode: <strong>{consultActive ? "active" : "inactive"}</strong>. Local consult artifacts are excluded from git:{" "}
+          {consult.status.excludedRelativePaths.map((entry) => (
+            <code>{entry}</code>
+          ))}
+          .
+        </p>
+      ) : null}
+      {consult.error ? <SquadErrorNotice error={consult.error} /> : null}
+      {consult.lastOperation?.ok ? (
+        <p class="success-message">
+          {consult.lastOperation.operation === "consult" ? "Consult mode is active." : "Consult learnings were extracted."}
+        </p>
+      ) : null}
       <div class="squad-preset-confirm-actions">
-        <button class="squad-refresh-button" onClick={refresh} disabled={loading}>
+        <button
+          class="squad-refresh-button"
+          onClick={() => {
+            refresh();
+            consult.refresh();
+          }}
+          disabled={busy}
+        >
           <i class="codicon codicon-refresh" aria-hidden="true"></i> Refresh personal status
         </button>
-        <button class="squad-preset-init-button" onClick={initialize} disabled={loading || initialized}>
+        <button class="squad-preset-init-button" onClick={initialize} disabled={busy || initialized}>
           <i class="codicon codicon-rocket" aria-hidden="true"></i> Initialize personal Squad
+        </button>
+        <button class="squad-preset-init-button" onClick={consult.start} disabled={busy || !initialized || consultActive}>
+          <i class="codicon codicon-copy" aria-hidden="true"></i> Start consult mode
+        </button>
+        <button class="squad-preset-init-button" onClick={consult.extract} disabled={busy || !initialized || !consultActive}>
+          <i class="codicon codicon-cloud-upload" aria-hidden="true"></i> Extract learnings
         </button>
       </div>
     </div>

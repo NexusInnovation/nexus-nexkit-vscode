@@ -1,7 +1,7 @@
 import { ServiceContainer } from "../../core/serviceContainer";
 import { LoggingService } from "../../shared/services/loggingService";
 import { ExtensionMessage, WebviewMessage } from "./types/webviewMessages";
-import { SquadError, isSquadErr } from "../squad/models";
+import { SquadConsultModeOperation, SquadError, isSquadErr } from "../squad/models";
 
 /**
  * Routes personal/global Squad commands (SQD-051 / FR-064).
@@ -29,6 +29,15 @@ export class SquadPersonalSquadMessageHandler {
         return true;
       case "initPersonalSquad":
         await this.handleInitialize();
+        return true;
+      case "getConsultModeStatus":
+        await this.handleGetConsultStatus();
+        return true;
+      case "startSquadConsultMode":
+        await this.handleStartConsultMode();
+        return true;
+      case "extractSquadConsultMode":
+        await this.handleExtractConsultMode();
         return true;
       default:
         return false;
@@ -71,6 +80,56 @@ export class SquadPersonalSquadMessageHandler {
       this._postMessage({ command: "squadPersonalSquadInitResult", ok: false, error: squadError });
     } finally {
       this._postMessage({ command: "squadPersonalSquadLoading", isLoading: false });
+    }
+  }
+
+  private async handleGetConsultStatus(): Promise<void> {
+    this._postMessage({ command: "squadConsultModeLoading", isLoading: true });
+    try {
+      const status = await this._services.squadConsult.getStatus();
+      if (isSquadErr(status)) {
+        this._logger.warn("Squad consult mode: status failed", status.error);
+        this._postMessage({ command: "squadConsultModeError", error: status.error });
+        return;
+      }
+      this._postMessage({ command: "squadConsultModeStatusUpdate", status: status.value });
+    } catch (error) {
+      const squadError = this._unknownError("Reading Squad consult mode status failed unexpectedly.", error);
+      this._logger.error("Squad consult mode: status threw", squadError);
+      this._postMessage({ command: "squadConsultModeError", error: squadError });
+    } finally {
+      this._postMessage({ command: "squadConsultModeLoading", isLoading: false });
+    }
+  }
+
+  private async handleStartConsultMode(): Promise<void> {
+    await this._runConsultOperation(SquadConsultModeOperation.Consult, () => this._services.squadConsult.startConsultMode());
+  }
+
+  private async handleExtractConsultMode(): Promise<void> {
+    await this._runConsultOperation(SquadConsultModeOperation.Extract, () => this._services.squadConsult.extractLearnings());
+  }
+
+  private async _runConsultOperation(
+    operation: SquadConsultModeOperation,
+    run: () => ReturnType<ServiceContainer["squadConsult"]["startConsultMode"]>
+  ): Promise<void> {
+    this._postMessage({ command: "squadConsultModeLoading", isLoading: true });
+    try {
+      const result = await run();
+      if (isSquadErr(result)) {
+        this._logger.warn(`Squad consult mode: ${operation} failed`, result.error);
+        this._postMessage({ command: "squadConsultModeResult", operation, ok: false, error: result.error });
+        return;
+      }
+      this._postMessage({ command: "squadConsultModeResult", operation, ok: true, outcome: result.value });
+      this._postMessage({ command: "squadConsultModeStatusUpdate", status: result.value.status });
+    } catch (error) {
+      const squadError = this._unknownError(`Squad ${operation} failed unexpectedly.`, error);
+      this._logger.error(`Squad consult mode: ${operation} threw`, squadError);
+      this._postMessage({ command: "squadConsultModeResult", operation, ok: false, error: squadError });
+    } finally {
+      this._postMessage({ command: "squadConsultModeLoading", isLoading: false });
     }
   }
 

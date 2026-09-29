@@ -60,6 +60,7 @@ import { SquadWatchService } from "../features/squad/services/squadWatchService"
 import { SquadProfileService } from "../features/squad/services/squadProfileService";
 import { SquadTelemetryService } from "../features/squad/services/squadTelemetryService";
 import { SquadPersonalSquadService } from "../features/squad/services/squadPersonalSquadService";
+import { SquadConsultModeService } from "../features/squad/services/squadConsultModeService";
 
 /**
  * Service container for dependency injection
@@ -212,6 +213,13 @@ export interface ServiceContainer {
    * No CLI or file work runs until requested by the panel.
    */
   squadPersonal: SquadPersonalSquadService;
+
+  /**
+   * Start workspace consult mode (`squad consult`) and extract learnings back
+   * to the personal Squad (`squad extract`). No CLI or file work runs until
+   * requested by the panel.
+   */
+  squadConsult: SquadConsultModeService;
 }
 
 /**
@@ -283,6 +291,13 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const squadCliUpgrade = new SquadCliUpgradeService({ updates: squadUpdates, cli: squadCli, logger: logging });
   const squadBacklog = new SquadBacklogService({
     providers: [new GitHubBacklogProvider(), new AzureDevOpsBacklogProvider()],
+  });
+  const squadConsult = new SquadConsultModeService({
+    cli: squadCli,
+    personal: squadPersonal,
+    backup,
+    detection: squadDetection,
+    logger: logging,
   });
   const squadPlugins = squadFile ? new SquadPluginService({ fileService: squadFile, cli: squadCli }) : undefined;
   const squadProjectUpgrade = new SquadProjectUpgradeService({
@@ -413,6 +428,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     squadImport,
     squadWatch,
     squadPersonal,
+    squadConsult,
     squadFile,
     squadUpdates,
     squadCliUpgrade,

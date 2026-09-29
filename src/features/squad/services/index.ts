@@ -36,3 +36,4 @@ export * from "./squadCeremonyService";
 export * from "./squadProfileService";
 export * from "./squadTelemetryService";
 export * from "./squadPersonalSquadService";
+export * from "./squadConsultModeService";

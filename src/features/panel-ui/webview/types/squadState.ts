@@ -20,6 +20,9 @@ import type {
   SquadCharter,
   SquadCliUpgradeSummary,
   SquadCeremoniesDocument,
+  SquadConsultModeOperation,
+  SquadConsultModeOutcome,
+  SquadConsultModeStatus,
   SquadDetectionResult,
   SquadDocKind,
   SquadDoctorReport,
@@ -251,6 +254,26 @@ export interface SquadPersonalSquadStateSlice {
   lastInitOk: boolean | null;
 }
 
+/** Consult-mode status and operation state (SQD-052 / FR-064). */
+export interface SquadConsultModeStateSlice {
+  /** True while status/consult/extract is in flight. */
+  loading: boolean;
+
+  /** Last known consult-mode status, or null before the first status read. */
+  status: SquadConsultModeStatus | null;
+
+  /** Last consult-mode failure, always actionable when present. */
+  error: SquadError | null;
+
+  /** Latest consult/extract result, or null before any operation. */
+  lastOperation: {
+    operation: SquadConsultModeOperation;
+    ok: boolean;
+    outcome?: SquadConsultModeOutcome;
+    error?: SquadError;
+  } | null;
+}
+
 /**
  * Squad state slice held in the global {@link AppState}.
  * A single source of truth for the Squad tab; populated exclusively through
@@ -337,6 +360,9 @@ export interface SquadState {
   /** Personal/global Squad scenario state (SQD-051 / FR-064). */
   personalSquad: SquadPersonalSquadStateSlice;
 
+  /** Workspace consult-mode scenario state (SQD-052 / FR-064). */
+  consultMode: SquadConsultModeStateSlice;
+
   /** Latest Squad Doctor report (FR-060), when one has been produced. */
   doctor: SquadDoctorReport | null;
 
@@ -414,6 +440,12 @@ export const initialSquadState: SquadState = {
     status: null,
     error: null,
     lastInitOk: null,
+  },
+  consultMode: {
+    loading: false,
+    status: null,
+    error: null,
+    lastOperation: null,
   },
   doctor: null,
   updates: null,

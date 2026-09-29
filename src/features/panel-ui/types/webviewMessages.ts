@@ -23,9 +23,12 @@ import type {
   SquadImportPreviewRequest,
   SquadBacklogItem,
   SquadBacklogItemQuery,
+  SquadConsultModeOutcome,
+  SquadConsultModeOperation,
   SquadMarkdownDoc,
   SquadMarketplaceRef,
   SquadModelConfigDocument,
+  SquadConsultModeStatus,
   SquadPersonalSquadInitOutcome,
   SquadPersonalSquadStatus,
   SquadPluginAction,
@@ -131,6 +134,9 @@ export type WebviewMessage =
   // Personal/global Squad scenario (SQD-051 / #266, FR-064)
   | { command: "getPersonalSquadStatus" }
   | { command: "initPersonalSquad" }
+  | { command: "getConsultModeStatus" }
+  | { command: "startSquadConsultMode" }
+  | { command: "extractSquadConsultMode" }
   // Squad plugin marketplace + lifecycle actions (SQD-039 / #254). `target` is optional for
   // actions whose operand the host can prompt for (marketplace source, plugin directory).
   | { command: "runSquadPluginAction"; action: SquadPluginAction; target?: string }
@@ -286,6 +292,26 @@ export type ExtensionMessage =
       command: "squadPersonalSquadInitResult";
       ok: boolean;
       outcome?: SquadPersonalSquadInitOutcome;
+      error?: SquadError;
+    }
+  // Consult mode scenario (SQD-052 / #267, FR-064)
+  | {
+      command: "squadConsultModeStatusUpdate";
+      status: SquadConsultModeStatus;
+    }
+  | {
+      command: "squadConsultModeLoading";
+      isLoading: boolean;
+    }
+  | {
+      command: "squadConsultModeError";
+      error: SquadError;
+    }
+  | {
+      command: "squadConsultModeResult";
+      operation: SquadConsultModeOperation;
+      ok: boolean;
+      outcome?: SquadConsultModeOutcome;
       error?: SquadError;
     }
   | {
