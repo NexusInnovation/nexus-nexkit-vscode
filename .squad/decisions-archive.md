@@ -1,4 +1,4 @@
-# Squad Decisions — Archive
+﻿# Squad Decisions — Archive
 
 Entries older than 30 days, moved out of `decisions.md` by the Scribe to keep the active ledger lean. Append-only.
 
@@ -630,3 +630,24 @@ QA classification separates transient environment noise from actionable product/
 ### Why
 
 The `#main` suffix was unnecessary and caused a mismatch between the constant and a bare-key entry a user might already have, risking duplicate marketplace entries.
+---
+
+## Decision: Settings deployer marketplace bootstrap (2026-08-07)
+
+• Bootstraps chat.plugins.marketplaces with NexusInnovation/nexus-plugin-marketplace when missing.
+• Pre-seed marketplace in test setups to avoid false-negative test failures.
+
+---
+
+## Decision: Test pipeline validation — auth noise and hardening plan (2026-08-07)
+
+• Test pipeline stable: 388 passing, 8 pending. Previous failure transient/non-reproducible.
+• Medium regression risk: extension-host auth logs produce blocked-dialog noise during tests.
+• Follow-up: add auth suppression test, negative-path assertions, deterministic smoke script with per-stage logs.
+
+---
+
+## Decision: Marketplace identifier normalized (2026-08-26)
+
+• OFFICIAL_PLUGIN_MARKETPLACE constant changed from NexusInnovation/nexus-plugin-marketplace#main to bare NexusInnovation/nexus-plugin-marketplace.
+• Deduplication logic ensures existing #main-suffixed entries recognized as same marketplace, rewritten to bare key. Optimization: no write if unchanged.

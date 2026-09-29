@@ -1,4 +1,4 @@
-# Ghost — History
+﻿# Ghost — History
 
 ## Project Context
 
@@ -51,3 +51,18 @@ Implemented 5 major SQD webview tickets (see `.squad/decisions.md` for full deta
 
 **Issue #298 (SQD-R2: Service folder inconsistency):** SQD-005 files (`squadCliService.ts`, `squadProcessRunner.ts`, `squadDetectionService.ts`, `squadProjectVersionReader.ts`, `squadDoctorParser.ts`) sit at `src/features/squad/` root while SQD-011/016/017/018/020 use `src/features/squad/services/`. Link to consolidate under `services/` (pure move + import fixups, low risk). Tracked as issue #298.
 
+## Learnings
+
+### 2026-09-28 — SQD-R1 (#297): Dead legacy preset path removed
+
+- Legacy `selectSquadPreset` / `applySquadPreset` webview commands and `squadPresetsUpdate` host-to-webview message are fully superseded by `listSquadPresets`, `squadPresetsDiscovered`, and `initSquadFromPreset`.
+- The current picker keeps selected preset state locally in `useSquadPresets`; it should not be promoted back into `AppState`.
+- When merging concurrent Squad webview PRs, re-scan for removed command strings because newly landed tests can reintroduce references even when source code is already clean.
+
+## 2026-09-28 — Ralph Round 1, P2 Kickoff (Team Update)
+
+**From Scribe:** SQD-R1 (issue #297, PR #299) completed and merged into feature/squad-support. Legacy selectSquadPreset/pplySquadPreset webview commands, host stubs, and corresponding AppState fields removed. Canonical preset flow now fully via SQD-019/020 listSquadPresets / initSquadFromPreset pathway.
+
+**Cross-team note:** Link (SQD-R2) consolidated 5 Squad service files under src/features/squad/services/ — service/provider/parser/reader modules now follow canonical folder layout. Trinity validated Preact webview test harness (69 tests passing, isolated from extension-host suite). All three changes landed safely.
+
+**MVP Status:** All 23 SQD PRs merged into squad/mvp-integration branch (Morpheus reviewed, 744 tests passing). Ready for Eric's merge to feature/squad-support.

@@ -236,28 +236,6 @@
 
 ---
 
-## Decision: Settings deployer marketplace bootstrap (2026-08-07)
-
-• Bootstraps chat.plugins.marketplaces with NexusInnovation/nexus-plugin-marketplace when missing.
-• Pre-seed marketplace in test setups to avoid false-negative test failures.
-
----
-
-## Decision: Test pipeline validation — auth noise and hardening plan (2026-08-07)
-
-• Test pipeline stable: 388 passing, 8 pending. Previous failure transient/non-reproducible.
-• Medium regression risk: extension-host auth logs produce blocked-dialog noise during tests.
-• Follow-up: add auth suppression test, negative-path assertions, deterministic smoke script with per-stage logs.
-
----
-
-## Decision: Marketplace identifier normalized (2026-08-26)
-
-• OFFICIAL_PLUGIN_MARKETPLACE constant changed from NexusInnovation/nexus-plugin-marketplace#main to bare NexusInnovation/nexus-plugin-marketplace.
-• Deduplication logic ensures existing #main-suffixed entries recognized as same marketplace, rewritten to bare key. Optimization: no write if unchanged.
-
----
-
 ## Decision: Squad-in-NexKit hybrid integration (2026-09-28)
 
 • **Presets:** plugins/<team>/squad/ in nexus-plugin-marketplace; authoring out of scope for NexKit.
@@ -265,6 +243,26 @@
 • **UI:** Dedicated Squad tab in webview; auto-detect updates; backup before apply.
 • **Backlog:** GitHub Issues + Azure DevOps for MVP; Jira in v2+. MVP-first phasing.
 • **Upstream:** Marketplace preferred; new repo fallback. Epics #212–#215 + 55 sub-issues created.
+
+---
+
+## Decision: Dead legacy preset path removed (2026-09-28)
+
+• `selectSquadPreset` / `applySquadPreset` webview commands and host stubs removed; superseded by SQD-019/020 dedicated preset picker.
+• Removed `squadPresetsUpdate` extension message, `squad.presets` / `squad.selectedPresetId` AppState fields, host-side placeholder handlers, and tests.
+• Dead code was user-invisible and maintained misleading message contract — removal eliminates confusion.
+• Preset picker UI continues to use `useSquadPresets` for local selection state and `presetPicker` AppState slice for discovered/rejected/unreachable sources.
+• **Do not reintroduce** unless explicit product requirement; canonical path is SQD-019/020 `initSquadFromPreset`.
+
+---
+
+## Decision: Canonical Squad service layout (2026-09-28)
+
+• Squad service implementation files consolidated under `src/features/squad/services/` (SQD-R2 cleanup).
+• **Files moved:** `squadCliService.ts`, `squadProcessRunner.ts`, `squadDetectionService.ts`, `squadProjectVersionReader.ts`, `squadDoctorParser.ts`.
+• **File layout principle:** domain types under `models/`, validation logic under `validation/`, all service/provider/parser/reader modules under `services/`.
+• Import paths updated across 6 files; all tests green, type-check clean, lints passing.
+• **Guidance:** future Squad service/provider/process-runner/parser/reader modules follow this pattern.
 
 ---
 
