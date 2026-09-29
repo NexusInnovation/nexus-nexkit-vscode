@@ -22,6 +22,9 @@ const MAX_BACKUPS = 5;
  */
 const SQUAD_ARTIFACTS: readonly string[] = [".squad", path.join(".github", "agents", "squad.agent.md")];
 
+/** Workspace-relative Squad upstream manifest rewritten by `squad upstream`. */
+const SQUAD_UPSTREAM_MANIFEST = path.join(".squad", "upstream.json");
+
 /**
  * Service for managing Nexkit template folder backups.
  * Stores backups in the user directory (via UserDirectoryService) instead of the workspace.
@@ -266,6 +269,43 @@ export class GitHubTemplateBackupService {
       if (await fileExists(source)) {
         await this._copyArtifact(source, path.join(workspaceRoot, relative));
       }
+    }
+  }
+
+  /**
+   * Back up `.squad/upstream.json` before a `squad upstream add/sync/remove`
+   * rewrites it (FR-031/FR-032). Deliberately narrower than
+   * {@link backupSquadArtifacts}: upstream git clones under
+   * `.squad/_upstream_repos/` can be large and are re-creatable via sync.
+   *
+   * @param workspaceRoot Absolute path to the workspace root.
+   * @returns Absolute path to the created backup directory, or `null` when no
+   *   manifest exists yet (nothing to back up).
+   */
+  public async backupSquadUpstreamManifest(workspaceRoot: string): Promise<string | null> {
+    const manifest = path.join(workspaceRoot, SQUAD_UPSTREAM_MANIFEST);
+    if (!(await fileExists(manifest))) {
+      return null;
+    }
+
+    const timestamp = new Date().toISOString().slice(0, 23).replace(/T/g, "_").replace(/[:.]/g, "-");
+    const backupPath = path.join(this._userDirectoryService.getUserBackupDir(), `squad-upstream-${timestamp}`);
+    await fs.promises.mkdir(backupPath, { recursive: true });
+    await this._copyArtifact(manifest, path.join(backupPath, SQUAD_UPSTREAM_MANIFEST));
+    return backupPath;
+  }
+
+  /**
+   * Restore `.squad/upstream.json` from a backup created by
+   * {@link backupSquadUpstreamManifest} (rollback after a failed CLI call).
+   *
+   * @param workspaceRoot Absolute path to the workspace root.
+   * @param backupPath Absolute path returned by {@link backupSquadUpstreamManifest}.
+   */
+  public async restoreSquadUpstreamManifest(workspaceRoot: string, backupPath: string): Promise<void> {
+    const source = path.join(backupPath, SQUAD_UPSTREAM_MANIFEST);
+    if (await fileExists(source)) {
+      await this._copyArtifact(source, path.join(workspaceRoot, SQUAD_UPSTREAM_MANIFEST));
     }
   }
 

@@ -19,12 +19,15 @@ import type {
   SquadError,
   SquadMarkdownDoc,
   SquadMarketplaceRef,
+  SquadModelConfigDocument,
+  SquadPluginAction,
   SquadPluginRef,
   SquadRosterMember,
+  SquadUpstreamRecommendations,
   SquadUpdatesResult,
   SquadUpstreamSource,
 } from "../../../squad/models";
-import type { SquadLogDocument } from "../types/squadState";
+import type { SquadLogDocument, SquadPluginActionResultState, SquadUpstreamOperationState } from "../types/squadState";
 
 /**
  * Hook result for Squad state and actions.
@@ -54,17 +57,26 @@ export interface UseSquadStateResult {
   /** Editable `.squad/routing.md`, when present. */
   routing: SquadMarkdownDoc | null;
 
+  /** Editable `.squad/model-config.json` document (FR-063), once read. */
+  modelConfig: SquadModelConfigDocument | null;
+
   /** Read-only agent histories, logs and orchestration logs. */
   logs: SquadLogDocument[];
 
   /** Upstream inheritance sources. */
   upstreams: SquadUpstreamSource[];
 
+  /** Org → team → project recommendations and upstream warnings, when evaluated. */
+  upstreamRecommendations: SquadUpstreamRecommendations | null;
+
   /** Plugin marketplaces. */
   marketplaces: SquadMarketplaceRef[];
 
   /** Installed plugins. */
   plugins: SquadPluginRef[];
+
+  /** Result of the most recent plugin action, or `null`. */
+  lastPluginAction: SquadPluginActionResultState | null;
 
   /** Latest Squad Doctor report, when produced. */
   doctor: SquadDoctorReport | null;
@@ -91,6 +103,12 @@ export interface UseSquadStateResult {
    */
   saveDoc: (kind: SquadDocKind, content: string, baseContentHash?: string | null) => void;
 
+  /**
+   * Persist edited `.squad/model-config.json` JSON (FR-063). The host validates
+   * JSON/schema, backs up, then writes; invalid content surfaces a squadError.
+   */
+  saveModelConfig: (content: string) => void;
+
   /** Run Squad Doctor diagnostics. */
   runDoctor: () => void;
 
@@ -99,6 +117,13 @@ export interface UseSquadStateResult {
 
   /** Re-read Squad plugin marketplaces and installed plugins. */
   refreshPlugins: () => void;
+
+  /**
+   * Run a plugin marketplace / lifecycle action (FR-040/FR-041/FR-044). The
+   * host confirms and backs up before any write, and prompts for the operand
+   * (marketplace source or plugin folder) when `target` is omitted.
+   */
+  runPluginAction: (action: SquadPluginAction, target?: string) => void;
 
   /**
    * Persist how the Squad CLI is invoked (FR-004): install globally via npm,
@@ -119,6 +144,21 @@ export interface UseSquadStateResult {
    * for explicit confirmation first and verifies the new version afterwards.
    */
   upgradeCli: () => void;
+
+  /** Latest upstream operation (running / succeeded / failed), or `null`. */
+  upstreamOperation: SquadUpstreamOperationState | null;
+
+  /** Re-list upstreams through `squad upstream list` (FR-032). */
+  listUpstreams: () => void;
+
+  /** Add a free local / git / export upstream via `squad upstream add` (FR-031). */
+  addUpstream: (source: string, name?: string, ref?: string) => void;
+
+  /** Sync one upstream, or all when `name` is omitted (FR-032). */
+  syncUpstream: (name?: string) => void;
+
+  /** Remove an upstream; the host asks for confirmation first (FR-032). */
+  removeUpstream: (name: string) => void;
 }
 
 /**
@@ -148,6 +188,10 @@ export function useSquadState(): UseSquadStateResult {
     );
   };
 
+  const saveModelConfig = (content: string) => {
+    messenger.sendMessage({ command: "saveSquadModelConfig", content });
+  };
+
   const runDoctor = () => {
     messenger.sendMessage({ command: "runSquadDoctor" });
   };
@@ -158,6 +202,10 @@ export function useSquadState(): UseSquadStateResult {
 
   const refreshPlugins = () => {
     messenger.sendMessage({ command: "refreshSquadPlugins" });
+  };
+
+  const runPluginAction = (action: SquadPluginAction, target?: string) => {
+    messenger.sendMessage({ command: "runSquadPluginAction", action, target });
   };
 
   const setCliInvocation = (source: SquadCliSource, cliPath?: string) => {
@@ -172,6 +220,22 @@ export function useSquadState(): UseSquadStateResult {
     messenger.sendMessage({ command: "upgradeSquadCli" });
   };
 
+  const listUpstreams = () => {
+    messenger.sendMessage({ command: "listSquadUpstreams" });
+  };
+
+  const addUpstream = (source: string, name?: string, ref?: string) => {
+    messenger.sendMessage({ command: "addSquadUpstream", source, name, ref });
+  };
+
+  const syncUpstream = (name?: string) => {
+    messenger.sendMessage({ command: "syncSquadUpstream", name });
+  };
+
+  const removeUpstream = (name: string) => {
+    messenger.sendMessage({ command: "removeSquadUpstream", name });
+  };
+
   return {
     isReady: squad.isReady,
     isLoading: squad.isLoading,
@@ -181,10 +245,13 @@ export function useSquadState(): UseSquadStateResult {
     charters: squad.charters,
     decisions: squad.decisions,
     routing: squad.routing,
+    modelConfig: squad.modelConfig,
     logs: squad.logs,
     upstreams: squad.upstreams,
+    upstreamRecommendations: squad.upstreamRecommendations,
     marketplaces: squad.marketplaces,
     plugins: squad.plugins,
+    lastPluginAction: squad.lastPluginAction,
     doctor: squad.doctor,
     updates: squad.updates,
     cliUpgrade: squad.cliUpgrade,
@@ -192,11 +259,18 @@ export function useSquadState(): UseSquadStateResult {
     refreshDetection,
     saveCharter,
     saveDoc,
+    saveModelConfig,
     runDoctor,
     checkUpdates,
     refreshPlugins,
+    runPluginAction,
     setCliInvocation,
     installCli,
     upgradeCli,
+    upstreamOperation: squad.upstreamOperation,
+    listUpstreams,
+    addUpstream,
+    syncUpstream,
+    removeUpstream,
   };
 }

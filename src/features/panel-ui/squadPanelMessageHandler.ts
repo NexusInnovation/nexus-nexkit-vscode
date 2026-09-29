@@ -8,16 +8,25 @@ import {
   SquadDocKind,
   SquadError,
   SquadMarketplaceRef,
+  SquadModelConfigDocument,
   SquadPluginRef,
   SquadResult,
   SquadRosterMember,
+  SquadUpstreamRecommendations,
   SquadUpstreamSource,
   isSquadErr,
 } from "../squad/models";
 import { SquadFileService, SquadLogKind as SquadFileLogKind } from "../squad/services/squadFileService";
 import { SquadControlledWriteOutcome } from "../squad/services/squadFileWriteService";
 import { SquadPluginService } from "../squad/services/squadPluginService";
+import { SquadUpstreamRecommendationService } from "../squad/services/squadUpstreamRecommendationService";
 import { SquadLogDocument, SquadLogKind } from "./webview/types/squadState";
+
+/** Upstream sources plus their recommendations; `null` recommendations mean "not evaluated". */
+interface SquadUpstreamSnapshot {
+  upstreams: SquadUpstreamSource[];
+  recommendations: SquadUpstreamRecommendations | null;
+}
 
 interface SquadPluginInventory {
   marketplaces: SquadMarketplaceRef[];
@@ -36,7 +45,8 @@ interface SquadPluginInventory {
  * response types; failures always surface as a structured, actionable
  * {@link SquadError} via `squadError` — never a silent success.
  *
- * Write-back flows (`saveSquadCharter`, `saveSquadDoc`) are delegated to the
+ * Write-back flows (`saveSquadCharter`, `saveSquadDoc`, `saveSquadModelConfig`)
+ * are delegated to the
  * controlled write service, which invokes BackupService before every write
  * (SQD-026, FR-006/FR-023). Squad Doctor (`runSquadDoctor`) is wired to
  * {@link SquadCliService} (SQD-021).
@@ -46,7 +56,8 @@ export class SquadPanelMessageHandler {
 
   constructor(
     private readonly _services: ServiceContainer,
-    private readonly _postMessage: (message: ExtensionMessage) => void
+    private readonly _postMessage: (message: ExtensionMessage) => void,
+    private readonly _upstreamRecommender: SquadUpstreamRecommendationService = new SquadUpstreamRecommendationService()
   ) {
     this._logger = _services.logging;
   }
@@ -71,6 +82,9 @@ export class SquadPanelMessageHandler {
         return true;
       case "saveSquadDoc":
         await this.handleSaveSquadDoc(message);
+        return true;
+      case "saveSquadModelConfig":
+        await this.handleSaveSquadModelConfig(message);
         return true;
       case "runSquadDoctor":
         await this.handleRunSquadDoctor();
@@ -102,7 +116,7 @@ export class SquadPanelMessageHandler {
 
     let firstError: SquadError | undefined;
     const fileService = this._services.squadFile;
-    const upstreams = fileService ? await this._readUpstreams(fileService, (error) => (firstError ??= error)) : [];
+    const upstreams = await this._readUpstreams(fileService, (error) => (firstError ??= error));
     const pluginInventory = await this._readPluginInventory(this._services.squadPlugins);
     if (pluginInventory.error) {
       firstError ??= pluginInventory.error;
@@ -124,6 +138,9 @@ export class SquadPanelMessageHandler {
     const routing = this._unwrap(await fileService.readRouting(), (error) => (firstError ??= error)) ?? null;
     this._postMessage({ command: "squadDocsUpdate", decisions, routing });
 
+    const modelConfig = await this._readModelConfig(fileService, (error) => (firstError ??= error));
+    this._postMessage({ command: "squadModelConfigUpdate", modelConfig });
+
     const logs = await this._collectLogs(fileService, roster, (error) => (firstError ??= error));
     this._postMessage({ command: "squadLogsUpdate", logs });
 
@@ -143,7 +160,7 @@ export class SquadPanelMessageHandler {
       }
       let upstreamError: SquadError | undefined;
       const fileService = this._services.squadFile;
-      const upstreams = fileService ? await this._readUpstreams(fileService, (error) => (upstreamError = error)) : [];
+      const upstreams = await this._readUpstreams(fileService, (error) => (upstreamError = error));
       const pluginInventory = await this._readPluginInventory(this._services.squadPlugins);
       this._emitStatus(detection.value, upstreams, pluginInventory.marketplaces, pluginInventory.plugins);
       const error = upstreamError ?? pluginInventory.error;
@@ -171,7 +188,7 @@ export class SquadPanelMessageHandler {
 
       const fileService = this._services.squadFile;
       let upstreamError: SquadError | undefined;
-      const upstreams = fileService ? await this._readUpstreams(fileService, (error) => (upstreamError = error)) : [];
+      const upstreams = await this._readUpstreams(fileService, (error) => (upstreamError = error));
       const pluginInventory = await this._readPluginInventory(this._services.squadPlugins);
       this._emitStatus(updates.value.detection, upstreams, pluginInventory.marketplaces, pluginInventory.plugins);
       this._postMessage({ command: "squadUpdatesUpdate", updates: updates.value });
@@ -249,6 +266,47 @@ export class SquadPanelMessageHandler {
   }
 
   /**
+   * Validate and save `.squad/model-config.json` (SQD-028, FR-063) through the
+   * backup-first controlled write service. JSON/schema failures surface as a
+   * `parse-failed` squadError and nothing is written.
+   */
+  private async handleSaveSquadModelConfig(
+    message: Extract<WebviewMessage, { command: "saveSquadModelConfig" }>
+  ): Promise<void> {
+    const writer = this._services.squadWrite;
+    if (!writer) {
+      this._emitNoWorkspaceWriteError();
+      return;
+    }
+
+    if (typeof message.content !== "string") {
+      this._emitError({
+        code: "file-write-failed",
+        message: "The Squad model configuration could not be saved because the edit was empty or malformed.",
+        remediation: "Reopen the model configuration editor and try saving again.",
+      });
+      return;
+    }
+
+    this._setLoading(true);
+    try {
+      const result = await writer.saveModelConfig(message.content);
+      if (isSquadErr(result)) {
+        this._emitError(result.error);
+        return;
+      }
+
+      this._postMessage({
+        command: "squadModelConfigSaved",
+        modelConfig: result.value.document,
+        result: this._toWriteSummary(result.value),
+      });
+    } finally {
+      this._setLoading(false);
+    }
+  }
+
+  /**
    * Run Squad Doctor via the CLI service (SQD-021, FR-060). Emits
    * `squadDoctorUpdate` with the parsed report on success, or a structured,
    * actionable `squadError` (CLI missing, timeout, cancellation, non-zero
@@ -307,17 +365,41 @@ export class SquadPanelMessageHandler {
 
   // --- helpers ----------------------------------------------------------
 
+  /**
+   * Read upstream sources and evaluate the org → team → project
+   * recommendations (SQD-037). A read failure yields `null` recommendations so
+   * the webview never renders an error as a clean recommendation state.
+   */
   private async _readUpstreams(
-    fileService: SquadFileService,
+    fileService: SquadFileService | undefined,
     onError: (error: SquadError) => void
-  ): Promise<SquadUpstreamSource[]> {
+  ): Promise<SquadUpstreamSnapshot> {
+    if (!fileService) {
+      return { upstreams: [], recommendations: null };
+    }
     const result = await fileService.readUpstreams();
     if (isSquadErr(result)) {
       this._logger.warn("Squad: failed to read upstream sources", result.error);
       onError(result.error);
-      return [];
+      return { upstreams: [], recommendations: null };
     }
-    return result.value;
+    return { upstreams: result.value, recommendations: this._upstreamRecommender.recommend(result.value) };
+  }
+
+  private async _readModelConfig(
+    fileService: SquadFileService,
+    onError: (error: SquadError) => void
+  ): Promise<SquadModelConfigDocument | null> {
+    const result = await fileService.readModelConfig();
+    if (isSquadErr(result)) {
+      this._logger.warn("Squad: failed to read model configuration", result.error);
+      onError(result.error);
+      return null;
+    }
+    if (result.value.validationError) {
+      onError(result.value.validationError);
+    }
+    return result.value.document;
   }
 
   private async _readPluginInventory(pluginService: SquadPluginService | undefined): Promise<SquadPluginInventory> {
@@ -420,11 +502,18 @@ export class SquadPanelMessageHandler {
 
   private _emitStatus(
     detection: SquadDetectionResult,
-    upstreams: SquadUpstreamSource[],
+    { upstreams, recommendations }: SquadUpstreamSnapshot,
     marketplaces: SquadMarketplaceRef[],
     plugins: SquadPluginRef[]
   ): void {
-    this._postMessage({ command: "squadStatusUpdate", detection, upstreams, marketplaces, plugins });
+    this._postMessage({
+      command: "squadStatusUpdate",
+      detection,
+      upstreams,
+      upstreamRecommendations: recommendations,
+      marketplaces,
+      plugins,
+    });
   }
 
   private _emitError(error: SquadError): void {

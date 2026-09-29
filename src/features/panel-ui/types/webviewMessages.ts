@@ -17,11 +17,15 @@ import type {
   SquadExportRequest,
   SquadMarkdownDoc,
   SquadMarketplaceRef,
+  SquadModelConfigDocument,
+  SquadPluginAction,
   SquadPluginRef,
   SquadPreset,
   SquadRosterMember,
+  SquadUpstreamRecommendations,
   SquadUpdatesResult,
   SquadUpstreamSource,
+  SquadUpstreamOperation,
   UnreachableSquadSource,
 } from "../../squad/models";
 import type { SquadLogDocument } from "../webview/types/squadState";
@@ -74,6 +78,8 @@ export type WebviewMessage =
   | { command: "refreshSquadDetection" }
   | { command: "checkSquadUpdates" }
   | { command: "saveSquadCharter"; agentId: string; content: string }
+  // Squad model configuration editing (SQD-028 / #243, FR-063): raw JSON, validated host-side
+  | { command: "saveSquadModelConfig"; content: string }
   | {
       command: "saveSquadDoc";
       kind: SquadDocKind;
@@ -88,12 +94,20 @@ export type WebviewMessage =
   | { command: "runSquadDoctor" }
   | { command: "exportSquad"; request?: SquadExportRequest }
   | { command: "refreshSquadPlugins" }
+  // Squad plugin marketplace + lifecycle actions (SQD-039 / #254). `target` is optional for
+  // actions whose operand the host can prompt for (marketplace source, plugin directory).
+  | { command: "runSquadPluginAction"; action: SquadPluginAction; target?: string }
   // Squad preset selection screen (SQD-019 / #234)
   | { command: "listSquadPresets" }
   | { command: "initSquadFromPreset"; presetId: string }
   // Squad CLI setup (SQD-025 / #240): choose npm-global / npx / custom path, or install the CLI
   | { command: "setSquadCliInvocation"; source: SquadCliSource; cliPath?: string }
   | { command: "installSquadCli" }
+  // Squad upstream operations via `squad upstream` (SQD-036 / #251, FR-031/FR-032)
+  | { command: "listSquadUpstreams" }
+  | { command: "addSquadUpstream"; source: string; name?: string; ref?: string }
+  | { command: "syncSquadUpstream"; name?: string }
+  | { command: "removeSquadUpstream"; name: string }
   // Squad CLI self-upgrade (SQD-031 / #246): host confirms, runs `squad upgrade --self`, then verifies
   | { command: "upgradeSquadCli" };
 
@@ -167,6 +181,13 @@ export type ExtensionMessage =
       command: "squadStatusUpdate";
       detection: SquadDetectionResult;
       upstreams: SquadUpstreamSource[];
+      /**
+       * Org → team → project recommendations and upstream warnings
+       * (SQD-037, FR-033/034/035). `null` when the upstreams could not be
+       * evaluated (e.g. `.squad/upstream.json` failed to parse) so a failure
+       * is never rendered as a clean recommendation state.
+       */
+      upstreamRecommendations: SquadUpstreamRecommendations | null;
       marketplaces: SquadMarketplaceRef[];
       plugins: SquadPluginRef[];
     }
@@ -174,6 +195,16 @@ export type ExtensionMessage =
       command: "squadPluginsUpdate";
       marketplaces: SquadMarketplaceRef[];
       plugins: SquadPluginRef[];
+    }
+  // Squad plugin action outcome (SQD-039 / #254). `ok: false` always carries an actionable error.
+  | {
+      command: "squadPluginActionResult";
+      action: SquadPluginAction;
+      target?: string;
+      ok: boolean;
+      changed?: boolean;
+      output?: string;
+      error?: SquadError;
     }
   | {
       command: "squadRosterUpdate";
@@ -212,6 +243,15 @@ export type ExtensionMessage =
       result: SquadWriteSummary;
     }
   | {
+      command: "squadModelConfigUpdate";
+      modelConfig: SquadModelConfigDocument | null;
+    }
+  | {
+      command: "squadModelConfigSaved";
+      modelConfig: SquadModelConfigDocument;
+      result: SquadWriteSummary;
+    }
+  | {
       command: "squadLoading";
       isLoading: boolean;
     }
@@ -244,4 +284,19 @@ export type ExtensionMessage =
   | {
       command: "squadCliUpgradeResult";
       upgrade: SquadCliUpgradeSummary;
+    }
+  // Squad upstream operations (SQD-036 / #251, FR-031/FR-032)
+  | {
+      command: "squadUpstreamOperationStarted";
+      operation: SquadUpstreamOperation;
+      name?: string;
+    }
+  | {
+      command: "squadUpstreamOperationResult";
+      operation: SquadUpstreamOperation;
+      name?: string;
+      ok: boolean;
+      /** Upstreams re-read from `.squad/upstream.json` after the operation (also on failure). */
+      upstreams: SquadUpstreamSource[];
+      error?: SquadError;
     };

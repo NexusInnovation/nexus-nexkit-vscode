@@ -18,6 +18,12 @@ import {
 } from "../../src/features/squad/models";
 import { SquadLogKind } from "../../src/features/squad/services/squadFileService";
 
+const VALID_MODEL_CONFIG_JSON = '{ "default": "gpt-5.6-terra", "overrides": { "link": "claude-opus-5.5" } }';
+const VALID_MODEL_CONFIG = {
+  defaultModel: "gpt-5.6-terra",
+  overrides: [{ agentId: "link", model: "claude-opus-5.5" }],
+};
+
 function detectionResult(): SquadDetectionResult {
   return {
     project: {
@@ -47,6 +53,8 @@ interface SquadStubs {
   readUpstreams: sinon.SinonStub;
   saveCharter: sinon.SinonStub;
   saveMarkdownDoc: sinon.SinonStub;
+  readModelConfig: sinon.SinonStub;
+  saveModelConfig: sinon.SinonStub;
   readMarketplaces: sinon.SinonStub;
   listInstalledPlugins: sinon.SinonStub;
   runDoctor: sinon.SinonStub;
@@ -85,6 +93,30 @@ function createStubs(): SquadStubs {
         backupPath: "backup",
         bytesWritten: 11,
         doc: { kind: SquadDocKind.Decisions, relativePath: ".squad/decisions.md", exists: true, content: "# Decisions" },
+      })
+    ),
+    readModelConfig: sinon.stub().resolves(
+      squadOk({
+        document: {
+          relativePath: ".squad/model-config.json",
+          exists: true,
+          content: VALID_MODEL_CONFIG_JSON,
+          config: VALID_MODEL_CONFIG,
+        },
+      })
+    ),
+    saveModelConfig: sinon.stub().resolves(
+      squadOk({
+        relativePath: ".squad/model-config.json",
+        created: false,
+        backupPath: "C:/abs/backup",
+        bytesWritten: VALID_MODEL_CONFIG_JSON.length,
+        document: {
+          relativePath: ".squad/model-config.json",
+          exists: true,
+          content: VALID_MODEL_CONFIG_JSON,
+          config: VALID_MODEL_CONFIG,
+        },
       })
     ),
     readMarketplaces: sinon.stub().resolves(squadOk([])),
@@ -147,12 +179,14 @@ function createServices(stubs: SquadStubs, hasWorkspace = true): ServiceContaine
         listLogs: stubs.listLogs,
         readLog: stubs.readLog,
         readUpstreams: stubs.readUpstreams,
+        readModelConfig: stubs.readModelConfig,
       }
     : undefined;
   const squadWrite = hasWorkspace
     ? {
         saveCharter: stubs.saveCharter,
         saveMarkdownDoc: stubs.saveMarkdownDoc,
+        saveModelConfig: stubs.saveModelConfig,
       }
     : undefined;
   const squadPlugins = hasWorkspace
@@ -384,9 +418,49 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
     const status = find("squadStatusUpdate");
     assert.ok(status, "status is still emitted for other Squad state");
     assert.deepStrictEqual(status.upstreams, []);
+    assert.strictEqual(status.upstreamRecommendations, null, "a failed read must not produce recommendations");
     const error = find("squadError");
     assert.strictEqual(error?.error.code, "parse-failed");
     assert.strictEqual(error?.error.remediation, "fix JSON");
+  });
+
+  test("getSquadState emits org → team → project recommendations with a sub-path warning (SQD-037)", async () => {
+    const stubs = createStubs();
+    stubs.readUpstreams.resolves(
+      squadOk([
+        { id: "platform-team", kind: "git", reference: "https://github.com/acme/squad/tree/main/team" },
+        { id: "nexus-org", kind: "local", reference: "../org" },
+      ])
+    );
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "getSquadState" });
+
+    const recommendations = find("squadStatusUpdate")?.upstreamRecommendations;
+    assert.ok(recommendations, "recommendations are evaluated from the upstream manifest");
+    assert.deepStrictEqual(
+      recommendations.levels.map((level) => [level.level, level.status]),
+      [
+        ["org", "configured"],
+        ["team", "configured"],
+        ["project", "missing"],
+      ]
+    );
+    const codes = recommendations.warnings.map((warning) => warning.code);
+    assert.ok(codes.includes("subpath-unsupported"));
+    assert.ok(codes.includes("hierarchy-order"));
+    assert.strictEqual(find("squadError"), undefined, "warnings are not errors");
+  });
+
+  test("refreshSquadDetection re-evaluates upstream recommendations", async () => {
+    const stubs = createStubs();
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "refreshSquadDetection" });
+
+    const recommendations = find("squadStatusUpdate")?.upstreamRecommendations;
+    assert.ok(recommendations);
+    assert.strictEqual(recommendations.levels.length, 3);
   });
 
   test("getSquadState without a workspace folder emits only status", async () => {
@@ -543,6 +617,104 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
     assert.deepStrictEqual(commands(), ["squadLoading", "squadError", "squadLoading"]);
     assert.strictEqual(find("squadError")?.error.code, "backup-failed");
     assert.strictEqual((posted[posted.length - 1] as { isLoading: boolean }).isLoading, false);
+  });
+
+  test("getSquadState emits squadModelConfigUpdate with the validated model config", async () => {
+    const stubs = createStubs();
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "getSquadState" });
+
+    const update = find("squadModelConfigUpdate");
+    assert.ok(update, "expected squadModelConfigUpdate");
+    assert.deepStrictEqual(update.modelConfig?.config, VALID_MODEL_CONFIG);
+    assert.strictEqual(find("squadError"), undefined);
+  });
+
+  test("getSquadState keeps an invalid model config visible and emits a parse-failed squadError", async () => {
+    const stubs = createStubs();
+    const validationError = { code: "parse-failed" as const, message: "invalid", remediation: "fix it" };
+    stubs.readModelConfig.resolves(
+      squadOk({
+        document: { relativePath: ".squad/model-config.json", exists: true, content: "{", config: null },
+        validationError,
+      })
+    );
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "getSquadState" });
+
+    const update = find("squadModelConfigUpdate");
+    assert.strictEqual(update?.modelConfig?.content, "{");
+    assert.strictEqual(update?.modelConfig?.config, null);
+    assert.strictEqual(find("squadError")?.error.code, "parse-failed");
+  });
+
+  test("getSquadState surfaces model config read failures without faking a document", async () => {
+    const stubs = createStubs();
+    stubs.readModelConfig.resolves(squadErr({ code: "file-read-failed", message: "denied", remediation: "perms" }));
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "getSquadState" });
+
+    assert.strictEqual(find("squadModelConfigUpdate")?.modelConfig, null);
+    assert.strictEqual(find("squadError")?.error.code, "file-read-failed");
+  });
+
+  test("saveSquadModelConfig emits loading and a sanitized save result", async () => {
+    const stubs = createStubs();
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "saveSquadModelConfig", content: VALID_MODEL_CONFIG_JSON });
+
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadModelConfigSaved", "squadLoading"]);
+    assert.ok(stubs.saveModelConfig.calledOnceWithExactly(VALID_MODEL_CONFIG_JSON));
+    const saved = find("squadModelConfigSaved");
+    assert.ok(saved);
+    assert.deepStrictEqual(saved.modelConfig.config, VALID_MODEL_CONFIG);
+    assert.deepStrictEqual(saved.result, {
+      relativePath: ".squad/model-config.json",
+      created: false,
+      backupCreated: true,
+      bytesWritten: VALID_MODEL_CONFIG_JSON.length,
+    });
+    assert.ok(!("backupPath" in saved.result), "absolute backup path must not reach the webview");
+  });
+
+  test("saveSquadModelConfig surfaces validation failures and never reports success", async () => {
+    const stubs = createStubs();
+    stubs.saveModelConfig.resolves(
+      squadErr({ code: "parse-failed", message: "not valid JSON", remediation: "fix the JSON" })
+    );
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "saveSquadModelConfig", content: "{" });
+
+    assert.deepStrictEqual(commands(), ["squadLoading", "squadError", "squadLoading"]);
+    assert.strictEqual(find("squadError")?.error.code, "parse-failed");
+    assert.strictEqual(find("squadModelConfigSaved"), undefined);
+  });
+
+  test("saveSquadModelConfig emits not-a-workspace when no writer is available", async () => {
+    const stubs = createStubs();
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs, false));
+
+    await handler.handleMessage({ command: "saveSquadModelConfig", content: VALID_MODEL_CONFIG_JSON });
+
+    assert.deepStrictEqual(commands(), ["squadError"]);
+    assert.strictEqual(find("squadError")?.error.code, "not-a-workspace");
+    assert.ok(stubs.saveModelConfig.notCalled);
+  });
+
+  test("saveSquadModelConfig rejects a non-string payload without writing", async () => {
+    const stubs = createStubs();
+    const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
+
+    await handler.handleMessage({ command: "saveSquadModelConfig", content: undefined as unknown as string });
+
+    assert.deepStrictEqual(commands(), ["squadError"]);
+    assert.strictEqual(find("squadError")?.error.code, "file-write-failed");
+    assert.ok(stubs.saveModelConfig.notCalled);
   });
 
   test("runSquadDoctor emits squadDoctorUpdate with the parsed report", async () => {

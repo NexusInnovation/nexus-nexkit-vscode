@@ -1,6 +1,7 @@
 import { useSquadState } from "../../hooks/useSquadState";
 import { SkeletonList } from "../atoms/Skeleton";
 import { SquadErrorNotice } from "../molecules/SquadErrorNotice";
+import { SquadUpstreamRecommendationsView } from "../molecules/SquadUpstreamRecommendationsView";
 import { SquadUpstreamKind, SquadUpstreamSource } from "../../../../squad/models";
 
 /** Human-readable labels for upstream source kinds (FR-030). */
@@ -75,7 +76,7 @@ export function SquadUpstreamList({ upstreams }: SquadUpstreamListProps) {
  * failures from the host remain visible through {@link SquadErrorNotice}.
  */
 export function SquadUpstreamSection() {
-  const { isReady, isLoading, error, upstreams } = useSquadState();
+  const { isReady, isLoading, error, upstreams, upstreamRecommendations } = useSquadState();
 
   return (
     <div class="squad-upstreams">
@@ -86,6 +87,8 @@ export function SquadUpstreamSection() {
       {isReady && isLoading && <p class="loading">Refreshing upstream sources…</p>}
 
       {isReady && <SquadUpstreamList upstreams={upstreams} />}
+
+      {isReady && upstreamRecommendations && <SquadUpstreamRecommendationsView recommendations={upstreamRecommendations} />}
     </div>
   );
 }
