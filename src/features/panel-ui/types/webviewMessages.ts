@@ -242,6 +242,9 @@ export type ExtensionMessage =
       preview: SquadImportPreview;
     }
   | {
+      command: "squadImportPreviewDiscarded";
+    }
+  | {
       command: "squadImportResult";
       import: SquadImportOutcome;
     }

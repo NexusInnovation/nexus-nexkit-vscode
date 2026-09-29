@@ -8,7 +8,7 @@
 
 import * as assert from "assert";
 import { useSquadState } from "../../../src/features/panel-ui/webview/hooks/useSquadState";
-import { SquadCliSource, SquadPluginAction } from "../../../src/features/squad/models";
+import { SquadCliSource, SquadPluginAction, SquadTransferTargetKind } from "../../../src/features/squad/models";
 import { renderWithAppState, fireEvent, cleanup } from "./harness/renderSquad";
 import { lastPostedMessage, postedMessagesOfCommand, resetVsCodeApiMock } from "./harness/vscodeApiMock";
 
@@ -25,6 +25,21 @@ function ActionProbe() {
       <button data-testid="save-doc-new" onClick={() => squad.saveDoc("routing", "# Routing", null)} />
       <button data-testid="run-doctor" onClick={() => squad.runDoctor()} />
       <button data-testid="check-updates" onClick={() => squad.checkUpdates()} />
+      <button data-testid="preview-import" onClick={() => squad.previewImport()} />
+      <button
+        data-testid="preview-import-github"
+        onClick={() =>
+          squad.previewImport({
+            source: {
+              kind: SquadTransferTargetKind.GitHub,
+              repository: "NexusInnovation/team-squad",
+              path: "exports/squad.json",
+            },
+          })
+        }
+      />
+      <button data-testid="apply-import" onClick={() => squad.applyImport("preview-1")} />
+      <button data-testid="discard-import" onClick={() => squad.discardImportPreview()} />
       <button data-testid="refresh-plugins" onClick={() => squad.refreshPlugins()} />
       <button data-testid="plugin-enable" onClick={() => squad.runPluginAction(SquadPluginAction.Enable, "team")} />
       <button data-testid="plugin-add-nexus" onClick={() => squad.runPluginAction(SquadPluginAction.AddNexusMarketplace)} />
@@ -122,6 +137,39 @@ suite("useSquadState — actions", () => {
     const view = renderWithAppState(<ActionProbe />);
     click(view, "check-updates");
     assert.deepStrictEqual(lastPostedMessage(), { command: "checkSquadUpdates" });
+  });
+
+  test("previewImport without a request lets the host pick an export file", () => {
+    const view = renderWithAppState(<ActionProbe />);
+    click(view, "preview-import");
+    assert.deepStrictEqual(lastPostedMessage(), { command: "previewSquadImport" });
+  });
+
+  test("previewImport forwards an explicit GitHub source request", () => {
+    const view = renderWithAppState(<ActionProbe />);
+    click(view, "preview-import-github");
+    assert.deepStrictEqual(lastPostedMessage(), {
+      command: "previewSquadImport",
+      request: {
+        source: {
+          kind: SquadTransferTargetKind.GitHub,
+          repository: "NexusInnovation/team-squad",
+          path: "exports/squad.json",
+        },
+      },
+    });
+  });
+
+  test("applyImport posts the selected preview id", () => {
+    const view = renderWithAppState(<ActionProbe />);
+    click(view, "apply-import");
+    assert.deepStrictEqual(lastPostedMessage(), { command: "applySquadImport", request: { previewId: "preview-1" } });
+  });
+
+  test("discardImportPreview posts the discard message", () => {
+    const view = renderWithAppState(<ActionProbe />);
+    click(view, "discard-import");
+    assert.deepStrictEqual(lastPostedMessage(), { command: "discardSquadImportPreview" });
   });
 
   test("refreshPlugins posts refreshSquadPlugins", () => {

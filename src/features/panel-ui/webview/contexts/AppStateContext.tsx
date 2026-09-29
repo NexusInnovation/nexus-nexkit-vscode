@@ -252,6 +252,41 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
           }));
           break;
 
+        case "squadImportPreview":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              importPreview: message.preview,
+              error: null,
+              isLoading: false,
+            },
+          }));
+          break;
+
+        case "squadImportPreviewDiscarded":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              importPreview: null,
+            },
+          }));
+          break;
+
+        case "squadImportResult":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              importPreview: null,
+              lastImport: message.import,
+              error: null,
+              isLoading: false,
+            },
+          }));
+          break;
+
         case "squadCharterSaved":
           setState((prev) => {
             const existingIndex = prev.squad.charters.findIndex((charter) => charter.agentId === message.charter.agentId);
@@ -412,7 +447,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
                 operation: message.operation,
                 name: message.name,
                 status: message.ok ? "succeeded" : "failed",
-                error: message.ok ? null : message.error ?? null,
+                error: message.ok ? null : (message.error ?? null),
               },
             },
           }));
@@ -440,6 +475,9 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     const unsubscribeSquadLogs = messenger.onMessage("squadLogsUpdate", handleMessage);
     const unsubscribeSquadDoctor = messenger.onMessage("squadDoctorUpdate", handleMessage);
     const unsubscribeSquadUpdates = messenger.onMessage("squadUpdatesUpdate", handleMessage);
+    const unsubscribeSquadImportPreview = messenger.onMessage("squadImportPreview", handleMessage);
+    const unsubscribeSquadImportPreviewDiscarded = messenger.onMessage("squadImportPreviewDiscarded", handleMessage);
+    const unsubscribeSquadImportResult = messenger.onMessage("squadImportResult", handleMessage);
     const unsubscribeSquadCharterSaved = messenger.onMessage("squadCharterSaved", handleMessage);
     const unsubscribeSquadDocSaved = messenger.onMessage("squadDocSaved", handleMessage);
     const unsubscribeSquadModelConfig = messenger.onMessage("squadModelConfigUpdate", handleMessage);
@@ -477,6 +515,9 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       unsubscribeSquadLogs();
       unsubscribeSquadDoctor();
       unsubscribeSquadUpdates();
+      unsubscribeSquadImportPreview();
+      unsubscribeSquadImportPreviewDiscarded();
+      unsubscribeSquadImportResult();
       unsubscribeSquadCharterSaved();
       unsubscribeSquadDocSaved();
       unsubscribeSquadModelConfig();

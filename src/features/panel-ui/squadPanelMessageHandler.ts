@@ -100,6 +100,7 @@ export class SquadPanelMessageHandler {
         return true;
       case "discardSquadImportPreview":
         this._services.squadImport.discardPreview();
+        this._postMessage({ command: "squadImportPreviewDiscarded" });
         return true;
       case "refreshSquadPlugins":
         await this.handleRefreshSquadPlugins();
@@ -279,9 +280,7 @@ export class SquadPanelMessageHandler {
    * backup-first controlled write service. JSON/schema failures surface as a
    * `parse-failed` squadError and nothing is written.
    */
-  private async handleSaveSquadModelConfig(
-    message: Extract<WebviewMessage, { command: "saveSquadModelConfig" }>
-  ): Promise<void> {
+  private async handleSaveSquadModelConfig(message: Extract<WebviewMessage, { command: "saveSquadModelConfig" }>): Promise<void> {
     const writer = this._services.squadWrite;
     if (!writer) {
       this._emitNoWorkspaceWriteError();
@@ -358,9 +357,7 @@ export class SquadPanelMessageHandler {
    * Preview a Squad import (SQD-034, FR-062). Reads and validates the export
    * and reports every path the import would write; nothing is modified.
    */
-  private async handlePreviewSquadImport(
-    message: Extract<WebviewMessage, { command: "previewSquadImport" }>
-  ): Promise<void> {
+  private async handlePreviewSquadImport(message: Extract<WebviewMessage, { command: "previewSquadImport" }>): Promise<void> {
     this._setLoading(true);
     try {
       const result = await this._services.squadImport.previewImport(message.request ?? {});
@@ -379,9 +376,7 @@ export class SquadPanelMessageHandler {
    * for explicit confirmation and backs up existing artifacts before the CLI
    * runs. The webview should request `getSquadState` after a result.
    */
-  private async handleApplySquadImport(
-    message: Extract<WebviewMessage, { command: "applySquadImport" }>
-  ): Promise<void> {
+  private async handleApplySquadImport(message: Extract<WebviewMessage, { command: "applySquadImport" }>): Promise<void> {
     if (!message.request?.previewId) {
       this._emitError({
         code: "cancelled",

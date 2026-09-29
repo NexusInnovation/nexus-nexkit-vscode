@@ -566,9 +566,7 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
       baseContentHash: "abc123",
     });
 
-    assert.ok(
-      stubs.saveMarkdownDoc.calledOnceWithExactly(SquadDocKind.Routing, "# Routing", { baseContentHash: "abc123" })
-    );
+    assert.ok(stubs.saveMarkdownDoc.calledOnceWithExactly(SquadDocKind.Routing, "# Routing", { baseContentHash: "abc123" }));
   });
 
   test("saveSquadDoc surfaces write-conflict as an actionable error, never a saved result", async () => {
@@ -694,9 +692,7 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
 
   test("saveSquadModelConfig surfaces validation failures and never reports success", async () => {
     const stubs = createStubs();
-    stubs.saveModelConfig.resolves(
-      squadErr({ code: "parse-failed", message: "not valid JSON", remediation: "fix the JSON" })
-    );
+    stubs.saveModelConfig.resolves(squadErr({ code: "parse-failed", message: "not valid JSON", remediation: "fix the JSON" }));
     const handler = new NexkitPanelMessageHandler(getWebview, createServices(stubs));
 
     await handler.handleMessage({ command: "saveSquadModelConfig", content: "{" });
@@ -915,7 +911,7 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
     await handler.handleMessage({ command: "discardSquadImportPreview" });
 
     assert.ok(stubs.discardPreview.calledOnce);
-    assert.strictEqual(posted.length, 0);
+    assert.deepStrictEqual(commands(), ["squadImportPreviewDiscarded"]);
   });
 
   test("unknown command is ignored without posting a message", async () => {
