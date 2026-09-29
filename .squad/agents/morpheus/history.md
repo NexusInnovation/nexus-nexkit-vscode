@@ -14,6 +14,14 @@
 
 ## Learnings
 
+### SQD-037 Upstream recommendations (#252, PR #307) — 2026-09-28
+
+- Pure rules (no vscode, no I/O) + constructor injection with a default instance beats a new ServiceContainer member when the service has no external deps: zero mock churn in other suites' partial containers and no conflict surface with parallel PRs (#251).
+- Contract nullability carries meaning: `upstreamRecommendations: null` = "not evaluated" so a failed manifest read never renders as a clean state; warnings ≠ errors (no `squadError`).
+- Git sub-path detection must be host-aware: `owner/repo/x` is a sub-path only on GitHub (GitLab has nested groups); browse markers only at index 2 or after `-` (GitLab) to avoid matching folders named `tree`.
+- Worktree gotcha: the shared main `node_modules` junction lacked `happy-dom`/`@testing-library/preact` → `check:types` failed on test harness; remove the junction (`cmd /c rmdir`, link only) and `pnpm install --frozen-lockfile` in the worktree. `git worktree add -b` hit a `.git/config` lock from a parallel agent — branch got created, worktree didn't; `worktree prune` + re-add fixed it.
+- Prettier `--check` is not a usable gate on existing files here (CRLF working copies + baseline drift); format only new files with `--end-of-line auto`.
+
 ### GitHub Ruleset Validation Feature
 
 **Key Decisions (2026-07-08):**
@@ -68,3 +76,5 @@ Process learning: for large parallel PR stacks, grep-based convention sweeps acr
 **Integration branch:** squad/mvp-integration (from feature/squad-support) created, validated, pushed to origin. No PR opened yet — Eric merges with merge commit to preserve per-PR authorship. Then close 23 superseded PRs as historical reference.
 
 **Next:** P2 wave 1 (#241, #245, #248, #250, #253) launching; Link leads. Integration branch represents complete Squad MVP foundation — ready for feature promotion.
+
+- 2026-09-28 (#252/PR #307, SQD-037): Parallel Squad PRs repeatedly conflict on barrel files (src/features/squad/models/index.ts, services/index.ts) — resolve by keeping both export lines. A 'Base branch was modified' / 'merge conflicts' from `gh pr merge` right after a push means another PR landed: re-fetch, re-merge feature/squad-support, re-validate, re-push, retry.
