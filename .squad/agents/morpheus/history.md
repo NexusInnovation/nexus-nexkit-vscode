@@ -1,4 +1,4 @@
-# Morpheus — History
+﻿# Morpheus — History
 
 ## Project Context
 
@@ -13,6 +13,14 @@
 **Key contact for approval:** Eric De Carufel (provides clarifications, approves architecture decisions)
 
 ## Learnings
+
+### SQD-037 Upstream recommendations (#252, PR #307) — 2026-09-28
+
+- Pure rules (no vscode, no I/O) + constructor injection with a default instance beats a new ServiceContainer member when the service has no external deps: zero mock churn in other suites' partial containers and no conflict surface with parallel PRs (#251).
+- Contract nullability carries meaning: `upstreamRecommendations: null` = "not evaluated" so a failed manifest read never renders as a clean state; warnings ≠ errors (no `squadError`).
+- Git sub-path detection must be host-aware: `owner/repo/x` is a sub-path only on GitHub (GitLab has nested groups); browse markers only at index 2 or after `-` (GitLab) to avoid matching folders named `tree`.
+- Worktree gotcha: the shared main `node_modules` junction lacked `happy-dom`/`@testing-library/preact` → `check:types` failed on test harness; remove the junction (`cmd /c rmdir`, link only) and `pnpm install --frozen-lockfile` in the worktree. `git worktree add -b` hit a `.git/config` lock from a parallel agent — branch got created, worktree didn't; `worktree prune` + re-add fixed it.
+- Prettier `--check` is not a usable gate on existing files here (CRLF working copies + baseline drift); format only new files with `--end-of-line auto`.
 
 ### GitHub Ruleset Validation Feature
 
@@ -60,3 +68,15 @@ Two non-blocking coherence findings (emergent from parallel dev, not any single 
 Strategy recommended to Eric: **Option (b)** — merge the single integration branch (conflicts resolved once, validated green, per-PR authorship preserved via merge commits) and close the 23 PRs as superseded; NOT one-by-one (GitHub would re-hit the same 3 conflicts across 23 CI runs). Decision: `.squad/decisions/inbox/morpheus-mvp-merge-train.md`.
 
 Process learning: for large parallel PR stacks, grep-based convention sweeps across the merged tree catch violations faster and more completely than reading each diff in isolation — the emergent issues (dead paths, folder drift) only surface *after* integration, so review the integrated whole, not just the parts. Decision inbox docs from Link/Ghost gave reliable design intent to verify against.
+
+## 2026-09-28 — Ralph Round 1: MVP Merge Train (Team Update)
+
+**From Scribe:** SQD MVP merge-train review (23 SQD PRs, SQD-001 through SQD-025) completed and validated green (744 tests passing, 11 pending). All PRs approved APPROVE (0 ❌). Two non-blocking follow-ups: R1 (Ghost: remove dead legacy preset path) and R2 (Link: consolidate service folder). Both landed safely in P2 phase.
+
+**Integration branch:** squad/mvp-integration (from feature/squad-support) created, validated, pushed to origin. No PR opened yet — Eric merges with merge commit to preserve per-PR authorship. Then close 23 superseded PRs as historical reference.
+
+**Next:** P2 wave 1 (#241, #245, #248, #250, #253) launching; Link leads. Integration branch represents complete Squad MVP foundation — ready for feature promotion.
+
+- 2026-09-28 (#252/PR #307, SQD-037): Parallel Squad PRs repeatedly conflict on barrel files (src/features/squad/models/index.ts, services/index.ts) — resolve by keeping both export lines. A 'Base branch was modified' / 'merge conflicts' from `gh pr merge` right after a push means another PR landed: re-fetch, re-merge feature/squad-support, re-validate, re-push, retry.
+
+- 2026-09-28 (#268, SQD-053 worktree-per-issue design, closed): The SQD-042/043 backlog contract covers detection only, with no item listing. The design adds optional listItems/getWorkState to the provider contract instead of a parallel gh/az path. `ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY` on junctioned node_modules is a safety abort: `CI=true`/`confirmModulesPurge=false` could purge the main checkout's node_modules through the junction. Refuse junctions for pnpm (the hard-link store makes a real install cheap), and always unlink links before any recursive delete. Linked worktrees share `info/exclude` (common dir) but not untracked files, so NexKit-managed untracked artifacts must be copied. `GitExcludeConfigDeployer` writes the per-worktree exclude file, which git ignores (flagged for #269). Stash is the best 'backup' before a destructive worktree cleanup because `refs/stash` survives in the common dir. The `-c core.longpaths=true` per-command flag avoids persistent config changes. Decision: `.squad/decisions/inbox/morpheus-268-worktree-design.md`.

@@ -29,4 +29,24 @@ export interface WebviewPersistentState {
   repositoryFilters: string[];
   activeTab?: string;
   lastSeenProfileCount?: number;
+  /**
+   * Unsaved Squad editor drafts keyed by edit target (SQD-029), so collapsing a
+   * section, switching tabs or reloading the panel never loses user edits.
+   */
+  squadDrafts?: Record<string, SquadEditorDraft>;
+}
+
+/** A persisted, unsaved Squad editor draft (SQD-029). */
+export interface SquadEditorDraft {
+  /** Current (possibly edited) text in the editor. */
+  draft: string;
+
+  /** File content when editing started — the baseline for the dirty state. */
+  baseContent: string;
+
+  /**
+   * `contentHash` of the document when editing started (governance docs only),
+   * echoed as `baseContentHash` so the host can detect a write conflict.
+   */
+  baseContentHash?: string | null;
 }

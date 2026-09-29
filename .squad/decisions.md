@@ -236,25 +236,222 @@
 
 ---
 
-## Decision: Settings deployer marketplace bootstrap (2026-08-07)
+## Decision: Squad controlled writes contract (SQD-026, 2026-09-28)
 
-• Bootstraps chat.plugins.marketplaces with NexusInnovation/nexus-plugin-marketplace when missing.
-• Pre-seed marketplace in test setups to avoid false-negative test failures.
+Link: PR #305, merged into `feature/squad-support`
 
----
-
-## Decision: Test pipeline validation — auth noise and hardening plan (2026-08-07)
-
-• Test pipeline stable: 388 passing, 8 pending. Previous failure transient/non-reproducible.
-• Medium regression risk: extension-host auth logs produce blocked-dialog noise during tests.
-• Follow-up: add auth suppression test, negative-path assertions, deterministic smoke script with per-stage logs.
+• Keep write operations in `src/features/squad/services/squadFileWriteService.ts`, separate from read-only `SquadFileService`.
+• Public write entry points: `saveCharter`, `saveMarkdownDoc`, and the reusable `saveControlledFile` allowlist contract.
+• Every controlled write invokes `GitHubTemplateBackupService.backupSquadArtifacts()` before writing; backup failure returns `backup-failed` and aborts without writing.
+• The host handles `saveSquadCharter` and `saveSquadDoc` by emitting explicit success messages (`squadCharterSaved`, `squadDocSaved`) or `squadError`; there is no success-shaped fallback.
+• Webview success summaries intentionally expose only relative path, created flag, backup-created boolean, and byte count; absolute backup paths remain host-side.
 
 ---
 
-## Decision: Marketplace identifier normalized (2026-08-26)
+## Decision: Governance-doc saves use content-hash optimistic concurrency (SQD-027, 2026-09-28)
 
-• OFFICIAL_PLUGIN_MARKETPLACE constant changed from NexusInnovation/nexus-plugin-marketplace#main to bare NexusInnovation/nexus-plugin-marketplace.
-• Deduplication logic ensures existing #main-suffixed entries recognized as same marketplace, rewritten to bare key. Optimization: no write if unchanged.
+Link: PR #306, merged into `feature/squad-support`
+
+• `SquadMarkdownDoc` carries optional `contentHash` (SHA-256 hex of full on-disk bytes; `null` when absent) and `truncated`.
+• `saveSquadDoc` accepts optional `baseContentHash`. `SquadFileWriteService.saveMarkdownDoc` rejects mismatches with the new `write-conflict` error code **before** backup/write (string = must match, `null` = must still be absent, omitted = force overwrite).
+• Docs (on disk or new content) larger than `SQUAD_MAX_READ_BYTES` (256 KB) are not writable from the panel — remediation points to the VS Code editor.
+• Existing CRLF line endings are preserved on save.
+
+---
+
+## Decision: Squad update detection contract (SQD-030, 2026-09-28)
+
+Link: #245, PR #308
+
+Implemented update detection as a reusable service/contract layer, not as upgrade execution.
+
+• Added `SquadUpdateService` under `src/features/squad/services/`.
+• Added serializable update models in `src/features/squad/models/squadUpdates.ts`.
+• `checkUpdates()` fetches latest Squad package version from npm, enriches detection freshness, and returns CLI/project update candidates.
+• CLI update candidate maps to `upgrade-self`, requires confirmation, and does not require a workspace backup.
+• Project update candidate maps to `upgrade`, requires confirmation, and requires a backup.
+• `0.0.0-source` project versions remain non-comparable/unknown.
+• Host/webview message contract: `checkSquadUpdates` -> `squadUpdatesUpdate`.
+
+---
+
+## Decision: CLI self-upgrade confirmed contract (SQD-031, 2026-09-28)
+
+Link: #246, PR #312
+
+• CLI self-upgrade is a separate confirmed write-like operation, not a side effect of update detection. `SquadCliUpgradeService` must first reuse `SquadUpdateService` to prove a CLI update is available, ask for explicit confirmation, run the allowlisted `squad upgrade --self` command, then re-run detection and fail if the installed version cannot be verified as changed/current.
+• The webview command/result pair is `upgradeSquadCli` -> `squadCliUpgradeResult`; failures use actionable `squadError` instead of success-shaped fallback state.
+• Service/container conflicts with parallel Squad P2 work are additive: keep `squadCliUpgrade` alongside `squadUpdates`, `squadExport`, `squadUpstream`, `squadPlugins`, and `squadPluginActions`.
+
+---
+
+## Decision: Squad export contract (SQD-033, 2026-09-28)
+
+Link: #248, PR #303
+
+Squad export uses a reusable transfer contract in `src/features/squad/models/squadTransfer.ts`:
+
+• `SquadTransferTargetKind.File` with serialisable `file:` URI strings.
+• `SquadTransferTargetKind.GitHub` with `owner/repo`, optional `ref`, optional `path`.
+• `SquadExportRequest` and `SquadExportOutcome` cross the webview boundary through `exportSquad` and `squadExportResult`.
+• The host service (`SquadExportService`) owns file-picker prompting and all CLI execution through the allowlisted `SquadCliService`; errors stay as `SquadResult` failures and route to visible `squadError`.
+
+---
+
+## Decision: Squad import preview and backup contract (SQD-034, 2026-09-28)
+
+Link: #249, PR #314
+
+NexKit owns a two-step Squad import flow instead of directly delegating an arbitrary source to the CLI.
+
+• `SquadImportService.previewImport` reads local file or GitHub contents API sources, validates the export manifest, computes every file that will be created/overwritten, and stages the exact manifest content in memory.
+• `applyImport` accepts only a staged preview id for the same workspace, re-plans before writing, prompts for confirmation, invokes `GitHubTemplateBackupService.backupWorkspaceArtifacts()` for touched Squad/skill paths, then runs the allowlisted `SquadCliCommand.Import` with a private temp file and `--force`.
+• CLI failures are not success-shaped: when a backup exists NexKit restores from it; when no backup was needed NexKit removes touched paths. Rollback failures surface actionable remediation pointing at the latest `squad-import-*` backup.
+• Webview import messages now round-trip through centralized app state: `squadImportPreview` stores the staged preview, `squadImportResult` records the successful outcome and clears the preview, and `squadImportPreviewDiscarded` clears abandoned previews.
+
+---
+
+## Decision: Squad upstream.json display (SQD-035, 2026-09-28)
+
+Link: #250, PR #301
+
+• NexKit reads `.squad/upstream.json` through `SquadFileService.readUpstreams()` and displays upstream ids, source types, references and last sync timestamps in a dedicated read-only Squad panel section. The status header keeps only the upstream count.
+• Missing `.squad/upstream.json` is a valid empty upstream list because upstream inheritance is optional. If the manifest exists, invalid JSON, unsupported root shapes, non-object entries, missing id/reference fields, or unsupported source kinds return a structured `parse-failed` `SquadError`; the host forwards that error with `squadError` so the UI never treats a bad manifest as an empty success.
+
+---
+
+## Decision: Upstream recommendations as pure rules service (SQD-037, 2026-09-28)
+
+Morpheus: #252, PR #307
+
+### Decisions
+1. **Pure, stateless `SquadUpstreamRecommendationService`** (`src/features/squad/services/`). No `vscode` imports, no I/O, no clock; output is JSON-serialisable. Rules are unit-tested directly.
+2. **Constructor injection with default instance** into `SquadPanelMessageHandler` rather than a new `ServiceContainer` member.
+3. **Contract**: `squadStatusUpdate.upstreamRecommendations: SquadUpstreamRecommendations | null`. `null` = not evaluated. Failed reads never render clean recommendation; `squadError` is the visible signal. Warnings are **not** errors.
+4. **Levels** always returned in org → team → project order. Classification by whole-token keyword match on source id; ambiguous/unmatched sources listed as `unclassifiedSourceIds`.
+5. **Reserved folders**: `squad/upstreams/<level>` in the marketplace (configurable via options). Viable way to consume one level is JSON export from folder or dedicated repo per level.
+6. **Warning codes**: `subpath-unsupported`, `full-clone`, `hierarchy-order`, `reserved-folder-limitation`. Ordered: per-source → hierarchy → notice.
+
+---
+
+## Decision: Squad plugin inventory contract (SQD-038, 2026-09-28)
+
+Link: #253
+
+`SquadPluginService` is the reusable read-only plugin inventory seam. It delegates marketplace file reads to `SquadFileService` and installed plugin listing to `SquadCliService` using the allowlisted `plugin list --json` command. Webview state now carries both `marketplaces` and `plugins`, with `squadPluginsUpdate` available for plugin-only refreshes and `squadStatusUpdate` carrying the same inventory during full Squad refreshes.
+
+Failures remain visible and actionable: malformed marketplace JSON returns `parse-failed`; CLI/list/JSON failures return `cli-not-found` or `plugin-list-failed` and are emitted as `squadError` after partial inventory updates.
+
+---
+
+## Decision: GitHub backlog detection contract (SQD-042, 2026-09-28)
+
+Link: #257, PR #318
+
+Backlog detection uses a provider-agnostic orchestration service plus platform-specific providers:
+
+• `SquadBacklogService` owns workspace resolution, `.squad/config.json` parsing, git remote discovery, provider selection, timestamping and the success/not-detected/error contract.
+• `SquadBacklogProvider` owns platform verification only. GitHub is implemented by `GitHubBacklogProvider`; ADO should add a provider rather than changing service selection semantics.
+• Explicit `.squad/config.json` `platform` wins over git remote inference. Platform aliases normalize to provider ids (`github`, `gh`, `azure-devops`, `ado`, etc.).
+
+Error semantics: No workspace is an error (`not-a-workspace`). Malformed `.squad/config.json`, unsupported platforms, tool/auth/rate-limit/provider failures are actionable `SquadResult` errors. No git repository, no remotes, or remotes that do not match a registered provider are valid `not-detected` states with remediation.
+
+---
+
+## Decision: Squad simulated CLI tests (SQD-041, 2026-09-28)
+
+Trinity: #256, PR #313
+
+SQD-041 uses a shared `FakeSquadCli` test helper that implements `SquadProcessRunner` instead of mocking higher-level feature services or invoking any real CLI process. The tests drive the real `SquadCliService` and the current update, upstream, plugin action, and plugin listing services through that seam.
+
+• Keeps tests behavioral and contract-focused: command argv, timeout/cancel behavior, allowlist enforcement, backups/confirmation sequencing, and visible error contracts are all verified where users experience them.
+• Satisfies the "no real CLI/process execution" constraint while still failing on relevant regressions.
+• Pins the reviewed Squad CLI command/flag allowlist so future command-surface changes require explicit test/security review.
+• PR #313 covers FR-005, FR-031, FR-032 and FR-044 with simulated success, non-zero exit, timeout, missing CLI, cancellation, invalid input and parse-failure paths. Surfaced and fixed one hardening issue: prototype-key command ids now return the normal unknown-command `cli-execution-failed` result rather than throwing.
+
+---
+
+## Decision: Squad watch lifecycle contract (SQD-045, 2026-09-28)
+
+Link: #260, PR #319
+
+`squad watch` is owned by a new extension-host `SquadWatchService` registered in `ServiceContainer` and added to `context.subscriptions`. The service starts no work during activation; it only spawns the allowlisted `SquadCliCommand.Watch` command after an explicit command/webview request, and `dispose()` force-kills the process handle so shutdown does not orphan the long-running CLI.
+
+Shared state contract: `SquadWatchStatus.state`: `stopped | starting | running | stopping | failed`. `SquadWatchStatus.error`: `SquadError | null`; non-null only when `state === "failed"`. `SquadWatchSnapshot`: `{ status, logs }`. `SquadWatchLogEntry`: `{ seq, timestamp, stream, text }`, where `stream` is `stdout | stderr | system`. Logs are ANSI-stripped, line-based, capped to 500 retained lines, each line capped to 2000 characters; `droppedLogLines` reports evictions.
+
+Webview → host: `getSquadWatchStatus`, `startSquadWatch` with optional `{ intervalMinutes }`, `stopSquadWatch` with optional `{ force }`. Host → webview: `squadWatchUpdate` with `{ snapshot: SquadWatchSnapshot }`, `squadError` on rejected starts/stops.
+
+Settings: `nexkit.squad.watch.defaultIntervalMinutes` (`application`, default `10`, min `1`, max `1440`). Commands: `nexus-nexkit-vscode.squad.startWatch`, `nexus-nexkit-vscode.squad.stopWatch`.
+
+Error semantics: Starting watch requires an open workspace; otherwise returns `not-a-workspace`. Invalid intervals return `invalid-input`. Duplicate starts return `watch-already-running`. Stops without a process return `watch-not-running`. Spawn failures map to `cli-not-found` or `watch-failed`. Unexpected exits move status to `failed`.
+
+---
+
+## Decision: Squad editor UX — charter/decisions/routing (SQD-029, 2026-09-28)
+
+Ghost: #244, PR #315
+
+SQD-029 adds Preact UI for editing Squad agent charters plus `.squad/decisions.md` and `.squad/routing.md`, consuming Link's SQD-026 controlled-write and SQD-027 content-hash contracts.
+
+• Keep editor side effects in hooks: `useSquadEditor` owns draft/save/cancel lifecycle and delegates writes through `useSquadState`; components remain presentational.
+• Keep host-to-webview write replies centralized in `AppStateContext.tsx`; successful `squadCharterSaved` / `squadDocSaved` and write-path `squadError` messages update `SquadState.lastWrite` with a monotonic sequence.
+• Governance editors pass the captured `baseContentHash`; truncated documents are read-only, absent governance docs can be created with `baseContentHash: null`, and write conflicts keep the draft with an explicit reload action.
+• Save notices expose only the backend write summary (relative path, created, backup-created, bytes written) and never display backup locations.
+
+---
+
+## Decision: Squad upstreams/plugins webview UI (SQD-040, 2026-09-28)
+
+Ghost: #255, PR #317
+
+SQD-040 consumes the merged backend contracts from SQD-036 and SQD-039 for upstream CLI operations and plugin marketplace/lifecycle actions.
+
+The webview keeps upstreams and plugins as normal Squad AppState data and exposes UI behavior through selector/action hooks:
+
+• `useSquadUpstreams` owns add/list/sync/remove dispatch and maps `squadUpstreamOperation*` state into visible feedback.
+• `useSquadPlugins` owns refresh/action dispatch and maps `squadPluginActionResult` plus plugin-scoped `squadError` into visible inventory/action feedback.
+• `SquadOperationFeedbackView` is shared by both areas so failures render as actionable alerts, cancellations render as neutral status, and success is never shown for failed operations.
+• Plugin write actions rely on the host contract for confirmation and `.squad/` backup; the UI labels/tooltips explicitly say write actions ask for confirmation and back up `.squad/`.
+
+Consequences: Components stay presentational. Webview component coverage lives in the happy-dom runner; future UI changes should run `node .\out\test\runWebviewTest.js` in addition to `test:unit`. Plugin-scoped errors are filtered out of the upstream hook.
+
+---
+
+## Decision: Squad ceremony quick actions (SQD-047, 2026-09-28)
+
+Ghost: #262, PR #316
+
+Issue #262 / SQD-047 implements PRD FR-055: NexKit offers quick ceremony actions from `.squad/ceremonies.md` in the Squad webview.
+
+• Parse `.squad/ceremonies.md` read-only through `SquadFileService`, with a dedicated ceremony parser/service and structured `SquadResult` failures.
+• Keep the webview launch payload to `{ ceremonyId }`; the extension host re-reads the ceremonies file immediately before launch and rejects missing or disabled ceremonies.
+• Surface ceremonies in a new Squad "Ceremonies" collapsible section with explicit missing-file, empty, truncated, disabled, loading, success, and actionable error states.
+• Launch ceremonies by opening Copilot Chat on the `Squad` mode using the ceremony metadata and agenda from the workspace file.
+
+---
+
+## Decision: Squad profile configuration contract (SQD-048, 2026-09-28)
+
+Link: #263, PR pending
+
+Add an optional `squad` section to each saved NexKit `Profile`.
+
+```ts
+interface SquadProfileConfig {
+  presetId?: string;
+  upstreams?: SquadUpstreamSource[];
+  pluginMarketplaces?: SquadMarketplaceRef[];
+  plugins?: SquadPluginRef[];
+  modelConfig?: SquadModelConfig;
+  ralph?: SquadRalphPreferences;
+}
+```
+
+`SquadProfileService.captureCurrentConfig()` returns `undefined` when no Squad marker is present. When Squad is present, it captures `.squad/config.json` fields, `.squad/upstream.json`, `.squad/plugins/marketplaces.json`, installed plugin inventory from `squad plugin list --json`, and `.squad/model-config.json`.
+
+Applying a profile writes the file-backed portion after `BackupService.backupSquadArtifacts()`.
+
+Error semantics: Malformed or unreadable Squad files return structured `SquadResult` failures and cause profile save/apply to surface an error instead of saving or applying a partial success-shaped Squad profile.
 
 ---
 
@@ -268,75 +465,29 @@
 
 ---
 
+## Decision: Dead legacy preset path removed (2026-09-28)
+
+• `selectSquadPreset` / `applySquadPreset` webview commands and host stubs removed; superseded by SQD-019/020 dedicated preset picker.
+• Removed `squadPresetsUpdate` extension message, `squad.presets` / `squad.selectedPresetId` AppState fields, host-side placeholder handlers, and tests.
+• Dead code was user-invisible and maintained misleading message contract — removal eliminates confusion.
+• Preset picker UI continues to use `useSquadPresets` for local selection state and `presetPicker` AppState slice for discovered/rejected/unreachable sources.
+• **Do not reintroduce** unless explicit product requirement; canonical path is SQD-019/020 `initSquadFromPreset`.
+
+---
+
+## Decision: Canonical Squad service layout (2026-09-28)
+
+• Squad service implementation files consolidated under `src/features/squad/services/` (SQD-R2 cleanup).
+• **Files moved:** `squadCliService.ts`, `squadProcessRunner.ts`, `squadDetectionService.ts`, `squadProjectVersionReader.ts`, `squadDoctorParser.ts`.
+• **File layout principle:** domain types under `models/`, validation logic under `validation/`, all service/provider/parser/reader modules under `services/`.
+• Import paths updated across 6 files; all tests green, type-check clean, lints passing.
+• **Guidance:** future Squad service/provider/process-runner/parser/reader modules follow this pattern.
+
+---
+
 # Texte intégral — Entrées résumées (2026-09-28)
 
 Below: full original text of summarized decisions for future reference.
-
----
-
-## Decision: Align unchanged-settings test with marketplace bootstrap behavior
-
-**Date:** 2026-08-07
-**Agent:** Link
-**Classification:** Project-specific — settings deployer tests
-
-### Context
-
-An unchanged-settings unit test in `RecommendedSettingsConfigDeployer` failed because it asserted no writes while the deployer intentionally bootstraps `chat.plugins.marketplaces` when missing.
-
-### Decision
-
-Pre-seed `plugins.marketplaces` with `NexusInnovation/nexus-plugin-marketplace#main` in the unchanged-settings test setup so the assertion validates only true regressions.
-
-### Why
-
-The deployer's bootstrap write is expected behavior, and the prior setup produced a false negative.
-
----
-
-## Decision: Test triage outcome and regression-risk posture after transient failure
-
-**Date:** 2026-08-07
-**Agent:** Trinity
-**Classification:** Project-specific — test pipeline validation
-
-### Context
-
-A prior run reported `npm run test` exit code `1`. Trinity revalidated the full pipeline.
-
-### Decision
-
-Current status is stable for this run: `npm run test-compile` pass, `npm run lint` pass, `npm test` pass (`388 passing`, `8 pending`, exit `0`). The previous failure is treated as transient/non-reproducible for now.
-
-### Regression risk
-
-Medium. Extension-host auth-path logs still produce repeated blocked-dialog noise during tests, which can obscure real auth regressions.
-
-### Follow-up hardening
-
-1. Add a focused extension-host test that explicitly validates auth prompt suppression in test mode.
-2. Add negative-path assertions around auth session retrieval to validate expected failures.
-3. Add a deterministic smoke script (compile + lint + unit + extension-host) that preserves per-stage logs for flaky-run diagnosis.
-
-### Why
-
-QA classification separates transient environment noise from actionable product/test regressions while documenting concrete hardening work.
-
----
-
-## Decision: Marketplace identifier normalized, legacy suffix deduped
-
-**Date:** 2026-08-26
-**Agent:** Link
-**Classification:** Project-specific — NexKit marketplace settings handling
-
-### Context
-
-`OFFICIAL_PLUGIN_MARKETPLACE` in `recommendedSettingsConfigDeployer.ts` changed from `NexusInnovation/nexus-plugin-marketplace#main` to the bare `NexusInnovation/nexus-plugin-marketplace`. The `chat.plugins.marketplaces` ensure-first logic now normalizes on a `#ref`-stripped key, so any existing `#main`-suffixed entry is recognized as the same marketplace, deduped against the bare key, and rewritten to the bare key (first in the list). The "skip write if unchanged" optimization still applies.
-
-### Why
-
-The `#main` suffix was unnecessary and caused a mismatch between the constant and a bare-key entry a user might already have, risking duplicate marketplace entries.
 
 ---
 
@@ -517,3 +668,258 @@ History records are permanent context for the squad. Accidental loss (via bugs, 
 
 - **Pre-Scribe checklist:** Scribe must read this decision before starting any file consolidation.
 - **Coordinator audit:** After each Scribe session, Coordinator verifies that all removals have corresponding archive grows.
+
+---
+
+# Decision — Squad MVP merge-train review & integration (Morpheus, 2026-09-28)
+
+**Reviewer gate:** Morpheus reviews SQD-001..SQD-025 (23 PRs targeting eature/squad-support) in dependency order.
+**Scope:** #271–#294. Integration branch: squad/mvp-integration (from origin/feature/squad-support), pushed to origin.
+
+## Merge order (topological, dependency-valid)
+
+271 → 275 → 274 → 277 → 276 → 273 → 278 → 280 → 281 → 283 → 279 → 284 → 282 → 285 → 286 → 287 → 289 → 288 → 291 → 290 → 293 → 292 → 294
+
+All 23 merged as real merge commits (history/attribution preserved). 20 merged clean; 3 conflicts resolved.
+
+## Verdict
+
+**Result: 23/23 ✅ APPROVE, 0 ❌.** No real bugs, no convention violations, no security defects.
+
+**Verification (integration branch):**
+- pnpm run check:types ✅
+- pnpm run lint ✅ (0 errors)
+- pnpm run test-compile ✅
+- **pnpm test → 744 passing / 11 pending / 0 failing (exit 0)**
+- pnpm run compile (extension + webview bundle) ✅
+
+## Required revisions (post-MVP tickets)
+
+1. **R1 (Dead legacy preset path):** After merging #293/#294, SQD-007 selectPreset/pplyPreset hook actions and host stubs are invoked by no component — superseded by dedicated presetPicker slice. Remove to avoid two parallel preset mechanisms. **Assign:** Ghost (webview) + Link (host).
+
+2. **R2 (Service folder inconsistency):** SQD-005 files sit at src/features/squad/ root while SQD-011/016/017/018/020 use src/features/squad/services/. Consolidate under services/. **Assign:** Link.
+
+## Merge strategy recommendation
+
+**Merge squad/mvp-integration as a single integration PR into eature/squad-support.** Conflicts already resolved once and validated green. Single atomic, CI-verified state. Per-PR history/attribution preserved via real merge commits. Then close #271–#294 as superseded.
+
+---
+
+# Decision: Preact webview DOM test harness (Trinity, 2026-09-28)
+
+**Requested by:** Eric De Carufel (approved adding @testing-library/preact + happy-dom as devDependencies)
+**Branch / PR:** squad/preact-test-harness → PR #295. Builds on squad/mvp-integration — merge that first.
+
+## Decision
+
+Adopt a **separate Node + happy-dom Mocha runner** for Preact webview DOM tests, kept isolated from the VS Code extension-host suite.
+
+### What was added
+- **devDependencies:** @testing-library/preact@3.2.4, happy-dom@20.14.5.
+- **Runner:** 	est/runWebviewTest.ts — plain Node + Mocha, runs 	est/suite/webview/**/*.test.js. Registers the happy-dom environment and a mocked cquireVsCodeApi bridge.
+- **Harness:** 	est/suite/webview/harness/ — domEnvironment.ts, scodeApiMock.ts, enderSquad.tsx (enderWithAppState, enderWithProvider).
+- **Scripts:** pnpm test:webview; pnpm test now runs the Electron runner **and** the webview runner.
+
+### Isolation rules (must keep)
+- The Electron host runner globs with ignore: "suite/webview/**" — DOM tests must never load inside the extension host.
+- Webview tests live under 	est/suite/webview/**.
+- 	sconfig.json gained skipLibCheck: true to avoid import semantics drift.
+
+### Conventions for future webview tests
+- Drive state either via enderWithAppState(ui, squadOverrides) or by dispatching extension messages through the real provider.
+- Assert host interactions via the mocked bridge (lastPostedMessage, postedMessagesOfCommand).
+- Keep the charter security invariant: workspace markdown renders as escaped text in <pre>.
+
+**Bugs found in product code:** none.
+
+---
+
+# Decision: Scribe history/archive safety rule (HARD)
+
+**Date:** 2026-09-28
+**Incident:** A prior Scribe run dropped ~17KB of Ghost's and ~22KB of Trinity's history without archiving.
+**Mitigation:** Coordinator restored snapshots from VS Code local history.
+
+## Rule (HARD)
+
+When the Scribe removes or summarizes content from history.md or decisions.md:
+
+1. **Archive first:** APPEND the full removed text verbatim to the matching *-archive.md file.
+2. **Verify size:** Measure the archive file size before and after the append. Confirm that the archive grew by at least the number of bytes removed.
+3. **No summarization on this run (2026-09-28 Scribe pass).**
+
+## Rationale
+
+History records are permanent context. Accidental loss breaks the squad's institutional memory. Archiving before removal creates a deterministic checkpoint; verifying size growth ensures the archive actually received the content.
+
+---
+
+# Decision: P3/P4 Squad dependency order (Morpheus, 2026-09-28)
+
+## Can start now in parallel
+
+1. #263 — SQD-048 profiles Squad config (Link): dependencies #216, #232, #250, and #253 are closed.
+2. #266 — SQD-051 personal squad scenario (Link): dependencies #220 and #226 are closed.
+
+## Blocked
+
+1. #258 — SQD-043 ADO backlog detection (Link): blocked by #257.
+2. #259 — SQD-044 backlog status UI (Ghost): blocked by #257 and #258.
+3. #261 — SQD-046 squad watch health/logs UI (Ghost): blocked by #260.
+4. #264 — SQD-049 anonymous Squad telemetry (Link): blocked by #263.
+5. #265 — SQD-050 profile integration tests (Trinity): blocked by #263.
+6. #267 — SQD-052 consult mode scenario (Link): blocked by #266.
+7. #268 — SQD-053 worktree-per-issue design (Morpheus): blocked by #257 and #258.
+8. #269 — SQD-054 worktree-per-issue implementation (Link): blocked by #268.
+9. #270 — SQD-055 CI/lint guard for Squad tests (Tank): blocked by #256 and #265.
+
+## Architectural ordering notes
+
+- Keep the backlog lane linear until the read models exist: #257 -> #258 -> #259, then #268 can design worktree-per-issue.
+- Keep the watch lane linear: #260 -> #261.
+- Profiles can move now: #263 should go before telemetry/tests, then #264 and #265 can run in parallel.
+- Personal/consult can move now independently: #266 first, then #267.
+- CI guard #270 should stay last.
+
+---
+
+# Decision: User directive — Claude Haiku fallback (2026-09-28)
+
+**By:** Eric De Carufel (via Copilot, 2026-09-28T16:34:37-04:00)
+**Classification:** Generic — team subagent model preference
+
+Par défaut, les sous-agents utilisent le modèle claude-opus-5.5. En cas d'indisponibilité, rester dans la famille Claude (fallback Claude uniquement).
+
+Rationale: User request — captured for team memory and squad extraction.
+
+---
+
+# Decision: SQD-043 Azure DevOps backlog detection (Link, 2026-09-28)
+
+Issue: #258 / PR: #322
+
+Azure DevOps backlog support remains a provider added beside GitHub, not a change to `SquadBacklogService` orchestration:
+
+- `AzureDevOpsBacklogProvider` implements `SquadBacklogProvider` and is registered after `GitHubBacklogProvider`.
+- The shared backlog contract gains only optional provider metadata: `SquadBacklogInfo.azureDevOps?: SquadAzureDevOpsBacklogRef`.
+- The detected/not-detected/error envelope and `itemCounts` contract are unchanged for Ghost/#259.
+
+## ADO configuration contract
+
+Configured ADO detection requires `.squad/config.json`:
+
+```json
+{
+  "platform": "azure-devops",
+  "ado": {
+    "org": "contoso",
+    "project": "Nexkit",
+    "defaultWorkItemType": "User Story",
+    "areaPath": "Nexkit\\Squad",
+    "iterationPath": "Nexkit\\Sprint 1"
+  }
+}
+```
+
+- `ado.org` may be an organization name or an organization URL such as `https://dev.azure.com/contoso`.
+- `ado.project` is required when `platform` explicitly selects Azure DevOps.
+- `defaultWorkItemType`, `areaPath`, and `iterationPath` are optional metadata; area/iteration paths also scope count queries.
+- When no platform is configured, the provider can infer org/project from Azure DevOps git remotes.
+
+## Error semantics
+
+- Missing or malformed explicit ADO config returns `parse-failed`, never a success state.
+- Missing Azure CLI or Azure DevOps extension returns `backlog-tool-not-found`.
+- Azure CLI authentication/access failures return `backlog-auth-required`.
+- Azure DevOps throttling returns `backlog-rate-limited`.
+- Missing/inaccessible projects and transient `az boards query` failures return `backlog-unavailable`.
+
+## Verification approach
+
+The provider uses read-only `az boards query --organization <url> --project <project> --wiql <query> --output json` calls. Tests stub every process call through `SquadProcessRunner` and cover config-driven detection, remote inference, query shaping, and failure mapping.
+
+---
+
+# Decision: SQD-049 Anonymous Squad telemetry (Link, 2026-09-28)
+
+PR: #325
+Issue: #264
+Date: 2026-09-28
+
+Decision: centralize FR-066 telemetry behind `SquadTelemetryService` instead of calling `TelemetryService.trackEvent` directly from Squad feature handlers.
+
+Rationale:
+- The service enforces the extra `nexkit.squad.telemetry.enabled` opt-out in addition to VS Code global telemetry and `nexkit.telemetry.enabled`.
+- Events use one fixed event name, `squad.feature.used`, with feature/action/outcome/error-code classification and safe counts/booleans only.
+- Property keys are allowlisted and string values are redacted unless they match a short machine-readable token pattern, preventing file names, paths, workspace names, repo names, agent names, content, or secrets from being forwarded.
+- `TelemetryService` common properties were made anonymous by removing the legacy username/IP collection; otherwise Squad event properties could be sanitized while shared telemetry context still carried PII.
+
+Integration notes:
+- Host-side Squad handlers now track only at centralized result boundaries: state/detection/update refresh, write saves, doctor/export, preset list/init, upstream operations, plugin actions, and CLI setup.
+- Do not pass preset IDs, agent IDs, plugin IDs, marketplace names, upstream names, custom CLI paths, repository references, local paths, stdout, stderr, document content, or workspace names into telemetry.
+- Tests live in `test/suite/squadTelemetryService.test.ts` and assert opt-out behavior plus PII/path/content sanitization.
+
+---
+
+# Decision: SQD-052 Consult mode implementation (Link, 2026-09-28)
+
+Issue: #267
+PR: #326
+Stacked on: #321
+
+Decision:
+- Model consult mode as the workspace half of FR-064, separate from but gated by SQD-051 personal Squad detection.
+- Detect consult mode by reading `.squad/config.json` and requiring a boolean `"consult"` property; missing config or missing property is inactive, malformed JSON/shape is a visible `parse-failed` error.
+- Run `squad consult --yes` and `squad extract --yes` only through `SquadCliService` allowlisted commands, with all CLI calls stubbed in tests.
+- Confirm local/personal scope before writes and invoke `backupSquadArtifacts` before consult/extract CLI operations because consult mode can write workspace `.squad/` artifacts.
+- Surface status/result/loading/error through centralized panel messages and keep the UI in the existing Personal Squad card.
+
+Validation:
+- `pnpm --config.verifyDepsBeforeRun=false run check:types`
+- `pnpm --config.verifyDepsBeforeRun=false run lint`
+- `pnpm --config.verifyDepsBeforeRun=false run test-compile`
+- `pnpm --config.verifyDepsBeforeRun=false run test:unit` (997 passing, 11 pending)
+
+---
+
+# Decision: SQD-053 Worktree-per-issue design (Morpheus, 2026-09-28)
+
+Issue: #268 / PR: #269 (full design: https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/268#issuecomment-5882832050). Implementation: #269 (Link, + Ghost UI, + Trinity tests).
+
+• **Conventions (fixed, v1):** path `{repo-parent}/{repo-name}-{issue}` where the main root is derived from `git rev-parse --git-common-dir` (never the current, possibly linked, worktree); branch `squad/{issue}-{slug}`. The slug removes accents with NFKD, keeps only `[a-z0-9-]`, is at most 50 chars and is checked with `check-ref-format`. Existing work is matched by the prefix `squad/{issue}-`.
+• **Base branch:** resolved in this order: dialog choice → last base used for the repo (`workspaceState`) → `origin/HEAD` → `ls-remote --symref` → first of develop/main/master. The base is stored in local git config as `branch.<b>.nexkitBase`. New branches use `--no-track`. A failed fetch gives a "base may be stale" warning and is not treated as success.
+• **Backlog contract amendment (additive):** optional `SquadBacklogProvider.listItems` / `getWorkState`, and `SquadBacklogService.listItems/getItem/getWorkState`. These reuse detection's config/remote/provider selection. ADO WIQL never interpolates user text.
+• **Services:**
+  - `GitWorktreeClient`: git CLI through `SquadProcessRunner`, `shell:false`, no policy. It does not use the `vscode.git` API.
+  - `SquadWorktreeNaming`: pure functions.
+  - Dependency strategies.
+  - `WorktreeRemover`.
+  - `SquadWorktreeService`: the orchestrator, registered lazily, with a per-repo mutex.
+• **node_modules:** default `auto` = install with the package manager (pnpm `--frozen-lockfile --prefer-offline`; needs a trusted workspace). A **junction is refused for pnpm**. The lefthook/pnpm `ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY` abort protects the main checkout's `node_modules` from being purged through the junction. Never work around it with `CI=true` or `confirmModulesPurge=false`.
+• **Removal invariant:** unlink the junction/symlink first, then fall back in order: `git worktree remove` → `git -c core.longpaths=true …` → `fs.rm` → robocopy `/MIR /XJ` (exit code ≥ 8 = failure) → `prune`. It never reports `removed:true` on failure.
+• **Destructive safety:** BackupService is not used, because worktree creation is additive and overwrites no workspace files. Cleanup of a dirty worktree needs a host-side modal confirmation and runs `git stash push --include-untracked` first; the stash is kept in the common dir, so it can be recovered from the main repo. Branches are deleted with `branch -d` by default. The current-window worktree cannot be removed. An unknown PR/issue state is never counted as "merged".
+• **Partial success is explicit:** when the dependency install fails, the outcome includes `dependencies.state:"failed"` plus a Retry action. It is never shown as plain success.
+• **Settings (application scope, via SettingsManager):** `nexkit.squad.worktree.dependencies`, `.openInNewWindow`, `.parentDirectory` (also the long-path escape hatch), `.copyUntracked` (default `[".nexkit"]`, never `.env*`). `core.longpaths` is changed persistently only with the user's consent.
+• **Webview** sends only opaque ids, never paths. Telemetry carries no paths, names, issue ids, titles or stderr.
+• **Related bug for #269:** `GitExcludeConfigDeployer` writes the per-worktree `info/exclude`, but git only reads `$GIT_COMMON_DIR/info/exclude`.
+• **Team workflow:** stop junctioning agent worktrees and use `pnpm install --frozen-lockfile` in each worktree. Hooks then run without `--no-verify`.
+
+---
+
+# Decision: SQD-055 Squad CI guard contract (Tank, 2026-09-28)
+
+Issue: #270 / PR: #328
+
+Keep the Squad test guard in the normal lint/static-analysis path instead of adding a separate optional CI-only job.
+
+## Rationale
+
+- `pnpm run lint` already runs in CI static analysis and local hooks, so missing/skipped Squad tests fail before the OS test matrix starts.
+- The guard is deterministic and offline: it checks protected SQD-022/SQD-041/SQD-050 test artifacts, disallows skip/only, and blocks direct real CLI/network primitives in Squad test sources.
+- `lint:squad-tests` gives Squad test files explicit ESLint coverage without broadening unrelated source TSX lint warnings.
+- The CI test matrix now also runs `runWebviewTest.js`, so the webview Squad suites added by the happy-dom harness are exercised in CI.
+- PR triggers include `feature/squad-support` and `squad/**` bases so stacked Squad PRs receive CI without changing release/build gates, which remain scoped to `main`/`develop`.
+
+## Hook note
+
+Per Morpheus's #268 worktree design, the lefthook/pnpm failure with junctioned `node_modules` is intentional protection: pnpm is preventing the main checkout's dependency tree from being purged through the junction. Do not bypass it in hooks. The correct fix is real `pnpm install` per worktree, no junctions.

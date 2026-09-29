@@ -181,3 +181,13 @@ No DevOps action required now. Implementation can begin immediately. When comple
 environment.
 
 Full readiness assessment in .squad/decisions.md. Orchestration log: .squad/orchestration-log/2026-05-19T141429Z-tank.md.
+
+### 2026-09-28 — SQD-055 Squad test CI guard
+
+**Completed:** Opened PR #328 from `squad/270-squad-test-ci-guard` stacked on #324 after merging #313's simulated CLI tests.
+
+- **Guard pattern:** `pnpm run lint` now starts with `scripts/guard-squad-tests.mjs`, which requires the SQD-022/SQD-041/SQD-050 protected test artifacts, fails on skipped/focused Squad tests, and rejects direct real process/network calls in Squad test sources.
+- **CI coverage:** `ci-cd.yml` now runs on PRs to `feature/squad-support` and `squad/**` in addition to `main`/`develop`; the test matrix runs both extension-host tests and the Node/happy-dom webview runner.
+- **Squad test lint:** Added `lint:squad-tests` for Squad extension-host and webview test files; removed one stale eslint-disable that the new lint scope exposed.
+- **Worktree hooks:** Bonus hook workaround was dropped after Morpheus's #268 design clarified pnpm is protecting the main checkout through the junction. Correct workflow is real `pnpm install` per worktree, no junctions.
+- **Validation:** `check:types`, `lint`, `test-compile`, `test:unit`, `test:webview`, workflow Prettier YAML check, commit hook, and pre-push hook all passed.

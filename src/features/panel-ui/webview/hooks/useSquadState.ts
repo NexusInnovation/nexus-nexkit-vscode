@@ -26,7 +26,12 @@ import type {
   SquadUpdatesResult,
   SquadUpstreamSource,
 } from "../../../squad/models";
-import type { SquadLogDocument, SquadPluginActionResultState, SquadUpstreamOperationState } from "../types/squadState";
+import type {
+  SquadLogDocument,
+  SquadPluginActionResultState,
+  SquadUpstreamOperationState,
+  SquadWriteOutcome,
+} from "../types/squadState";
 
 /**
  * Hook result for Squad state and actions.
@@ -40,6 +45,9 @@ export interface UseSquadStateResult {
 
   /** Structured, actionable error, or `null` when healthy. */
   error: SquadError | null;
+
+  /** Latest charter/decisions/routing write outcome (SQD-029). */
+  lastWrite: SquadWriteOutcome | null;
 
   /** Detection snapshot (install state, project/CLI versions). */
   detection: SquadDetectionResult | null;
@@ -236,6 +244,7 @@ export function useSquadState(): UseSquadStateResult {
     isReady: squad.isReady,
     isLoading: squad.isLoading,
     error: squad.error,
+    lastWrite: squad.lastWrite,
     detection: squad.detection,
     roster: squad.roster,
     charters: squad.charters,
