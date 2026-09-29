@@ -66,3 +66,9 @@ Implemented 5 major SQD webview tickets (see `.squad/decisions.md` for full deta
 **Cross-team note:** Link (SQD-R2) consolidated 5 Squad service files under src/features/squad/services/ — service/provider/parser/reader modules now follow canonical folder layout. Trinity validated Preact webview test harness (69 tests passing, isolated from extension-host suite). All three changes landed safely.
 
 **MVP Status:** All 23 SQD PRs merged into squad/mvp-integration branch (Morpheus reviewed, 744 tests passing). Ready for Eric's merge to feature/squad-support.
+
+## 2026-09-28 — SQD-044 (#259): Backlog status UI
+
+- Backlog provider state belongs in the Squad `AppState` slice as its own sub-state (`backlog`) rather than overloading the existing Squad detection snapshot; GitHub/ADO failures must render in the backlog card instead of becoming a success-shaped empty state.
+- The SQD-042/043 host contract is easiest to consume as dedicated `squadBacklogLoading` / `squadBacklogUpdate` / `squadBacklogError` messages, keeping all webview message handling centralized in `AppStateContext.tsx`.
+- When adding host messages to `SquadPanelMessageHandler`, update the older handler tests' service mocks at the same time; otherwise partial `ServiceContainer` fixtures will miss newly required services even though production DI is wired.

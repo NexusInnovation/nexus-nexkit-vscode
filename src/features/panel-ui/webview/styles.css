@@ -1971,6 +1971,125 @@ details[open] > .type-header::before {
   font-size: 12px;
 }
 
+/* Squad backlog status (SQD-044, FR-050..FR-053) */
+.squad-backlog {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 4px;
+  background-color: var(--vscode-sideBar-background, transparent);
+}
+
+.squad-backlog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.squad-backlog-title {
+  margin: 0;
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--vscode-foreground);
+}
+
+.squad-backlog-subtitle,
+.squad-backlog-v1-note,
+.squad-backlog-empty,
+.squad-backlog-message,
+.squad-backlog-remediation,
+.squad-backlog-detail,
+.squad-backlog-detail-list p {
+  margin: 0;
+  font-size: 0.85em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.squad-backlog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.squad-backlog-status {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 0.78em;
+  font-weight: 600;
+}
+
+.squad-backlog-status-detected {
+  color: var(--vscode-editor-background, var(--vscode-badge-foreground));
+  background-color: var(--vscode-testing-iconPassed, var(--vscode-badge-background));
+}
+
+.squad-backlog-status-not-detected,
+.squad-backlog-status-loading {
+  color: var(--vscode-badge-foreground);
+  background-color: var(--vscode-badge-background);
+}
+
+.squad-backlog-status-error {
+  color: var(--vscode-editor-background, var(--vscode-badge-foreground));
+  background-color: var(--vscode-errorForeground, var(--vscode-badge-background));
+}
+
+.squad-backlog-grid,
+.squad-backlog-counts {
+  display: grid;
+  gap: 6px 10px;
+  margin: 0;
+}
+
+.squad-backlog-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.squad-backlog-item,
+.squad-backlog-counts div {
+  min-width: 0;
+}
+
+.squad-backlog-item-wide {
+  grid-column: 1 / -1;
+}
+
+.squad-backlog-item dt,
+.squad-backlog-counts dt {
+  font-size: 0.72em;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.squad-backlog-item dd,
+.squad-backlog-counts dd {
+  margin: 0;
+  font-size: 0.88em;
+  color: var(--vscode-foreground);
+  word-break: break-word;
+}
+
+.squad-backlog-counts {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 6px 0;
+  border-top: 1px solid var(--vscode-panel-border);
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.squad-backlog-detail span,
+.squad-backlog-detail-list span {
+  font-weight: 600;
+  color: var(--vscode-foreground);
+}
+
 /* Squad CLI-missing notice + invocation chooser (SQD-025, FR-004) */
 .squad-cli-missing {
   margin: 0;

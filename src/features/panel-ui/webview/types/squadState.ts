@@ -15,6 +15,7 @@
 
 import type {
   RejectedSquadPreset,
+  SquadBacklogDetection,
   SquadCharter,
   SquadDetectionResult,
   SquadDoctorReport,
@@ -160,6 +161,29 @@ export interface SquadPluginActionResultState {
   error?: SquadError;
 }
 
+/** Backlog status sub-state (SQD-044, FR-050/FR-051/FR-052/FR-053). */
+export interface SquadBacklogState {
+  /** True while GitHub Issues / Azure DevOps backlog detection is running. */
+  isLoading: boolean;
+
+  /** True after the first backlog detection response, success or failure. */
+  isReady: boolean;
+
+  /** Detected or not-detected backlog outcome, or `null` before the first response / after a hard error. */
+  detection: SquadBacklogDetection | null;
+
+  /** Actionable backlog detection failure; never rendered as a successful state. */
+  error: SquadError | null;
+}
+
+/** Initial backlog state — empty until SQD-042/043 detection responds. */
+export const initialSquadBacklogState: SquadBacklogState = {
+  isLoading: false,
+  isReady: false,
+  detection: null,
+  error: null,
+};
+
 /**
  * Squad state slice held in the global {@link AppState}.
  * A single source of truth for the Squad tab; populated exclusively through
@@ -225,6 +249,9 @@ export interface SquadState {
   /** Result of the most recent plugin action (SQD-039), or `null` before any. */
   lastPluginAction: SquadPluginActionResultState | null;
 
+  /** GitHub Issues / Azure DevOps backlog status (SQD-044). */
+  backlog: SquadBacklogState;
+
   /** Latest Squad Doctor report (FR-060), when one has been produced. */
   doctor: SquadDoctorReport | null;
 
@@ -273,6 +300,7 @@ export const initialSquadState: SquadState = {
   marketplaces: [],
   plugins: [],
   lastPluginAction: null,
+  backlog: initialSquadBacklogState,
   doctor: null,
   updates: null,
   presetPicker: initialSquadPresetPickerState,

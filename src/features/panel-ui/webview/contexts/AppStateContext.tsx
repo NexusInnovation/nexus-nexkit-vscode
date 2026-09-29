@@ -196,6 +196,49 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
           }));
           break;
 
+        case "squadBacklogUpdate":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              backlog: {
+                isLoading: false,
+                isReady: true,
+                detection: message.backlog,
+                error: null,
+              },
+            },
+          }));
+          break;
+
+        case "squadBacklogLoading":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              backlog: {
+                ...prev.squad.backlog,
+                isLoading: message.isLoading,
+              },
+            },
+          }));
+          break;
+
+        case "squadBacklogError":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              backlog: {
+                isLoading: false,
+                isReady: true,
+                detection: null,
+                error: message.error,
+              },
+            },
+          }));
+          break;
+
         case "squadRosterUpdate":
           setState((prev) => ({
             ...prev,
@@ -412,7 +455,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
                 operation: message.operation,
                 name: message.name,
                 status: message.ok ? "succeeded" : "failed",
-                error: message.ok ? null : message.error ?? null,
+                error: message.ok ? null : (message.error ?? null),
               },
             },
           }));
@@ -435,6 +478,9 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     const unsubscribeSquadStatus = messenger.onMessage("squadStatusUpdate", handleMessage);
     const unsubscribeSquadPlugins = messenger.onMessage("squadPluginsUpdate", handleMessage);
     const unsubscribeSquadPluginAction = messenger.onMessage("squadPluginActionResult", handleMessage);
+    const unsubscribeSquadBacklog = messenger.onMessage("squadBacklogUpdate", handleMessage);
+    const unsubscribeSquadBacklogLoading = messenger.onMessage("squadBacklogLoading", handleMessage);
+    const unsubscribeSquadBacklogError = messenger.onMessage("squadBacklogError", handleMessage);
     const unsubscribeSquadRoster = messenger.onMessage("squadRosterUpdate", handleMessage);
     const unsubscribeSquadDocs = messenger.onMessage("squadDocsUpdate", handleMessage);
     const unsubscribeSquadLogs = messenger.onMessage("squadLogsUpdate", handleMessage);
@@ -472,6 +518,9 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       unsubscribeSquadStatus();
       unsubscribeSquadPlugins();
       unsubscribeSquadPluginAction();
+      unsubscribeSquadBacklog();
+      unsubscribeSquadBacklogLoading();
+      unsubscribeSquadBacklogError();
       unsubscribeSquadRoster();
       unsubscribeSquadDocs();
       unsubscribeSquadLogs();

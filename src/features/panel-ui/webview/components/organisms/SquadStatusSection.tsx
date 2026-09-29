@@ -1,6 +1,7 @@
 import { useState } from "preact/hooks";
 import { useSquadState } from "../../hooks/useSquadState";
 import { SquadCliSource, SquadInstallState } from "../../../../squad/models";
+import { SquadBacklogStatusSection } from "./SquadBacklogStatusSection";
 import {
   describeCliVersion,
   describeProjectVersion,
@@ -142,8 +143,20 @@ function SquadCliMissingNotice({
  * this component renders nothing until the first detection snapshot arrives.
  */
 export function SquadStatusSection() {
-  const { detection, isLoading, upstreams, plugins, refreshDetection, doctor, runDoctor, error, setCliInvocation, installCli } =
-    useSquadState();
+  const {
+    detection,
+    isLoading,
+    upstreams,
+    plugins,
+    backlog,
+    refreshDetection,
+    refreshBacklog,
+    doctor,
+    runDoctor,
+    error,
+    setCliInvocation,
+    installCli,
+  } = useSquadState();
 
   if (!detection) {
     return null;
@@ -198,6 +211,8 @@ export function SquadStatusSection() {
         </div>
       </dl>
 
+      <SquadBacklogStatusSection backlog={backlog} onRefresh={refreshBacklog} disabled={isLoading} />
+
       {!cli.installed && (
         <SquadCliMissingNotice
           disabled={isLoading}
@@ -210,17 +225,9 @@ export function SquadStatusSection() {
       <div class="squad-diagnostics">
         <div class="squad-diagnostics-header">
           <span class="squad-diagnostics-title">Diagnostics</span>
-          <button
-            class="squad-doctor-button"
-            onClick={runDoctor}
-            disabled={isLoading}
-            title="Run Squad Doctor diagnostics"
-          >
-            <i
-              class={`codicon codicon-${isLoading ? "loading codicon-modifier-spin" : "pulse"}`}
-              aria-hidden="true"
-            ></i>{" "}
-            Run Doctor
+          <button class="squad-doctor-button" onClick={runDoctor} disabled={isLoading} title="Run Squad Doctor diagnostics">
+            <i class={`codicon codicon-${isLoading ? "loading codicon-modifier-spin" : "pulse"}`} aria-hidden="true"></i> Run
+            Doctor
           </button>
         </div>
 
@@ -238,10 +245,7 @@ export function SquadStatusSection() {
                 {doctor.checks.map((check, index) => (
                   <li key={index} class={`squad-diagnostic squad-diagnostic-${check.severity}`}>
                     <div class="squad-diagnostic-head">
-                      <i
-                        class={`codicon codicon-${doctorSeverityCodicon(check.severity)}`}
-                        aria-hidden="true"
-                      ></i>
+                      <i class={`codicon codicon-${doctorSeverityCodicon(check.severity)}`} aria-hidden="true"></i>
                       <span class="squad-diagnostic-label">{check.label}</span>
                       <span class="squad-diagnostic-severity">{doctorSeverityLabel(check.severity)}</span>
                     </div>
@@ -253,9 +257,7 @@ export function SquadStatusSection() {
             )}
           </div>
         ) : (
-          <p class="squad-diagnostics-empty">
-            Run Squad Doctor to check your workspace configuration and surface any issues.
-          </p>
+          <p class="squad-diagnostics-empty">Run Squad Doctor to check your workspace configuration and surface any issues.</p>
         )}
       </div>
     </div>

@@ -20,16 +20,30 @@ import type { ComponentChildren, VNode } from "preact";
 import { AppStateContext, AppStateProvider } from "../../../../src/features/panel-ui/webview/contexts/AppStateContext";
 import type { AppState } from "../../../../src/features/panel-ui/webview/types/appState";
 import { initialAppState } from "../../../../src/features/panel-ui/webview/types/appState";
-import type { SquadState, SquadPresetPickerState } from "../../../../src/features/panel-ui/webview/types/squadState";
-import { initialSquadState, initialSquadPresetPickerState } from "../../../../src/features/panel-ui/webview/types/squadState";
+import type {
+  SquadBacklogState,
+  SquadState,
+  SquadPresetPickerState,
+} from "../../../../src/features/panel-ui/webview/types/squadState";
+import {
+  initialSquadBacklogState,
+  initialSquadState,
+  initialSquadPresetPickerState,
+} from "../../../../src/features/panel-ui/webview/types/squadState";
 import {
   SquadCliSource,
   SquadInstallState,
   SquadVersionStatus,
   SquadDoctorSeverity,
   SquadPresetSourceKind,
+  SquadBacklogDetectionSource,
+  SquadBacklogProviderId,
+  SquadBacklogNotDetectedReason,
 } from "../../../../src/features/squad/models";
 import type {
+  SquadBacklogDetection,
+  SquadBacklogDetected,
+  SquadBacklogNotDetected,
   SquadCliInfo,
   SquadDetectionResult,
   SquadDoctorReport,
@@ -43,23 +57,30 @@ import type {
 export { render, fireEvent, act, waitFor, cleanup, within } from "@testing-library/preact";
 
 /** Squad-state overrides where the preset-picker slice may itself be partial. */
-export type SquadStateOverrides = Partial<Omit<SquadState, "presetPicker">> & {
+export type SquadStateOverrides = Partial<Omit<SquadState, "presetPicker" | "backlog">> & {
   presetPicker?: Partial<SquadPresetPickerState>;
+  backlog?: Partial<SquadBacklogState>;
 };
 
 /** Build a full {@link SquadState} from a partial override. */
 export function makeSquadState(overrides: SquadStateOverrides = {}): SquadState {
-  const { presetPicker, ...rest } = overrides;
+  const { presetPicker, backlog, ...rest } = overrides;
   return {
     ...initialSquadState,
     ...rest,
     presetPicker: makePresetPickerState(presetPicker),
+    backlog: makeBacklogState(backlog),
   };
 }
 
 /** Build a full {@link SquadPresetPickerState} from a partial override. */
 export function makePresetPickerState(overrides: Partial<SquadPresetPickerState> = {}): SquadPresetPickerState {
   return { ...initialSquadPresetPickerState, ...overrides };
+}
+
+/** Build a full {@link SquadBacklogState} from a partial override. */
+export function makeBacklogState(overrides: Partial<SquadBacklogState> = {}): SquadBacklogState {
+  return { ...initialSquadBacklogState, ...overrides };
 }
 
 /** Build a full {@link AppState} whose Squad slice is overridden. */
@@ -170,10 +191,7 @@ export function makeRejectedPreset(
 }
 
 /** A source that could not be reached. */
-export function makeUnreachableSource(
-  sourceId: string,
-  overrides: Partial<UnreachableSquadSource> = {}
-): UnreachableSquadSource {
+export function makeUnreachableSource(sourceId: string, overrides: Partial<UnreachableSquadSource> = {}): UnreachableSquadSource {
   return {
     sourceId,
     label: `Source ${sourceId}`,
@@ -189,6 +207,63 @@ export function makeDoctorReport(overrides: Partial<SquadDoctorReport> = {}): Sq
     checks: [{ label: "Workspace", severity: SquadDoctorSeverity.Ok }],
     structured: true,
     generatedAt: 1_700_000_000_000,
+    ...overrides,
+  };
+}
+
+/** A detected GitHub Issues backlog. */
+export function makeGitHubBacklogDetection(overrides: Partial<SquadBacklogDetected> = {}): SquadBacklogDetection {
+  return {
+    status: "detected",
+    detectedAt: 1_700_000_000_000,
+    backlog: {
+      providerId: SquadBacklogProviderId.GitHub,
+      source: SquadBacklogDetectionSource.GitRemote,
+      displayName: "NexusInnovation/nexus-nexkit-vscode",
+      url: "https://github.com/NexusInnovation/nexus-nexkit-vscode",
+      remoteName: "origin",
+      readOnly: false,
+      itemCounts: { open: 42, squad: 12, untriaged: 3 },
+      github: { host: "github.com", owner: "NexusInnovation", repo: "nexus-nexkit-vscode" },
+    },
+    ...overrides,
+  };
+}
+
+/** A detected Azure DevOps backlog. */
+export function makeAzureDevOpsBacklogDetection(overrides: Partial<SquadBacklogDetected> = {}): SquadBacklogDetection {
+  return {
+    status: "detected",
+    detectedAt: 1_700_000_000_000,
+    backlog: {
+      providerId: SquadBacklogProviderId.AzureDevOps,
+      source: SquadBacklogDetectionSource.Config,
+      displayName: "contoso/NexKit",
+      url: "https://dev.azure.com/contoso/NexKit",
+      remoteName: null,
+      readOnly: false,
+      itemCounts: { open: 15, squad: 8, untriaged: 2 },
+      azureDevOps: {
+        organization: "contoso",
+        organizationUrl: "https://dev.azure.com/contoso",
+        project: "NexKit",
+        defaultWorkItemType: "User Story",
+        areaPath: "NexKit\\Squad",
+        iterationPath: "NexKit\\P3",
+      },
+    },
+    ...overrides,
+  };
+}
+
+/** A first-class not-detected backlog state. */
+export function makeBacklogNotDetected(overrides: Partial<SquadBacklogNotDetected> = {}): SquadBacklogDetection {
+  return {
+    status: "not-detected",
+    reason: SquadBacklogNotDetectedReason.UnrecognizedRemote,
+    message: "No supported Squad backlog was detected from the configured git remotes.",
+    remediation: "Use a GitHub remote, or set `.squad/config.json` `platform` to a supported backlog provider.",
+    detectedAt: 1_700_000_000_000,
     ...overrides,
   };
 }

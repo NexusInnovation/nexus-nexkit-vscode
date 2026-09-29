@@ -3,6 +3,7 @@ import { ServiceContainer } from "../../core/serviceContainer";
 import { LoggingService } from "../../shared/services/loggingService";
 import { ExtensionMessage, WebviewMessage } from "./types/webviewMessages";
 import {
+  SquadBacklogDetection,
   SquadCharter,
   SquadDetectionResult,
   SquadDocKind,
@@ -95,6 +96,9 @@ export class SquadPanelMessageHandler {
       case "refreshSquadPlugins":
         await this.handleRefreshSquadPlugins();
         return true;
+      case "refreshSquadBacklog":
+        await this.handleRefreshSquadBacklog();
+        return true;
       default:
         return false;
     }
@@ -122,6 +126,7 @@ export class SquadPanelMessageHandler {
       firstError ??= pluginInventory.error;
     }
     this._emitStatus(detection.value, upstreams, pluginInventory.marketplaces, pluginInventory.plugins);
+    await this._refreshBacklogStatus();
 
     if (!fileService) {
       if (firstError) {
@@ -163,6 +168,7 @@ export class SquadPanelMessageHandler {
       const upstreams = await this._readUpstreams(fileService, (error) => (upstreamError = error));
       const pluginInventory = await this._readPluginInventory(this._services.squadPlugins);
       this._emitStatus(detection.value, upstreams, pluginInventory.marketplaces, pluginInventory.plugins);
+      await this._refreshBacklogStatus();
       const error = upstreamError ?? pluginInventory.error;
       if (error) {
         this._emitError(error);
@@ -270,9 +276,7 @@ export class SquadPanelMessageHandler {
    * backup-first controlled write service. JSON/schema failures surface as a
    * `parse-failed` squadError and nothing is written.
    */
-  private async handleSaveSquadModelConfig(
-    message: Extract<WebviewMessage, { command: "saveSquadModelConfig" }>
-  ): Promise<void> {
+  private async handleSaveSquadModelConfig(message: Extract<WebviewMessage, { command: "saveSquadModelConfig" }>): Promise<void> {
     const writer = this._services.squadWrite;
     if (!writer) {
       this._emitNoWorkspaceWriteError();
@@ -361,6 +365,11 @@ export class SquadPanelMessageHandler {
     } finally {
       this._setLoading(false);
     }
+  }
+
+  /** Refresh GitHub Issues / Azure DevOps backlog status (SQD-044). */
+  private async handleRefreshSquadBacklog(): Promise<void> {
+    await this._refreshBacklogStatus();
   }
 
   // --- helpers ----------------------------------------------------------
@@ -516,6 +525,28 @@ export class SquadPanelMessageHandler {
     });
   }
 
+  private async _refreshBacklogStatus(): Promise<void> {
+    this._setBacklogLoading(true);
+    try {
+      const result = await this._services.squadBacklog.detect(this._workspaceRoot());
+      if (isSquadErr(result)) {
+        this._emitBacklogError(result.error);
+        return;
+      }
+      this._emitBacklog(result.value);
+    } finally {
+      this._setBacklogLoading(false);
+    }
+  }
+
+  private _emitBacklog(backlog: SquadBacklogDetection): void {
+    this._postMessage({ command: "squadBacklogUpdate", backlog });
+  }
+
+  private _emitBacklogError(error: SquadError): void {
+    this._postMessage({ command: "squadBacklogError", error });
+  }
+
   private _emitError(error: SquadError): void {
     this._postMessage({ command: "squadError", error });
   }
@@ -530,6 +561,10 @@ export class SquadPanelMessageHandler {
 
   private _setLoading(isLoading: boolean): void {
     this._postMessage({ command: "squadLoading", isLoading });
+  }
+
+  private _setBacklogLoading(isLoading: boolean): void {
+    this._postMessage({ command: "squadBacklogLoading", isLoading });
   }
 
   private _unwrap<T>(result: SquadResult<T>, onError: (error: SquadError) => void): T | undefined {
