@@ -7,6 +7,7 @@
 import { createContext, ComponentChildren } from "preact";
 import { useState, useEffect } from "preact/hooks";
 import { AppState, initialAppState } from "../types/appState";
+import { SQUAD_WRITE_ERROR_CODES } from "../types/squadState";
 import { ExtensionMessage } from "../types";
 import { useVSCodeAPI } from "../hooks/useVSCodeAPI";
 
@@ -266,6 +267,12 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
                 charters,
                 error: null,
                 isLoading: false,
+                lastWrite: {
+                  sequence: (prev.squad.lastWrite?.sequence ?? 0) + 1,
+                  ok: true,
+                  target: { type: "charter", agentId: message.charter.agentId },
+                  summary: message.result,
+                },
               },
             };
           });
@@ -280,6 +287,12 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
               routing: message.doc.kind === "routing" ? message.doc : prev.squad.routing,
               error: null,
               isLoading: false,
+              lastWrite: {
+                sequence: (prev.squad.lastWrite?.sequence ?? 0) + 1,
+                ok: true,
+                target: { type: "doc", kind: message.doc.kind },
+                summary: message.result,
+              },
             },
           }));
           break;
@@ -323,6 +336,9 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
               ...prev.squad,
               error: message.error,
               isLoading: false,
+              lastWrite: SQUAD_WRITE_ERROR_CODES.includes(message.error.code)
+                ? { sequence: (prev.squad.lastWrite?.sequence ?? 0) + 1, ok: false, error: message.error }
+                : prev.squad.lastWrite,
             },
           }));
           break;
