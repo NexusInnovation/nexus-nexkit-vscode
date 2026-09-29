@@ -21,3 +21,5 @@ export * from "./squadProjectUpgradeService";
 export * from "./squadCliUpgradeService";
 export * from "./squadPluginActionService";
 export * from "./squadPluginActionConfirmer";
+export * from "./squadBacklogService";
+export * from "./gitHubBacklogProvider";
