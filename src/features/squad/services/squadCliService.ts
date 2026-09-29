@@ -248,7 +248,9 @@ export class SquadCliService {
     command: SquadCliCommand,
     options: SquadCliExecuteOptions = {}
   ): Promise<SquadResult<SquadCliExecution>> {
-    const spec = SQUAD_CLI_COMMAND_SPECS[command];
+    const spec = Object.prototype.hasOwnProperty.call(SQUAD_CLI_COMMAND_SPECS, command)
+      ? SQUAD_CLI_COMMAND_SPECS[command]
+      : undefined;
     if (!spec) {
       return squadErr({
         code: "cli-execution-failed",
