@@ -48,6 +48,7 @@ import { SquadPluginService } from "../features/squad/services/squadPluginServic
 import { SquadPluginActionService } from "../features/squad/services/squadPluginActionService";
 import { SquadBacklogService } from "../features/squad/services/squadBacklogService";
 import { GitHubBacklogProvider } from "../features/squad/services/gitHubBacklogProvider";
+import { AzureDevOpsBacklogProvider } from "../features/squad/services/azureDevOpsBacklogProvider";
 
 /**
  * Service container for dependency injection
@@ -220,7 +221,9 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   // CLI is found across platforms (npm `squad.cmd`/`squad.ps1` shims on Windows).
   const squadDetection = new SquadDetectionService({ cliService: squadCli });
   const squadUpdates = new SquadUpdateService({ detectionService: squadDetection });
-  const squadBacklog = new SquadBacklogService({ providers: [new GitHubBacklogProvider()] });
+  const squadBacklog = new SquadBacklogService({
+    providers: [new GitHubBacklogProvider(), new AzureDevOpsBacklogProvider()],
+  });
   const squadPlugins = squadFile ? new SquadPluginService({ fileService: squadFile, cli: squadCli }) : undefined;
   const squadPluginActions = squadPlugins
     ? new SquadPluginActionService({ cli: squadCli, plugins: squadPlugins, backup })

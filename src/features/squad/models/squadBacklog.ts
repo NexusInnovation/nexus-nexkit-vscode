@@ -116,6 +116,27 @@ export interface SquadGitHubBacklogRef {
   repo: string;
 }
 
+/** Azure DevOps project coordinates and optional Squad defaults (FR-051). */
+export interface SquadAzureDevOpsBacklogRef {
+  /** Azure DevOps organization name, e.g. `contoso`. */
+  organization: string;
+
+  /** Canonical organization URL passed to `az devops` commands. */
+  organizationUrl: string;
+
+  /** Azure DevOps project name. */
+  project: string;
+
+  /** Default work item type Squad should create, when configured. */
+  defaultWorkItemType?: string;
+
+  /** Area path used to scope Squad backlog queries, when configured. */
+  areaPath?: string;
+
+  /** Iteration path used to scope Squad backlog queries, when configured. */
+  iterationPath?: string;
+}
+
 /** A verified, reachable backlog. */
 export interface SquadBacklogInfo {
   /** Platform serving the backlog. */
@@ -141,6 +162,9 @@ export interface SquadBacklogInfo {
 
   /** GitHub coordinates when {@link providerId} is `github`. */
   github?: SquadGitHubBacklogRef;
+
+  /** Azure DevOps project coordinates when {@link providerId} is `azure-devops`. */
+  azureDevOps?: SquadAzureDevOpsBacklogRef;
 }
 
 /** What a provider returns; the service stamps {@link SquadBacklogInfo.source}. */
