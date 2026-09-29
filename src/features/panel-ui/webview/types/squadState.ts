@@ -22,6 +22,7 @@ import type {
   SquadMarkdownDoc,
   SquadMarketplaceRef,
   SquadModelConfigDocument,
+  SquadPersonalSquadStatus,
   SquadPluginAction,
   SquadPreset,
   SquadPluginRef,
@@ -160,6 +161,21 @@ export interface SquadPluginActionResultState {
   error?: SquadError;
 }
 
+/** Personal/global Squad status and init state (SQD-051 / FR-064). */
+export interface SquadPersonalSquadStateSlice {
+  /** True while status/init is in flight. */
+  loading: boolean;
+
+  /** Last known personal Squad status, or null before the first status read. */
+  status: SquadPersonalSquadStatus | null;
+
+  /** Last status/init failure, always actionable when present. */
+  error: SquadError | null;
+
+  /** Whether the latest init request succeeded. */
+  lastInitOk: boolean | null;
+}
+
 /**
  * Squad state slice held in the global {@link AppState}.
  * A single source of truth for the Squad tab; populated exclusively through
@@ -225,6 +241,9 @@ export interface SquadState {
   /** Result of the most recent plugin action (SQD-039), or `null` before any. */
   lastPluginAction: SquadPluginActionResultState | null;
 
+  /** Personal/global Squad scenario state (SQD-051 / FR-064). */
+  personalSquad: SquadPersonalSquadStateSlice;
+
   /** Latest Squad Doctor report (FR-060), when one has been produced. */
   doctor: SquadDoctorReport | null;
 
@@ -273,6 +292,12 @@ export const initialSquadState: SquadState = {
   marketplaces: [],
   plugins: [],
   lastPluginAction: null,
+  personalSquad: {
+    loading: false,
+    status: null,
+    error: null,
+    lastInitOk: null,
+  },
   doctor: null,
   updates: null,
   presetPicker: initialSquadPresetPickerState,

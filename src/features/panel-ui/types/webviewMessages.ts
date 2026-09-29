@@ -17,6 +17,8 @@ import type {
   SquadMarkdownDoc,
   SquadMarketplaceRef,
   SquadModelConfigDocument,
+  SquadPersonalSquadInitOutcome,
+  SquadPersonalSquadStatus,
   SquadPluginAction,
   SquadPluginRef,
   SquadPreset,
@@ -93,6 +95,9 @@ export type WebviewMessage =
   | { command: "runSquadDoctor" }
   | { command: "exportSquad"; request?: SquadExportRequest }
   | { command: "refreshSquadPlugins" }
+  // Personal/global Squad scenario (SQD-051 / #266, FR-064)
+  | { command: "getPersonalSquadStatus" }
+  | { command: "initPersonalSquad" }
   // Squad plugin marketplace + lifecycle actions (SQD-039 / #254). `target` is optional for
   // actions whose operand the host can prompt for (marketplace source, plugin directory).
   | { command: "runSquadPluginAction"; action: SquadPluginAction; target?: string }
@@ -201,6 +206,26 @@ export type ExtensionMessage =
       ok: boolean;
       changed?: boolean;
       output?: string;
+      error?: SquadError;
+    }
+  // Personal/global Squad scenario (SQD-051 / #266). This contract is reusable
+  // by consult mode (#267) without implying consult-specific behavior here.
+  | {
+      command: "squadPersonalSquadStatusUpdate";
+      status: SquadPersonalSquadStatus;
+    }
+  | {
+      command: "squadPersonalSquadLoading";
+      isLoading: boolean;
+    }
+  | {
+      command: "squadPersonalSquadError";
+      error: SquadError;
+    }
+  | {
+      command: "squadPersonalSquadInitResult";
+      ok: boolean;
+      outcome?: SquadPersonalSquadInitOutcome;
       error?: SquadError;
     }
   | {

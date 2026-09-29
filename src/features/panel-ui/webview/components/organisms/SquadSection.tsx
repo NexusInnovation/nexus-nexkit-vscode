@@ -9,7 +9,8 @@ import { SquadGovernanceSection } from "./SquadGovernanceSection";
 import { SquadLogSection } from "./SquadLogSection";
 import { SquadPresetPicker } from "./SquadPresetPicker";
 import { SquadUpstreamSection } from "./SquadUpstreamSection";
-import { SquadInstallState } from "../../../../squad/models";
+import { SquadInstallState, SquadPersonalSquadState } from "../../../../squad/models";
+import { useSquadPersonalSquad } from "../../hooks/useSquadPersonalSquad";
 
 /**
  * Guidance shown when no Squad markers are present in the workspace.
@@ -25,7 +26,52 @@ function SquadNotDetectedNotice() {
         <i class="codicon codicon-info" aria-hidden="true"></i> NexKit looks for markers such as{" "}
         <code>.squad/team.md</code>, <code>.squad/config.json</code> or <code>.github/agents/squad.agent.md</code>.
       </p>
+      <PersonalSquadCard />
       <SquadPresetPicker />
+    </div>
+  );
+}
+
+/** Personal/global Squad entry point shown beside workspace initialization choices. */
+function PersonalSquadCard() {
+  const { loading, status, error, lastInitOk, refresh, initialize } = useSquadPersonalSquad();
+
+  useEffect(() => {
+    if (!status && !loading) {
+      refresh();
+    }
+  }, []);
+
+  const initialized = status?.state === SquadPersonalSquadState.Initialized;
+
+  return (
+    <div class="squad-personal-card info-message">
+      <p>
+        <i class="codicon codicon-account" aria-hidden="true"></i> Personal Squad
+      </p>
+      <p>
+        {status?.warning ??
+          "Personal Squad lives outside this workspace and can affect future Squad sessions for this user profile."}
+      </p>
+      {status ? (
+        <p>
+          Status:{" "}
+          <strong>
+            {initialized ? `initialized (${status.memberCount} member${status.memberCount === 1 ? "" : "s"})` : "not initialized"}
+          </strong>{" "}
+          in {status.targetLabel}.
+        </p>
+      ) : null}
+      {error ? <SquadErrorNotice error={error} /> : null}
+      {lastInitOk ? <p class="success-message">Personal Squad is ready.</p> : null}
+      <div class="squad-preset-confirm-actions">
+        <button class="squad-refresh-button" onClick={refresh} disabled={loading}>
+          <i class="codicon codicon-refresh" aria-hidden="true"></i> Refresh personal status
+        </button>
+        <button class="squad-preset-init-button" onClick={initialize} disabled={loading || initialized}>
+          <i class="codicon codicon-rocket" aria-hidden="true"></i> Initialize personal Squad
+        </button>
+      </div>
     </div>
   );
 }

@@ -46,6 +46,7 @@ import { SquadExportService } from "../features/squad/services/squadExportServic
 import { SquadFileWriteService } from "../features/squad/services/squadFileWriteService";
 import { SquadPluginService } from "../features/squad/services/squadPluginService";
 import { SquadPluginActionService } from "../features/squad/services/squadPluginActionService";
+import { SquadPersonalSquadService } from "../features/squad/services/squadPersonalSquadService";
 
 /**
  * Service container for dependency injection
@@ -146,6 +147,12 @@ export interface ServiceContainer {
    * prompts for a destination only when invoked.
    */
   squadExport: SquadExportService;
+
+  /**
+   * Detect and initialize the user's personal/global Squad (`squad init --global`).
+   * No CLI or file work runs until requested by the panel.
+   */
+  squadPersonal: SquadPersonalSquadService;
 }
 
 /**
@@ -207,6 +214,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   // SquadCliService (SQD-005, #220) — no work runs until a command is invoked.
   const squadCli = new SquadCliService();
   const squadExport = new SquadExportService({ cli: squadCli });
+  const squadPersonal = new SquadPersonalSquadService({ cli: squadCli, logger: logging });
   // Detection delegates CLI probing to SquadCliService so a globally-installed
   // CLI is found across platforms (npm `squad.cmd`/`squad.ps1` shims on Windows).
   const squadDetection = new SquadDetectionService({ cliService: squadCli });
@@ -303,6 +311,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     squadDetection,
     squadCli,
     squadExport,
+    squadPersonal,
     squadFile,
     squadUpdates,
     squadWrite,

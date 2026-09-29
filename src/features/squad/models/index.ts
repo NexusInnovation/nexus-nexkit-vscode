@@ -22,3 +22,4 @@ export * from "./squadPluginAction";
 export * from "./squadProfileConfig";
 export * from "./squadUpdates";
 export * from "./squadTransfer";
+export * from "./squadPersonalSquad";

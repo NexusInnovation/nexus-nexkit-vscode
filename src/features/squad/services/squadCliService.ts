@@ -99,7 +99,7 @@ export const SQUAD_CLI_COMMAND_SPECS: Readonly<Record<SquadCliCommand, SquadCliC
   },
   [SquadCliCommand.Init]: {
     argv: ["init"],
-    allowedFlags: ["--yes", "--force", "--preset"],
+    allowedFlags: ["--yes", "--force", "--preset", "--global"],
     allowsOperands: true,
     defaultTimeoutMs: SQUAD_CLI_TIMEOUTS_MS.init,
   },
