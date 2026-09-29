@@ -7,6 +7,7 @@ import { getApmAgentDiagnostics } from "./utils/templateDiagnostics";
 import { SquadPanelMessageHandler } from "./squadPanelMessageHandler";
 import { SquadPresetMessageHandler } from "./squadPresetMessageHandler";
 import { SquadCliSetupMessageHandler } from "./squadCliSetupMessageHandler";
+import { SquadCliUpgradeMessageHandler } from "./squadCliUpgradeMessageHandler";
 import { SquadUpstreamMessageHandler } from "./squadUpstreamMessageHandler";
 import { SquadPluginActionMessageHandler } from "./squadPluginActionMessageHandler";
 
@@ -27,6 +28,7 @@ export class NexkitPanelMessageHandler {
   private readonly _squadHandler: SquadPanelMessageHandler;
   private readonly _squadPresetHandler: SquadPresetMessageHandler;
   private readonly _squadCliSetupHandler: SquadCliSetupMessageHandler;
+  private readonly _squadCliUpgradeHandler: SquadCliUpgradeMessageHandler;
   private readonly _squadUpstreamHandler: SquadUpstreamMessageHandler;
   private readonly _squadPluginActionHandler: SquadPluginActionMessageHandler;
   private _lastApmEmptySignature: string | undefined;
@@ -43,6 +45,12 @@ export class NexkitPanelMessageHandler {
       async () => {
         await this._squadHandler.handle({ command: "refreshSquadDetection" });
       },
+      _services.logging
+    );
+    this._squadCliUpgradeHandler = new SquadCliUpgradeMessageHandler(
+      _services.squadCliUpgrade,
+      (message) => this.sendToWebview(message),
+      undefined,
       _services.logging
     );
     this._squadPluginActionHandler = new SquadPluginActionMessageHandler(_services, (message) =>
@@ -113,6 +121,9 @@ export class NexkitPanelMessageHandler {
       return;
     }
     if (await this._squadCliSetupHandler.handle(message)) {
+      return;
+    }
+    if (await this._squadCliUpgradeHandler.handle(message)) {
       return;
     }
     if (await this._squadUpstreamHandler.handle(message)) {

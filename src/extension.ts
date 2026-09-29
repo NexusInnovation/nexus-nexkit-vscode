@@ -24,7 +24,11 @@ import { registerShowLogsCommand } from "./shared/commands/loggingCommand";
 import { registerAddDevOpsConnectionCommand, registerRemoveDevOpsConnectionCommand } from "./features/apm-devops/commands";
 import { registerGenerateCommitMessageCommand } from "./features/commit-management/commands";
 import { registerOpenConvertToMarkdownCommand } from "./features/convert-to-markdown/commands";
-import { registerSquadExportCommand, registerSquadUpgradeProjectCommand } from "./features/squad/commands";
+import {
+  registerSquadExportCommand,
+  registerSquadUpgradeCliCommand,
+  registerSquadUpgradeProjectCommand,
+} from "./features/squad/commands";
 
 /**
  * Extension activation
@@ -76,6 +80,7 @@ export async function activate(context: vscode.ExtensionContext) {
   registerOpenConvertToMarkdownCommand(context, services);
   registerSquadExportCommand(context, services);
   registerSquadUpgradeProjectCommand(context, services);
+  registerSquadUpgradeCliCommand(context, services);
 
   // Lightweight watchers: register synchronously so no change event is missed
   services.aiTemplateData.setupConfigurationWatcher();

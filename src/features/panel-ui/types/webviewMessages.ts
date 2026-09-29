@@ -8,6 +8,7 @@ import type {
   RejectedSquadPreset,
   SquadCharter,
   SquadCliSource,
+  SquadCliUpgradeSummary,
   SquadDetectionResult,
   SquadDoctorReport,
   SquadDocKind,
@@ -108,7 +109,9 @@ export type WebviewMessage =
   | { command: "listSquadUpstreams" }
   | { command: "addSquadUpstream"; source: string; name?: string; ref?: string }
   | { command: "syncSquadUpstream"; name?: string }
-  | { command: "removeSquadUpstream"; name: string };
+  | { command: "removeSquadUpstream"; name: string }
+  // Squad CLI self-upgrade (SQD-031 / #246): host confirms, runs `squad upgrade --self`, then verifies
+  | { command: "upgradeSquadCli" };
 
 /**
  * Messages sent FROM the extension TO the webview
@@ -289,6 +292,11 @@ export type ExtensionMessage =
       presetId: string;
       ok: boolean;
       error?: SquadError;
+    }
+  // Squad CLI self-upgrade (SQD-031 / #246); failures are sent as `squadError`
+  | {
+      command: "squadCliUpgradeResult";
+      upgrade: SquadCliUpgradeSummary;
     }
   // Squad upstream operations (SQD-036 / #251, FR-031/FR-032)
   | {

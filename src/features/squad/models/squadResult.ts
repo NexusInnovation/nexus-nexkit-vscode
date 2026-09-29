@@ -27,6 +27,7 @@ export const SQUAD_ERROR_CODES = [
   "upstream-failed",
   "invalid-input",
   "update-check-failed",
+  "upgrade-failed",
   "plugin-list-failed",
   "plugin-action-failed",
   "backup-failed",

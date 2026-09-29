@@ -12,6 +12,7 @@ import { useVSCodeAPI } from "./useVSCodeAPI";
 import type {
   SquadCharter,
   SquadCliSource,
+  SquadCliUpgradeSummary,
   SquadDetectionResult,
   SquadDocKind,
   SquadDoctorReport,
@@ -91,6 +92,9 @@ export interface UseSquadStateResult {
   /** Latest Squad CLI/project update-check result, when requested. */
   updates: SquadUpdatesResult | null;
 
+  /** Latest successful CLI self-upgrade result; failures surface via `error`. */
+  cliUpgrade: SquadCliUpgradeSummary | null;
+
   /** Request the initial Squad state / refresh everything. */
   refresh: () => void;
 
@@ -148,6 +152,12 @@ export interface UseSquadStateResult {
    * confirmation and backs up Squad files before running `squad upgrade`.
    */
   upgradeProject: () => void;
+
+  /**
+   * Upgrade the Squad CLI with `squad upgrade --self` (FR-005). The host asks
+   * for explicit confirmation first and verifies the new version afterwards.
+   */
+  upgradeCli: () => void;
 
   /** Latest upstream operation (running / succeeded / failed), or `null`. */
   upstreamOperation: SquadUpstreamOperationState | null;
@@ -224,6 +234,10 @@ export function useSquadState(): UseSquadStateResult {
     messenger.sendMessage({ command: "upgradeSquadProject" });
   };
 
+  const upgradeCli = () => {
+    messenger.sendMessage({ command: "upgradeSquadCli" });
+  };
+
   const listUpstreams = () => {
     messenger.sendMessage({ command: "listSquadUpstreams" });
   };
@@ -259,6 +273,7 @@ export function useSquadState(): UseSquadStateResult {
     lastPluginAction: squad.lastPluginAction,
     doctor: squad.doctor,
     updates: squad.updates,
+    cliUpgrade: squad.cliUpgrade,
     refresh,
     refreshDetection,
     saveCharter,
@@ -271,6 +286,7 @@ export function useSquadState(): UseSquadStateResult {
     setCliInvocation,
     installCli,
     upgradeProject,
+    upgradeCli,
     upstreamOperation: squad.upstreamOperation,
     listUpstreams,
     addUpstream,

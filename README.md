@@ -107,6 +107,8 @@ Accédez aux commandes via la palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) :
 
 - **Nexkit: Restore Template Backup** - Restaure les templates depuis les sauvegardes automatiques
 
+- **Nexkit: Upgrade Squad CLI** - Vérifie si une nouvelle version du CLI Squad est disponible puis, après confirmation explicite, exécute `squad upgrade --self` et vérifie la nouvelle version installée (les erreurs restent visibles et actionnables)
+
 ### Panneau Latéral
 
 Un panneau dédié dans la barre d'activité offre :

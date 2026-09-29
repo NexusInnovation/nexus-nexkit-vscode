@@ -16,6 +16,7 @@
 import type {
   RejectedSquadPreset,
   SquadCharter,
+  SquadCliUpgradeSummary,
   SquadDetectionResult,
   SquadDocKind,
   SquadDoctorReport,
@@ -264,6 +265,9 @@ export interface SquadState {
   /** Latest Squad CLI/project update-check result (FR-005), when requested. */
   updates: SquadUpdatesResult | null;
 
+  /** Latest confirmed CLI self-upgrade result (SQD-031, FR-005); failures go to {@link error}. */
+  cliUpgrade: SquadCliUpgradeSummary | null;
+
   /** Preset selection screen sub-state (SQD-019, FR-010/FR-014/FR-015). */
   presetPicker: SquadPresetPickerState;
 
@@ -314,6 +318,7 @@ export const initialSquadState: SquadState = {
   lastPluginAction: null,
   doctor: null,
   updates: null,
+  cliUpgrade: null,
   presetPicker: initialSquadPresetPickerState,
   upstreamOperation: null,
   lastWrite: null,

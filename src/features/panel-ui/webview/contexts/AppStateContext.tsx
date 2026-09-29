@@ -266,6 +266,18 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
           }));
           break;
 
+        case "squadCliUpgradeResult":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              cliUpgrade: message.upgrade,
+              isLoading: false,
+              error: null,
+            },
+          }));
+          break;
+
         case "squadCharterSaved":
           setState((prev) => {
             const existingIndex = prev.squad.charters.findIndex((charter) => charter.agentId === message.charter.agentId);
@@ -470,6 +482,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     const unsubscribeSquadDoctor = messenger.onMessage("squadDoctorUpdate", handleMessage);
     const unsubscribeSquadUpdates = messenger.onMessage("squadUpdatesUpdate", handleMessage);
     const unsubscribeSquadProjectUpgraded = messenger.onMessage("squadProjectUpgraded", handleMessage);
+    const unsubscribeSquadCliUpgrade = messenger.onMessage("squadCliUpgradeResult", handleMessage);
     const unsubscribeSquadCharterSaved = messenger.onMessage("squadCharterSaved", handleMessage);
     const unsubscribeSquadDocSaved = messenger.onMessage("squadDocSaved", handleMessage);
     const unsubscribeSquadModelConfig = messenger.onMessage("squadModelConfigUpdate", handleMessage);
@@ -508,6 +521,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       unsubscribeSquadDoctor();
       unsubscribeSquadUpdates();
       unsubscribeSquadProjectUpgraded();
+      unsubscribeSquadCliUpgrade();
       unsubscribeSquadCharterSaved();
       unsubscribeSquadDocSaved();
       unsubscribeSquadModelConfig();

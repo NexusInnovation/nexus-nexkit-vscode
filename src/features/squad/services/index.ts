@@ -17,5 +17,6 @@ export * from "./squadUpstreamService";
 export * from "./squadUpstreamRecommendationService";
 export * from "./squadPluginService";
 export * from "./squadProjectUpgradeService";
+export * from "./squadCliUpgradeService";
 export * from "./squadPluginActionService";
 export * from "./squadPluginActionConfirmer";

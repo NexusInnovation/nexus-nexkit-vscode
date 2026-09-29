@@ -46,6 +46,7 @@ import { SquadExportService } from "../features/squad/services/squadExportServic
 import { SquadFileWriteService } from "../features/squad/services/squadFileWriteService";
 import { SquadPluginService } from "../features/squad/services/squadPluginService";
 import { SquadProjectUpgradeService } from "../features/squad/services/squadProjectUpgradeService";
+import { SquadCliUpgradeService } from "../features/squad/services/squadCliUpgradeService";
 import { SquadPluginActionService } from "../features/squad/services/squadPluginActionService";
 
 /**
@@ -143,6 +144,12 @@ export interface ServiceContainer {
   squadUpdates: SquadUpdateService;
 
   /**
+   * Confirmed `squad upgrade --self` (SQD-031, FR-005). Only runs after an
+   * update check and an explicit user confirmation; verifies the new version.
+   */
+  squadCliUpgrade: SquadCliUpgradeService;
+
+  /**
    * Export the current Squad through the allowlisted CLI (SQD-033). Lazily
    * prompts for a destination only when invoked.
    */
@@ -218,6 +225,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   // CLI is found across platforms (npm `squad.cmd`/`squad.ps1` shims on Windows).
   const squadDetection = new SquadDetectionService({ cliService: squadCli });
   const squadUpdates = new SquadUpdateService({ detectionService: squadDetection });
+  const squadCliUpgrade = new SquadCliUpgradeService({ updates: squadUpdates, cli: squadCli, logger: logging });
   const squadPlugins = squadFile ? new SquadPluginService({ fileService: squadFile, cli: squadCli }) : undefined;
   const squadProjectUpgrade = new SquadProjectUpgradeService({
     updates: squadUpdates,
@@ -318,6 +326,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     squadExport,
     squadFile,
     squadUpdates,
+    squadCliUpgrade,
     squadWrite,
     squadPlugins,
     squadProjectUpgrade,
