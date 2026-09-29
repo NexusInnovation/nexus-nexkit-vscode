@@ -1,16 +1,19 @@
 import { useState } from "preact/hooks";
 import { useSquadState } from "../../hooks/useSquadState";
+import { useSquadEditor } from "../../hooks/useSquadEditor";
 import { SkeletonList } from "../atoms/Skeleton";
 import { SquadErrorNotice } from "../molecules/SquadErrorNotice";
+import { SquadFileEditor } from "../molecules/SquadFileEditor";
 import { SquadMarkdownView } from "../molecules/SquadMarkdownView";
+import type { SquadCharter } from "../../../../squad/models";
 
 /**
- * SquadRosterSection Component (SQD-012, FR-022)
+ * SquadRosterSection Component (SQD-012 / SQD-029, FR-022/FR-023)
  *
- * Read-only, purely presentational view of the Squad roster read from
- * `.squad/team.md` and the agent charters read from
- * `.squad/agents/<id>/charter.md`. Renders a roster table; selecting a member
- * that has a charter reveals its content below.
+ * View of the Squad roster read from `.squad/team.md` and the agent charters
+ * read from `.squad/agents/<id>/charter.md`. Renders a roster table; selecting
+ * a member that has a charter reveals its content below, where it can be
+ * edited and saved (backup first).
  *
  * State is sourced entirely from the Squad AppState slice via
  * {@link useSquadState}; all loading, empty and error states are shown
@@ -89,9 +92,23 @@ export function SquadRosterSection() {
           <h3 class="squad-charter-title">
             <i class="codicon codicon-book" aria-hidden="true"></i> {selectedCharter.agentId} charter
           </h3>
-          <SquadMarkdownView content={selectedCharter.content} ariaLabel={`${selectedCharter.agentId} charter`} emptyMessage="This charter is empty." />
+          <SquadCharterEditor key={selectedCharter.agentId} charter={selectedCharter} />
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Shows one agent charter with its edit/save/cancel flow (SQD-029, FR-023).
+ * Saves go through the backup-first controlled write path (SQD-026).
+ */
+function SquadCharterEditor({ charter }: { charter: SquadCharter }) {
+  const editor = useSquadEditor({ target: { type: "charter", agentId: charter.agentId }, content: charter.content });
+
+  return (
+    <SquadFileEditor label={`${charter.agentId} charter`} relativePath={charter.relativePath} editor={editor}>
+      <SquadMarkdownView content={charter.content} ariaLabel={`${charter.agentId} charter`} emptyMessage="This charter is empty." />
+    </SquadFileEditor>
   );
 }

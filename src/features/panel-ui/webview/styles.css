@@ -1824,6 +1824,134 @@ details[open] > .type-header::before {
   color: var(--vscode-descriptionForeground);
 }
 
+/* Charter / governance editor (SQD-029) */
+.squad-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.squad-editor-toolbar,
+.squad-editor-actions,
+.squad-editor-confirm {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.squad-editor-toolbar {
+  justify-content: flex-end;
+}
+
+.squad-editor-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
+  border-radius: 4px;
+  background-color: var(--vscode-button-secondaryBackground, transparent);
+  color: var(--vscode-button-secondaryForeground, var(--vscode-foreground));
+  cursor: pointer;
+  font-size: 0.85em;
+}
+
+.squad-editor-button:hover:not(:disabled) {
+  background-color: var(--vscode-button-secondaryHoverBackground, var(--vscode-list-hoverBackground));
+}
+
+.squad-editor-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.squad-editor-primary {
+  background-color: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+}
+
+.squad-editor-primary:hover:not(:disabled) {
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+.squad-editor-danger {
+  color: var(--vscode-errorForeground);
+}
+
+.squad-editor-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 160px;
+  padding: 6px 8px;
+  resize: vertical;
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 0.85em;
+  line-height: 1.4;
+  color: var(--vscode-input-foreground);
+  background-color: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
+  border-radius: 4px;
+}
+
+.squad-editor-textarea:focus {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
+.squad-editor-status {
+  margin: 0;
+  font-size: 0.8em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.squad-editor-status.dirty {
+  color: var(--vscode-editorWarning-foreground, var(--vscode-foreground));
+}
+
+.squad-editor-backup-note,
+.squad-editor-readonly-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  font-size: 0.8em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.squad-editor-warning,
+.squad-editor-saved {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 8px;
+  font-size: 0.85em;
+  border-radius: 4px;
+}
+
+.squad-editor-warning {
+  color: var(--vscode-inputValidation-warningForeground, var(--vscode-foreground));
+  background-color: var(--vscode-inputValidation-warningBackground, var(--vscode-editorWarning-background));
+  border: 1px solid var(--vscode-inputValidation-warningBorder, var(--vscode-editorWarning-foreground));
+}
+
+.squad-editor-saved {
+  border: 1px solid var(--vscode-testing-iconPassed, var(--vscode-panel-border));
+}
+
+.squad-editor-saved-message {
+  flex: 1;
+}
+
+.squad-editor-dismiss {
+  padding: 0 2px;
+  border: none;
+  background: none;
+  color: var(--vscode-foreground);
+  cursor: pointer;
+}
+
 /* Squad tab container (SQD-009) */
 .squad-section {
   display: flex;

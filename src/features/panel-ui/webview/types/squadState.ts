@@ -17,8 +17,10 @@ import type {
   RejectedSquadPreset,
   SquadCharter,
   SquadDetectionResult,
+  SquadDocKind,
   SquadDoctorReport,
   SquadError,
+  SquadErrorCode,
   SquadMarkdownDoc,
   SquadMarketplaceRef,
   SquadModelConfigDocument,
@@ -32,6 +34,37 @@ import type {
   SquadUpstreamOperation,
   UnreachableSquadSource,
 } from "../../../squad/models";
+import type { SquadWriteSummary } from "../../types/webviewMessages";
+
+/**
+ * A Squad file the panel can edit (SQD-029, FR-023/FR-024): an agent charter
+ * or a governance document (decisions/routing).
+ */
+export type SquadEditTarget = { type: "charter"; agentId: string } | { type: "doc"; kind: SquadDocKind };
+
+/**
+ * Outcome of the most recent controlled Squad write (SQD-029).
+ *
+ * `sequence` increases monotonically with every write outcome so an editor
+ * can tell whether a result arrived after it issued its own save. Failures
+ * carry no target because the host reports them through the shared
+ * `squadError` message.
+ */
+export type SquadWriteOutcome =
+  | { sequence: number; ok: true; target: SquadEditTarget; summary: SquadWriteSummary }
+  | { sequence: number; ok: false; error: SquadError };
+
+/**
+ * Error codes the controlled write path (SQD-026/SQD-027) can emit. Only
+ * these `squadError` codes are recorded as a write failure; any other error
+ * (e.g. detection) never resolves a pending save.
+ */
+export const SQUAD_WRITE_ERROR_CODES: readonly SquadErrorCode[] = [
+  "backup-failed",
+  "file-write-failed",
+  "write-conflict",
+  "not-a-workspace",
+];
 
 /**
  * Kind of a read-only Squad log document (FR-025).
@@ -239,6 +272,12 @@ export interface SquadState {
    * or `null` before the first one. Failures carry an actionable error.
    */
   upstreamOperation: SquadUpstreamOperationState | null;
+
+  /**
+   * Latest charter/decisions/routing write outcome (SQD-029), or `null` before
+   * any save. Drives the editors' success/backup notice and inline errors.
+   */
+  lastWrite: SquadWriteOutcome | null;
 }
 
 /** Progress / outcome of the latest `squad upstream` operation (SQD-036). */
@@ -277,4 +316,5 @@ export const initialSquadState: SquadState = {
   updates: null,
   presetPicker: initialSquadPresetPickerState,
   upstreamOperation: null,
+  lastWrite: null,
 };
