@@ -29,6 +29,7 @@ import {
   registerSquadUpgradeCliCommand,
   registerSquadUpgradeProjectCommand,
   registerSquadImportCommand,
+  registerSquadWorktreeCommands,
 } from "./features/squad/commands";
 
 /**
@@ -83,6 +84,7 @@ export async function activate(context: vscode.ExtensionContext) {
   registerSquadUpgradeProjectCommand(context, services);
   registerSquadUpgradeCliCommand(context, services);
   registerSquadImportCommand(context, services);
+  registerSquadWorktreeCommands(context, services);
 
   // Lightweight watchers: register synchronously so no change event is missed
   services.aiTemplateData.setupConfigurationWatcher();

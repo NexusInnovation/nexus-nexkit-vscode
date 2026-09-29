@@ -1,6 +1,10 @@
 import * as fs from "fs";
 import * as path from "path";
+import { execFile } from "child_process";
+import { promisify } from "util";
 import { fileExists } from "../../shared/utils/fileHelper";
+
+const execFileAsync = promisify(execFile);
 
 /**
  * Service for adding NexKit exclusions to .git/info/exclude.
@@ -21,19 +25,7 @@ export class GitExcludeConfigDeployer {
       return;
     }
 
-    // Resolve the actual git directory — in a worktree, .git is a file like "gitdir: /path/to/real/gitdir"
-    const gitStat = await fs.promises.stat(gitPath);
-    let gitDir: string;
-    if (gitStat.isFile()) {
-      const content = await fs.promises.readFile(gitPath, "utf8");
-      const match = content.match(/^gitdir:\s*(.+)$/m);
-      if (!match) {
-        return;
-      }
-      gitDir = match[1].trim();
-    } else {
-      gitDir = gitPath;
-    }
+    const gitDir = await this._resolveCommonGitDir(targetRoot, gitPath);
 
     const gitInfoDir = path.join(gitDir, "info");
     const excludePath = path.join(gitInfoDir, "exclude");
@@ -58,6 +50,30 @@ export class GitExcludeConfigDeployer {
     }
 
     await this._cleanupGitignore(targetRoot);
+  }
+
+  private async _resolveCommonGitDir(targetRoot: string, gitPath: string): Promise<string> {
+    try {
+      const { stdout } = await execFileAsync("git", ["-C", targetRoot, "rev-parse", "--path-format=absolute", "--git-common-dir"], {
+        windowsHide: true,
+        timeout: 5000,
+      });
+      const commonDir = stdout.trim();
+      if (commonDir) {
+        return commonDir;
+      }
+    } catch {
+      // Fall back to the legacy local gitdir resolution below.
+    }
+
+    const gitStat = await fs.promises.stat(gitPath);
+    if (!gitStat.isFile()) {
+      return gitPath;
+    }
+
+    const content = await fs.promises.readFile(gitPath, "utf8");
+    const match = content.match(/^gitdir:\s*(.+)$/m);
+    return match ? match[1].trim() : gitPath;
   }
 
   /**

@@ -160,6 +160,16 @@
         "command": "nexus-nexkit-vscode.squad.import",
         "title": "Nexkit: Import Squad",
         "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.squad.createWorktreeForIssue",
+        "title": "Nexkit: Create Squad Worktree for Issue",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.squad.cleanupWorktrees",
+        "title": "Nexkit: Cleanup Squad Worktrees",
+        "category": "Nexkit"
       }
     ],
     "menus": {
@@ -510,6 +520,41 @@
           "default": true,
           "scope": "application",
           "description": "Enable anonymous Squad usage telemetry to help improve Nexkit's Squad integration. Respects VS Code's global telemetry setting and nexkit.telemetry.enabled. No file names, paths, workspace names, user content, or secrets are collected."
+        },
+        "nexkit.squad.worktree.dependencies": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "install",
+            "link",
+            "none"
+          ],
+          "default": "auto",
+          "scope": "application",
+          "markdownDescription": "How NexKit prepares dependencies in Squad issue worktrees. **Auto** installs from a lockfile in trusted workspaces; **Link** is refused for pnpm to avoid unsafe node_modules junction purges."
+        },
+        "nexkit.squad.worktree.openInNewWindow": {
+          "type": "boolean",
+          "default": true,
+          "scope": "application",
+          "description": "Open newly-created Squad issue worktrees in a new VS Code window."
+        },
+        "nexkit.squad.worktree.parentDirectory": {
+          "type": "string",
+          "default": "",
+          "scope": "application",
+          "markdownDescription": "Optional parent directory for Squad issue worktrees. Leave empty to create worktrees beside the main repository. Use a short path such as `C:\\wt` if Windows long paths are a concern."
+        },
+        "nexkit.squad.worktree.copyUntracked": {
+          "type": "array",
+          "default": [
+            ".nexkit"
+          ],
+          "scope": "application",
+          "description": "Relative untracked NexKit artifact paths copied into new Squad issue worktrees. Parent traversal and .env-style paths are rejected.",
+          "items": {
+            "type": "string"
+          }
         }
       }
     }

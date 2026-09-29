@@ -104,6 +104,31 @@ export interface SquadBacklogItemCounts {
   untriaged: number | null;
 }
 
+export interface SquadBacklogItem {
+  providerId: SquadBacklogProviderId;
+  id: string;
+  number: number;
+  title: string;
+  url: string | null;
+  state: "open" | "closed";
+  labels: string[];
+  assignees: string[];
+  type?: string;
+}
+
+export interface SquadBacklogItemQuery {
+  squadOnly?: boolean;
+  assignedToMe?: boolean;
+  untriagedOnly?: boolean;
+  search?: string;
+  limit?: number;
+}
+
+export interface SquadWorkState {
+  item: "open" | "closed" | "unknown";
+  pullRequest: "merged" | "open" | "closed" | "none" | "unknown";
+}
+
 /** GitHub-specific coordinates of a GitHub Issues backlog. */
 export interface SquadGitHubBacklogRef {
   /** GitHub host, e.g. `github.com` or a GHE host. */
@@ -219,6 +244,12 @@ export interface SquadBacklogProvider {
 
   /** Resolve and verify access to the backlog through the platform tooling. */
   detect(context: SquadBacklogContext): Promise<SquadResult<SquadBacklogProviderInfo>>;
+
+  /** List open work items for worktree creation. */
+  listItems?(context: SquadBacklogContext, query: SquadBacklogItemQuery): Promise<SquadResult<SquadBacklogItem[]>>;
+
+  /** Read item and PR state used to propose safe worktree cleanup. */
+  getWorkState?(context: SquadBacklogContext, itemId: string, branch: string): Promise<SquadResult<SquadWorkState>>;
 }
 
 const PLATFORM_ALIASES: Readonly<Record<string, SquadBacklogProviderId>> = {

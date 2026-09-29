@@ -24,3 +24,4 @@ export * from "./squadUpdates";
 export * from "./squadTransfer";
 export * from "./squadCliUpgrade";
 export * from "./squadBacklog";
+export * from "./squadWorktree";

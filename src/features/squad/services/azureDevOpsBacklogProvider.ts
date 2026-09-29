@@ -15,9 +15,12 @@ import {
   SquadAzureDevOpsBacklogRef,
   SquadBacklogContext,
   SquadBacklogDetectionSource,
+  SquadBacklogItem,
+  SquadBacklogItemQuery,
   SquadBacklogProvider,
   SquadBacklogProviderId,
   SquadBacklogProviderInfo,
+  SquadWorkState,
   SquadError,
   SquadGitRemote,
   SquadResult,
@@ -119,6 +122,85 @@ export class AzureDevOpsBacklogProvider implements SquadBacklogProvider {
       },
       azureDevOps: toAzureDevOpsRef(config),
     });
+  }
+
+  public async listItems(
+    context: SquadBacklogContext,
+    query: SquadBacklogItemQuery
+  ): Promise<SquadResult<SquadBacklogItem[]>> {
+    const configResult = resolveAzureDevOpsConfig(context);
+    if (!configResult.ok) {
+      return configResult;
+    }
+    const config = configResult.value;
+    const result = await this._runner.run({
+      command: this._azCommand,
+      args: [
+        "boards",
+        "query",
+        "--organization",
+        config.organizationUrl,
+        "--project",
+        config.project,
+        "--wiql",
+        buildAzureDevOpsItemsWiql(config, query),
+        "--output",
+        "json",
+      ],
+      cwd: context.workspaceRoot.fsPath,
+      timeoutMs: this._timeoutMs,
+      token: context.token,
+    });
+
+    const failure = mapAzFailure(result, config);
+    if (failure) {
+      return squadErr(failure);
+    }
+    return parseAzureDevOpsItems(result.stdout, query);
+  }
+
+  public async getWorkState(
+    context: SquadBacklogContext,
+    itemId: string,
+    _branch: string
+  ): Promise<SquadResult<SquadWorkState>> {
+    const configResult = resolveAzureDevOpsConfig(context);
+    if (!configResult.ok) {
+      return configResult;
+    }
+    const numericId = Number(itemId);
+    if (!Number.isInteger(numericId) || numericId <= 0) {
+      return squadErr({
+        code: "invalid-input",
+        message: "Azure DevOps work item ids must be positive numbers.",
+        remediation: "Refresh the backlog list, then try cleanup again.",
+      });
+    }
+
+    const config = configResult.value;
+    const result = await this._runner.run({
+      command: this._azCommand,
+      args: [
+        "boards",
+        "query",
+        "--organization",
+        config.organizationUrl,
+        "--project",
+        config.project,
+        "--wiql",
+        buildAzureDevOpsWorkStateWiql(numericId),
+        "--output",
+        "json",
+      ],
+      cwd: context.workspaceRoot.fsPath,
+      timeoutMs: this._timeoutMs,
+      token: context.token,
+    });
+    const failure = mapAzFailure(result, config);
+    if (failure) {
+      return squadErr(failure);
+    }
+    return squadOk({ item: parseAzureDevOpsWorkItemState(result.stdout), pullRequest: "unknown" });
   }
 
   private async _queryCount(
@@ -225,6 +307,35 @@ export function buildAzureDevOpsWiql(config: SquadAzureDevOpsBacklogRef, tag?: s
   }
 
   return `SELECT [System.Id] FROM WorkItems WHERE ${clauses.join(" AND ")} ORDER BY [System.ChangedDate] DESC`;
+}
+
+export function buildAzureDevOpsItemsWiql(config: SquadAzureDevOpsBacklogRef, query: SquadBacklogItemQuery): string {
+  const clauses = [
+    "[System.TeamProject] = @project",
+    ...CLOSED_STATES.map((state) => `[System.State] <> '${state}'`),
+  ];
+
+  if (config.areaPath) {
+    clauses.push(`[System.AreaPath] UNDER '${escapeWiqlString(config.areaPath)}'`);
+  }
+  if (config.iterationPath) {
+    clauses.push(`[System.IterationPath] UNDER '${escapeWiqlString(config.iterationPath)}'`);
+  }
+  if (query.squadOnly !== false) {
+    clauses.push(`[System.Tags] CONTAINS '${escapeWiqlString(SQUAD_BACKLOG_LABEL)}'`);
+  }
+  if (query.untriagedOnly) {
+    clauses.push(`[System.Tags] CONTAINS '${escapeWiqlString(SQUAD_UNTRIAGED_LABEL)}'`);
+  }
+  if (query.assignedToMe) {
+    clauses.push("[System.AssignedTo] = @Me");
+  }
+
+  return `SELECT [System.Id], [System.Title], [System.State], [System.Tags], [System.AssignedTo], [System.WorkItemType] FROM WorkItems WHERE ${clauses.join(" AND ")} ORDER BY [System.ChangedDate] DESC`;
+}
+
+function buildAzureDevOpsWorkStateWiql(itemId: number): string {
+  return `SELECT [System.Id], [System.State] FROM WorkItems WHERE [System.TeamProject] = @project AND [System.Id] = ${itemId}`;
 }
 
 function resolveAzureDevOpsConfig(context: SquadBacklogContext): SquadResult<AzureDevOpsBacklogConfig> {
@@ -527,6 +638,95 @@ function extractWorkItems(payload: unknown): unknown[] | null {
     return record.value;
   }
   return null;
+}
+
+function parseAzureDevOpsItems(stdout: string, query: SquadBacklogItemQuery): SquadResult<SquadBacklogItem[]> {
+  let payload: unknown;
+  try {
+    payload = JSON.parse(stdout);
+  } catch (error) {
+    return squadErr({
+      code: "parse-failed",
+      message: "The Azure CLI returned an unexpected work item list response.",
+      remediation: "Update the Azure CLI and Azure DevOps extension, then refresh.",
+      detail: error instanceof Error ? error.message : undefined,
+    });
+  }
+
+  const items = extractWorkItems(payload);
+  if (!items) {
+    return squadErr({
+      code: "parse-failed",
+      message: "The Azure CLI response did not include a work item list.",
+      remediation: "Update the Azure CLI and Azure DevOps extension, then refresh.",
+    });
+  }
+
+  const search = query.search?.trim().toLowerCase();
+  const requestedLimit = Number.isInteger(query.limit) ? (query.limit as number) : 50;
+  const limit = Math.max(1, Math.min(100, requestedLimit));
+  return squadOk(
+    items
+      .map(toAzureDevOpsBacklogItem)
+      .filter((item): item is SquadBacklogItem => item !== null)
+      .filter((item) => (search ? item.id === search || item.title.toLowerCase().includes(search) : true))
+      .slice(0, limit)
+  );
+}
+
+function toAzureDevOpsBacklogItem(value: unknown): SquadBacklogItem | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+  const record = value as Readonly<Record<string, unknown>>;
+  const fields = (record.fields && typeof record.fields === "object" ? record.fields : record) as Readonly<Record<string, unknown>>;
+  const id = typeof record.id === "number" ? record.id : Number(fields["System.Id"]);
+  if (!Number.isInteger(id) || id <= 0) {
+    return null;
+  }
+  const title = typeof fields["System.Title"] === "string" ? fields["System.Title"] : `Work item ${id}`;
+  const state = typeof fields["System.State"] === "string" ? fields["System.State"] : "";
+  const tags =
+    typeof fields["System.Tags"] === "string" ? fields["System.Tags"].split(";").map((tag) => tag.trim()).filter(Boolean) : [];
+  const assignedTo = fields["System.AssignedTo"];
+  return {
+    providerId: SquadBacklogProviderId.AzureDevOps,
+    id: String(id),
+    number: id,
+    title,
+    url: typeof record.url === "string" ? record.url : null,
+    state: CLOSED_STATES.includes(state as (typeof CLOSED_STATES)[number]) ? "closed" : "open",
+    labels: tags,
+    assignees: parseAzureDevOpsAssignees(assignedTo),
+    type: typeof fields["System.WorkItemType"] === "string" ? fields["System.WorkItemType"] : undefined,
+  };
+}
+
+function parseAzureDevOpsAssignees(value: unknown): string[] {
+  if (typeof value === "string" && value.trim()) {
+    return [value.trim()];
+  }
+  if (value && typeof value === "object") {
+    const displayName = (value as { displayName?: unknown }).displayName;
+    return typeof displayName === "string" && displayName.trim() ? [displayName.trim()] : [];
+  }
+  return [];
+}
+
+function parseAzureDevOpsWorkItemState(stdout: string): SquadWorkState["item"] {
+  try {
+    const payload = JSON.parse(stdout);
+    const item = extractWorkItems(payload)?.[0];
+    if (!item || typeof item !== "object") {
+      return "unknown";
+    }
+    const record = item as Readonly<Record<string, unknown>>;
+    const fields = (record.fields && typeof record.fields === "object" ? record.fields : record) as Readonly<Record<string, unknown>>;
+    const state = typeof fields["System.State"] === "string" ? fields["System.State"] : "";
+    return CLOSED_STATES.includes(state as (typeof CLOSED_STATES)[number]) ? "closed" : "open";
+  } catch {
+    return "unknown";
+  }
 }
 
 function toAzureDevOpsRef(config: AzureDevOpsBacklogConfig): SquadAzureDevOpsBacklogRef {

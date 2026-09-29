@@ -24,3 +24,8 @@ export * from "./squadPluginActionConfirmer";
 export * from "./squadBacklogService";
 export * from "./gitHubBacklogProvider";
 export * from "./azureDevOpsBacklogProvider";
+export * from "./squadWorktreeNaming";
+export * from "./gitWorktreeClient";
+export * from "./worktreeDependencyStrategy";
+export * from "./worktreeRemover";
+export * from "./squadWorktreeService";

@@ -41,6 +41,8 @@ export const Commands = {
   UPGRADE_SQUAD_PROJECT: "nexus-nexkit-vscode.squad.upgradeProject",
   UPGRADE_SQUAD_CLI: "nexus-nexkit-vscode.squad.upgradeCli",
   IMPORT_SQUAD: "nexus-nexkit-vscode.squad.import",
+  CREATE_SQUAD_WORKTREE: "nexus-nexkit-vscode.squad.createWorktreeForIssue",
+  CLEANUP_SQUAD_WORKTREES: "nexus-nexkit-vscode.squad.cleanupWorktrees",
 } as const;
 
 // Type-safe command names

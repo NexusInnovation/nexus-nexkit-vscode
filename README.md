@@ -109,6 +109,12 @@ Accédez aux commandes via la palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) :
 
 - **Nexkit: Upgrade Squad CLI** - Vérifie si une nouvelle version du CLI Squad est disponible puis, après confirmation explicite, exécute `squad upgrade --self` et vérifie la nouvelle version installée (les erreurs restent visibles et actionnables)
 
+### Squad worktrees par issue
+
+Les commandes **Nexkit: Create Squad Worktree for Issue** et **Nexkit: Cleanup Squad Worktrees** préparent un worktree Git isolé pour un item de backlog Squad. NexKit réutilise la détection GitHub/Azure DevOps existante, crée une branche `squad/<issue>-<slug>`, installe les dépendances depuis le lockfile dans les worktrees de confiance, refuse les jonctions `node_modules` avec pnpm, et protège le nettoyage des worktrees sales en stashing avant suppression confirmée.
+
+Paramètres applicatifs associés : `nexkit.squad.worktree.dependencies`, `nexkit.squad.worktree.openInNewWindow`, `nexkit.squad.worktree.parentDirectory`, et `nexkit.squad.worktree.copyUntracked`.
+
 ### Panneau Latéral
 
 Un panneau dédié dans la barre d'activité offre :

@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { OperationMode } from "../features/ai-template-files/models/aiTemplateFile";
-import { SquadCliSource } from "../features/squad/models";
+import { SquadCliSource, SquadWorktreeDependencyMode } from "../features/squad/models";
 
 /**
  * Centralized manager for all Nexkit extension settings and workspace state
@@ -43,6 +43,10 @@ export class SettingsManager {
   private static readonly SQUAD_CLI_SOURCE = "squad.cliSource";
   private static readonly SQUAD_CLI_PATH = "squad.cliPath";
   private static readonly SQUAD_TELEMETRY_ENABLED = "squad.telemetry.enabled";
+  private static readonly SQUAD_WORKTREE_DEPENDENCIES = "squad.worktree.dependencies";
+  private static readonly SQUAD_WORKTREE_OPEN_IN_NEW_WINDOW = "squad.worktree.openInNewWindow";
+  private static readonly SQUAD_WORKTREE_PARENT_DIRECTORY = "squad.worktree.parentDirectory";
+  private static readonly SQUAD_WORKTREE_COPY_UNTRACKED = "squad.worktree.copyUntracked";
 
   // Template auto-refresh settings
   private static readonly TEMPLATES_AUTO_REFRESH_INTERVAL = "templates.autoRefreshIntervalMinutes";
@@ -230,6 +234,50 @@ export class SettingsManager {
     await vscode.workspace
       .getConfiguration(this.NEXKIT_SECTION)
       .update(this.SQUAD_TELEMETRY_ENABLED, value, vscode.ConfigurationTarget.Global);
+  }
+
+  static getSquadWorktreeDependencies(): SquadWorktreeDependencyMode {
+    return vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .get<SquadWorktreeDependencyMode>(this.SQUAD_WORKTREE_DEPENDENCIES, SquadWorktreeDependencyMode.Auto);
+  }
+
+  static async setSquadWorktreeDependencies(value: SquadWorktreeDependencyMode): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .update(this.SQUAD_WORKTREE_DEPENDENCIES, value, vscode.ConfigurationTarget.Global);
+  }
+
+  static getSquadWorktreeOpenInNewWindow(): boolean {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<boolean>(this.SQUAD_WORKTREE_OPEN_IN_NEW_WINDOW, true);
+  }
+
+  static async setSquadWorktreeOpenInNewWindow(value: boolean): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .update(this.SQUAD_WORKTREE_OPEN_IN_NEW_WINDOW, value, vscode.ConfigurationTarget.Global);
+  }
+
+  static getSquadWorktreeParentDirectory(): string {
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<string>(this.SQUAD_WORKTREE_PARENT_DIRECTORY, "");
+  }
+
+  static async setSquadWorktreeParentDirectory(value: string): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .update(this.SQUAD_WORKTREE_PARENT_DIRECTORY, value, vscode.ConfigurationTarget.Global);
+  }
+
+  static getSquadWorktreeCopyUntracked(): string[] {
+    return vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .get<string[]>(this.SQUAD_WORKTREE_COPY_UNTRACKED, [".nexkit"]);
+  }
+
+  static async setSquadWorktreeCopyUntracked(value: string[]): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .update(this.SQUAD_WORKTREE_COPY_UNTRACKED, value, vscode.ConfigurationTarget.Global);
   }
 
   // Extension Updates

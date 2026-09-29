@@ -7,10 +7,13 @@ import {
   SquadBacklogDetected,
   SquadBacklogDetection,
   SquadBacklogDetectionSource,
+  SquadBacklogItem,
+  SquadBacklogItemQuery,
   SquadBacklogNotDetected,
   SquadBacklogNotDetectedReason,
   SquadBacklogProvider,
   SquadBacklogProviderId,
+  SquadWorkState,
   SquadError,
   SquadGitRemote,
   SquadResult,
@@ -122,6 +125,65 @@ export class SquadBacklogService {
     return this._detectFromRemotes(root, config, remoteResult.value, token);
   }
 
+  public async listItems(
+    query: SquadBacklogItemQuery,
+    workspaceRoot?: vscode.Uri,
+    token?: vscode.CancellationToken
+  ): Promise<SquadResult<SquadBacklogItem[]>> {
+    const selected = await this._selectProviderContext(workspaceRoot, token);
+    if (!selected.ok) {
+      return selected;
+    }
+    if (!selected.value.provider.listItems) {
+      return squadErr({
+        code: "backlog-unsupported",
+        message: `${selected.value.provider.displayName} does not support backlog item listing in this NexKit build.`,
+        remediation: "Update NexKit, or use a supported Squad backlog provider.",
+      });
+    }
+    return selected.value.provider.listItems(selected.value.context, query);
+  }
+
+  public async getItem(
+    itemId: string,
+    workspaceRoot?: vscode.Uri,
+    token?: vscode.CancellationToken
+  ): Promise<SquadResult<SquadBacklogItem>> {
+    const items = await this.listItems({ squadOnly: false, search: itemId, limit: 100 }, workspaceRoot, token);
+    if (!items.ok) {
+      return items;
+    }
+    const item = items.value.find((candidate) => candidate.id === itemId || String(candidate.number) === itemId);
+    if (!item) {
+      return squadErr({
+        code: "invalid-input",
+        message: "The selected backlog item could not be found.",
+        remediation: "Refresh the Squad backlog list, then try again.",
+      });
+    }
+    return squadOk(item);
+  }
+
+  public async getWorkState(
+    itemId: string,
+    branch: string,
+    workspaceRoot?: vscode.Uri,
+    token?: vscode.CancellationToken
+  ): Promise<SquadResult<SquadWorkState>> {
+    const selected = await this._selectProviderContext(workspaceRoot, token);
+    if (!selected.ok) {
+      return selected;
+    }
+    if (!selected.value.provider.getWorkState) {
+      return squadErr({
+        code: "backlog-unsupported",
+        message: `${selected.value.provider.displayName} does not support work state checks in this NexKit build.`,
+        remediation: "Update NexKit, or inspect the issue and pull request manually before cleanup.",
+      });
+    }
+    return selected.value.provider.getWorkState(selected.value.context, itemId, branch);
+  }
+
   private async _detectConfiguredProvider(
     workspaceRoot: vscode.Uri,
     config: SquadBacklogConfig,
@@ -153,6 +215,65 @@ export class SquadBacklogService {
       source: SquadBacklogDetectionSource.Config,
       token,
     });
+  }
+
+  private async _selectProviderContext(
+    workspaceRoot?: vscode.Uri,
+    token?: vscode.CancellationToken
+  ): Promise<SquadResult<{ provider: SquadBacklogProvider; context: SquadBacklogContext }>> {
+    const root = workspaceRoot ?? this._resolveWorkspaceRoot();
+    if (!root) {
+      return squadErr({
+        code: "not-a-workspace",
+        message: "No workspace folder is open, so Squad backlog operations cannot run.",
+        remediation: "Open a folder or workspace and try again.",
+      });
+    }
+
+    const configResult = await this._readConfig(root);
+    if (!configResult.ok) {
+      return configResult;
+    }
+
+    const remoteResult = await this._readGitRemotes(root, token);
+    if (!remoteResult.ok) {
+      return remoteResult;
+    }
+
+    const config = configResult.value;
+    const remotes = remoteResult.value.remotes;
+    if (config.platform) {
+      const providerId = normalizeSquadBacklogPlatform(config.platform);
+      const provider = providerId ? this._providers.find((candidate) => candidate.id === providerId) : undefined;
+      if (!provider) {
+        return squadErr({
+          code: "backlog-unsupported",
+          message: `Squad backlog platform "${config.platform}" is not supported by NexKit.`,
+          remediation: "Set `.squad/config.json` `platform` to `github` or `azure-devops`, then refresh.",
+        });
+      }
+      return squadOk({
+        provider,
+        context: { workspaceRoot: root, remotes, config, source: SquadBacklogDetectionSource.Config, token },
+      });
+    }
+
+    const context: SquadBacklogContext = {
+      workspaceRoot: root,
+      remotes,
+      config,
+      source: SquadBacklogDetectionSource.GitRemote,
+      token,
+    };
+    const provider = this._providers.find((candidate) => candidate.matches(context));
+    if (!provider) {
+      return squadErr({
+        code: "backlog-unsupported",
+        message: "NexKit could not infer a supported Squad backlog from this repository.",
+        remediation: "Configure `.squad/config.json` with `platform: \"github\"` or `platform: \"azure-devops\"`, then refresh.",
+      });
+    }
+    return squadOk({ provider, context });
   }
 
   private async _detectFromRemotes(
