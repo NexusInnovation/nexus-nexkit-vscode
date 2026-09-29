@@ -29,6 +29,7 @@ function ActionProbe() {
       <button data-testid="plugin-enable" onClick={() => squad.runPluginAction(SquadPluginAction.Enable, "team")} />
       <button data-testid="plugin-add-nexus" onClick={() => squad.runPluginAction(SquadPluginAction.AddNexusMarketplace)} />
       <button data-testid="install-cli" onClick={() => squad.installCli()} />
+      <button data-testid="upgrade-project" onClick={() => squad.upgradeProject()} />
       <button data-testid="use-npx" onClick={() => squad.setCliInvocation(SquadCliSource.Npx)} />
       <button data-testid="use-custom" onClick={() => squad.setCliInvocation(SquadCliSource.Custom, "/opt/squad")} />
       <button data-testid="list-upstreams" onClick={() => squad.listUpstreams()} />
@@ -154,6 +155,12 @@ suite("useSquadState — actions", () => {
     const view = renderWithAppState(<ActionProbe />);
     click(view, "install-cli");
     assert.deepStrictEqual(lastPostedMessage(), { command: "installSquadCli" });
+  });
+
+  test("upgradeProject posts upgradeSquadProject (SQD-032)", () => {
+    const view = renderWithAppState(<ActionProbe />);
+    click(view, "upgrade-project");
+    assert.deepStrictEqual(lastPostedMessage(), { command: "upgradeSquadProject" });
   });
 
   test("setCliInvocation(npx) posts setSquadCliInvocation without a path", () => {

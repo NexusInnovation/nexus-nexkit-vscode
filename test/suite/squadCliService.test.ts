@@ -127,6 +127,19 @@ suite("Unit: SquadCliService", () => {
       assert.deepStrictEqual(captured.request?.args, ["upgrade", "--self", "--yes"]);
     });
 
+    test("Should build non-interactive `upgrade --force` for project Upgrade (SQD-032)", async () => {
+      const captured: { request?: SquadSpawnRequest } = {};
+      const service = new SquadCliService({
+        runner: fakeRunner({}, captured),
+        logger: silentLogger,
+        cliSource: SquadCliSource.Global,
+      });
+
+      await service.execute(SquadCliCommand.Upgrade, { args: ["--force"] });
+
+      assert.deepStrictEqual(captured.request?.args, ["upgrade", "--force"]);
+    });
+
     test("Should append allowed operands and flags for upstream", async () => {
       const captured: { request?: SquadSpawnRequest } = {};
       const service = new SquadCliService({

@@ -76,6 +76,8 @@ export type WebviewMessage =
   | { command: "getSquadState" }
   | { command: "refreshSquadDetection" }
   | { command: "checkSquadUpdates" }
+  // Confirmed + backed-up project upgrade (SQD-032 / #247)
+  | { command: "upgradeSquadProject" }
   | { command: "saveSquadCharter"; agentId: string; content: string }
   // Squad model configuration editing (SQD-028 / #243, FR-063): raw JSON, validated host-side
   | { command: "saveSquadModelConfig"; content: string }
@@ -224,6 +226,17 @@ export type ExtensionMessage =
   | {
       command: "squadUpdatesUpdate";
       updates: SquadUpdatesResult;
+    }
+  | {
+      command: "squadProjectUpgraded";
+      /** Sanitized outcome: absolute backup paths stay host-side (SQD-032). */
+      result: {
+        upgraded: boolean;
+        previousVersion: string | null;
+        targetVersion: string | null;
+        currentVersion: string | null;
+        backupCreated: boolean;
+      };
     }
   | {
       command: "squadExportResult";

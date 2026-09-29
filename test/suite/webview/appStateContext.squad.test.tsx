@@ -110,6 +110,28 @@ suite("AppStateContext — Squad messages", () => {
     assert.strictEqual(state.plugins[0].enabled, false);
   });
 
+  test("squadProjectUpgraded clears the stale update check and loading/error (SQD-032)", () => {
+    const squad = renderProbe();
+    const detection = makeDetection();
+    send({
+      command: "squadUpdatesUpdate",
+      updates: { detection, cli: {}, project: { updateAvailable: true }, checkedAt: 1 },
+    });
+    assert.ok(squad().updates);
+    send({ command: "squadError", error: makeError() });
+    send({ command: "squadLoading", isLoading: true });
+
+    send({
+      command: "squadProjectUpgraded",
+      result: { upgraded: true, previousVersion: "1.0.0", targetVersion: "1.2.0", currentVersion: "1.2.0", backupCreated: true },
+    });
+
+    const state = squad();
+    assert.strictEqual(state.updates, null, "a completed upgrade must invalidate the cached update check");
+    assert.strictEqual(state.isLoading, false);
+    assert.strictEqual(state.error, null);
+  });
+
   test("squadPluginActionResult stores the latest plugin action outcome", () => {
     const squad = renderProbe();
     assert.strictEqual(squad().lastPluginAction, null);
