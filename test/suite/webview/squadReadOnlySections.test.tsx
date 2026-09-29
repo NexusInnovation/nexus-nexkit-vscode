@@ -12,6 +12,9 @@ import { SquadRosterSection } from "../../../src/features/panel-ui/webview/compo
 import { SquadGovernanceSection } from "../../../src/features/panel-ui/webview/components/organisms/SquadGovernanceSection";
 import { SquadLogSection } from "../../../src/features/panel-ui/webview/components/organisms/SquadLogSection";
 import { SquadMarkdownView } from "../../../src/features/panel-ui/webview/components/molecules/SquadMarkdownView";
+import { SquadUpstreamSection } from "../../../src/features/panel-ui/webview/components/organisms/SquadUpstreamSection";
+import { SquadUpstreamRecommendationService } from "../../../src/features/squad/services/squadUpstreamRecommendationService";
+import { SquadUpstreamKind } from "../../../src/features/squad/models";
 import { SquadLogKind } from "../../../src/features/panel-ui/webview/types/squadState";
 import { render, cleanup, renderWithAppState, fireEvent, makeError } from "./harness/renderSquad";
 import { resetVsCodeApiMock } from "./harness/vscodeApiMock";
@@ -153,6 +156,75 @@ suite("Read-only Squad views", () => {
       assert.ok(view.getByText(/has been truncated for display/), "truncation notice shown when opened");
       assert.strictEqual(view.container.querySelector("script"), null, "log body is escaped");
       assert.ok(view.container.querySelector("pre.squad-markdown")?.textContent?.includes(SCRIPT_PAYLOAD));
+    });
+  });
+
+  suite("SquadUpstreamSection recommendations (SQD-037)", () => {
+    const recommender = new SquadUpstreamRecommendationService();
+
+    test("renders the org → team → project hierarchy in order with the Nexus suggestion", () => {
+      const upstreams = [{ id: "nexus-org", kind: SquadUpstreamKind.Local, reference: "../org" }];
+      const view = renderWithAppState(<SquadUpstreamSection />, {
+        isReady: true,
+        upstreams,
+        upstreamRecommendations: recommender.recommend(upstreams),
+      });
+
+      assert.ok(view.getByText("Recommended hierarchy"));
+      const levels = Array.from(view.container.querySelectorAll("ol.squad-upstream-levels > li"));
+      assert.deepStrictEqual(
+        levels.map((item) => item.getAttribute("data-level")),
+        ["org", "team", "project"]
+      );
+      assert.ok(levels[0].textContent?.includes("Configured"));
+      assert.ok(levels[0].textContent?.includes("nexus-org"));
+      assert.ok(levels[1].textContent?.includes("Not configured"));
+      assert.ok(levels[1].textContent?.includes("NexusInnovation/nexus-plugin-marketplace"));
+      assert.ok(levels[1].textContent?.includes("squad/upstreams/team"));
+      assert.ok(levels[1].textContent?.includes("sub-paths are not supported"));
+    });
+
+    test("renders the sub-path warning as a visible alert with remediation and alternatives", () => {
+      const upstreams = [
+        { id: "platform-team", kind: SquadUpstreamKind.Git, reference: "https://github.com/acme/squad/tree/main/team" },
+      ];
+      const view = renderWithAppState(<SquadUpstreamSection />, {
+        isReady: true,
+        upstreams,
+        upstreamRecommendations: recommender.recommend(upstreams),
+      });
+
+      const alert = view.container.querySelector('li.squad-upstream-warning[data-code="subpath-unsupported"]');
+      assert.ok(alert, "sub-path warning is rendered");
+      assert.strictEqual(alert.getAttribute("role"), "alert");
+      assert.ok(alert.textContent?.includes("does not support sub-paths"));
+      assert.ok(alert.textContent?.includes("dedicated upstream repository per level"));
+      assert.ok(alert.textContent?.includes("JSON export"));
+      const notice = view.container.querySelector('li.squad-upstream-warning[data-code="reserved-folder-limitation"]');
+      assert.strictEqual(notice?.getAttribute("role"), "note");
+    });
+
+    test("lists free sources that are not mapped to a level", () => {
+      const upstreams = [{ id: "shared-tools", kind: SquadUpstreamKind.Local, reference: "../tools" }];
+      const view = renderWithAppState(<SquadUpstreamSection />, {
+        isReady: true,
+        upstreams,
+        upstreamRecommendations: recommender.recommend(upstreams),
+      });
+
+      assert.ok(view.container.querySelector(".squad-upstream-unclassified")?.textContent?.includes("shared-tools"));
+    });
+
+    test("shows no recommendations when the manifest failed to load — only the actionable error", () => {
+      const view = renderWithAppState(<SquadUpstreamSection />, {
+        isReady: true,
+        upstreams: [],
+        upstreamRecommendations: null,
+        error: makeError({ message: "The Squad upstream manifest (.squad/upstream.json) is not valid JSON." }),
+      });
+
+      assert.ok(view.getByText(/is not valid JSON/));
+      assert.strictEqual(view.container.querySelector(".squad-upstream-recommendations"), null);
     });
   });
 });

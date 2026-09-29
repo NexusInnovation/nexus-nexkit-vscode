@@ -7,6 +7,7 @@ import * as assert from "assert";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
+import { createHash } from "crypto";
 import * as vscode from "vscode";
 import { SquadFileService, SquadLogKind, SQUAD_MAX_READ_BYTES } from "../../src/features/squad/services/squadFileService";
 import { isSquadOk, isSquadErr, SquadDocKind, SquadMarketplaceKind, SquadUpstreamKind } from "../../src/features/squad/models";
@@ -131,6 +132,34 @@ suite("Unit: SquadFileService", () => {
     assert.strictEqual(result.value.content, "");
   });
 
+  test("readDecisions exposes a SHA-256 contentHash of the on-disk bytes (SQD-027)", async () => {
+    writeFile(".squad/decisions.md", "# Decisions\r\n- one\r\n");
+    const result = await service.readDecisions();
+    assert.ok(isSquadOk(result));
+    assert.strictEqual(
+      result.value.contentHash,
+      createHash("sha256").update("# Decisions\r\n- one\r\n", "utf8").digest("hex")
+    );
+    assert.strictEqual(result.value.truncated, false);
+  });
+
+  test("readRouting reports a null contentHash when absent", async () => {
+    const result = await service.readRouting();
+    assert.ok(isSquadOk(result));
+    assert.strictEqual(result.value.contentHash, null);
+    assert.strictEqual(result.value.truncated, false);
+  });
+
+  test("readDecisions flags truncation and hashes the full file for large docs", async () => {
+    const big = "d".repeat(SQUAD_MAX_READ_BYTES + 10);
+    writeFile(".squad/decisions.md", big);
+    const result = await service.readDecisions();
+    assert.ok(isSquadOk(result));
+    assert.strictEqual(result.value.truncated, true);
+    assert.strictEqual(result.value.content.length, SQUAD_MAX_READ_BYTES);
+    assert.strictEqual(result.value.contentHash, createHash("sha256").update(big, "utf8").digest("hex"));
+  });
+
   // --- histories & logs (FR-025) ---
 
   test("readAgentHistory returns content and truncated flag for large files", async () => {
@@ -226,6 +255,72 @@ suite("Unit: SquadFileService", () => {
     assert.deepStrictEqual(result.value, []);
   });
 
+  // --- model config (FR-063) ---
+
+  test("readModelConfig parses default and per-agent overrides", async () => {
+    const content = JSON.stringify({ default: "gpt-5.6-terra", overrides: { neo: "gpt-5.6-sol", tank: "gpt-5.6-luna" } });
+    writeFile(".squad/model-config.json", content);
+
+    const result = await service.readModelConfig();
+
+    assert.ok(isSquadOk(result));
+    assert.strictEqual(result.value.validationError, undefined);
+    assert.deepStrictEqual(result.value.document, {
+      relativePath: ".squad/model-config.json",
+      exists: true,
+      content,
+      config: {
+        defaultModel: "gpt-5.6-terra",
+        overrides: [
+          { agentId: "neo", model: "gpt-5.6-sol" },
+          { agentId: "tank", model: "gpt-5.6-luna" },
+        ],
+      },
+    });
+  });
+
+  test("readModelConfig reports an absent file as exists:false without an error", async () => {
+    const result = await service.readModelConfig();
+
+    assert.ok(isSquadOk(result));
+    assert.deepStrictEqual(result.value, {
+      document: { relativePath: ".squad/model-config.json", exists: false, content: "", config: null },
+    });
+  });
+
+  test("readModelConfig keeps malformed JSON visible with a parse-failed validation error", async () => {
+    writeFile(".squad/model-config.json", '{ "default": ');
+
+    const result = await service.readModelConfig();
+
+    assert.ok(isSquadOk(result));
+    assert.strictEqual(result.value.document.exists, true);
+    assert.strictEqual(result.value.document.content, '{ "default": ');
+    assert.strictEqual(result.value.document.config, null);
+    assert.strictEqual(result.value.validationError?.code, "parse-failed");
+    assert.ok(result.value.validationError?.remediation);
+  });
+
+  test("readModelConfig flags schema violations", async () => {
+    writeFile(".squad/model-config.json", JSON.stringify({ overrides: ["neo"] }));
+
+    const result = await service.readModelConfig();
+
+    assert.ok(isSquadOk(result));
+    assert.strictEqual(result.value.document.config, null);
+    assert.strictEqual(result.value.validationError?.code, "parse-failed");
+    assert.ok(result.value.validationError?.detail?.includes('"overrides"'));
+  });
+
+  test("readModelConfig refuses oversized files instead of validating truncated JSON", async () => {
+    writeFile(".squad/model-config.json", `{ "default": "m", "pad": "${"x".repeat(SQUAD_MAX_READ_BYTES)}" }`);
+
+    const result = await service.readModelConfig();
+
+    assert.ok(isSquadErr(result));
+    assert.strictEqual(result.error.code, "file-read-failed");
+  });
+
   test("readUpstreams fails with parse-failed on invalid JSON", async () => {
     writeFile(".squad/upstream.json", "{ not json ");
     const result = await service.readUpstreams();
@@ -283,8 +378,47 @@ suite("Unit: SquadFileService", () => {
     assert.ok(result.error.remediation);
   });
 
-  test("readUpstreams fails with parse-failed when the manifest shape is unsupported", async () => {
+  test("readUpstreams parses the Squad CLI manifest format", async () => {
+    writeFile(
+      ".squad/upstream.json",
+      JSON.stringify({
+        upstreams: [
+          {
+            name: "org",
+            type: "git",
+            source: "https://github.com/org/squad.git",
+            ref: "release",
+            added_at: "2026-06-01T00:00:00.000Z",
+            last_synced: "2026-06-02T00:00:00.000Z",
+          },
+          { name: "team", type: "local", source: "C:\\repos\\team", added_at: "2026-06-01T00:00:00.000Z", last_synced: null },
+        ],
+      })
+    );
+
+    const result = await service.readUpstreams();
+    assert.ok(isSquadOk(result));
+    const [org, team] = result.value;
+    assert.strictEqual(org.id, "org");
+    assert.strictEqual(org.kind, SquadUpstreamKind.Git);
+    assert.strictEqual(org.reference, "https://github.com/org/squad.git");
+    assert.strictEqual(org.gitRef, "release");
+    assert.strictEqual(org.lastSyncedAt, Date.parse("2026-06-02T00:00:00.000Z"));
+    assert.strictEqual(team.kind, SquadUpstreamKind.Local);
+    assert.strictEqual(team.reference, "C:\\repos\\team");
+    assert.strictEqual(team.gitRef, undefined);
+    assert.strictEqual(team.lastSyncedAt, undefined);
+  });
+
+  test("readUpstreams accepts an empty Squad CLI manifest", async () => {
     writeFile(".squad/upstream.json", JSON.stringify({ upstreams: [] }));
+    const result = await service.readUpstreams();
+    assert.ok(isSquadOk(result));
+    assert.deepStrictEqual(result.value, []);
+  });
+
+  test("readUpstreams fails with parse-failed when the manifest shape is unsupported", async () => {
+    writeFile(".squad/upstream.json", JSON.stringify({ remotes: [] }));
     const result = await service.readUpstreams();
     assert.ok(isSquadErr(result));
     assert.strictEqual(result.error.code, "parse-failed");
