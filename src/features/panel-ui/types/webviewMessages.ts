@@ -15,6 +15,10 @@ import type {
   SquadError,
   SquadExportOutcome,
   SquadExportRequest,
+  SquadImportApplyRequest,
+  SquadImportOutcome,
+  SquadImportPreview,
+  SquadImportPreviewRequest,
   SquadMarkdownDoc,
   SquadMarketplaceRef,
   SquadModelConfigDocument,
@@ -95,6 +99,10 @@ export type WebviewMessage =
     }
   | { command: "runSquadDoctor" }
   | { command: "exportSquad"; request?: SquadExportRequest }
+  // Squad import (SQD-034): preview first, then apply the previewed import by id
+  | { command: "previewSquadImport"; request?: SquadImportPreviewRequest }
+  | { command: "applySquadImport"; request: SquadImportApplyRequest }
+  | { command: "discardSquadImportPreview" }
   | { command: "refreshSquadPlugins" }
   // Squad plugin marketplace + lifecycle actions (SQD-039 / #254). `target` is optional for
   // actions whose operand the host can prompt for (marketplace source, plugin directory).
@@ -244,6 +252,17 @@ export type ExtensionMessage =
   | {
       command: "squadExportResult";
       export: SquadExportOutcome;
+    }
+  | {
+      command: "squadImportPreview";
+      preview: SquadImportPreview;
+    }
+  | {
+      command: "squadImportPreviewDiscarded";
+    }
+  | {
+      command: "squadImportResult";
+      import: SquadImportOutcome;
     }
   | {
       command: "squadCharterSaved";

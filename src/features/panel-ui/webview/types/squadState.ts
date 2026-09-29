@@ -22,6 +22,8 @@ import type {
   SquadDoctorReport,
   SquadError,
   SquadErrorCode,
+  SquadImportOutcome,
+  SquadImportPreview,
   SquadMarkdownDoc,
   SquadMarketplaceRef,
   SquadModelConfigDocument,
@@ -268,6 +270,12 @@ export interface SquadState {
   /** Latest confirmed CLI self-upgrade result (SQD-031, FR-005); failures go to {@link error}. */
   cliUpgrade: SquadCliUpgradeSummary | null;
 
+  /** Latest previewed Squad import, or `null` when no preview is staged. */
+  importPreview: SquadImportPreview | null;
+
+  /** Latest successful Squad import outcome, or `null` before an import completes. */
+  lastImport: SquadImportOutcome | null;
+
   /** Preset selection screen sub-state (SQD-019, FR-010/FR-014/FR-015). */
   presetPicker: SquadPresetPickerState;
 
@@ -319,6 +327,8 @@ export const initialSquadState: SquadState = {
   doctor: null,
   updates: null,
   cliUpgrade: null,
+  importPreview: null,
+  lastImport: null,
   presetPicker: initialSquadPresetPickerState,
   upstreamOperation: null,
   lastWrite: null,

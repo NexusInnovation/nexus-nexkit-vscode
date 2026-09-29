@@ -17,6 +17,9 @@ import type {
   SquadDocKind,
   SquadDoctorReport,
   SquadError,
+  SquadImportOutcome,
+  SquadImportPreview,
+  SquadImportPreviewRequest,
   SquadMarkdownDoc,
   SquadMarketplaceRef,
   SquadModelConfigDocument,
@@ -95,6 +98,12 @@ export interface UseSquadStateResult {
   /** Latest successful CLI self-upgrade result; failures surface via `error`. */
   cliUpgrade: SquadCliUpgradeSummary | null;
 
+  /** Latest previewed Squad import, or `null` when no preview is staged. */
+  importPreview: SquadImportPreview | null;
+
+  /** Latest successful Squad import outcome, or `null` before an import completes. */
+  lastImport: SquadImportOutcome | null;
+
   /** Request the initial Squad state / refresh everything. */
   refresh: () => void;
 
@@ -122,6 +131,15 @@ export interface UseSquadStateResult {
 
   /** Check for available Squad CLI/project updates without running upgrades. */
   checkUpdates: () => void;
+
+  /** Preview a Squad import without modifying the workspace (FR-062). */
+  previewImport: (request?: SquadImportPreviewRequest) => void;
+
+  /** Apply a previously previewed import; the host confirms and backs up first (FR-006/FR-062). */
+  applyImport: (previewId: string) => void;
+
+  /** Discard the staged Squad import preview. */
+  discardImportPreview: () => void;
 
   /** Re-read Squad plugin marketplaces and installed plugins. */
   refreshPlugins: () => void;
@@ -214,6 +232,18 @@ export function useSquadState(): UseSquadStateResult {
     messenger.sendMessage({ command: "checkSquadUpdates" });
   };
 
+  const previewImport = (request?: SquadImportPreviewRequest) => {
+    messenger.sendMessage(request === undefined ? { command: "previewSquadImport" } : { command: "previewSquadImport", request });
+  };
+
+  const applyImport = (previewId: string) => {
+    messenger.sendMessage({ command: "applySquadImport", request: { previewId } });
+  };
+
+  const discardImportPreview = () => {
+    messenger.sendMessage({ command: "discardSquadImportPreview" });
+  };
+
   const refreshPlugins = () => {
     messenger.sendMessage({ command: "refreshSquadPlugins" });
   };
@@ -274,6 +304,8 @@ export function useSquadState(): UseSquadStateResult {
     doctor: squad.doctor,
     updates: squad.updates,
     cliUpgrade: squad.cliUpgrade,
+    importPreview: squad.importPreview,
+    lastImport: squad.lastImport,
     refresh,
     refreshDetection,
     saveCharter,
@@ -281,6 +313,9 @@ export function useSquadState(): UseSquadStateResult {
     saveModelConfig,
     runDoctor,
     checkUpdates,
+    previewImport,
+    applyImport,
+    discardImportPreview,
     refreshPlugins,
     runPluginAction,
     setCliInvocation,

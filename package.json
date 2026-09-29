@@ -155,6 +155,11 @@
         "command": "nexus-nexkit-vscode.squad.upgradeCli",
         "title": "Nexkit: Upgrade Squad CLI",
         "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.squad.import",
+        "title": "Nexkit: Import Squad",
+        "category": "Nexkit"
       }
     ],
     "menus": {

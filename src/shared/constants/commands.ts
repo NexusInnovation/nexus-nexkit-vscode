@@ -40,6 +40,7 @@ export const Commands = {
   EXPORT_SQUAD: "nexus-nexkit-vscode.squad.export",
   UPGRADE_SQUAD_PROJECT: "nexus-nexkit-vscode.squad.upgradeProject",
   UPGRADE_SQUAD_CLI: "nexus-nexkit-vscode.squad.upgradeCli",
+  IMPORT_SQUAD: "nexus-nexkit-vscode.squad.import",
 } as const;
 
 // Type-safe command names

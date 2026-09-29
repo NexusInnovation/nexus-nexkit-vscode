@@ -12,7 +12,17 @@ import * as assert from "assert";
 import { useAppState } from "../../../src/features/panel-ui/webview/hooks/useAppState";
 import type { SquadState } from "../../../src/features/panel-ui/webview/types/squadState";
 import { SquadLogKind } from "../../../src/features/panel-ui/webview/types/squadState";
-import { renderWithProvider, act, cleanup, makeDetection, makeError, makePreset, makeRejectedPreset, makeUnreachableSource, makeDoctorReport } from "./harness/renderSquad";
+import {
+  renderWithProvider,
+  act,
+  cleanup,
+  makeDetection,
+  makeError,
+  makePreset,
+  makeRejectedPreset,
+  makeUnreachableSource,
+  makeDoctorReport,
+} from "./harness/renderSquad";
 import { dispatchExtensionMessage, resetVsCodeApiMock, postedMessagesOfCommand } from "./harness/vscodeApiMock";
 import { SquadUpstreamRecommendationService } from "../../../src/features/squad/services/squadUpstreamRecommendationService";
 
@@ -30,6 +40,23 @@ function send(message: Record<string, unknown>): void {
   act(() => {
     dispatchExtensionMessage(message);
   });
+}
+
+function makeImportPreview(): Record<string, unknown> {
+  return {
+    previewId: "preview-1",
+    source: { kind: "file", uri: "file:///workspace/squad-export.json" },
+    sourceLabel: "squad-export.json",
+    manifestVersion: "1.0",
+    squadDirectory: ".squad",
+    hasExistingSquad: true,
+    agents: [{ name: "link", hasCharter: true, hasHistory: false, change: "overwrite" }],
+    skills: [{ name: "code-review", change: "create" }],
+    castingKeys: ["policy"],
+    files: [{ relativePath: ".squad/team.md", change: "overwrite" }],
+    warnings: ["Existing Squad files will be backed up first."],
+    createdAt: 123,
+  };
 }
 
 suite("AppStateContext — Squad messages", () => {
@@ -84,7 +111,13 @@ suite("AppStateContext — Squad messages", () => {
     const recommendations = new SquadUpstreamRecommendationService().recommend([
       { id: "nexus-org", kind: "git", reference: "https://github.com/acme/squad/tree/main/org" },
     ]);
-    send({ command: "squadStatusUpdate", detection: makeDetection(), upstreams: [], upstreamRecommendations: recommendations, plugins: [] });
+    send({
+      command: "squadStatusUpdate",
+      detection: makeDetection(),
+      upstreams: [],
+      upstreamRecommendations: recommendations,
+      plugins: [],
+    });
 
     assert.deepStrictEqual(squad().upstreamRecommendations, recommendations);
 
@@ -198,6 +231,56 @@ suite("AppStateContext — Squad messages", () => {
     const state = squad();
     assert.strictEqual(state.cliUpgrade, null);
     assert.strictEqual(state.error?.code, "upgrade-failed");
+  });
+
+  test("squadImportPreview stores the staged preview and clears loading/error", () => {
+    const squad = renderProbe();
+    const preview = makeImportPreview();
+    send({ command: "squadError", error: makeError({ code: "parse-failed" }) });
+    send({ command: "squadLoading", isLoading: true });
+
+    send({ command: "squadImportPreview", preview });
+
+    const state = squad();
+    assert.strictEqual(state.isLoading, false);
+    assert.strictEqual(state.error, null);
+    assert.deepStrictEqual(state.importPreview, preview);
+    assert.strictEqual(state.lastImport, null);
+  });
+
+  test("squadImportResult stores the outcome and clears the staged preview", () => {
+    const squad = renderProbe();
+    const preview = makeImportPreview();
+    send({ command: "squadImportPreview", preview });
+
+    const outcome = {
+      previewId: "preview-1",
+      source: preview.source,
+      importedAt: 456,
+      agentCount: 1,
+      skillCount: 1,
+      backupCreated: true,
+      stdout: "ok",
+      stderr: "",
+      durationMs: 25,
+    };
+    send({ command: "squadImportResult", import: outcome });
+
+    const state = squad();
+    assert.strictEqual(state.importPreview, null);
+    assert.deepStrictEqual(state.lastImport, outcome);
+    assert.strictEqual(state.error, null);
+    assert.strictEqual(state.isLoading, false);
+  });
+
+  test("squadImportPreviewDiscarded clears only the staged import preview", () => {
+    const squad = renderProbe();
+    send({ command: "squadImportPreview", preview: makeImportPreview() });
+    assert.ok(squad().importPreview);
+
+    send({ command: "squadImportPreviewDiscarded" });
+
+    assert.strictEqual(squad().importPreview, null);
   });
 
   test("squadRosterUpdate stores roster and charters", () => {

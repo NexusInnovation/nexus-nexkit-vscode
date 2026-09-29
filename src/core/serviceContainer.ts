@@ -43,6 +43,7 @@ import { SquadInitService } from "../features/squad/services/squadInitService";
 import { SquadUpstreamService } from "../features/squad/services/squadUpstreamService";
 import { SquadUpdateService } from "../features/squad/services/squadUpdateService";
 import { SquadExportService } from "../features/squad/services/squadExportService";
+import { SquadImportService } from "../features/squad/services/squadImportService";
 import { SquadFileWriteService } from "../features/squad/services/squadFileWriteService";
 import { SquadPluginService } from "../features/squad/services/squadPluginService";
 import { SquadProjectUpgradeService } from "../features/squad/services/squadProjectUpgradeService";
@@ -160,6 +161,12 @@ export interface ServiceContainer {
    * (SQD-032, FR-005/FR-006). No work runs until invoked.
    */
   squadProjectUpgrade: SquadProjectUpgradeService;
+
+  /**
+   * Preview and apply Squad imports (SQD-034, FR-062/FR-006): preview first,
+   * explicit confirmation, BackupService backup, then `squad import`.
+   */
+  squadImport: SquadImportService;
 }
 
 /**
@@ -221,6 +228,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   // SquadCliService (SQD-005, #220) — no work runs until a command is invoked.
   const squadCli = new SquadCliService();
   const squadExport = new SquadExportService({ cli: squadCli });
+  const squadImport = new SquadImportService({ cli: squadCli, backup, logger: logging });
   // Detection delegates CLI probing to SquadCliService so a globally-installed
   // CLI is found across platforms (npm `squad.cmd`/`squad.ps1` shims on Windows).
   const squadDetection = new SquadDetectionService({ cliService: squadCli });
@@ -324,6 +332,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     squadDetection,
     squadCli,
     squadExport,
+    squadImport,
     squadFile,
     squadUpdates,
     squadCliUpgrade,
