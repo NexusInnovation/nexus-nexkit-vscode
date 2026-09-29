@@ -8,7 +8,8 @@
  * Squad data remain valid.
  */
 
-import { SquadAgentModelConfig, SquadPluginRef, SquadRalphPreferences, SquadUpstreamSource } from "./squadConfig";
+import { SquadMarketplaceRef, SquadPluginRef, SquadRalphPreferences, SquadUpstreamSource } from "./squadConfig";
+import { SquadModelConfig } from "./squadModelConfig";
 
 /**
  * Optional Squad section of a NexKit {@link Profile} (FR-065).
@@ -21,11 +22,14 @@ export interface SquadProfileConfig {
   /** Upstream inheritance sources captured in the profile. */
   upstreams?: SquadUpstreamSource[];
 
+  /** Squad plugin marketplaces captured from `.squad/plugins/marketplaces.json`. */
+  pluginMarketplaces?: SquadMarketplaceRef[];
+
   /** Squad plugins captured in the profile. */
   plugins?: SquadPluginRef[];
 
-  /** Per-agent model assignments captured in the profile. */
-  modelConfig?: SquadAgentModelConfig[];
+  /** Default and per-agent model assignments captured in the profile. */
+  modelConfig?: SquadModelConfig;
 
   /** Ralph / backlog automation preferences captured in the profile. */
   ralph?: SquadRalphPreferences;

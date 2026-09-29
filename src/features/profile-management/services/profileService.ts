@@ -7,6 +7,8 @@ import { SettingsManager } from "../../../core/settingsManager";
 import { AITemplateFile } from "../../ai-template-files/models/aiTemplateFile";
 import { InstalledTemplateRecord } from "../../ai-template-files/models/installedTemplateRecord";
 import { getWorkspaceRoot } from "../../../shared/utils/fileHelper";
+import { SquadProfileService } from "../../squad/services/squadProfileService";
+import { isSquadErr } from "../../squad/models";
 
 /**
  * Service for managing template profiles
@@ -18,7 +20,8 @@ export class ProfileService {
   constructor(
     private readonly installedTemplatesStateManager: InstalledTemplatesStateManager,
     private readonly aiTemplateDataService: AITemplateDataService,
-    private readonly backupService: GitHubTemplateBackupService
+    private readonly backupService: GitHubTemplateBackupService,
+    private readonly squadProfileService?: SquadProfileService
   ) {}
 
   /**
@@ -50,10 +53,16 @@ export class ProfileService {
       throw new Error("No templates are currently installed. Cannot save an empty profile.");
     }
 
+    const squadConfig = await this.squadProfileService?.captureCurrentConfig();
+    if (squadConfig && isSquadErr(squadConfig)) {
+      throw new Error(`Could not capture Squad configuration: ${squadConfig.error.message}`);
+    }
+
     const now = Date.now();
     const profile: Profile = {
       name: trimmedName,
       templates: installedTemplates,
+      ...(squadConfig?.value ? { squad: squadConfig.value } : {}),
       createdAt: existingProfileIndex >= 0 ? profiles[existingProfileIndex].createdAt : now,
       updatedAt: now,
     };
@@ -131,8 +140,20 @@ export class ProfileService {
     // Store as last applied profile
     await SettingsManager.setLastAppliedProfile(profileName);
 
+    let squad: ApplyProfileResult["squad"];
+    if (profile.squad) {
+      if (!this.squadProfileService) {
+        throw new Error("Profile includes Squad configuration, but Squad profile support is unavailable.");
+      }
+      const squadResult = await this.squadProfileService.applyProfileConfig(profile.squad);
+      if (isSquadErr(squadResult)) {
+        throw new Error(`Could not apply Squad configuration: ${squadResult.error.message}`);
+      }
+      squad = squadResult.value;
+    }
+
     this._onProfilesChangedEmitter.fire();
-    return { summary, backupPath };
+    return { summary, backupPath, ...(squad ? { squad } : {}) };
   }
 
   /**

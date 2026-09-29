@@ -28,6 +28,7 @@ export function ProfileSection() {
                 </div>
                 <div class="profile-details">
                   {profile.templates.length} template{profile.templates.length !== 1 ? "s" : ""}
+                  {profile.squad ? " + Squad" : ""}
                 </div>
               </div>
               <div class="profile-actions-row">
