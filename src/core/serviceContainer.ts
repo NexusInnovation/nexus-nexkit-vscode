@@ -46,6 +46,8 @@ import { SquadExportService } from "../features/squad/services/squadExportServic
 import { SquadFileWriteService } from "../features/squad/services/squadFileWriteService";
 import { SquadPluginService } from "../features/squad/services/squadPluginService";
 import { SquadPluginActionService } from "../features/squad/services/squadPluginActionService";
+import { SquadBacklogService } from "../features/squad/services/squadBacklogService";
+import { GitHubBacklogProvider } from "../features/squad/services/gitHubBacklogProvider";
 
 /**
  * Service container for dependency injection
@@ -115,6 +117,13 @@ export interface ServiceContainer {
    * confirmed, backed-up `squad plugin` writes. Undefined without a workspace.
    */
   squadPluginActions?: SquadPluginActionService;
+
+  /**
+   * Detects the configured Squad backlog (SQD-042, FR-050). Constructed with
+   * no activation I/O; `gh`/git are invoked only when the panel or commands
+   * request backlog status.
+   */
+  squadBacklog: SquadBacklogService;
 
   /**
    * Aggregated Squad preset source (SQD-019). Lazily constructed on first
@@ -211,6 +220,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   // CLI is found across platforms (npm `squad.cmd`/`squad.ps1` shims on Windows).
   const squadDetection = new SquadDetectionService({ cliService: squadCli });
   const squadUpdates = new SquadUpdateService({ detectionService: squadDetection });
+  const squadBacklog = new SquadBacklogService({ providers: [new GitHubBacklogProvider()] });
   const squadPlugins = squadFile ? new SquadPluginService({ fileService: squadFile, cli: squadCli }) : undefined;
   const squadPluginActions = squadPlugins
     ? new SquadPluginActionService({ cli: squadCli, plugins: squadPlugins, backup })
@@ -305,6 +315,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     squadExport,
     squadFile,
     squadUpdates,
+    squadBacklog,
     squadWrite,
     squadPlugins,
     squadPluginActions,
