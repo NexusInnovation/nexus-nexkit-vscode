@@ -8,7 +8,7 @@ import { AITemplateFile } from "../../ai-template-files/models/aiTemplateFile";
 import { InstalledTemplateRecord } from "../../ai-template-files/models/installedTemplateRecord";
 import { getWorkspaceRoot } from "../../../shared/utils/fileHelper";
 import { SquadProfileService } from "../../squad/services/squadProfileService";
-import { isSquadErr } from "../../squad/models";
+import { SquadError, isSquadErr } from "../../squad/models";
 
 /**
  * Service for managing template profiles
@@ -55,7 +55,7 @@ export class ProfileService {
 
     const squadConfig = await this.squadProfileService?.captureCurrentConfig();
     if (squadConfig && isSquadErr(squadConfig)) {
-      throw new Error(`Could not capture Squad configuration: ${squadConfig.error.message}`);
+      throw new Error(this.formatSquadProfileError("Could not capture Squad configuration", squadConfig.error));
     }
 
     const now = Date.now();
@@ -137,9 +137,6 @@ export class ProfileService {
     // Add not found templates to failed count
     summary.failed += notFoundCount;
 
-    // Store as last applied profile
-    await SettingsManager.setLastAppliedProfile(profileName);
-
     let squad: ApplyProfileResult["squad"];
     if (profile.squad) {
       if (!this.squadProfileService) {
@@ -147,10 +144,13 @@ export class ProfileService {
       }
       const squadResult = await this.squadProfileService.applyProfileConfig(profile.squad);
       if (isSquadErr(squadResult)) {
-        throw new Error(`Could not apply Squad configuration: ${squadResult.error.message}`);
+        throw new Error(this.formatSquadProfileError("Could not apply Squad configuration", squadResult.error));
       }
       squad = squadResult.value;
     }
+
+    // Store as last applied only after every profile section succeeded.
+    await SettingsManager.setLastAppliedProfile(profileName);
 
     this._onProfilesChangedEmitter.fire();
     return { summary, backupPath, ...(squad ? { squad } : {}) };
@@ -276,5 +276,10 @@ export class ProfileService {
     }
 
     return undefined;
+  }
+
+  private formatSquadProfileError(prefix: string, error: SquadError): string {
+    const remediation = error.remediation ? ` ${error.remediation}` : "";
+    return `${prefix}: ${error.message}${remediation}`;
   }
 }

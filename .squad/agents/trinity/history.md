@@ -83,3 +83,10 @@ avigator is getter-only in Node 22 → override with Object.defineProperty, not 
 **Cross-team note:** Ghost (SQD-R1) removed dead legacy preset commands; Link (SQD-R2) consolidated service layout. All three changes integrated cleanly into MVP. Suite green on both Electron and webview harnesses.
 
 **MVP Status:** All 23 SQD PRs merged into squad/mvp-integration branch (744 tests passing, validated by Morpheus). P2 wave 1 (#241, #245, #248, #250, #253) launching with Link lead.
+
+### 2026-09-28 — SQD-050 profile Squad integration tests
+
+- Added integration-style `ProfileService` coverage for FR-065 profile save/apply/delete behavior with mocked state manager, AI template data, backup service, settings, workspace, and Squad profile service dependencies.
+- Covered Squad capture persistence, template-only backwards compatibility, actionable save/apply failures, successful apply returning Squad outcome, and delete behavior that removes only requested profiles without invoking Squad services.
+- Tests found one real profile-management bug: `lastAppliedProfile` was updated before the Squad section finished applying, creating a misleading success state when Squad apply failed. Fixed by updating last-applied only after every profile section succeeds and by preserving Squad remediation text in surfaced errors.
+- Verification: `npm run check:types`, `npm run lint`, `npm run test-compile`, and `npm run test:unit` all green (`978 passing / 11 pending`).
