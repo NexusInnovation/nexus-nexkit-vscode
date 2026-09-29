@@ -957,6 +957,217 @@ details[open] > .type-header::before {
   color: var(--vscode-button-secondaryForeground);
 }
 
+/* --- Squad worktree-per-issue section (SQD-054) --- */
+.squad-worktrees {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.squad-worktree-toolbar,
+.squad-worktree-actions,
+.squad-worktree-card-actions,
+.squad-worktree-cleanup-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.squad-worktree-create,
+.squad-worktree-list-block,
+.squad-worktree-cleanup,
+.squad-worktree-preview,
+.squad-worktree-confirm,
+.squad-worktree-warning,
+.squad-worktree-card {
+  padding: 10px;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 6px;
+  background-color: var(--vscode-editorWidget-background, rgba(128, 128, 128, 0.08));
+}
+
+.squad-worktree-create h3,
+.squad-worktree-list-block h3,
+.squad-worktree-cleanup h3,
+.squad-worktree-confirm h4 {
+  margin: 0 0 8px;
+  font-size: 0.95em;
+}
+
+.squad-worktree-field,
+.squad-worktree-checkbox {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.squad-worktree-checkbox {
+  flex-direction: row;
+  align-items: center;
+}
+
+.squad-worktree-field span {
+  font-size: 0.85em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.squad-worktree-field select,
+.squad-worktree-field input {
+  width: 100%;
+  box-sizing: border-box;
+  color: var(--vscode-input-foreground);
+  background-color: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
+  border-radius: 3px;
+  padding: 5px 6px;
+}
+
+.squad-worktree-options {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.squad-worktree-button {
+  padding: 5px 9px;
+  border: 1px solid var(--vscode-button-border, transparent);
+  border-radius: 4px;
+  color: var(--vscode-button-foreground);
+  background-color: var(--vscode-button-background);
+  cursor: pointer;
+}
+
+.squad-worktree-button.primary {
+  font-weight: 600;
+}
+
+.squad-worktree-button.secondary {
+  color: var(--vscode-button-secondaryForeground);
+  background-color: var(--vscode-button-secondaryBackground);
+}
+
+.squad-worktree-button.danger {
+  color: var(--vscode-errorForeground);
+  background-color: var(--vscode-button-secondaryBackground);
+}
+
+.squad-worktree-button:hover:not(:disabled) {
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+.squad-worktree-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.squad-worktree-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.squad-worktree-preview div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.squad-worktree-preview span,
+.squad-worktree-meta,
+.squad-worktree-card-main > span {
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.85em;
+}
+
+.squad-worktree-preview code,
+.squad-worktree-card code {
+  word-break: break-all;
+}
+
+.squad-worktree-list,
+.squad-worktree-candidates {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.squad-worktree-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.squad-worktree-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.squad-worktree-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.squad-worktree-warning {
+  margin-top: 10px;
+  border-color: var(--vscode-inputValidation-warningBorder);
+  background-color: var(--vscode-inputValidation-warningBackground);
+}
+
+.squad-worktree-warning p {
+  margin: 6px 0;
+}
+
+.squad-worktree-warning-line {
+  margin: 2px 0;
+  color: var(--vscode-inputValidation-warningForeground, var(--vscode-foreground));
+}
+
+.squad-worktree-success {
+  padding: 8px;
+  border: 1px solid var(--vscode-inputValidation-infoBorder);
+  border-radius: 4px;
+  background-color: var(--vscode-inputValidation-infoBackground);
+}
+
+.squad-worktree-candidate {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  padding: 8px;
+  text-align: left;
+  color: var(--vscode-foreground);
+  background-color: transparent;
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.squad-worktree-candidate:hover,
+.squad-worktree-candidate.selected {
+  background-color: var(--vscode-list-hoverBackground);
+}
+
+.squad-worktree-candidate span {
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.85em;
+}
+
+@media (min-width: 360px) {
+  .squad-worktree-options {
+    grid-template-columns: minmax(0, 1fr) minmax(120px, 0.5fr);
+  }
+}
+
 .delete-button:hover {
   background-color: var(--vscode-inputValidation-errorBackground);
   color: var(--vscode-inputValidation-errorForeground);

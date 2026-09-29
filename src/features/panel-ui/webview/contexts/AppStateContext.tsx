@@ -443,6 +443,10 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
                 ? { sequence: (prev.squad.lastWrite?.sequence ?? 0) + 1, ok: false, error: message.error }
                 : prev.squad.lastWrite,
             },
+            squadWorktrees: {
+              ...prev.squadWorktrees,
+              pending: null,
+            },
           }));
           break;
 
@@ -536,6 +540,137 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
             },
           }));
           break;
+
+        case "squadWorktreeOperationStarted":
+          setState((prev) => ({
+            ...prev,
+            squadWorktrees: {
+              ...prev.squadWorktrees,
+              pending: message.operation,
+            },
+          }));
+          break;
+
+        case "squadWorktreeOperationFinished":
+          setState((prev) => ({
+            ...prev,
+            squadWorktrees: {
+              ...prev.squadWorktrees,
+              pending: prev.squadWorktrees.pending === message.operation ? null : prev.squadWorktrees.pending,
+            },
+          }));
+          break;
+
+        case "squadBacklogItemsUpdate":
+          setState((prev) => ({
+            ...prev,
+            squadWorktrees: {
+              ...prev.squadWorktrees,
+              items: message.items,
+              itemsFetchedAt: message.fetchedAt,
+              pending: prev.squadWorktrees.pending === "listItems" ? null : prev.squadWorktrees.pending,
+            },
+          }));
+          break;
+
+        case "squadWorktreesUpdate":
+          setState((prev) => ({
+            ...prev,
+            squadWorktrees: {
+              ...prev.squadWorktrees,
+              worktrees: message.worktrees,
+              worktreesFetchedAt: message.fetchedAt,
+              pending: prev.squadWorktrees.pending === "list" ? null : prev.squadWorktrees.pending,
+            },
+          }));
+          break;
+
+        case "squadWorktreePreview":
+          setState((prev) => ({
+            ...prev,
+            squadWorktrees: {
+              ...prev.squadWorktrees,
+              preview: message.preview,
+              pending: null,
+            },
+          }));
+          break;
+
+        case "squadWorktreeCreated":
+          setState((prev) => ({
+            ...prev,
+            squadWorktrees: {
+              ...prev.squadWorktrees,
+              worktrees: upsertWorktree(prev.squadWorktrees.worktrees, message.outcome.worktree),
+              lastOutcome: message.outcome,
+              lastDependencyRetry: null,
+              pending: null,
+            },
+          }));
+          break;
+
+        case "squadWorktreeOpened":
+          setState((prev) => ({
+            ...prev,
+            squadWorktrees: {
+              ...prev.squadWorktrees,
+              pending: null,
+            },
+          }));
+          break;
+
+        case "squadWorktreeCleanupCandidates":
+          setState((prev) => ({
+            ...prev,
+            squadWorktrees: {
+              ...prev.squadWorktrees,
+              cleanupCandidates: message.candidates,
+              pending: null,
+            },
+          }));
+          break;
+
+        case "squadWorktreeCleanupResult":
+          setState((prev) => ({
+            ...prev,
+            squadWorktrees: {
+              ...prev.squadWorktrees,
+              worktrees: message.outcome.removed
+                ? prev.squadWorktrees.worktrees.filter((worktree) => worktree.id !== message.worktreeId)
+                : prev.squadWorktrees.worktrees,
+              cleanupCandidates: prev.squadWorktrees.cleanupCandidates.filter(
+                (candidate) => candidate.worktree.id !== message.worktreeId
+              ),
+              lastCleanup: { worktreeId: message.worktreeId, outcome: message.outcome },
+              pending: null,
+            },
+          }));
+          break;
+
+        case "squadWorktreeDependencyRetried":
+          setState((prev) => ({
+            ...prev,
+            squadWorktrees: {
+              ...prev.squadWorktrees,
+              worktrees: prev.squadWorktrees.worktrees.map((worktree) =>
+                worktree.id === message.worktreeId ? { ...worktree, dependencies: message.outcome.state } : worktree
+              ),
+              lastOutcome:
+                prev.squadWorktrees.lastOutcome?.worktree.id === message.worktreeId
+                  ? {
+                      ...prev.squadWorktrees.lastOutcome,
+                      dependencies: message.outcome,
+                      worktree: {
+                        ...prev.squadWorktrees.lastOutcome.worktree,
+                        dependencies: message.outcome.state,
+                      },
+                    }
+                  : prev.squadWorktrees.lastOutcome,
+              lastDependencyRetry: { worktreeId: message.worktreeId, outcome: message.outcome },
+              pending: null,
+            },
+          }));
+          break;
       }
     };
 
@@ -579,6 +714,16 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     const unsubscribeSquadInitResult = messenger.onMessage("squadInitResult", handleMessage);
     const unsubscribeSquadUpstreamStarted = messenger.onMessage("squadUpstreamOperationStarted", handleMessage);
     const unsubscribeSquadUpstreamResult = messenger.onMessage("squadUpstreamOperationResult", handleMessage);
+    const unsubscribeSquadWorktreeStarted = messenger.onMessage("squadWorktreeOperationStarted", handleMessage);
+    const unsubscribeSquadWorktreeFinished = messenger.onMessage("squadWorktreeOperationFinished", handleMessage);
+    const unsubscribeSquadBacklogItems = messenger.onMessage("squadBacklogItemsUpdate", handleMessage);
+    const unsubscribeSquadWorktrees = messenger.onMessage("squadWorktreesUpdate", handleMessage);
+    const unsubscribeSquadWorktreePreview = messenger.onMessage("squadWorktreePreview", handleMessage);
+    const unsubscribeSquadWorktreeCreated = messenger.onMessage("squadWorktreeCreated", handleMessage);
+    const unsubscribeSquadWorktreeOpened = messenger.onMessage("squadWorktreeOpened", handleMessage);
+    const unsubscribeSquadWorktreeCleanupCandidates = messenger.onMessage("squadWorktreeCleanupCandidates", handleMessage);
+    const unsubscribeSquadWorktreeCleanupResult = messenger.onMessage("squadWorktreeCleanupResult", handleMessage);
+    const unsubscribeSquadWorktreeDependencyRetried = messenger.onMessage("squadWorktreeDependencyRetried", handleMessage);
 
     // Request initial state from extension
     messenger.sendMessage({ command: "webviewReady" });
@@ -624,8 +769,26 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       unsubscribeSquadInitResult();
       unsubscribeSquadUpstreamStarted();
       unsubscribeSquadUpstreamResult();
+      unsubscribeSquadWorktreeStarted();
+      unsubscribeSquadWorktreeFinished();
+      unsubscribeSquadBacklogItems();
+      unsubscribeSquadWorktrees();
+      unsubscribeSquadWorktreePreview();
+      unsubscribeSquadWorktreeCreated();
+      unsubscribeSquadWorktreeOpened();
+      unsubscribeSquadWorktreeCleanupCandidates();
+      unsubscribeSquadWorktreeCleanupResult();
+      unsubscribeSquadWorktreeDependencyRetried();
     };
   }, [messenger]);
 
   return <AppStateContext.Provider value={state}>{children}</AppStateContext.Provider>;
+}
+
+function upsertWorktree<T extends { id: string }>(worktrees: T[], next: T): T[] {
+  const existingIndex = worktrees.findIndex((worktree) => worktree.id === next.id);
+  if (existingIndex < 0) {
+    return [...worktrees, next];
+  }
+  return worktrees.map((worktree, index) => (index === existingIndex ? next : worktree));
 }

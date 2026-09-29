@@ -30,6 +30,8 @@ import {
   initialSquadState,
   initialSquadPresetPickerState,
 } from "../../../../src/features/panel-ui/webview/types/squadState";
+import type { SquadWorktreeState } from "../../../../src/features/panel-ui/webview/types/squadWorktreeState";
+import { initialSquadWorktreeState } from "../../../../src/features/panel-ui/webview/types/squadWorktreeState";
 import {
   SquadCliSource,
   SquadInstallState,
@@ -39,11 +41,16 @@ import {
   SquadBacklogDetectionSource,
   SquadBacklogProviderId,
   SquadBacklogNotDetectedReason,
+  SquadWorktreeBranchSource,
+  SquadWorktreeDependencyMode,
+  SquadWorktreeDependencyState,
+  SquadWorktreeRemovalFallback,
 } from "../../../../src/features/squad/models";
 import type {
   SquadBacklogDetection,
   SquadBacklogDetected,
   SquadBacklogNotDetected,
+  SquadBacklogItem,
   SquadCliInfo,
   SquadDetectionResult,
   SquadDoctorReport,
@@ -51,6 +58,10 @@ import type {
   SquadPreset,
   SquadProjectInfo,
   RejectedSquadPreset,
+  SquadWorktreeCleanupCandidate,
+  SquadWorktreeCreateOutcome,
+  SquadWorktreeCreatePreview,
+  SquadWorktreeInfo,
   UnreachableSquadSource,
 } from "../../../../src/features/squad/models";
 
@@ -60,6 +71,10 @@ export { render, fireEvent, act, waitFor, cleanup, within } from "@testing-libra
 export type SquadStateOverrides = Partial<Omit<SquadState, "presetPicker" | "backlog">> & {
   presetPicker?: Partial<SquadPresetPickerState>;
   backlog?: Partial<SquadBacklogState>;
+};
+
+export type AppStateOverrides = SquadStateOverrides & {
+  squadWorktrees?: Partial<SquadWorktreeState>;
 };
 
 /** Build a full {@link SquadState} from a partial override. */
@@ -88,6 +103,16 @@ export function makeAppState(squad: SquadStateOverrides = {}): AppState {
   return { ...initialAppState, squad: makeSquadState(squad) };
 }
 
+/** Build a full {@link AppState} with optional Squad and worktree slice overrides. */
+export function makeAppStateWithWorktrees(overrides: AppStateOverrides = {}): AppState {
+  const { squadWorktrees, ...squad } = overrides;
+  return {
+    ...initialAppState,
+    squad: makeSquadState(squad),
+    squadWorktrees: { ...initialSquadWorktreeState, ...squadWorktrees },
+  };
+}
+
 /**
  * Render {@link ui} inside an `AppStateContext.Provider` seeded with a Squad
  * state slice. The VS Code messenger singleton (mocked globally) is still used
@@ -95,6 +120,11 @@ export function makeAppState(squad: SquadStateOverrides = {}): AppState {
  */
 export function renderWithAppState(ui: VNode, squad: SquadStateOverrides = {}) {
   return render(<AppStateContext.Provider value={makeAppState(squad)}>{ui}</AppStateContext.Provider>);
+}
+
+/** Render with both Squad and Squad worktree state overrides. */
+export function renderWithWorktreeState(ui: VNode, overrides: AppStateOverrides = {}) {
+  return render(<AppStateContext.Provider value={makeAppStateWithWorktrees(overrides)}>{ui}</AppStateContext.Provider>);
 }
 
 /** Render {@link children} inside the real {@link AppStateProvider}. */
@@ -265,5 +295,92 @@ export function makeBacklogNotDetected(overrides: Partial<SquadBacklogNotDetecte
     remediation: "Use a GitHub remote, or set `.squad/config.json` `platform` to a supported backlog provider.",
     detectedAt: 1_700_000_000_000,
     ...overrides,
+  };
+}
+
+export function makeBacklogItem(overrides: Partial<SquadBacklogItem> = {}): SquadBacklogItem {
+  return {
+    providerId: SquadBacklogProviderId.GitHub,
+    id: "269",
+    number: 269,
+    title: "Implement worktree UI",
+    url: "https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/269",
+    state: "open",
+    labels: ["squad"],
+    assignees: [],
+    ...overrides,
+  };
+}
+
+export function makeWorktree(overrides: Partial<SquadWorktreeInfo> = {}): SquadWorktreeInfo {
+  return {
+    id: "wt-269",
+    displayPath: "C:\\git\\nexkit\\nexus-nexkit-vscode-269",
+    branch: "squad/269-worktree-ui",
+    head: "abc123",
+    issueNumber: 269,
+    isMain: false,
+    isCurrentWindow: false,
+    locked: false,
+    prunable: false,
+    dirty: false,
+    ahead: 0,
+    behind: 0,
+    baseBranch: "develop",
+    dependencies: SquadWorktreeDependencyState.Installed,
+    ...overrides,
+  };
+}
+
+export function makeWorktreePreview(overrides: Partial<SquadWorktreeCreatePreview> = {}): SquadWorktreeCreatePreview {
+  return {
+    providerId: SquadBacklogProviderId.GitHub,
+    itemId: "269",
+    issueNumber: 269,
+    branch: "squad/269-worktree-ui",
+    displayPath: "C:\\git\\nexkit\\nexus-nexkit-vscode-269",
+    baseBranch: "develop",
+    branchSource: SquadWorktreeBranchSource.New,
+    warnings: [],
+    ...overrides,
+  };
+}
+
+export function makeWorktreeOutcome(overrides: Partial<SquadWorktreeCreateOutcome> = {}): SquadWorktreeCreateOutcome {
+  const worktree = makeWorktree();
+  return {
+    worktree,
+    branch: worktree.branch ?? "squad/269-worktree-ui",
+    branchSource: SquadWorktreeBranchSource.New,
+    baseBranch: "develop",
+    baseFetched: true,
+    dependencies: {
+      mode: SquadWorktreeDependencyMode.Install,
+      state: SquadWorktreeDependencyState.Installed,
+      error: null,
+    },
+    seededCount: 0,
+    opened: false,
+    warnings: [],
+    ...overrides,
+  };
+}
+
+export function makeCleanupCandidate(overrides: Partial<SquadWorktreeCleanupCandidate> = {}): SquadWorktreeCleanupCandidate {
+  return {
+    worktree: makeWorktree(),
+    reasons: ["pr-merged"],
+    blockers: [],
+    ...overrides,
+  };
+}
+
+export function makeCleanupOutcome() {
+  return {
+    removed: true,
+    branchDeleted: true,
+    stashed: false,
+    fallback: SquadWorktreeRemovalFallback.None,
+    warnings: [],
   };
 }

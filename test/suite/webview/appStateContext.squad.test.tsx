@@ -10,6 +10,7 @@
 
 import * as assert from "assert";
 import { useAppState } from "../../../src/features/panel-ui/webview/hooks/useAppState";
+import type { AppState } from "../../../src/features/panel-ui/webview/types/appState";
 import type { SquadState } from "../../../src/features/panel-ui/webview/types/squadState";
 import { SquadLogKind } from "../../../src/features/panel-ui/webview/types/squadState";
 import {
@@ -22,6 +23,11 @@ import {
   makeRejectedPreset,
   makeUnreachableSource,
   makeDoctorReport,
+  makeBacklogItem,
+  makeWorktree,
+  makeWorktreeOutcome,
+  makeCleanupCandidate,
+  makeCleanupOutcome,
 } from "./harness/renderSquad";
 import { dispatchExtensionMessage, resetVsCodeApiMock, postedMessagesOfCommand } from "./harness/vscodeApiMock";
 import { SquadUpstreamRecommendationService } from "../../../src/features/squad/services/squadUpstreamRecommendationService";
@@ -31,9 +37,19 @@ function SquadProbe() {
   return <pre data-testid="squad-json">{JSON.stringify(squad)}</pre>;
 }
 
+function AppProbe() {
+  const state = useAppState();
+  return <pre data-testid="app-json">{JSON.stringify(state)}</pre>;
+}
+
 function renderProbe(): () => SquadState {
   const view = renderWithProvider(<SquadProbe />);
   return () => JSON.parse(view.getByTestId("squad-json").textContent ?? "{}") as SquadState;
+}
+
+function renderAppProbe(): () => AppState {
+  const view = renderWithProvider(<AppProbe />);
+  return () => JSON.parse(view.getByTestId("app-json").textContent ?? "{}") as AppState;
 }
 
 function send(message: Record<string, unknown>): void {
@@ -470,5 +486,54 @@ suite("AppStateContext — Squad messages", () => {
     const op = squad().upstreamOperation;
     assert.strictEqual(op?.status, "failed");
     assert.deepStrictEqual(op?.error, error);
+  });
+
+  test("squadWorktree messages update the dedicated worktree slice", () => {
+    const app = renderAppProbe();
+    send({ command: "squadWorktreeOperationStarted", operation: "listItems" });
+    assert.strictEqual(app().squadWorktrees.pending, "listItems");
+
+    send({ command: "squadBacklogItemsUpdate", items: [makeBacklogItem()], fetchedAt: 123 });
+    send({ command: "squadWorktreesUpdate", worktrees: [makeWorktree()], fetchedAt: 456 });
+
+    const state = app().squadWorktrees;
+    assert.strictEqual(state.items[0].number, 269);
+    assert.strictEqual(state.worktrees[0].id, "wt-269");
+    assert.strictEqual(state.itemsFetchedAt, 123);
+    assert.strictEqual(state.worktreesFetchedAt, 456);
+    assert.strictEqual(state.pending, null);
+  });
+
+  test("squadWorktreeCreated stores partial dependency outcomes without surfacing a false success", () => {
+    const app = renderAppProbe();
+    const error = makeError({ code: "dependency-setup-failed", message: "pnpm install failed." });
+    const outcome = makeWorktreeOutcome({
+      dependencies: { mode: "install", state: "failed", error },
+      worktree: makeWorktree({ dependencies: "failed" }),
+    });
+
+    send({ command: "squadWorktreeCreated", outcome });
+
+    const state = app().squadWorktrees;
+    assert.strictEqual(state.lastOutcome?.dependencies.error?.code, "dependency-setup-failed");
+    assert.strictEqual(state.worktrees[0].dependencies, "failed");
+  });
+
+  test("cleanup and dependency retry results update existing worktree state", () => {
+    const app = renderAppProbe();
+    const worktree = makeWorktree({ dependencies: "failed" });
+    send({ command: "squadWorktreesUpdate", worktrees: [worktree], fetchedAt: 1 });
+    send({ command: "squadWorktreeCleanupCandidates", candidates: [makeCleanupCandidate({ worktree })] });
+    send({
+      command: "squadWorktreeDependencyRetried",
+      worktreeId: worktree.id,
+      outcome: { mode: "install", state: "installed", error: null },
+    });
+    assert.strictEqual(app().squadWorktrees.worktrees[0].dependencies, "installed");
+
+    send({ command: "squadWorktreeCleanupResult", worktreeId: worktree.id, outcome: makeCleanupOutcome() });
+    assert.strictEqual(app().squadWorktrees.worktrees.length, 0);
+    assert.strictEqual(app().squadWorktrees.cleanupCandidates.length, 0);
+    assert.strictEqual(app().squadWorktrees.lastCleanup?.worktreeId, worktree.id);
   });
 });
