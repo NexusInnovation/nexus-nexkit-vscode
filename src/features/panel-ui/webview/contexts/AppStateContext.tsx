@@ -304,6 +304,64 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
           }));
           break;
 
+        case "squadPersonalSquadStatusUpdate":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              personalSquad: {
+                ...prev.squad.personalSquad,
+                status: message.status,
+                loading: false,
+                error: null,
+              },
+            },
+          }));
+          break;
+
+        case "squadPersonalSquadLoading":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              personalSquad: {
+                ...prev.squad.personalSquad,
+                loading: message.isLoading,
+              },
+            },
+          }));
+          break;
+
+        case "squadPersonalSquadError":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              personalSquad: {
+                ...prev.squad.personalSquad,
+                loading: false,
+                error: message.error,
+              },
+            },
+          }));
+          break;
+
+        case "squadPersonalSquadInitResult":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              personalSquad: {
+                ...prev.squad.personalSquad,
+                status: message.outcome?.status ?? prev.squad.personalSquad.status,
+                loading: false,
+                error: message.error ?? null,
+                lastInitOk: message.ok,
+              },
+            },
+          }));
+          break;
+
         case "squadRosterUpdate":
           setState((prev) => ({
             ...prev,
@@ -772,6 +830,10 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     const unsubscribeSquadCeremoniesError = messenger.onMessage("squadCeremoniesError", handleMessage);
     const unsubscribeSquadCeremonyStarted = messenger.onMessage("squadCeremonyActionStarted", handleMessage);
     const unsubscribeSquadCeremonyResult = messenger.onMessage("squadCeremonyActionResult", handleMessage);
+    const unsubscribeSquadPersonalStatus = messenger.onMessage("squadPersonalSquadStatusUpdate", handleMessage);
+    const unsubscribeSquadPersonalLoading = messenger.onMessage("squadPersonalSquadLoading", handleMessage);
+    const unsubscribeSquadPersonalError = messenger.onMessage("squadPersonalSquadError", handleMessage);
+    const unsubscribeSquadPersonalInit = messenger.onMessage("squadPersonalSquadInitResult", handleMessage);
     const unsubscribeSquadRoster = messenger.onMessage("squadRosterUpdate", handleMessage);
     const unsubscribeSquadDocs = messenger.onMessage("squadDocsUpdate", handleMessage);
     const unsubscribeSquadLogs = messenger.onMessage("squadLogsUpdate", handleMessage);
@@ -833,6 +895,10 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       unsubscribeSquadCeremoniesError();
       unsubscribeSquadCeremonyStarted();
       unsubscribeSquadCeremonyResult();
+      unsubscribeSquadPersonalStatus();
+      unsubscribeSquadPersonalLoading();
+      unsubscribeSquadPersonalError();
+      unsubscribeSquadPersonalInit();
       unsubscribeSquadRoster();
       unsubscribeSquadDocs();
       unsubscribeSquadLogs();

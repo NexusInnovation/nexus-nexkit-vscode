@@ -27,3 +27,4 @@ export * from "./squadBacklog";
 export * from "./squadWorktree";
 export * from "./squadWatch";
 export * from "./squadCeremony";
+export * from "./squadPersonalSquad";

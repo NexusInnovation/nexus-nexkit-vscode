@@ -158,6 +158,20 @@ suite("Unit: SquadCliService", () => {
       assert.deepStrictEqual(captured.request?.args, ["upstream", "add", "team", "--yes"]);
     });
 
+    test("Should allow global personal Squad initialization (SQD-051)", async () => {
+      const captured: { request?: SquadSpawnRequest } = {};
+      const service = new SquadCliService({
+        runner: fakeRunner({}, captured),
+        logger: silentLogger,
+        cliSource: SquadCliSource.Global,
+      });
+
+      const result = await service.execute(SquadCliCommand.Init, { args: ["--global", "--yes"] });
+
+      assert.strictEqual(result.ok, true);
+      assert.deepStrictEqual(captured.request?.args, ["init", "--global", "--yes"]);
+    });
+
     test("Should allow --name and --ref for upstream add (SQD-036)", async () => {
       const captured: { request?: SquadSpawnRequest } = {};
       const service = new SquadCliService({
