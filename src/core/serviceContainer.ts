@@ -51,6 +51,7 @@ import { SquadCliUpgradeService } from "../features/squad/services/squadCliUpgra
 import { SquadPluginActionService } from "../features/squad/services/squadPluginActionService";
 import { SquadBacklogService } from "../features/squad/services/squadBacklogService";
 import { GitHubBacklogProvider } from "../features/squad/services/gitHubBacklogProvider";
+import { AzureDevOpsBacklogProvider } from "../features/squad/services/azureDevOpsBacklogProvider";
 
 /**
  * Service container for dependency injection
@@ -243,7 +244,9 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const squadDetection = new SquadDetectionService({ cliService: squadCli });
   const squadUpdates = new SquadUpdateService({ detectionService: squadDetection });
   const squadCliUpgrade = new SquadCliUpgradeService({ updates: squadUpdates, cli: squadCli, logger: logging });
-  const squadBacklog = new SquadBacklogService({ providers: [new GitHubBacklogProvider()] });
+  const squadBacklog = new SquadBacklogService({
+    providers: [new GitHubBacklogProvider(), new AzureDevOpsBacklogProvider()],
+  });
   const squadPlugins = squadFile ? new SquadPluginService({ fileService: squadFile, cli: squadCli }) : undefined;
   const squadProjectUpgrade = new SquadProjectUpgradeService({
     updates: squadUpdates,

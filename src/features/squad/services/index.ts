@@ -23,3 +23,4 @@ export * from "./squadPluginActionService";
 export * from "./squadPluginActionConfirmer";
 export * from "./squadBacklogService";
 export * from "./gitHubBacklogProvider";
+export * from "./azureDevOpsBacklogProvider";
