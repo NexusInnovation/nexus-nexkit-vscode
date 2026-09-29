@@ -1,22 +1,33 @@
 import { useSquadState } from "../../hooks/useSquadState";
+import { useSquadEditor } from "../../hooks/useSquadEditor";
 import { SkeletonList } from "../atoms/Skeleton";
 import { CollapsibleSection } from "../molecules/CollapsibleSection";
 import { SquadErrorNotice } from "../molecules/SquadErrorNotice";
+import { SquadFileEditor } from "../molecules/SquadFileEditor";
 import { SquadMarkdownView } from "../molecules/SquadMarkdownView";
-import { SquadMarkdownDoc } from "../../../../squad/models";
+import { SquadDocKind, SquadMarkdownDoc } from "../../../../squad/models";
 
-interface SquadDocViewProps {
+interface SquadDocEditorProps {
   label: string;
   fileName: string;
+  kind: SquadDocKind;
   doc: SquadMarkdownDoc | null;
 }
 
 /**
- * Renders a single governance document (decisions or routing) read-only,
- * showing an explicit empty state when the file is absent.
+ * Renders a single governance document (decisions or routing) with its
+ * edit/save/cancel flow (SQD-029). An absent file shows an explicit empty
+ * state and can be created; a missing document snapshot is read-only.
  */
-function SquadDocView({ label, fileName, doc }: SquadDocViewProps) {
-  if (!doc || !doc.exists) {
+function SquadDocEditor({ label, fileName, kind, doc }: SquadDocEditorProps) {
+  const editor = useSquadEditor({
+    target: { type: "doc", kind },
+    content: doc?.exists ? doc.content : "",
+    contentHash: doc?.contentHash,
+    truncated: doc?.truncated,
+  });
+
+  if (!doc) {
     return (
       <p class="empty-message">
         No <code>{fileName}</code> found in <code>.squad/</code>.
@@ -24,16 +35,32 @@ function SquadDocView({ label, fileName, doc }: SquadDocViewProps) {
     );
   }
 
-  return <SquadMarkdownView content={doc.content} ariaLabel={label} emptyMessage={`${fileName} is empty.`} />;
+  return (
+    <SquadFileEditor
+      label={fileName}
+      relativePath={doc.relativePath}
+      editor={editor}
+      editLabel={doc.exists ? "Edit" : "Create"}
+    >
+      {doc.exists ? (
+        <SquadMarkdownView content={doc.content} ariaLabel={label} emptyMessage={`${fileName} is empty.`} />
+      ) : (
+        <p class="empty-message">
+          No <code>{fileName}</code> found in <code>.squad/</code>.
+        </p>
+      )}
+    </SquadFileEditor>
+  );
 }
 
 /**
- * SquadGovernanceSection Component (SQD-013, FR-024)
+ * SquadGovernanceSection Component (SQD-013 / SQD-029, FR-024)
  *
- * Read-only, purely presentational viewers for the Squad governance documents
- * `.squad/decisions.md` and `.squad/routing.md`, sourced from the Squad
- * AppState slice via {@link useSquadState}. Editing is out of scope for the MVP
- * (SQD-029). Loading, empty and error states are shown explicitly.
+ * Viewers and editors for the Squad governance documents `.squad/decisions.md`
+ * and `.squad/routing.md`, sourced from the Squad AppState slice via
+ * {@link useSquadState}. Edits are saved through the backup-first host write
+ * path with optimistic concurrency (SQD-027). Loading, empty and error states
+ * are shown explicitly.
  */
 export function SquadGovernanceSection() {
   const { isReady, isLoading, error, decisions, routing } = useSquadState();
@@ -49,11 +76,11 @@ export function SquadGovernanceSection() {
       {isReady && (
         <>
           <CollapsibleSection id="squad-decisions" title="Decisions" defaultExpanded>
-            <SquadDocView label="Squad decisions" fileName="decisions.md" doc={decisions} />
+            <SquadDocEditor label="Squad decisions" fileName="decisions.md" kind="decisions" doc={decisions} />
           </CollapsibleSection>
 
           <CollapsibleSection id="squad-routing" title="Routing">
-            <SquadDocView label="Squad routing" fileName="routing.md" doc={routing} />
+            <SquadDocEditor label="Squad routing" fileName="routing.md" kind="routing" doc={routing} />
           </CollapsibleSection>
         </>
       )}

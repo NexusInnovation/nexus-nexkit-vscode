@@ -651,3 +651,75 @@ The `#main` suffix was unnecessary and caused a mismatch between the constant an
 
 • OFFICIAL_PLUGIN_MARKETPLACE constant changed from NexusInnovation/nexus-plugin-marketplace#main to bare NexusInnovation/nexus-plugin-marketplace.
 • Deduplication logic ensures existing #main-suffixed entries recognized as same marketplace, rewritten to bare key. Optimization: no write if unchanged.
+---
+
+## Decision: Align unchanged-settings test with marketplace bootstrap behavior
+
+**Date:** 2026-08-07
+**Agent:** Link
+**Classification:** Project-specific — settings deployer tests
+**Archived:** 2026-09-28
+
+### Context
+
+An unchanged-settings unit test in RecommendedSettingsConfigDeployer failed because it asserted no writes while the deployer intentionally bootstraps chat.plugins.marketplaces when missing.
+
+### Decision
+
+Pre-seed plugins.marketplaces with NexusInnovation/nexus-plugin-marketplace#main in the unchanged-settings test setup so the assertion validates only true regressions.
+
+### Why
+
+The deployer's bootstrap write is expected behavior, and the prior setup produced a false negative.
+
+---
+
+## Decision: Test triage outcome and regression-risk posture after transient failure
+
+**Date:** 2026-08-07
+**Agent:** Trinity
+**Classification:** Project-specific — test pipeline validation
+**Archived:** 2026-09-28
+
+### Context
+
+A prior run reported 
+pm run test exit code 1. Trinity revalidated the full pipeline.
+
+### Decision
+
+Current status is stable for this run: 
+pm run test-compile pass, 
+pm run lint pass, 
+pm test pass (388 passing, 8 pending, exit  ). The previous failure is treated as transient/non-reproducible for now.
+
+### Regression risk
+
+Medium. Extension-host auth-path logs still produce repeated blocked-dialog noise during tests, which can obscure real auth regressions.
+
+### Follow-up hardening
+
+1. Add a focused extension-host test that explicitly validates auth prompt suppression in test mode.
+2. Add negative-path assertions around auth session retrieval to validate expected failures.
+3. Add a deterministic smoke script (compile + lint + unit + extension-host) that preserves per-stage logs for flaky-run diagnosis.
+
+### Why
+
+QA classification separates transient environment noise from actionable product/test regressions while documenting concrete hardening work.
+
+---
+
+## Decision: Marketplace identifier normalized, legacy suffix deduped
+
+**Date:** 2026-08-26
+**Agent:** Link
+**Classification:** Project-specific — NexKit marketplace settings handling
+**Archived:** 2026-09-28
+
+### Context
+
+OFFICIAL_PLUGIN_MARKETPLACE in ecommendedSettingsConfigDeployer.ts changed from NexusInnovation/nexus-plugin-marketplace#main to the bare NexusInnovation/nexus-plugin-marketplace. The chat.plugins.marketplaces ensure-first logic now normalizes on a #ref-stripped key, so any existing #main-suffixed entry is recognized as the same marketplace, deduped against the bare key, and rewritten to the bare key (first in the list). The "skip write if unchanged" optimization still applies.
+
+### Why
+
+The #main suffix was unnecessary and caused a mismatch between the constant and a bare-key entry a user might already have, risking duplicate marketplace entries.
