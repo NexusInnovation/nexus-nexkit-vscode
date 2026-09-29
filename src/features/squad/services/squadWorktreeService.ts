@@ -18,6 +18,7 @@ import {
   SquadWorktreeCreateOutcome,
   SquadWorktreeCreatePreview,
   SquadWorktreeCreateRequest,
+  SquadWorktreeDependencyOutcome,
   SquadWorktreeDependencyMode,
   SquadWorktreeDependencyState,
   SquadWorktreeInfo,
@@ -172,6 +173,36 @@ export class SquadWorktreeService {
     await this._openFolder(vscode.Uri.file(pathForId.value), { forceNewWindow: options.newWindow ?? this._settings.openInNewWindow() });
     this._track("squad.worktree.open", { result: "success" });
     return squadOk(undefined);
+  }
+
+  public async retryDependencies(
+    worktreeId: string,
+    mode?: SquadWorktreeDependencyMode,
+    token?: vscode.CancellationToken
+  ): Promise<SquadResult<SquadWorktreeDependencyOutcome>> {
+    const context = await this._context(token);
+    if (!context.ok) {
+      return context;
+    }
+    const pathForId = await this._resolvePathById(worktreeId);
+    if (!pathForId.ok) {
+      return pathForId;
+    }
+    const dependencyResult = await this._dependencies.setup({
+      mainRoot: context.value.mainRoot,
+      worktreePath: pathForId.value,
+      requestedMode: mode ?? this._settings.dependencies(),
+      token,
+    });
+    if (!dependencyResult.ok) {
+      return dependencyResult;
+    }
+    this._track("squad.worktree.dependencies.retry", {
+      result: dependencyResult.value.outcome.state === SquadWorktreeDependencyState.Failed ? "error" : "success",
+      depsMode: dependencyResult.value.outcome.mode,
+      depsState: dependencyResult.value.outcome.state,
+    });
+    return squadOk(dependencyResult.value.outcome);
   }
 
   public async findCleanupCandidates(token?: vscode.CancellationToken): Promise<SquadResult<SquadWorktreeCleanupCandidate[]>> {

@@ -9,6 +9,7 @@ import { SquadGovernanceSection } from "./SquadGovernanceSection";
 import { SquadLogSection } from "./SquadLogSection";
 import { SquadPresetPicker } from "./SquadPresetPicker";
 import { SquadUpstreamSection } from "./SquadUpstreamSection";
+import { SquadWorktreeSection } from "./SquadWorktreeSection";
 import { SquadInstallState } from "../../../../squad/models";
 
 /**
@@ -22,8 +23,8 @@ function SquadNotDetectedNotice() {
   return (
     <div class="squad-not-detected">
       <p class="squad-not-detected-markers">
-        <i class="codicon codicon-info" aria-hidden="true"></i> NexKit looks for markers such as{" "}
-        <code>.squad/team.md</code>, <code>.squad/config.json</code> or <code>.github/agents/squad.agent.md</code>.
+        <i class="codicon codicon-info" aria-hidden="true"></i> NexKit looks for markers such as <code>.squad/team.md</code>,{" "}
+        <code>.squad/config.json</code> or <code>.github/agents/squad.agent.md</code>.
       </p>
       <SquadPresetPicker />
     </div>
@@ -84,6 +85,9 @@ export function SquadSection() {
           </CollapsibleSection>
           <CollapsibleSection id="squad-upstreams-section" title="Upstreams" defaultExpanded>
             <SquadUpstreamSection />
+          </CollapsibleSection>
+          <CollapsibleSection id="squad-worktrees-section" title="Worktrees" defaultExpanded>
+            <SquadWorktreeSection />
           </CollapsibleSection>
           <CollapsibleSection id="squad-governance-section" title="Governance">
             <SquadGovernanceSection />

@@ -14,6 +14,7 @@ import { Profile } from "../../../profile-management/models/profile";
 import { DevOpsConnection } from "../../../apm-devops/models/devOpsConnection";
 import { WorkflowInfo } from "../../../github-workflow-runner/githubWorkflowRunnerService";
 import { SquadState, initialSquadState } from "./squadState";
+import { SquadWorktreeState, initialSquadWorktreeState } from "./squadWorktreeState";
 
 /**
  * Complete application state
@@ -87,6 +88,11 @@ export interface AppState {
    * Squad management state (SQD-007)
    */
   squad: SquadState;
+
+  /**
+   * Squad worktree-per-issue state (SQD-054)
+   */
+  squadWorktrees: SquadWorktreeState;
 }
 
 /**
@@ -135,4 +141,5 @@ export const initialAppState: AppState = {
     index: [],
   },
   squad: initialSquadState,
+  squadWorktrees: initialSquadWorktreeState,
 };

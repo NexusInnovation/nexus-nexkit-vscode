@@ -14,6 +14,8 @@ import type {
   SquadError,
   SquadExportOutcome,
   SquadExportRequest,
+  SquadBacklogItem,
+  SquadBacklogItemQuery,
   SquadMarkdownDoc,
   SquadMarketplaceRef,
   SquadModelConfigDocument,
@@ -25,9 +27,21 @@ import type {
   SquadUpdatesResult,
   SquadUpstreamSource,
   SquadUpstreamOperation,
+  SquadWorktreeCleanupCandidate,
+  SquadWorktreeCleanupOutcome,
+  SquadWorktreeCleanupRequest,
+  SquadWorktreeCreateOutcome,
+  SquadWorktreeCreatePreview,
+  SquadWorktreeCreateRequest,
+  SquadWorktreeDependencyMode,
+  SquadWorktreeDependencyOutcome,
+  SquadWorktreeInfo,
   UnreachableSquadSource,
 } from "../../squad/models";
 import type { SquadLogDocument } from "../webview/types/squadState";
+
+export type SquadWorktreeOperation =
+  "listItems" | "list" | "preview" | "create" | "open" | "findCleanup" | "cleanup" | "retryDependencies";
 
 /**
  * Sanitized write result sent to the webview after a controlled Squad edit.
@@ -106,7 +120,16 @@ export type WebviewMessage =
   | { command: "listSquadUpstreams" }
   | { command: "addSquadUpstream"; source: string; name?: string; ref?: string }
   | { command: "syncSquadUpstream"; name?: string }
-  | { command: "removeSquadUpstream"; name: string };
+  | { command: "removeSquadUpstream"; name: string }
+  // Squad worktree-per-issue actions (SQD-054 / #269)
+  | { command: "listSquadBacklogItems"; query?: SquadBacklogItemQuery }
+  | { command: "getSquadWorktrees" }
+  | { command: "previewSquadWorktree"; request: SquadWorktreeCreateRequest }
+  | { command: "createSquadWorktree"; request: SquadWorktreeCreateRequest }
+  | { command: "openSquadWorktree"; worktreeId: string; newWindow?: boolean }
+  | { command: "findSquadWorktreeCleanup" }
+  | { command: "cleanupSquadWorktree"; request: SquadWorktreeCleanupRequest }
+  | { command: "retrySquadWorktreeDependencies"; worktreeId: string; dependencies?: SquadWorktreeDependencyMode };
 
 /**
  * Messages sent FROM the extension TO the webview
@@ -291,4 +314,49 @@ export type ExtensionMessage =
       /** Upstreams re-read from `.squad/upstream.json` after the operation (also on failure). */
       upstreams: SquadUpstreamSource[];
       error?: SquadError;
+    }
+  // Squad worktree-per-issue state (SQD-054 / #269)
+  | {
+      command: "squadWorktreeOperationStarted";
+      operation: SquadWorktreeOperation;
+    }
+  | {
+      command: "squadWorktreeOperationFinished";
+      operation: SquadWorktreeOperation;
+    }
+  | {
+      command: "squadBacklogItemsUpdate";
+      items: SquadBacklogItem[];
+      fetchedAt: number;
+    }
+  | {
+      command: "squadWorktreesUpdate";
+      worktrees: SquadWorktreeInfo[];
+      fetchedAt: number;
+    }
+  | {
+      command: "squadWorktreePreview";
+      preview: SquadWorktreeCreatePreview;
+    }
+  | {
+      command: "squadWorktreeCreated";
+      outcome: SquadWorktreeCreateOutcome;
+    }
+  | {
+      command: "squadWorktreeOpened";
+      worktreeId: string;
+    }
+  | {
+      command: "squadWorktreeCleanupCandidates";
+      candidates: SquadWorktreeCleanupCandidate[];
+    }
+  | {
+      command: "squadWorktreeCleanupResult";
+      worktreeId: string;
+      outcome: SquadWorktreeCleanupOutcome;
+    }
+  | {
+      command: "squadWorktreeDependencyRetried";
+      worktreeId: string;
+      outcome: SquadWorktreeDependencyOutcome;
     };
