@@ -66,3 +66,29 @@ Implemented 5 major SQD webview tickets (see `.squad/decisions.md` for full deta
 **Cross-team note:** Link (SQD-R2) consolidated 5 Squad service files under src/features/squad/services/ — service/provider/parser/reader modules now follow canonical folder layout. Trinity validated Preact webview test harness (69 tests passing, isolated from extension-host suite). All three changes landed safely.
 
 **MVP Status:** All 23 SQD PRs merged into squad/mvp-integration branch (Morpheus reviewed, 744 tests passing). Ready for Eric's merge to feature/squad-support.
+
+## 2026-09-29 — SQD-040 (#255): Upstreams and plugins UI
+
+- Finished the P2 Squad webview UI for FR-030/031/032 and FR-042/043/044 on branch `squad/255-upstreams-plugins-ui` (PR #317).
+- Upstreams now have dedicated selector/action plumbing (`useSquadUpstreams`), add/list/sync/remove controls, operation feedback, retry for retryable failures, and no false success state for failed/cancelled operations.
+- Plugins now have marketplace and installed-plugin inventory, Nexus marketplace shortcut, marketplace registration, validate/dry-run/install/enable/disable/uninstall/refresh actions, and visible action output/errors through shared feedback UI.
+- Added `test/suite/webview/squadUpstreamsPlugins.test.tsx`; remember that `test:unit` does not run happy-dom webview tests, so run `node .\out\test\runWebviewTest.js` after `test-compile` for component coverage.
+- Validation run: `pnpm run check:types`, `pnpm run lint`, `pnpm run test-compile`, `pnpm run test:unit`, and `node .\out\test\runWebviewTest.js` all passed; pre-push also ran pretest + headless tests.
+
+## 2026-09-28 — SQD-047 (#262): Ceremony quick actions completed
+
+- Ceremony quick actions need both host and webview state wiring: `getSquadCeremonies` / `runSquadCeremony` / `openSquadCeremonies` must be routed through `NexkitPanelMessageHandler`, registered in `AppStateContext`, and exposed as hook actions before the Preact section can work.
+- The safest launch contract is id-only from the webview; the host re-reads `.squad/ceremonies.md` before opening Copilot Chat so stale, removed, or disabled ceremonies cannot be run from old panel state.
+- The no-DOM VNode tests do not render child component nodes; export pure leaf renderers (or assert list structure separately) when testing new Preact organisms without jsdom.
+
+### 2026-09-29 — SQD-029 (#244): Charter/governance editors
+
+- Centralized Squad edit outcomes in `SquadState.lastWrite` with a monotonic `sequence`; editors consume outcomes through hooks instead of adding message listeners outside `AppStateContext.tsx`.
+- Governance saves must capture `SquadMarkdownDoc.contentHash` at edit start and send it as `baseContentHash`; `write-conflict` keeps the draft and offers a reload path.
+- Persist unsaved editor drafts in VS Code webview state keyed by edit target (`charter:<id>` / `doc:<kind>`) so collapsing sections or reloading the panel does not drop user work.
+
+### 2026-09-29 — SQD-054 (#269): Worktrees section UI
+
+- Worktree UI needs its own top-level `AppState.squadWorktrees` slice instead of overloading the broader Squad detection slice; this keeps create/preview/cleanup pending state independent from Doctor/upstream/plugin operations.
+- Partial dependency setup failures are not errors in the reducer: `squadWorktreeCreated` stores the failed dependency outcome and the section renders an explicit retry action that calls a narrow host `retryDependencies(worktreeId)` service method.
+- Cleanup remains host-confirmed even when the webview shows a confirmation panel; the webview sends only `worktreeId` plus booleans, and the host re-lists candidates before showing the modal confirmation.
