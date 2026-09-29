@@ -15,9 +15,12 @@ import {
   SQUAD_UNTRIAGED_LABEL,
   SquadBacklogContext,
   SquadBacklogDetectionSource,
+  SquadBacklogItem,
+  SquadBacklogItemQuery,
   SquadBacklogProvider,
   SquadBacklogProviderId,
   SquadBacklogProviderInfo,
+  SquadWorkState,
   SquadError,
   SquadGitHubBacklogRef,
   SquadGitRemote,
@@ -130,6 +133,102 @@ export class GitHubBacklogProvider implements SquadBacklogProvider {
     }
 
     return parseRepositoryResponse(result.stdout, repository);
+  }
+
+  public async listItems(
+    context: SquadBacklogContext,
+    query: SquadBacklogItemQuery
+  ): Promise<SquadResult<SquadBacklogItem[]>> {
+    const repository = selectGitHubRemote(context.remotes, context.source === SquadBacklogDetectionSource.Config);
+    if (!repository) {
+      return squadErr(repositoryNotFound({ host: "github.com", owner: "unknown", repo: "unknown" }));
+    }
+
+    const args = [
+      "issue",
+      "list",
+      "--repo",
+      `${repository.owner}/${repository.repo}`,
+      "--state",
+      "open",
+      "--json",
+      "number,title,url,labels,assignees,state",
+      "--limit",
+      String(normalizeLimit(query.limit)),
+    ];
+    if (query.squadOnly !== false) {
+      args.push("--label", SQUAD_BACKLOG_LABEL);
+    }
+    if (query.assignedToMe) {
+      args.push("--assignee", "@me");
+    }
+
+    const result = await this._runner.run({
+      command: this._ghCommand,
+      args,
+      cwd: context.workspaceRoot.fsPath,
+      timeoutMs: this._timeoutMs,
+      token: context.token,
+    });
+
+    const failure = mapGhFailure(result, repository);
+    if (failure) {
+      return squadErr(failure);
+    }
+    return parseGitHubIssueList(result.stdout, query);
+  }
+
+  public async getWorkState(
+    context: SquadBacklogContext,
+    itemId: string,
+    branch: string
+  ): Promise<SquadResult<SquadWorkState>> {
+    const repository = selectGitHubRemote(context.remotes, context.source === SquadBacklogDetectionSource.Config);
+    if (!repository) {
+      return squadErr(repositoryNotFound({ host: "github.com", owner: "unknown", repo: "unknown" }));
+    }
+
+    const issueResult = await this._runner.run({
+      command: this._ghCommand,
+      args: ["issue", "view", itemId, "--repo", `${repository.owner}/${repository.repo}`, "--json", "state"],
+      cwd: context.workspaceRoot.fsPath,
+      timeoutMs: this._timeoutMs,
+      token: context.token,
+    });
+    const issueFailure = mapGhFailure(issueResult, repository);
+    if (issueFailure) {
+      return squadErr(issueFailure);
+    }
+
+    const prResult = await this._runner.run({
+      command: this._ghCommand,
+      args: [
+        "pr",
+        "list",
+        "--repo",
+        `${repository.owner}/${repository.repo}`,
+        "--head",
+        branch,
+        "--state",
+        "all",
+        "--json",
+        "state",
+        "--limit",
+        "10",
+      ],
+      cwd: context.workspaceRoot.fsPath,
+      timeoutMs: this._timeoutMs,
+      token: context.token,
+    });
+    const prFailure = mapGhFailure(prResult, repository);
+    if (prFailure) {
+      return squadErr(prFailure);
+    }
+
+    return squadOk({
+      item: parseGitHubIssueState(issueResult.stdout),
+      pullRequest: parseGitHubPullRequestState(prResult.stdout),
+    });
   }
 }
 
@@ -370,6 +469,100 @@ function parseRepositoryResponse(stdout: string, repository: ParsedGitHubRemote)
 function toCount(connection: { totalCount?: unknown } | null | undefined): number | null {
   const value = connection?.totalCount;
   return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null;
+}
+
+function normalizeLimit(limit: number | undefined): number {
+  if (!Number.isInteger(limit)) {
+    return 50;
+  }
+  return Math.max(1, Math.min(100, limit as number));
+}
+
+function parseGitHubIssueList(stdout: string, query: SquadBacklogItemQuery): SquadResult<SquadBacklogItem[]> {
+  let payload: unknown;
+  try {
+    payload = JSON.parse(stdout);
+  } catch (error) {
+    return squadErr({
+      code: "parse-failed",
+      message: "The GitHub CLI returned an unexpected issue list response.",
+      remediation: "Update the GitHub CLI, then refresh the backlog list.",
+      detail: error instanceof Error ? error.message : undefined,
+    });
+  }
+  if (!Array.isArray(payload)) {
+    return squadErr({
+      code: "parse-failed",
+      message: "The GitHub CLI issue list response was not an array.",
+      remediation: "Update the GitHub CLI, then refresh the backlog list.",
+    });
+  }
+
+  const search = query.search?.trim().toLowerCase();
+  return squadOk(
+    payload
+      .map(toGitHubBacklogItem)
+      .filter((item): item is SquadBacklogItem => item !== null)
+      .filter((item) => (query.untriagedOnly ? item.labels.includes(SQUAD_UNTRIAGED_LABEL) : true))
+      .filter((item) => (search ? item.id === search || item.title.toLowerCase().includes(search) : true))
+  );
+}
+
+function toGitHubBacklogItem(value: unknown): SquadBacklogItem | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+  const record = value as Readonly<Record<string, unknown>>;
+  if (typeof record.number !== "number" || !Number.isInteger(record.number) || typeof record.title !== "string") {
+    return null;
+  }
+  return {
+    providerId: SquadBacklogProviderId.GitHub,
+    id: String(record.number),
+    number: record.number,
+    title: record.title,
+    url: typeof record.url === "string" ? record.url : null,
+    state: String(record.state).toLowerCase() === "closed" ? "closed" : "open",
+    labels: parseNamedArray(record.labels),
+    assignees: parseNamedArray(record.assignees),
+  };
+}
+
+function parseNamedArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value
+    .map((entry) => (entry && typeof entry === "object" ? (entry as { name?: unknown; login?: unknown }).name ?? (entry as { login?: unknown }).login : undefined))
+    .filter((entry): entry is string => typeof entry === "string");
+}
+
+function parseGitHubIssueState(stdout: string): SquadWorkState["item"] {
+  try {
+    const payload = JSON.parse(stdout) as { state?: unknown };
+    return String(payload.state).toLowerCase() === "closed" ? "closed" : "open";
+  } catch {
+    return "unknown";
+  }
+}
+
+function parseGitHubPullRequestState(stdout: string): SquadWorkState["pullRequest"] {
+  try {
+    const payload = JSON.parse(stdout) as Array<{ state?: unknown }>;
+    const states = Array.isArray(payload) ? payload.map((item) => String(item.state).toLowerCase()) : [];
+    if (states.includes("merged")) {
+      return "merged";
+    }
+    if (states.includes("open")) {
+      return "open";
+    }
+    if (states.includes("closed")) {
+      return "closed";
+    }
+    return "none";
+  } catch {
+    return "unknown";
+  }
 }
 
 function excerpt(text: string): string | undefined {

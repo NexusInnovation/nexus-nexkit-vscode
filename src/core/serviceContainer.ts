@@ -49,6 +49,10 @@ import { SquadPluginActionService } from "../features/squad/services/squadPlugin
 import { SquadBacklogService } from "../features/squad/services/squadBacklogService";
 import { GitHubBacklogProvider } from "../features/squad/services/gitHubBacklogProvider";
 import { AzureDevOpsBacklogProvider } from "../features/squad/services/azureDevOpsBacklogProvider";
+import { GitWorktreeClient } from "../features/squad/services/gitWorktreeClient";
+import { WorktreeDependencyStrategy } from "../features/squad/services/worktreeDependencyStrategy";
+import { WorktreeRemover } from "../features/squad/services/worktreeRemover";
+import { SquadWorktreeService } from "../features/squad/services/squadWorktreeService";
 
 /**
  * Service container for dependency injection
@@ -125,6 +129,12 @@ export interface ServiceContainer {
    * request backlog status.
    */
   squadBacklog: SquadBacklogService;
+
+  /**
+   * Squad worktree-per-issue orchestration (SQD-054, FR-056). Lazily
+   * constructed because it owns only seams until commands/panel request work.
+   */
+  readonly squadWorktrees: SquadWorktreeService;
 
   /**
    * Aggregated Squad preset source (SQD-019). Lazily constructed on first
@@ -269,6 +279,23 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     return squadUpstreamService;
   };
 
+  let squadWorktreeService: SquadWorktreeService | undefined;
+  const getSquadWorktrees = (): SquadWorktreeService => {
+    if (!squadWorktreeService) {
+      const git = new GitWorktreeClient();
+      squadWorktreeService = new SquadWorktreeService({
+        git,
+        backlog: squadBacklog,
+        dependencies: new WorktreeDependencyStrategy({ workspaceTrusted: () => vscode.workspace.isTrusted }),
+        remover: new WorktreeRemover({ git }),
+        workspaceState: context.workspaceState,
+        logger: logging,
+        telemetry,
+      });
+    }
+    return squadWorktreeService;
+  };
+
   // Register for disposal
   context.subscriptions.push(logging);
   context.subscriptions.push(aiTemplateData);
@@ -330,6 +357,9 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     },
     get squadUpstream(): SquadUpstreamService {
       return getSquadUpstream();
+    },
+    get squadWorktrees(): SquadWorktreeService {
+      return getSquadWorktrees();
     },
   };
 }
