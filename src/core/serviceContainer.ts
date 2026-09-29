@@ -47,6 +47,7 @@ import { SquadFileWriteService } from "../features/squad/services/squadFileWrite
 import { SquadPluginService } from "../features/squad/services/squadPluginService";
 import { SquadPluginActionService } from "../features/squad/services/squadPluginActionService";
 import { SquadPersonalSquadService } from "../features/squad/services/squadPersonalSquadService";
+import { SquadConsultModeService } from "../features/squad/services/squadConsultModeService";
 
 /**
  * Service container for dependency injection
@@ -153,6 +154,13 @@ export interface ServiceContainer {
    * No CLI or file work runs until requested by the panel.
    */
   squadPersonal: SquadPersonalSquadService;
+
+  /**
+   * Start workspace consult mode (`squad consult`) and extract learnings back
+   * to the personal Squad (`squad extract`). No CLI or file work runs until
+   * requested by the panel.
+   */
+  squadConsult: SquadConsultModeService;
 }
 
 /**
@@ -219,6 +227,13 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   // CLI is found across platforms (npm `squad.cmd`/`squad.ps1` shims on Windows).
   const squadDetection = new SquadDetectionService({ cliService: squadCli });
   const squadUpdates = new SquadUpdateService({ detectionService: squadDetection });
+  const squadConsult = new SquadConsultModeService({
+    cli: squadCli,
+    personal: squadPersonal,
+    backup,
+    detection: squadDetection,
+    logger: logging,
+  });
   const squadPlugins = squadFile ? new SquadPluginService({ fileService: squadFile, cli: squadCli }) : undefined;
   const squadPluginActions = squadPlugins
     ? new SquadPluginActionService({ cli: squadCli, plugins: squadPlugins, backup })
@@ -312,6 +327,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     squadCli,
     squadExport,
     squadPersonal,
+    squadConsult,
     squadFile,
     squadUpdates,
     squadWrite,

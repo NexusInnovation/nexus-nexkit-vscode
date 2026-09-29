@@ -19,3 +19,4 @@ export * from "./squadPluginService";
 export * from "./squadPluginActionService";
 export * from "./squadPluginActionConfirmer";
 export * from "./squadPersonalSquadService";
+export * from "./squadConsultModeService";

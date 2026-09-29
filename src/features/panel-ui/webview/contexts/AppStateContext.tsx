@@ -254,6 +254,70 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
           }));
           break;
 
+        case "squadConsultModeStatusUpdate":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              consultMode: {
+                ...prev.squad.consultMode,
+                status: message.status,
+                loading: false,
+                error: null,
+              },
+            },
+          }));
+          break;
+
+        case "squadConsultModeLoading":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              consultMode: {
+                ...prev.squad.consultMode,
+                loading: message.isLoading,
+              },
+            },
+          }));
+          break;
+
+        case "squadConsultModeError":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              consultMode: {
+                ...prev.squad.consultMode,
+                loading: false,
+                error: message.error,
+              },
+            },
+          }));
+          break;
+
+        case "squadConsultModeResult":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              detection: message.outcome?.detection ?? prev.squad.detection,
+              consultMode: {
+                ...prev.squad.consultMode,
+                status: message.outcome?.status ?? prev.squad.consultMode.status,
+                loading: false,
+                error: message.error ?? null,
+                lastOperation: {
+                  operation: message.operation,
+                  ok: message.ok,
+                  outcome: message.outcome,
+                  error: message.error,
+                },
+              },
+            },
+          }));
+          break;
+
         case "squadRosterUpdate":
           setState((prev) => ({
             ...prev,
@@ -470,7 +534,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
                 operation: message.operation,
                 name: message.name,
                 status: message.ok ? "succeeded" : "failed",
-                error: message.ok ? null : message.error ?? null,
+                error: message.ok ? null : (message.error ?? null),
               },
             },
           }));
@@ -497,6 +561,10 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     const unsubscribeSquadPersonalLoading = messenger.onMessage("squadPersonalSquadLoading", handleMessage);
     const unsubscribeSquadPersonalError = messenger.onMessage("squadPersonalSquadError", handleMessage);
     const unsubscribeSquadPersonalInit = messenger.onMessage("squadPersonalSquadInitResult", handleMessage);
+    const unsubscribeSquadConsultStatus = messenger.onMessage("squadConsultModeStatusUpdate", handleMessage);
+    const unsubscribeSquadConsultLoading = messenger.onMessage("squadConsultModeLoading", handleMessage);
+    const unsubscribeSquadConsultError = messenger.onMessage("squadConsultModeError", handleMessage);
+    const unsubscribeSquadConsultResult = messenger.onMessage("squadConsultModeResult", handleMessage);
     const unsubscribeSquadRoster = messenger.onMessage("squadRosterUpdate", handleMessage);
     const unsubscribeSquadDocs = messenger.onMessage("squadDocsUpdate", handleMessage);
     const unsubscribeSquadLogs = messenger.onMessage("squadLogsUpdate", handleMessage);
@@ -538,6 +606,10 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       unsubscribeSquadPersonalLoading();
       unsubscribeSquadPersonalError();
       unsubscribeSquadPersonalInit();
+      unsubscribeSquadConsultStatus();
+      unsubscribeSquadConsultLoading();
+      unsubscribeSquadConsultError();
+      unsubscribeSquadConsultResult();
       unsubscribeSquadRoster();
       unsubscribeSquadDocs();
       unsubscribeSquadLogs();

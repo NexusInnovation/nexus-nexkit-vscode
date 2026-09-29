@@ -9,10 +9,7 @@ import * as assert from "assert";
 import * as sinon from "sinon";
 import * as vscode from "vscode";
 import { SquadCliSource } from "../../src/features/squad/models";
-import {
-  SquadCliCommand,
-  SquadCliService,
-} from "../../src/features/squad/services/squadCliService";
+import { SquadCliCommand, SquadCliService } from "../../src/features/squad/services/squadCliService";
 import type {
   SquadProcessRunner,
   SquadSpawnRequest,
@@ -20,10 +17,7 @@ import type {
 } from "../../src/features/squad/services/squadProcessRunner";
 
 /** Build a fake runner resolving a canned result and recording the request. */
-function fakeRunner(
-  result: Partial<SquadSpawnResult>,
-  captured: { request?: SquadSpawnRequest } = {}
-): SquadProcessRunner {
+function fakeRunner(result: Partial<SquadSpawnResult>, captured: { request?: SquadSpawnRequest } = {}): SquadProcessRunner {
   return {
     run: (request: SquadSpawnRequest): Promise<SquadSpawnResult> => {
       captured.request = request;
@@ -74,11 +68,7 @@ suite("Unit: SquadCliService", () => {
       await service.execute(SquadCliCommand.Version);
 
       assert.strictEqual(captured.request?.command, "npx");
-      assert.deepStrictEqual(captured.request?.args, [
-        "--yes",
-        "@bradygaster/squad-cli",
-        "version",
-      ]);
+      assert.deepStrictEqual(captured.request?.args, ["--yes", "@bradygaster/squad-cli", "version"]);
     });
 
     test("Should invoke the configured custom path", async () => {
@@ -181,6 +171,23 @@ suite("Unit: SquadCliService", () => {
       await service.execute(SquadCliCommand.Plugin, { args: ["list", "--json"] });
 
       assert.deepStrictEqual(captured.request?.args, ["plugin", "list", "--json"]);
+    });
+
+    test("Should allow consult mode commands with --yes (SQD-052)", async () => {
+      const captured: { request?: SquadSpawnRequest } = {};
+      const service = new SquadCliService({
+        runner: fakeRunner({}, captured),
+        logger: silentLogger,
+        cliSource: SquadCliSource.Global,
+      });
+
+      const consult = await service.execute(SquadCliCommand.Consult, { args: ["--yes"] });
+      assert.strictEqual(consult.ok, true);
+      assert.deepStrictEqual(captured.request?.args, ["consult", "--yes"]);
+
+      const extract = await service.execute(SquadCliCommand.Extract, { args: ["--yes"] });
+      assert.strictEqual(extract.ok, true);
+      assert.deepStrictEqual(captured.request?.args, ["extract", "--yes"]);
     });
 
     test("Should pass cwd fsPath to the runner", async () => {
@@ -407,11 +414,7 @@ suite("Unit: SquadCliService", () => {
       }
       // The override resolved an npx invocation for this call only.
       assert.strictEqual(captured.request?.command, "npx");
-      assert.deepStrictEqual(captured.request?.args, [
-        "--yes",
-        "@bradygaster/squad-cli",
-        "version",
-      ]);
+      assert.deepStrictEqual(captured.request?.args, ["--yes", "@bradygaster/squad-cli", "version"]);
     });
 
     test("Should surface cli-not-found when the executable is missing", async () => {
@@ -462,10 +465,7 @@ suite("Unit: SquadCliService", () => {
     test("Should request --json and parse a structured report on success", async () => {
       const captured: { request?: SquadSpawnRequest } = {};
       const service = new SquadCliService({
-        runner: fakeRunner(
-          { stdout: JSON.stringify([{ label: "Node", severity: "ok" }]) },
-          captured
-        ),
+        runner: fakeRunner({ stdout: JSON.stringify([{ label: "Node", severity: "ok" }]) }, captured),
         logger: silentLogger,
         cliSource: SquadCliSource.Global,
       });

@@ -4,6 +4,9 @@ import { ServiceContainer } from "../../src/core/serviceContainer";
 import { SquadPersonalSquadMessageHandler } from "../../src/features/panel-ui/squadPersonalSquadMessageHandler";
 import { ExtensionMessage } from "../../src/features/panel-ui/types/webviewMessages";
 import {
+  SquadConsultModeOperation,
+  SquadConsultModeState,
+  SquadConsultModeStatus,
   SquadPersonalSquadScope,
   SquadPersonalSquadState,
   SquadPersonalSquadStatus,
@@ -23,7 +26,26 @@ function status(state = SquadPersonalSquadState.Initialized): SquadPersonalSquad
   };
 }
 
-function createServices(getStatus: sinon.SinonStub, initialize: sinon.SinonStub): ServiceContainer {
+function consultStatus(state = SquadConsultModeState.Active): SquadConsultModeStatus {
+  return {
+    state,
+    targetLabel: "this workspace (.squad/)",
+    markerRelativePath: ".squad/config.json",
+    warning: "Consult mode writes local .squad files.",
+    excludedRelativePaths: [".squad/", ".github/agents/squad.agent.md"],
+    personalStatus: status(),
+  };
+}
+
+function createServices(
+  getStatus: sinon.SinonStub,
+  initialize: sinon.SinonStub,
+  consult: Partial<{
+    getStatus: sinon.SinonStub;
+    startConsultMode: sinon.SinonStub;
+    extractLearnings: sinon.SinonStub;
+  }> = {}
+): ServiceContainer {
   return {
     logging: {
       warn: () => undefined,
@@ -33,6 +55,11 @@ function createServices(getStatus: sinon.SinonStub, initialize: sinon.SinonStub)
     squadPersonal: {
       getStatus,
       initialize,
+    },
+    squadConsult: {
+      getStatus: consult.getStatus ?? sinon.stub(),
+      startConsultMode: consult.startConsultMode ?? sinon.stub(),
+      extractLearnings: consult.extractLearnings ?? sinon.stub(),
     },
   } as unknown as ServiceContainer;
 }
@@ -88,11 +115,7 @@ suite("Unit: SquadPersonalSquadMessageHandler (SQD-051 host routing)", () => {
 
     await handler.handle({ command: "getPersonalSquadStatus" });
 
-    assert.deepStrictEqual(commands(), [
-      "squadPersonalSquadLoading",
-      "squadPersonalSquadError",
-      "squadPersonalSquadLoading",
-    ]);
+    assert.deepStrictEqual(commands(), ["squadPersonalSquadLoading", "squadPersonalSquadError", "squadPersonalSquadLoading"]);
     assert.strictEqual(find("squadPersonalSquadError")?.error.code, "file-read-failed");
   });
 
@@ -114,9 +137,7 @@ suite("Unit: SquadPersonalSquadMessageHandler (SQD-051 host routing)", () => {
   });
 
   test("initPersonalSquad surfaces initialization failures", async () => {
-    const initialize = sinon
-      .stub()
-      .resolves(squadErr({ code: "cancelled", message: "cancelled", remediation: "Try again." }));
+    const initialize = sinon.stub().resolves(squadErr({ code: "cancelled", message: "cancelled", remediation: "Try again." }));
     const handler = new SquadPersonalSquadMessageHandler(createServices(sinon.stub(), initialize), postMessage);
 
     await handler.handle({ command: "initPersonalSquad" });
@@ -126,5 +147,65 @@ suite("Unit: SquadPersonalSquadMessageHandler (SQD-051 host routing)", () => {
     assert.strictEqual(result.ok, false);
     assert.strictEqual(result.error?.code, "cancelled");
     assert.strictEqual(find("squadPersonalSquadStatusUpdate"), undefined);
+  });
+
+  test("getConsultModeStatus posts loading and status", async () => {
+    const getConsultStatus = sinon.stub().resolves(squadOk(consultStatus()));
+    const handler = new SquadPersonalSquadMessageHandler(
+      createServices(sinon.stub(), sinon.stub(), { getStatus: getConsultStatus }),
+      postMessage
+    );
+
+    const handled = await handler.handle({ command: "getConsultModeStatus" });
+
+    assert.strictEqual(handled, true);
+    assert.deepStrictEqual(commands(), ["squadConsultModeLoading", "squadConsultModeStatusUpdate", "squadConsultModeLoading"]);
+    assert.strictEqual(find("squadConsultModeStatusUpdate")?.status.state, SquadConsultModeState.Active);
+  });
+
+  test("startSquadConsultMode posts result and refreshed status on success", async () => {
+    const startConsultMode = sinon.stub().resolves(
+      squadOk({
+        operation: SquadConsultModeOperation.Consult,
+        status: consultStatus(),
+        backupPath: null,
+        stdout: "ok",
+      })
+    );
+    const handler = new SquadPersonalSquadMessageHandler(
+      createServices(sinon.stub(), sinon.stub(), { startConsultMode }),
+      postMessage
+    );
+
+    const handled = await handler.handle({ command: "startSquadConsultMode" });
+
+    assert.strictEqual(handled, true);
+    assert.deepStrictEqual(commands(), [
+      "squadConsultModeLoading",
+      "squadConsultModeResult",
+      "squadConsultModeStatusUpdate",
+      "squadConsultModeLoading",
+    ]);
+    assert.strictEqual(find("squadConsultModeResult")?.operation, SquadConsultModeOperation.Consult);
+    assert.strictEqual(find("squadConsultModeResult")?.ok, true);
+  });
+
+  test("extractSquadConsultMode surfaces extraction failures", async () => {
+    const extractLearnings = sinon
+      .stub()
+      .resolves(squadErr({ code: "cli-execution-failed", message: "failed", remediation: "Retry." }));
+    const handler = new SquadPersonalSquadMessageHandler(
+      createServices(sinon.stub(), sinon.stub(), { extractLearnings }),
+      postMessage
+    );
+
+    await handler.handle({ command: "extractSquadConsultMode" });
+
+    const result = find("squadConsultModeResult");
+    assert.ok(result);
+    assert.strictEqual(result.operation, SquadConsultModeOperation.Extract);
+    assert.strictEqual(result.ok, false);
+    assert.strictEqual(result.error?.code, "cli-execution-failed");
+    assert.strictEqual(find("squadConsultModeStatusUpdate"), undefined);
   });
 });
