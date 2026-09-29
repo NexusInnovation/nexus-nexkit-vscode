@@ -1699,6 +1699,225 @@ details[open] > .type-header::before {
   font-size: 0.9em;
 }
 
+/* Upstream & plugin management (SQD-040) */
+.squad-plugins {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.squad-toolbar,
+.squad-plugin-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.squad-toolbar-button,
+.squad-plugin-action,
+.squad-upstream-add-button,
+.squad-operation-retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: none;
+  border-radius: 2px;
+  font-size: 0.9em;
+  cursor: pointer;
+  color: var(--vscode-button-secondaryForeground);
+  background-color: var(--vscode-button-secondaryBackground);
+}
+
+.squad-toolbar-button:hover:not(:disabled),
+.squad-plugin-action:hover:not(:disabled),
+.squad-upstream-add-button:hover:not(:disabled),
+.squad-operation-retry:hover:not(:disabled) {
+  background-color: var(--vscode-button-secondaryHoverBackground);
+}
+
+.squad-icon-button {
+  padding: 2px 4px;
+  border: none;
+  background: transparent;
+  color: var(--vscode-foreground);
+  cursor: pointer;
+}
+
+.squad-icon-button:hover:not(:disabled) {
+  background-color: var(--vscode-toolbar-hoverBackground);
+}
+
+.squad-toolbar-button:disabled,
+.squad-plugin-action:disabled,
+.squad-upstream-add-button:disabled,
+.squad-operation-retry:disabled,
+.squad-icon-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.squad-danger {
+  color: var(--vscode-errorForeground);
+}
+
+.squad-upstream-actions,
+.squad-plugin-actions {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.squad-plugin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.squad-upstream-git-ref,
+.squad-plugin-version,
+.squad-plugin-meta,
+.squad-plugins-hint,
+.squad-upstream-add-hint {
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.85em;
+}
+
+.squad-plugins-hint,
+.squad-upstream-add-hint {
+  margin: 0;
+}
+
+.squad-plugin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.squad-plugin-table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--vscode-descriptionForeground);
+  border-bottom: 1px solid var(--vscode-panel-border);
+  padding: 4px 6px;
+}
+
+.squad-plugin-table td {
+  padding: 6px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  vertical-align: top;
+}
+
+.squad-plugin-name {
+  font-weight: 600;
+}
+
+.squad-plugin-status {
+  padding: 1px 6px;
+  border-radius: 9px;
+  font-size: 0.8em;
+  border: 1px solid var(--vscode-panel-border);
+}
+
+.squad-plugin-status-enabled {
+  color: var(--vscode-testing-iconPassed, var(--vscode-foreground));
+}
+
+.squad-plugin-status-disabled,
+.squad-plugin-status-unknown {
+  color: var(--vscode-descriptionForeground);
+}
+
+.squad-subsection-title {
+  margin: 8px 0 0;
+  font-size: 0.95em;
+  font-weight: 600;
+}
+
+.squad-upstream-add {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+}
+
+.squad-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.squad-field-label {
+  font-size: 0.85em;
+  color: var(--vscode-descriptionForeground);
+}
+
+.squad-field input,
+.squad-marketplace-source-input,
+.squad-plugin-folder-input {
+  flex: 1;
+  min-width: 0;
+  padding: 3px 6px;
+  color: var(--vscode-input-foreground);
+  background-color: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border, transparent);
+}
+
+.squad-upstream-add-button {
+  align-self: flex-start;
+}
+
+.squad-operation-feedback {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9em;
+}
+
+.squad-operation-feedback-running,
+.squad-operation-feedback-success,
+.squad-operation-feedback-cancelled {
+  display: block;
+  padding: 4px 8px;
+  border-radius: 3px;
+  background-color: var(--vscode-textBlockQuote-background);
+}
+
+.squad-operation-feedback-success {
+  border-left: 3px solid var(--vscode-testing-iconPassed, var(--vscode-editorInfo-foreground));
+}
+
+.squad-operation-feedback-cancelled {
+  border-left: 3px solid var(--vscode-descriptionForeground);
+}
+
+.squad-operation-feedback-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.squad-operation-feedback-hint {
+  margin: 4px 0 0;
+  color: var(--vscode-descriptionForeground);
+}
+
+.squad-operation-retry {
+  align-self: flex-start;
+}
+
+.squad-plugin-action-output {
+  margin: 0;
+  padding: 6px 8px;
+  max-height: 200px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--vscode-editor-font-family);
+  font-size: 0.85em;
+  background-color: var(--vscode-textCodeBlock-background);
+}
+
 /* Charter / document / log content */
 .squad-charter-detail {
   margin-top: 8px;
