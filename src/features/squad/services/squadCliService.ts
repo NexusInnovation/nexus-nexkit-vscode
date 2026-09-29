@@ -155,13 +155,13 @@ export const SQUAD_CLI_COMMAND_SPECS: Readonly<Record<SquadCliCommand, SquadCliC
   },
   [SquadCliCommand.Export]: {
     argv: ["export"],
-    allowedFlags: ["--output", "--ref", "--path"],
+    allowedFlags: ["--force", "--output", "--ref", "--path"],
     allowsOperands: true,
     defaultTimeoutMs: SQUAD_CLI_TIMEOUTS_MS.standard,
   },
   [SquadCliCommand.Import]: {
     argv: ["import"],
-    allowedFlags: ["--yes", "--force"],
+    allowedFlags: ["--yes"],
     allowsOperands: true,
     defaultTimeoutMs: SQUAD_CLI_TIMEOUTS_MS.standard,
   },

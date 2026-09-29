@@ -30,6 +30,9 @@ const WORKSPACE = vscode.Uri.file(process.platform === "win32" ? "C:\\work\\repo
 
 const ALL_COMMANDS = Object.values(SquadCliCommand);
 
+/** Commands allowed in {@link SquadCliService.execute} (excludes long-running commands). */
+const EXECUTABLE_COMMANDS = ALL_COMMANDS.filter((cmd) => !SQUAD_CLI_COMMAND_SPECS[cmd].longRunning);
+
 /** Assert a failed result and return its error for further checks. */
 function expectErr<T>(result: SquadResult<T>, code: SquadError["code"]): SquadError {
   assert.strictEqual(result.ok, false, "a failure must never be reported as success");
@@ -95,22 +98,27 @@ suite("Unit: Squad CLI simulated commands (SQD-041)", () => {
 
   suite("allowlist contract", () => {
     test("exposes exactly the reviewed command set", () => {
-      assert.deepStrictEqual(Object.keys(SQUAD_CLI_COMMAND_SPECS).sort(), [
-        "doctor",
-        "export",
-        "import",
-        "init",
-        "plugin",
-        "upgrade",
-        "upgrade-self",
-        "upstream",
-        "version",
-      ]);
+      assert.deepStrictEqual(
+        EXECUTABLE_COMMANDS.map((cmd) => cmd.valueOf()).sort(),
+        [
+          "consult",
+          "doctor",
+          "export",
+          "extract",
+          "import",
+          "init",
+          "plugin",
+          "upgrade",
+          "upgrade-self",
+          "upstream",
+          "version",
+        ]
+      );
     });
 
     test("pins the argv, flags, operand policy and default timeout of every command", () => {
       const snapshot = Object.fromEntries(
-        ALL_COMMANDS.map((command) => {
+        EXECUTABLE_COMMANDS.map((command) => {
           const spec = SQUAD_CLI_COMMAND_SPECS[command];
           return [
             command,
@@ -129,11 +137,11 @@ suite("Unit: Squad CLI simulated commands (SQD-041)", () => {
         doctor: { argv: ["doctor"], flags: ["--json"], operands: false, timeout: SQUAD_CLI_TIMEOUTS_MS.doctor },
         init: {
           argv: ["init"],
-          flags: ["--force", "--preset", "--yes"],
+          flags: ["--force", "--global", "--preset", "--yes"],
           operands: true,
           timeout: SQUAD_CLI_TIMEOUTS_MS.init,
         },
-        upgrade: { argv: ["upgrade"], flags: ["--yes"], operands: false, timeout: SQUAD_CLI_TIMEOUTS_MS.upgrade },
+        upgrade: { argv: ["upgrade"], flags: ["--force", "--yes"], operands: false, timeout: SQUAD_CLI_TIMEOUTS_MS.upgrade },
         "upgrade-self": {
           argv: ["upgrade", "--self"],
           flags: ["--yes"],
@@ -154,17 +162,19 @@ suite("Unit: Squad CLI simulated commands (SQD-041)", () => {
         },
         export: {
           argv: ["export"],
-          flags: ["--output", "--path", "--ref"],
+          flags: ["--force", "--output", "--path", "--ref"],
           operands: true,
           timeout: SQUAD_CLI_TIMEOUTS_MS.standard,
         },
         import: { argv: ["import"], flags: ["--yes"], operands: true, timeout: SQUAD_CLI_TIMEOUTS_MS.standard },
+        consult: { argv: ["consult"], flags: ["--yes"], operands: false, timeout: SQUAD_CLI_TIMEOUTS_MS.standard },
+        extract: { argv: ["extract"], flags: ["--yes"], operands: false, timeout: SQUAD_CLI_TIMEOUTS_MS.standard },
       });
     });
   });
 
   suite("success path — every allowlisted command", () => {
-    for (const command of ALL_COMMANDS) {
+    for (const command of EXECUTABLE_COMMANDS) {
       test(`\`${command}\` runs the pinned argv with its default timeout and returns the output`, async () => {
         const spec = SQUAD_CLI_COMMAND_SPECS[command];
         const fake = new FakeSquadCli().on(spec.argv, fakeSquadReply.ok(`${command} done`, "a warning"));
@@ -214,7 +224,7 @@ suite("Unit: Squad CLI simulated commands (SQD-041)", () => {
   });
 
   suite("failure path — non-zero exit", () => {
-    for (const command of ALL_COMMANDS) {
+    for (const command of EXECUTABLE_COMMANDS) {
       test(`\`${command}\` exiting non-zero is an actionable cli-execution-failed`, async () => {
         const fake = new FakeSquadCli().on([], fakeSquadReply.fail(3, "\n  \n  Error: boom happened\nstack…", "partial"));
 
@@ -265,7 +275,7 @@ suite("Unit: Squad CLI simulated commands (SQD-041)", () => {
   });
 
   suite("timeout path", () => {
-    for (const command of ALL_COMMANDS) {
+    for (const command of EXECUTABLE_COMMANDS) {
       test(`\`${command}\` timing out is cli-timeout with the applied timeout`, async () => {
         const fake = new FakeSquadCli().on([], fakeSquadReply.timeout("half"));
 

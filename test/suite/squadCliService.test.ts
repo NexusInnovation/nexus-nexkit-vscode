@@ -191,20 +191,6 @@ suite("Unit: SquadCliService", () => {
       assert.deepStrictEqual(captured.request?.args, ["plugin", "list", "--json"]);
     });
 
-    test("Should allow `import <file> --force` for previewed Squad imports (SQD-034)", async () => {
-      const captured: { request?: SquadSpawnRequest } = {};
-      const service = new SquadCliService({
-        runner: fakeRunner({}, captured),
-        logger: silentLogger,
-        cliSource: SquadCliSource.Global,
-      });
-
-      const result = await service.execute(SquadCliCommand.Import, { args: ["export.json", "--force"] });
-
-      assert.strictEqual(result.ok, true);
-      assert.deepStrictEqual(captured.request?.args, ["import", "export.json", "--force"]);
-    });
-
     test("Should allow consult mode commands with --yes (SQD-052)", async () => {
       const captured: { request?: SquadSpawnRequest } = {};
       const service = new SquadCliService({
