@@ -90,3 +90,10 @@ avigator is getter-only in Node 22 → override with Object.defineProperty, not 
 - Covered update detection (`squad version` only, no upgrades), upstream add/list/sync/remove with backups/restore/confirmation, plugin lifecycle/marketplace/listing, and visible actionable failures for non-zero exit, timeout, missing CLI, cancellation, invalid input and malformed JSON.
 - Tests found one real hardening bug: prototype-key command ids like `__proto__`, `constructor`, and `toString` could throw before the unknown-command error. Fixed `SquadCliService.execute()` with an own-property command spec guard.
 - Verification: `npm run check:types`, `npm run lint`, `npm run test-compile`, `npm run test:unit` (`1095 passing / 11 pending`), plus pre-push `pnpm run pretest && pnpm run test:headless` (`35 passing`) all green. No `--no-verify` needed.
+
+### 2026-09-28 — SQD-050 profile Squad integration tests
+
+- Added integration-style `ProfileService` coverage for FR-065 profile save/apply/delete behavior with mocked state manager, AI template data, backup service, settings, workspace, and Squad profile service dependencies.
+- Covered Squad capture persistence, template-only backwards compatibility, actionable save/apply failures, successful apply returning Squad outcome, and delete behavior that removes only requested profiles without invoking Squad services.
+- Tests found one real profile-management bug: `lastAppliedProfile` was updated before the Squad section finished applying, creating a misleading success state when Squad apply failed. Fixed by updating last-applied only after every profile section succeeds and by preserving Squad remediation text in surfaced errors.
+- Verification: `npm run check:types`, `npm run lint`, `npm run test-compile`, and `npm run test:unit` all green (`978 passing / 11 pending`).
