@@ -27,6 +27,7 @@ import type {
   SquadModelConfigDocument,
   SquadPluginAction,
   SquadPluginRef,
+  SquadWatchSnapshot,
   SquadPreset,
   SquadRosterMember,
   SquadUpstreamRecommendations,
@@ -120,6 +121,10 @@ export type WebviewMessage =
   | { command: "discardSquadImportPreview" }
   | { command: "refreshSquadPlugins" }
   | { command: "refreshSquadBacklog" }
+  // Squad watch lifecycle (SQD-045 / #260, FR-054)
+  | { command: "getSquadWatchStatus" }
+  | { command: "startSquadWatch"; intervalMinutes?: number }
+  | { command: "stopSquadWatch"; force?: boolean }
   // Squad plugin marketplace + lifecycle actions (SQD-039 / #254). `target` is optional for
   // actions whose operand the host can prompt for (marketplace source, plugin directory).
   | { command: "runSquadPluginAction"; action: SquadPluginAction; target?: string }
@@ -285,6 +290,10 @@ export type ExtensionMessage =
         currentVersion: string | null;
         backupCreated: boolean;
       };
+    }
+  | {
+      command: "squadWatchUpdate";
+      snapshot: SquadWatchSnapshot;
     }
   | {
       command: "squadExportResult";

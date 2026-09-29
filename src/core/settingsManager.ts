@@ -47,6 +47,7 @@ export class SettingsManager {
   private static readonly SQUAD_WORKTREE_OPEN_IN_NEW_WINDOW = "squad.worktree.openInNewWindow";
   private static readonly SQUAD_WORKTREE_PARENT_DIRECTORY = "squad.worktree.parentDirectory";
   private static readonly SQUAD_WORKTREE_COPY_UNTRACKED = "squad.worktree.copyUntracked";
+  private static readonly SQUAD_WATCH_DEFAULT_INTERVAL_MINUTES = "squad.watch.defaultIntervalMinutes";
 
   // Template auto-refresh settings
   private static readonly TEMPLATES_AUTO_REFRESH_INTERVAL = "templates.autoRefreshIntervalMinutes";
@@ -278,6 +279,22 @@ export class SettingsManager {
     await vscode.workspace
       .getConfiguration(this.NEXKIT_SECTION)
       .update(this.SQUAD_WORKTREE_COPY_UNTRACKED, value, vscode.ConfigurationTarget.Global);
+  }
+
+  /**
+   * Default polling interval (minutes) used when starting `squad watch`
+   * without an explicit interval (FR-054).
+   */
+  static getSquadWatchDefaultIntervalMinutes(): number {
+    return vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .get<number>(this.SQUAD_WATCH_DEFAULT_INTERVAL_MINUTES, 10);
+  }
+
+  static async setSquadWatchDefaultIntervalMinutes(value: number): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.NEXKIT_SECTION)
+      .update(this.SQUAD_WATCH_DEFAULT_INTERVAL_MINUTES, value, vscode.ConfigurationTarget.Global);
   }
 
   // Extension Updates

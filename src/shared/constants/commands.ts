@@ -43,6 +43,8 @@ export const Commands = {
   IMPORT_SQUAD: "nexus-nexkit-vscode.squad.import",
   CREATE_SQUAD_WORKTREE: "nexus-nexkit-vscode.squad.createWorktreeForIssue",
   CLEANUP_SQUAD_WORKTREES: "nexus-nexkit-vscode.squad.cleanupWorktrees",
+  START_SQUAD_WATCH: "nexus-nexkit-vscode.squad.startWatch",
+  STOP_SQUAD_WATCH: "nexus-nexkit-vscode.squad.stopWatch",
 } as const;
 
 // Type-safe command names

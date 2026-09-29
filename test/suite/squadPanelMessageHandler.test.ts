@@ -15,6 +15,8 @@ import {
   SquadUpdatesResult,
   SquadUpdateTarget,
   SquadUpgradeCommand,
+  SquadWatchSnapshot,
+  SquadWatchState,
   squadErr,
   squadOk,
   SquadVersionStatus,
@@ -198,6 +200,23 @@ function updatesResult(): SquadUpdatesResult {
   };
 }
 
+function watchSnapshot(state: SquadWatchState = SquadWatchState.Stopped): SquadWatchSnapshot {
+  return {
+    status: {
+      state,
+      intervalMinutes: state === SquadWatchState.Stopped ? null : 10,
+      startedAt: state === SquadWatchState.Stopped ? null : 123,
+      stoppedAt: state === SquadWatchState.Stopped ? 456 : null,
+      exitCode: null,
+      signal: null,
+      error: null,
+      logLineCount: 0,
+      droppedLogLines: 0,
+    },
+    logs: [],
+  };
+}
+
 function createServices(stubs: SquadStubs, hasWorkspace = true): ServiceContainer {
   const squadFile = hasWorkspace
     ? {
@@ -274,6 +293,12 @@ function createServices(stubs: SquadStubs, hasWorkspace = true): ServiceContaine
       previewImport: stubs.previewImport,
       applyImport: stubs.applyImport,
       discardPreview: stubs.discardPreview,
+    },
+    squadWatch: {
+      onDidChangeSnapshot: () => ({ dispose: () => undefined }),
+      getSnapshot: sinon.stub().returns(watchSnapshot()),
+      start: sinon.stub().returns(squadOk(watchSnapshot(SquadWatchState.Starting))),
+      stop: sinon.stub().returns(squadOk(watchSnapshot(SquadWatchState.Stopping))),
     },
     squadFile,
     squadWrite,
@@ -451,6 +476,65 @@ suite("Unit: SquadPanelMessageHandler (host routing SQD-008)", () => {
 
     assert.deepStrictEqual(commands(), ["squadLoading", "squadPluginsUpdate", "squadError", "squadLoading"]);
     assert.strictEqual(find("squadError")?.error.code, "plugin-list-failed");
+  });
+
+  test("getSquadWatchStatus emits the latest watch snapshot", async () => {
+    const stubs = createStubs();
+    const services = createServices(stubs);
+    const watch = services.squadWatch as unknown as { getSnapshot: sinon.SinonStub };
+    watch.getSnapshot.returns(watchSnapshot(SquadWatchState.Running));
+    const handler = new NexkitPanelMessageHandler(getWebview, services);
+
+    await handler.handleMessage({ command: "getSquadWatchStatus" });
+
+    assert.deepStrictEqual(commands(), ["squadWatchUpdate"]);
+    assert.strictEqual(find("squadWatchUpdate")?.snapshot.status.state, SquadWatchState.Running);
+  });
+
+  test("startSquadWatch delegates to the watch service and emits the transition snapshot", async () => {
+    const stubs = createStubs();
+    const services = createServices(stubs);
+    const watch = services.squadWatch as unknown as { start: sinon.SinonStub };
+    const handler = new NexkitPanelMessageHandler(getWebview, services);
+
+    await handler.handleMessage({ command: "startSquadWatch", intervalMinutes: 12 });
+
+    assert.ok(watch.start.calledOnce);
+    assert.strictEqual(watch.start.firstCall.args[0].intervalMinutes, 12);
+    assert.deepStrictEqual(commands(), ["squadWatchUpdate"]);
+    assert.strictEqual(find("squadWatchUpdate")?.snapshot.status.state, SquadWatchState.Starting);
+  });
+
+  test("startSquadWatch surfaces actionable errors and does not report success", async () => {
+    const stubs = createStubs();
+    const services = createServices(stubs);
+    const watch = services.squadWatch as unknown as { start: sinon.SinonStub };
+    watch.start.returns(
+      squadErr({
+        code: "watch-already-running",
+        message: "already running",
+        remediation: "stop first",
+      })
+    );
+    const handler = new NexkitPanelMessageHandler(getWebview, services);
+
+    await handler.handleMessage({ command: "startSquadWatch" });
+
+    assert.deepStrictEqual(commands(), ["squadError", "squadWatchUpdate"]);
+    assert.strictEqual(find("squadError")?.error.code, "watch-already-running");
+  });
+
+  test("stopSquadWatch delegates to the watch service and emits the transition snapshot", async () => {
+    const stubs = createStubs();
+    const services = createServices(stubs);
+    const watch = services.squadWatch as unknown as { stop: sinon.SinonStub };
+    const handler = new NexkitPanelMessageHandler(getWebview, services);
+
+    await handler.handleMessage({ command: "stopSquadWatch", force: true });
+
+    assert.ok(watch.stop.calledOnceWithExactly({ force: true }));
+    assert.deepStrictEqual(commands(), ["squadWatchUpdate"]);
+    assert.strictEqual(find("squadWatchUpdate")?.snapshot.status.state, SquadWatchState.Stopping);
   });
 
   test("getSquadState surfaces an upstream read failure and does not hide it as success", async () => {

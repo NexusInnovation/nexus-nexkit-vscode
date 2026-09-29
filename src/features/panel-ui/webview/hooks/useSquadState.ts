@@ -29,6 +29,7 @@ import type {
   SquadUpstreamRecommendations,
   SquadUpdatesResult,
   SquadUpstreamSource,
+  SquadWatchSnapshot,
 } from "../../../squad/models";
 import type {
   SquadLogDocument,
@@ -108,6 +109,9 @@ export interface UseSquadStateResult {
   /** Latest successful Squad import outcome, or `null` before an import completes. */
   lastImport: SquadImportOutcome | null;
 
+  /** Latest `squad watch` status + bounded logs. */
+  watch: SquadWatchSnapshot;
+
   /** Request the initial Squad state / refresh everything. */
   refresh: () => void;
 
@@ -150,6 +154,15 @@ export interface UseSquadStateResult {
 
   /** Re-run backlog detection without refreshing the whole Squad panel. */
   refreshBacklog: () => void;
+
+  /** Request the latest `squad watch` status/log snapshot. */
+  getWatchStatus: () => void;
+
+  /** Start `squad watch`, optionally overriding the default interval. */
+  startWatch: (intervalMinutes?: number) => void;
+
+  /** Stop `squad watch`; force kills the process tree when available. */
+  stopWatch: (force?: boolean) => void;
 
   /**
    * Run a plugin marketplace / lifecycle action (FR-040/FR-041/FR-044). The
@@ -259,6 +272,18 @@ export function useSquadState(): UseSquadStateResult {
     messenger.sendMessage({ command: "refreshSquadBacklog" });
   };
 
+  const getWatchStatus = () => {
+    messenger.sendMessage({ command: "getSquadWatchStatus" });
+  };
+
+  const startWatch = (intervalMinutes?: number) => {
+    messenger.sendMessage({ command: "startSquadWatch", intervalMinutes });
+  };
+
+  const stopWatch = (force?: boolean) => {
+    messenger.sendMessage({ command: "stopSquadWatch", force });
+  };
+
   const runPluginAction = (action: SquadPluginAction, target?: string) => {
     messenger.sendMessage({ command: "runSquadPluginAction", action, target });
   };
@@ -318,6 +343,7 @@ export function useSquadState(): UseSquadStateResult {
     cliUpgrade: squad.cliUpgrade,
     importPreview: squad.importPreview,
     lastImport: squad.lastImport,
+    watch: squad.watch,
     refresh,
     refreshDetection,
     saveCharter,
@@ -330,6 +356,9 @@ export function useSquadState(): UseSquadStateResult {
     discardImportPreview,
     refreshPlugins,
     refreshBacklog,
+    getWatchStatus,
+    startWatch,
+    stopWatch,
     runPluginAction,
     setCliInvocation,
     installCli,

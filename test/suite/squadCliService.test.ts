@@ -18,6 +18,11 @@ import type {
   SquadSpawnRequest,
   SquadSpawnResult,
 } from "../../src/features/squad/services/squadProcessRunner";
+import type {
+  SquadLongRunningLauncher,
+  SquadLongRunningListeners,
+  SquadLongRunningSpawnRequest,
+} from "../../src/features/squad/services/squadLongRunningProcess";
 
 /** Build a fake runner resolving a canned result and recording the request. */
 function fakeRunner(
@@ -208,6 +213,76 @@ suite("Unit: SquadCliService", () => {
       await service.execute(SquadCliCommand.Version, { cwd });
 
       assert.strictEqual(captured.request?.cwd, cwd.fsPath);
+    });
+
+    test("Should reject `watch` from bounded execute", async () => {
+      const runner = { run: sinon.stub() };
+      const service = new SquadCliService({
+        runner: runner as unknown as SquadProcessRunner,
+        logger: silentLogger,
+        cliSource: SquadCliSource.Global,
+      });
+
+      const result = await service.execute(SquadCliCommand.Watch, { args: ["--interval", "5"] });
+
+      assert.strictEqual(result.ok, false);
+      if (!result.ok) {
+        assert.strictEqual(result.error.code, "cli-execution-failed");
+        assert.match(result.error.message, /long-running/);
+      }
+      sinon.assert.notCalled(runner.run);
+    });
+
+    test("Should start `watch` through the long-running launcher", () => {
+      const captured: { request?: SquadLongRunningSpawnRequest; listeners?: SquadLongRunningListeners } = {};
+      const launcher: SquadLongRunningLauncher = {
+        launch: (request, listeners) => {
+          captured.request = request;
+          captured.listeners = listeners;
+          return { kill: () => undefined };
+        },
+      };
+      const service = new SquadCliService({
+        longRunningLauncher: launcher,
+        logger: silentLogger,
+        cliSource: SquadCliSource.Global,
+      });
+
+      const result = service.spawnLongRunning(
+        SquadCliCommand.Watch,
+        { args: ["--interval", "15"], cwd: vscode.Uri.file("/tmp/workspace") },
+        {
+          onSpawn: () => undefined,
+          onStdout: () => undefined,
+          onStderr: () => undefined,
+          onError: () => undefined,
+          onExit: () => undefined,
+        }
+      );
+
+      assert.strictEqual(result.ok, true);
+      assert.deepStrictEqual(captured.request?.args, ["watch", "--interval", "15"]);
+      assert.ok(captured.listeners);
+    });
+
+    test("Should reject invalid `watch --interval` values without launching", () => {
+      const launcher = { launch: sinon.stub() };
+      const service = new SquadCliService({
+        longRunningLauncher: launcher as unknown as SquadLongRunningLauncher,
+        logger: silentLogger,
+        cliSource: SquadCliSource.Global,
+      });
+
+      const result = service.spawnLongRunning(SquadCliCommand.Watch, { args: ["--interval", "soon"] }, {
+        onSpawn: () => undefined,
+        onStdout: () => undefined,
+        onStderr: () => undefined,
+        onError: () => undefined,
+        onExit: () => undefined,
+      });
+
+      assert.strictEqual(result.ok, false);
+      sinon.assert.notCalled(launcher.launch);
     });
   });
 

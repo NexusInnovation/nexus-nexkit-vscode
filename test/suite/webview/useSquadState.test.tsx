@@ -42,6 +42,9 @@ function ActionProbe() {
       <button data-testid="discard-import" onClick={() => squad.discardImportPreview()} />
       <button data-testid="refresh-plugins" onClick={() => squad.refreshPlugins()} />
       <button data-testid="refresh-backlog" onClick={() => squad.refreshBacklog()} />
+      <button data-testid="get-watch-status" onClick={() => squad.getWatchStatus()} />
+      <button data-testid="start-watch" onClick={() => squad.startWatch(15)} />
+      <button data-testid="stop-watch" onClick={() => squad.stopWatch(true)} />
       <button data-testid="plugin-enable" onClick={() => squad.runPluginAction(SquadPluginAction.Enable, "team")} />
       <button data-testid="plugin-add-nexus" onClick={() => squad.runPluginAction(SquadPluginAction.AddNexusMarketplace)} />
       <button data-testid="install-cli" onClick={() => squad.installCli()} />
@@ -185,6 +188,16 @@ suite("useSquadState — actions", () => {
     const view = renderWithAppState(<ActionProbe />);
     click(view, "refresh-backlog");
     assert.deepStrictEqual(lastPostedMessage(), { command: "refreshSquadBacklog" });
+  });
+
+  test("watch actions post the SQD-045 lifecycle messages", () => {
+    const view = renderWithAppState(<ActionProbe />);
+    click(view, "get-watch-status");
+    assert.deepStrictEqual(lastPostedMessage(), { command: "getSquadWatchStatus" });
+    click(view, "start-watch");
+    assert.deepStrictEqual(lastPostedMessage(), { command: "startSquadWatch", intervalMinutes: 15 });
+    click(view, "stop-watch");
+    assert.deepStrictEqual(lastPostedMessage(), { command: "stopSquadWatch", force: true });
   });
 
   test("runPluginAction posts runSquadPluginAction with action and target", () => {

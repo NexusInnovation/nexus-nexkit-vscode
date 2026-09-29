@@ -56,6 +56,7 @@ import { GitWorktreeClient } from "../features/squad/services/gitWorktreeClient"
 import { WorktreeDependencyStrategy } from "../features/squad/services/worktreeDependencyStrategy";
 import { WorktreeRemover } from "../features/squad/services/worktreeRemover";
 import { SquadWorktreeService } from "../features/squad/services/squadWorktreeService";
+import { SquadWatchService } from "../features/squad/services/squadWatchService";
 
 /**
  * Service container for dependency injection
@@ -187,6 +188,13 @@ export interface ServiceContainer {
    * explicit confirmation, BackupService backup, then `squad import`.
    */
   squadImport: SquadImportService;
+
+  /**
+   * Lifecycle owner for the long-running `squad watch` process (SQD-045,
+   * FR-054). It starts only on explicit command/message request and is
+   * disposed with the extension so child processes are not orphaned.
+   */
+  squadWatch: SquadWatchService;
 }
 
 /**
@@ -249,6 +257,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const squadCli = new SquadCliService();
   const squadExport = new SquadExportService({ cli: squadCli });
   const squadImport = new SquadImportService({ cli: squadCli, backup, logger: logging });
+  const squadWatch = new SquadWatchService({ cli: squadCli, logger: logging });
   // Detection delegates CLI probing to SquadCliService so a globally-installed
   // CLI is found across platforms (npm `squad.cmd`/`squad.ps1` shims on Windows).
   const squadDetection = new SquadDetectionService({ cliService: squadCli });
@@ -333,6 +342,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   context.subscriptions.push(templateMetadataScanner);
   context.subscriptions.push(nexkitFileWatcher);
   context.subscriptions.push(convertToMarkdown);
+  context.subscriptions.push(squadWatch);
 
   logging.info("All services initialized successfully");
 
@@ -373,6 +383,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     squadCli,
     squadExport,
     squadImport,
+    squadWatch,
     squadFile,
     squadUpdates,
     squadCliUpgrade,

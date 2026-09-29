@@ -29,3 +29,5 @@ export * from "./gitWorktreeClient";
 export * from "./worktreeDependencyStrategy";
 export * from "./worktreeRemover";
 export * from "./squadWorktreeService";
+export * from "./squadLongRunningProcess";
+export * from "./squadWatchService";

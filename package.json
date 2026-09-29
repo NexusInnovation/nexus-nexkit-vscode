@@ -170,6 +170,16 @@
         "command": "nexus-nexkit-vscode.squad.cleanupWorktrees",
         "title": "Nexkit: Cleanup Squad Worktrees",
         "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.squad.startWatch",
+        "title": "Nexkit: Start Squad Watch",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.squad.stopWatch",
+        "title": "Nexkit: Stop Squad Watch",
+        "category": "Nexkit"
       }
     ],
     "menus": {
@@ -555,6 +565,14 @@
           "items": {
             "type": "string"
           }
+        },
+        "nexkit.squad.watch.defaultIntervalMinutes": {
+          "type": "number",
+          "default": 10,
+          "minimum": 1,
+          "maximum": 1440,
+          "scope": "application",
+          "markdownDescription": "Default polling interval, in minutes, used when starting `squad watch` from Nexkit. The value is passed to the Squad CLI as `--interval`."
         }
       }
     }
