@@ -1,4 +1,4 @@
-# Trinity — Tester / QA
+﻿# Trinity — Tester / QA
 
 Testing specialist ensuring all acceptance criteria are met through unit, integration, and BDD scenarios.
 
@@ -67,3 +67,19 @@ avigator is getter-only in Node 22 → override with Object.defineProperty, not 
 **Verification:** check:types ✅ · lint ✅ (0) · test-compile ✅ · pnpm test → 744 passing/11 pending (host) + 69 passing (webview), exit 0 ✅ · pnpm run package (esbuild bundles) ✅. Pre-existing auth-dialog log noise unchanged (not a regression).
 
 **Env notes:** Real pnpm install --frozen-lockfile in worktree (no junction); lefthook hooks ran normally (pre-commit pretest, commit-msg commitlint, pre-push pretest+headless) — no --no-verify needed.
+
+## Learnings
+
+### 2026-09-28 — PR #295 merge validation
+
+- After `squad/mvp-integration` was merged into `feature/squad-support`, `squad/preact-test-harness` merged `origin/feature/squad-support` cleanly; no PR-scope fixes were needed.
+- For this branch, `npm run test:unit` only runs the VS Code extension-host runner (`758 passing / 11 pending` after the base merge). The Preact DOM harness is a separate target and must also be covered with `npm run test:webview` (`69 passing`) or by running `npm test`.
+- The harness worktree had real `node_modules` with `@testing-library/preact` and `happy-dom`; the team-root `node_modules` did not, so a junction from the team root would have been invalid for this PR.
+
+## 2026-09-28 — Ralph Round 1, P2 Kickoff (Team Update)
+
+**From Scribe:** PR #295 (Preact webview test harness) validated and merged into feature/squad-support. 758 extension-host tests passing / 11 pending (stable). New 	est:webview script (Node + happy-dom runner) now runs 69 webview tests in isolation — DOM tests cannot accidentally load inside Electron host.
+
+**Cross-team note:** Ghost (SQD-R1) removed dead legacy preset commands; Link (SQD-R2) consolidated service layout. All three changes integrated cleanly into MVP. Suite green on both Electron and webview harnesses.
+
+**MVP Status:** All 23 SQD PRs merged into squad/mvp-integration branch (744 tests passing, validated by Morpheus). P2 wave 1 (#241, #245, #248, #250, #253) launching with Link lead.

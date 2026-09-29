@@ -5,5 +5,7 @@
   "sourceSquad": "C:\\Users\\EricDecarufel\\AppData\\Roaming\\squad\\personal-squad",
   "projectName": "nexus-nexkit-vscode",
   "createdAt": "2026-06-02T14:52:48.371Z",
-  "extractionDisabled": false
+  "extractionDisabled": false,
+  "defaultModel": "claude-opus-5.5",
+  "modelFallbackProvider": "claude"
 }
