@@ -4,8 +4,8 @@ commit-msg:
 
 pre-commit:
   jobs:
-    - run: pnpm --config.verifyDepsBeforeRun=false run pretest
+    - run: pnpm run pretest
 
 pre-push:
   jobs:
-    - run: pnpm --config.verifyDepsBeforeRun=false run pretest && pnpm --config.verifyDepsBeforeRun=false run test:headless
+    - run: pnpm run pretest && pnpm run test:headless
