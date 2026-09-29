@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, develop]
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, feature/squad-support, "squad/**"]
 
   workflow_dispatch:
     inputs:
@@ -138,10 +138,10 @@ jobs:
 
       - name: Run tests
         if: runner.os != 'Linux'
-        run: node ./out/test/runTest.js
+        run: node ./out/test/runTest.js && node ./out/test/runWebviewTest.js
       - name: Run tests (headless)
         if: runner.os == 'Linux'
-        run: xvfb-run -a node ./out/test/runTest.js
+        run: xvfb-run -a node ./out/test/runTest.js && node ./out/test/runWebviewTest.js
 
       - name: Upload test results
         if: always()
