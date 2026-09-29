@@ -12,12 +12,12 @@ import { SquadCliSource } from "../../src/features/squad/models";
 import {
   SquadCliCommand,
   SquadCliService,
-} from "../../src/features/squad/squadCliService";
+} from "../../src/features/squad/services/squadCliService";
 import type {
   SquadProcessRunner,
   SquadSpawnRequest,
   SquadSpawnResult,
-} from "../../src/features/squad/squadProcessRunner";
+} from "../../src/features/squad/services/squadProcessRunner";
 
 /** Build a fake runner resolving a canned result and recording the request. */
 function fakeRunner(
@@ -138,6 +138,35 @@ suite("Unit: SquadCliService", () => {
       await service.execute(SquadCliCommand.Upstream, { args: ["add", "team", "--yes"] });
 
       assert.deepStrictEqual(captured.request?.args, ["upstream", "add", "team", "--yes"]);
+    });
+
+    test("Should allow --name and --ref for upstream add (SQD-036)", async () => {
+      const captured: { request?: SquadSpawnRequest } = {};
+      const service = new SquadCliService({
+        runner: fakeRunner({}, captured),
+        logger: silentLogger,
+        cliSource: SquadCliSource.Global,
+      });
+
+      const result = await service.execute(SquadCliCommand.Upstream, {
+        args: ["add", "org/repo", "--name", "org", "--ref", "main"],
+      });
+
+      assert.strictEqual(result.ok, true);
+      assert.deepStrictEqual(captured.request?.args, ["upstream", "add", "org/repo", "--name", "org", "--ref", "main"]);
+    });
+
+    test("Should allow plugin list JSON output for inventory reads", async () => {
+      const captured: { request?: SquadSpawnRequest } = {};
+      const service = new SquadCliService({
+        runner: fakeRunner({ stdout: "[]" }, captured),
+        logger: silentLogger,
+        cliSource: SquadCliSource.Global,
+      });
+
+      await service.execute(SquadCliCommand.Plugin, { args: ["list", "--json"] });
+
+      assert.deepStrictEqual(captured.request?.args, ["plugin", "list", "--json"]);
     });
 
     test("Should pass cwd fsPath to the runner", async () => {

@@ -1522,6 +1522,7 @@ details[open] > .type-header::before {
    ============================================================================ */
 
 .squad-roster,
+.squad-upstreams,
 .squad-governance,
 .squad-logs {
   display: flex;
@@ -1529,14 +1530,16 @@ details[open] > .type-header::before {
   gap: 8px;
 }
 
-/* Roster table (SQD-012) */
-.squad-roster-table {
+/* Roster / upstream tables (SQD-012 / SQD-035) */
+.squad-roster-table,
+.squad-upstream-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9em;
 }
 
-.squad-roster-table th {
+.squad-roster-table th,
+.squad-upstream-table th {
   text-align: left;
   font-weight: 600;
   color: var(--vscode-descriptionForeground);
@@ -1544,7 +1547,8 @@ details[open] > .type-header::before {
   padding: 4px 6px;
 }
 
-.squad-roster-table td {
+.squad-roster-table td,
+.squad-upstream-table td {
   padding: 6px;
   border-bottom: 1px solid var(--vscode-panel-border);
   vertical-align: top;
@@ -1576,6 +1580,123 @@ details[open] > .type-header::before {
 
 .squad-no-charter {
   color: var(--vscode-descriptionForeground);
+}
+
+.squad-upstream-id {
+  font-weight: 600;
+}
+
+.squad-upstream-kind {
+  display: inline-flex;
+  padding: 1px 6px;
+  border-radius: 9px;
+  font-size: 0.8em;
+  background-color: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+}
+
+.squad-upstream-reference {
+  word-break: break-all;
+}
+
+/* Upstream recommendations (SQD-037) */
+.squad-upstream-recommendations {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.squad-upstream-recommendations-title {
+  margin: 0;
+  font-size: 0.95em;
+  font-weight: 600;
+}
+
+.squad-upstream-recommendations-hint,
+.squad-upstream-level-description,
+.squad-upstream-unclassified {
+  margin: 0;
+  color: var(--vscode-descriptionForeground);
+  font-size: 0.9em;
+}
+
+.squad-upstream-levels {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.squad-upstream-level-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.squad-upstream-level-label {
+  font-weight: 600;
+}
+
+.squad-upstream-level-status {
+  padding: 1px 6px;
+  border-radius: 9px;
+  font-size: 0.8em;
+  border: 1px solid var(--vscode-panel-border);
+}
+
+.squad-upstream-level-status-configured {
+  color: var(--vscode-testing-iconPassed, var(--vscode-foreground));
+}
+
+.squad-upstream-level-status-missing {
+  color: var(--vscode-descriptionForeground);
+}
+
+.squad-upstream-level-sources,
+.squad-upstream-level-suggestion {
+  margin: 2px 0 0;
+  font-size: 0.9em;
+  word-break: break-word;
+}
+
+.squad-upstream-warnings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.squad-upstream-warning {
+  padding: 6px 8px;
+  border-radius: 3px;
+  border-left: 3px solid var(--vscode-editorInfo-foreground);
+  background-color: var(--vscode-textBlockQuote-background);
+}
+
+.squad-upstream-warning-warning {
+  border-left-color: var(--vscode-editorWarning-foreground);
+  background-color: var(--vscode-inputValidation-warningBackground, var(--vscode-textBlockQuote-background));
+}
+
+.squad-upstream-warning-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.squad-upstream-warning-remediation {
+  margin: 4px 0 0;
+  font-size: 0.9em;
+}
+
+.squad-upstream-warning-alternatives {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  font-size: 0.9em;
 }
 
 /* Charter / document / log content */

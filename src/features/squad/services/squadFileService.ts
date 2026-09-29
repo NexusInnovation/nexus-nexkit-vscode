@@ -32,7 +32,13 @@ import {
   SquadDocKind,
   SquadUpstreamSource,
   SquadUpstreamKind,
+  SquadMarketplaceKind,
+  SquadMarketplaceRef,
+  SquadModelConfigDocument,
+  SQUAD_MODEL_CONFIG_RELATIVE_PATH,
 } from "../models";
+import { parseSquadModelConfig } from "../validation/squadModelConfigValidator";
+import { computeSquadContentHash } from "./squadContentHash";
 
 /** Root folder that holds all Squad configuration. */
 const SQUAD_DIR = ".squad";
@@ -101,6 +107,20 @@ const DOC_RELATIVE_PATH: Record<SquadDocKind, string> = {
   [SquadDocKind.Decisions]: `${SQUAD_DIR}/decisions.md`,
   [SquadDocKind.Routing]: `${SQUAD_DIR}/routing.md`,
 };
+
+/**
+ * Result of reading `.squad/model-config.json` (FR-063). The document is
+ * always returned so an invalid file can still be displayed and fixed; when
+ * the content fails validation, {@link validationError} carries the visible,
+ * actionable error and `document.config` is `null`.
+ */
+export interface SquadModelConfigRead {
+  /** Raw document plus validated config (when valid). */
+  document: SquadModelConfigDocument;
+
+  /** JSON/schema validation failure, when the existing file is invalid. */
+  validationError?: SquadError;
+}
 
 /**
  * Read-only accessor for the workspace `.squad/` directory.
@@ -307,7 +327,83 @@ export class SquadFileService {
       });
     }
 
-    return squadOk(this._normalizeUpstreams(parsed));
+    return this._normalizeUpstreams(parsed);
+  }
+
+  /**
+   * Read and parse `.squad/plugins/marketplaces.json` into marketplace
+   * references (FR-042). Returns an empty list when the file does not exist,
+   * since Squad plugins are optional; malformed JSON is a visible parse error.
+   */
+  public async readPluginMarketplaces(): Promise<SquadResult<SquadMarketplaceRef[]>> {
+    const relativePath = `${SQUAD_DIR}/plugins/marketplaces.json`;
+    const uri = this._join(SQUAD_DIR, "plugins", "marketplaces.json");
+
+    let raw: SquadTextFile;
+    try {
+      raw = await this._readText(uri, relativePath);
+    } catch (error) {
+      if (this._isNotFound(error)) {
+        return squadOk([]);
+      }
+      return this._readError(relativePath, error, "the Squad plugin marketplaces manifest");
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw.content);
+    } catch (error) {
+      return squadErr({
+        code: "parse-failed",
+        message: "The Squad plugin marketplaces manifest (.squad/plugins/marketplaces.json) is not valid JSON.",
+        remediation: "Fix the JSON syntax in .squad/plugins/marketplaces.json, or run 'squad plugin marketplace refresh'.",
+        detail: relativePath,
+        cause: error,
+      });
+    }
+
+    return squadOk(this._normalizeMarketplaces(parsed));
+  }
+
+  /**
+   * Read `.squad/model-config.json` (FR-063). A missing file is not an error
+   * (per-agent model overrides are optional). An existing file that is not
+   * valid JSON or does not match the Squad shape is returned with its raw
+   * content plus a `parse-failed` {@link SquadModelConfigRead.validationError}
+   * so the panel can show the problem and let the user fix it.
+   */
+  public async readModelConfig(): Promise<SquadResult<SquadModelConfigRead>> {
+    const relativePath = SQUAD_MODEL_CONFIG_RELATIVE_PATH;
+    const uri = this._joinRelative(relativePath);
+
+    let raw: SquadTextFile;
+    try {
+      raw = await this._readText(uri, relativePath);
+    } catch (error) {
+      if (this._isNotFound(error)) {
+        return squadOk({ document: { relativePath, exists: false, content: "", config: null } });
+      }
+      return this._readError(relativePath, error, "the Squad model configuration");
+    }
+
+    if (raw.truncated) {
+      return squadErr({
+        code: "file-read-failed",
+        message: "The Squad model configuration (.squad/model-config.json) is too large to load.",
+        remediation: `Reduce ${relativePath} below ${SQUAD_MAX_READ_BYTES} bytes and refresh the Squad panel.`,
+        detail: relativePath,
+      });
+    }
+
+    const parsed = parseSquadModelConfig(raw.content);
+    if (!parsed.ok) {
+      return squadOk({
+        document: { relativePath, exists: true, content: raw.content, config: null },
+        validationError: parsed.error,
+      });
+    }
+
+    return squadOk({ document: { relativePath, exists: true, content: raw.content, config: parsed.value } });
   }
 
   // --- internal helpers -------------------------------------------------
@@ -317,46 +413,211 @@ export class SquadFileService {
     const uri = this._joinRelative(relativePath);
 
     try {
-      const raw = await this._readText(uri, relativePath);
-      return squadOk({ kind, relativePath, exists: true, content: raw.content });
+      const bytes = await vscode.workspace.fs.readFile(uri);
+      const truncated = bytes.byteLength > SQUAD_MAX_READ_BYTES;
+      const slice = truncated ? bytes.subarray(0, SQUAD_MAX_READ_BYTES) : bytes;
+      return squadOk({
+        kind,
+        relativePath,
+        exists: true,
+        content: this._decoder.decode(slice),
+        contentHash: computeSquadContentHash(bytes),
+        truncated,
+      });
     } catch (error) {
       if (this._isNotFound(error)) {
-        return squadOk({ kind, relativePath, exists: false, content: "" });
+        return squadOk({ kind, relativePath, exists: false, content: "", contentHash: null, truncated: false });
       }
       return this._readError(relativePath, error, `the ${kind} document`);
     }
   }
 
-  private _normalizeUpstreams(parsed: unknown): SquadUpstreamSource[] {
-    const list = Array.isArray(parsed) ? parsed : this._isRecord(parsed) && Array.isArray(parsed.sources) ? parsed.sources : [];
+  private _normalizeUpstreams(parsed: unknown): SquadResult<SquadUpstreamSource[]> {
+    const list = this._upstreamList(parsed);
+    if (list === undefined) {
+      return this._upstreamParseError(
+        "Expected .squad/upstream.json to be an array or an object with an upstreams (or sources) array."
+      );
+    }
 
     const sources: SquadUpstreamSource[] = [];
-    for (const entry of list) {
+    for (const [index, entry] of list.entries()) {
       if (!this._isRecord(entry)) {
-        continue;
+        return this._upstreamParseError(`Source at index ${index} must be an object.`);
       }
       const id = this._asString(entry.id) ?? this._asString(entry.name);
+      // The Squad CLI manifest stores the location in `source` and the git
+      // branch in `ref`, so `source` wins over `ref` as the location.
+      const cliSource = this._asString(entry.source);
       const reference =
-        this._asString(entry.reference) ?? this._asString(entry.ref) ?? this._asString(entry.url) ?? this._asString(entry.path);
+        this._asString(entry.reference) ??
+        cliSource ??
+        this._asString(entry.ref) ??
+        this._asString(entry.url) ??
+        this._asString(entry.path);
       if (id === undefined || reference === undefined) {
-        continue;
+        return this._upstreamParseError(
+          `Source at index ${index} must include an id/name and source/reference/ref/url/path.`
+        );
       }
+      const kind = this._toUpstreamKind(entry.kind ?? entry.type);
+      if (kind === undefined) {
+        return this._upstreamParseError(`Source "${id}" has an unsupported kind. Use local, git or export.`);
+      }
+
       const source: SquadUpstreamSource = {
         id,
-        kind: this._toUpstreamKind(entry.kind ?? entry.type),
+        kind,
         reference,
       };
-      const lastSyncedAt = this._toEpochMillis(entry.lastSyncedAt ?? entry.lastSync ?? entry.syncedAt);
+      const lastSyncedAt = this._toEpochMillis(
+        entry.lastSyncedAt ?? entry.lastSync ?? entry.syncedAt ?? entry.last_synced
+      );
       if (lastSyncedAt !== undefined) {
         source.lastSyncedAt = lastSyncedAt;
       }
+      const gitRef = cliSource !== undefined ? this._asString(entry.ref) : undefined;
+      if (gitRef !== undefined) {
+        source.gitRef = gitRef;
+      }
       sources.push(source);
     }
-    return sources;
+    return squadOk(sources);
   }
 
-  private _toUpstreamKind(value: unknown): SquadUpstreamKind {
+  private _normalizeMarketplaces(parsed: unknown): SquadMarketplaceRef[] {
+    const list =
+      Array.isArray(parsed)
+        ? parsed
+        : this._isRecord(parsed) && Array.isArray(parsed.marketplaces)
+          ? parsed.marketplaces
+          : this._isRecord(parsed) && Array.isArray(parsed.sources)
+            ? parsed.sources
+            : [];
+
+    const marketplaces: SquadMarketplaceRef[] = [];
+    for (const entry of list) {
+      if (typeof entry === "string") {
+        const marketplace = this._marketplaceFromString(entry);
+        if (marketplace) {
+          marketplaces.push(marketplace);
+        }
+        continue;
+      }
+      if (!this._isRecord(entry)) {
+        continue;
+      }
+      const marketplace = this._marketplaceFromRecord(entry);
+      if (marketplace) {
+        marketplaces.push(marketplace);
+      }
+    }
+    return marketplaces;
+  }
+
+  private _marketplaceFromString(value: string): SquadMarketplaceRef | undefined {
+    const source = value.trim();
+    if (source.length === 0) {
+      return undefined;
+    }
+    return {
+      id: this._marketplaceIdFromSource(source),
+      source,
+      kind: this._inferMarketplaceKind(source),
+      enabled: true,
+    };
+  }
+
+  private _marketplaceFromRecord(entry: Record<string, unknown>): SquadMarketplaceRef | undefined {
+    const source =
+      this._asString(entry.source) ??
+      this._asString(entry.repository) ??
+      this._asString(entry.repo) ??
+      this._asString(entry.url) ??
+      this._asString(entry.path) ??
+      this._asString(entry.reference) ??
+      this._asString(entry.id) ??
+      this._asString(entry.name);
+    if (source === undefined) {
+      return undefined;
+    }
+
+    const id = this._asString(entry.id) ?? this._asString(entry.name) ?? this._marketplaceIdFromSource(source);
+    const marketplace: SquadMarketplaceRef = {
+      id,
+      displayName: this._asString(entry.displayName) ?? this._asString(entry.title),
+      source,
+      kind: this._toMarketplaceKind(entry.kind ?? entry.type, source),
+      enabled: this._asBoolean(entry.enabled) ?? !this._asBoolean(entry.disabled),
+    };
+    const ref = this._asString(entry.ref) ?? this._asString(entry.branch) ?? this._asString(entry.revision);
+    if (ref !== undefined) {
+      marketplace.ref = ref;
+    }
+    const lastRefreshedAt = this._toEpochMillis(entry.lastRefreshedAt ?? entry.lastRefresh ?? entry.refreshedAt);
+    if (lastRefreshedAt !== undefined) {
+      marketplace.lastRefreshedAt = lastRefreshedAt;
+    }
+    return marketplace;
+  }
+
+  private _marketplaceIdFromSource(source: string): string {
+    const withoutRef = source.split("#", 1)[0].trim();
+    const parts = withoutRef.split(/[\\/]/).filter((part) => part.length > 0);
+    return parts.length > 0 ? parts[parts.length - 1].replace(/\.git$/i, "") : withoutRef;
+  }
+
+  private _toMarketplaceKind(value: unknown, source: string): SquadMarketplaceKind {
     switch (this._asString(value)?.toLowerCase()) {
+      case SquadMarketplaceKind.GitHub:
+        return SquadMarketplaceKind.GitHub;
+      case SquadMarketplaceKind.Local:
+        return SquadMarketplaceKind.Local;
+      case SquadMarketplaceKind.Url:
+        return SquadMarketplaceKind.Url;
+      case SquadMarketplaceKind.Unknown:
+        return SquadMarketplaceKind.Unknown;
+      default:
+        return this._inferMarketplaceKind(source);
+    }
+  }
+
+  private _inferMarketplaceKind(source: string): SquadMarketplaceKind {
+    if (/^https?:\/\//i.test(source)) {
+      return source.includes("github.com") ? SquadMarketplaceKind.GitHub : SquadMarketplaceKind.Url;
+    }
+    if (/^[^/\s]+\/[^/\s]+(?:#.+)?$/i.test(source)) {
+      return SquadMarketplaceKind.GitHub;
+    }
+    return SquadMarketplaceKind.Local;
+  }
+
+  private _upstreamList(parsed: unknown): unknown[] | undefined {
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+    if (this._isRecord(parsed) && Array.isArray(parsed.upstreams)) {
+      return parsed.upstreams;
+    }
+    if (this._isRecord(parsed) && Array.isArray(parsed.sources)) {
+      return parsed.sources;
+    }
+    return undefined;
+  }
+
+  private _upstreamParseError(detail: string): SquadResult<never> {
+    return squadErr({
+      code: "parse-failed",
+      message: "The Squad upstream manifest (.squad/upstream.json) has an unsupported shape.",
+      remediation:
+        "Use the Squad CLI format ({ \"upstreams\": [...] }), an array of upstream sources, or an object with a sources array. Each source needs a name, type and source.",
+      detail,
+    });
+  }
+
+  private _toUpstreamKind(value: unknown): SquadUpstreamKind | undefined {
+    const kind = this._asString(value)?.toLowerCase() ?? SquadUpstreamKind.Local;
+    switch (kind) {
       case SquadUpstreamKind.Git:
         return SquadUpstreamKind.Git;
       case SquadUpstreamKind.Export:
@@ -364,7 +625,7 @@ export class SquadFileService {
       case SquadUpstreamKind.Local:
         return SquadUpstreamKind.Local;
       default:
-        return SquadUpstreamKind.Local;
+        return undefined;
     }
   }
 
@@ -542,5 +803,9 @@ export class SquadFileService {
 
   private _asString(value: unknown): string | undefined {
     return typeof value === "string" && value.trim().length > 0 ? value.trim() : undefined;
+  }
+
+  private _asBoolean(value: unknown): boolean | undefined {
+    return typeof value === "boolean" ? value : undefined;
   }
 }

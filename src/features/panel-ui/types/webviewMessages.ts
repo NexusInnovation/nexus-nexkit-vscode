@@ -12,14 +12,40 @@ import type {
   SquadDoctorReport,
   SquadDocKind,
   SquadError,
+  SquadExportOutcome,
+  SquadExportRequest,
   SquadMarkdownDoc,
+  SquadMarketplaceRef,
+  SquadModelConfigDocument,
+  SquadPluginAction,
   SquadPluginRef,
   SquadPreset,
   SquadRosterMember,
+  SquadUpstreamRecommendations,
+  SquadUpdatesResult,
   SquadUpstreamSource,
+  SquadUpstreamOperation,
   UnreachableSquadSource,
 } from "../../squad/models";
 import type { SquadLogDocument } from "../webview/types/squadState";
+
+/**
+ * Sanitized write result sent to the webview after a controlled Squad edit.
+ * Does not expose the absolute backup path; the host/service logs retain that.
+ */
+export interface SquadWriteSummary {
+  /** Workspace-root-relative POSIX path that was written. */
+  relativePath: string;
+
+  /** True when the target did not exist before this save. */
+  created: boolean;
+
+  /** True when BackupService captured existing Squad artifacts. */
+  backupCreated: boolean;
+
+  /** UTF-8 byte count written. */
+  bytesWritten: number;
+}
 
 /**
  * Messages sent FROM the webview TO the extension
@@ -49,17 +75,38 @@ export type WebviewMessage =
   // Squad management messages (SQD-007; host routing implemented in #223)
   | { command: "getSquadState" }
   | { command: "refreshSquadDetection" }
+  | { command: "checkSquadUpdates" }
   | { command: "saveSquadCharter"; agentId: string; content: string }
-  | { command: "saveSquadDoc"; kind: SquadDocKind; content: string }
-  | { command: "selectSquadPreset"; presetId: string }
-  | { command: "applySquadPreset"; presetId: string }
+  // Squad model configuration editing (SQD-028 / #243, FR-063): raw JSON, validated host-side
+  | { command: "saveSquadModelConfig"; content: string }
+  | {
+      command: "saveSquadDoc";
+      kind: SquadDocKind;
+      content: string;
+      /**
+       * `contentHash` of the doc the edit started from (SQD-027). When present,
+       * the host rejects the save with `write-conflict` if the file changed on
+       * disk since; omit only to force-overwrite.
+       */
+      baseContentHash?: string | null;
+    }
   | { command: "runSquadDoctor" }
+  | { command: "exportSquad"; request?: SquadExportRequest }
+  | { command: "refreshSquadPlugins" }
+  // Squad plugin marketplace + lifecycle actions (SQD-039 / #254). `target` is optional for
+  // actions whose operand the host can prompt for (marketplace source, plugin directory).
+  | { command: "runSquadPluginAction"; action: SquadPluginAction; target?: string }
   // Squad preset selection screen (SQD-019 / #234)
   | { command: "listSquadPresets" }
   | { command: "initSquadFromPreset"; presetId: string }
   // Squad CLI setup (SQD-025 / #240): choose npm-global / npx / custom path, or install the CLI
   | { command: "setSquadCliInvocation"; source: SquadCliSource; cliPath?: string }
-  | { command: "installSquadCli" };
+  | { command: "installSquadCli" }
+  // Squad upstream operations via `squad upstream` (SQD-036 / #251, FR-031/FR-032)
+  | { command: "listSquadUpstreams" }
+  | { command: "addSquadUpstream"; source: string; name?: string; ref?: string }
+  | { command: "syncSquadUpstream"; name?: string }
+  | { command: "removeSquadUpstream"; name: string };
 
 /**
  * Messages sent FROM the extension TO the webview
@@ -131,7 +178,30 @@ export type ExtensionMessage =
       command: "squadStatusUpdate";
       detection: SquadDetectionResult;
       upstreams: SquadUpstreamSource[];
+      /**
+       * Org → team → project recommendations and upstream warnings
+       * (SQD-037, FR-033/034/035). `null` when the upstreams could not be
+       * evaluated (e.g. `.squad/upstream.json` failed to parse) so a failure
+       * is never rendered as a clean recommendation state.
+       */
+      upstreamRecommendations: SquadUpstreamRecommendations | null;
+      marketplaces: SquadMarketplaceRef[];
       plugins: SquadPluginRef[];
+    }
+  | {
+      command: "squadPluginsUpdate";
+      marketplaces: SquadMarketplaceRef[];
+      plugins: SquadPluginRef[];
+    }
+  // Squad plugin action outcome (SQD-039 / #254). `ok: false` always carries an actionable error.
+  | {
+      command: "squadPluginActionResult";
+      action: SquadPluginAction;
+      target?: string;
+      ok: boolean;
+      changed?: boolean;
+      output?: string;
+      error?: SquadError;
     }
   | {
       command: "squadRosterUpdate";
@@ -148,13 +218,35 @@ export type ExtensionMessage =
       logs: SquadLogDocument[];
     }
   | {
-      command: "squadPresetsUpdate";
-      presets: SquadPreset[];
-      selectedPresetId?: string | null;
-    }
-  | {
       command: "squadDoctorUpdate";
       doctor: SquadDoctorReport;
+    }
+  | {
+      command: "squadUpdatesUpdate";
+      updates: SquadUpdatesResult;
+    }
+  | {
+      command: "squadExportResult";
+      export: SquadExportOutcome;
+    }
+  | {
+      command: "squadCharterSaved";
+      charter: SquadCharter;
+      result: SquadWriteSummary;
+    }
+  | {
+      command: "squadDocSaved";
+      doc: SquadMarkdownDoc;
+      result: SquadWriteSummary;
+    }
+  | {
+      command: "squadModelConfigUpdate";
+      modelConfig: SquadModelConfigDocument | null;
+    }
+  | {
+      command: "squadModelConfigSaved";
+      modelConfig: SquadModelConfigDocument;
+      result: SquadWriteSummary;
     }
   | {
       command: "squadLoading";
@@ -183,5 +275,20 @@ export type ExtensionMessage =
       command: "squadInitResult";
       presetId: string;
       ok: boolean;
+      error?: SquadError;
+    }
+  // Squad upstream operations (SQD-036 / #251, FR-031/FR-032)
+  | {
+      command: "squadUpstreamOperationStarted";
+      operation: SquadUpstreamOperation;
+      name?: string;
+    }
+  | {
+      command: "squadUpstreamOperationResult";
+      operation: SquadUpstreamOperation;
+      name?: string;
+      ok: boolean;
+      /** Upstreams re-read from `.squad/upstream.json` after the operation (also on failure). */
+      upstreams: SquadUpstreamSource[];
       error?: SquadError;
     };

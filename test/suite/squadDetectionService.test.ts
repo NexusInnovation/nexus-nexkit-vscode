@@ -11,7 +11,7 @@ import {
   SquadCliProbe,
   SquadDetectionService,
   SquadFileReader,
-} from "../../src/features/squad/squadDetectionService";
+} from "../../src/features/squad/services/squadDetectionService";
 import {
   SQUAD_MARKER_FILES,
   SquadCliSource,

@@ -156,10 +156,42 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
               ...prev.squad,
               detection: message.detection,
               upstreams: message.upstreams,
+              upstreamRecommendations: message.upstreamRecommendations ?? null,
+              marketplaces: message.marketplaces,
               plugins: message.plugins,
               isReady: true,
               isLoading: false,
               error: null,
+            },
+          }));
+          break;
+
+        case "squadPluginsUpdate":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              marketplaces: message.marketplaces,
+              plugins: message.plugins,
+              isLoading: false,
+              error: null,
+            },
+          }));
+          break;
+
+        case "squadPluginActionResult":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              lastPluginAction: {
+                action: message.action,
+                target: message.target,
+                ok: message.ok,
+                changed: message.changed,
+                output: message.output,
+                error: message.error,
+              },
             },
           }));
           break;
@@ -196,24 +228,79 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
           }));
           break;
 
-        case "squadPresetsUpdate":
-          setState((prev) => ({
-            ...prev,
-            squad: {
-              ...prev.squad,
-              presets: message.presets,
-              selectedPresetId:
-                message.selectedPresetId !== undefined ? message.selectedPresetId : prev.squad.selectedPresetId,
-            },
-          }));
-          break;
-
         case "squadDoctorUpdate":
           setState((prev) => ({
             ...prev,
             squad: {
               ...prev.squad,
               doctor: message.doctor,
+              isLoading: false,
+            },
+          }));
+          break;
+
+        case "squadUpdatesUpdate":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              updates: message.updates,
+              detection: message.updates.detection,
+              isLoading: false,
+              error: null,
+            },
+          }));
+          break;
+
+        case "squadCharterSaved":
+          setState((prev) => {
+            const existingIndex = prev.squad.charters.findIndex((charter) => charter.agentId === message.charter.agentId);
+            const charters =
+              existingIndex >= 0
+                ? prev.squad.charters.map((charter, index) => (index === existingIndex ? message.charter : charter))
+                : [...prev.squad.charters, message.charter];
+            return {
+              ...prev,
+              squad: {
+                ...prev.squad,
+                charters,
+                error: null,
+                isLoading: false,
+              },
+            };
+          });
+          break;
+
+        case "squadDocSaved":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              decisions: message.doc.kind === "decisions" ? message.doc : prev.squad.decisions,
+              routing: message.doc.kind === "routing" ? message.doc : prev.squad.routing,
+              error: null,
+              isLoading: false,
+            },
+          }));
+          break;
+
+        case "squadModelConfigUpdate":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              modelConfig: message.modelConfig,
+            },
+          }));
+          break;
+
+        case "squadModelConfigSaved":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              modelConfig: message.modelConfig,
+              error: null,
               isLoading: false,
             },
           }));
@@ -299,6 +386,37 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
             },
           }));
           break;
+
+        case "squadUpstreamOperationStarted":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              upstreamOperation: {
+                operation: message.operation,
+                name: message.name,
+                status: "running",
+                error: null,
+              },
+            },
+          }));
+          break;
+
+        case "squadUpstreamOperationResult":
+          setState((prev) => ({
+            ...prev,
+            squad: {
+              ...prev.squad,
+              upstreams: message.upstreams,
+              upstreamOperation: {
+                operation: message.operation,
+                name: message.name,
+                status: message.ok ? "succeeded" : "failed",
+                error: message.ok ? null : message.error ?? null,
+              },
+            },
+          }));
+          break;
       }
     };
 
@@ -315,17 +433,25 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     const unsubscribeWorkflows = messenger.onMessage("workflowListUpdate", handleMessage);
     const unsubscribeUpdatesAvailable = messenger.onMessage("templateUpdatesAvailable", handleMessage);
     const unsubscribeSquadStatus = messenger.onMessage("squadStatusUpdate", handleMessage);
+    const unsubscribeSquadPlugins = messenger.onMessage("squadPluginsUpdate", handleMessage);
+    const unsubscribeSquadPluginAction = messenger.onMessage("squadPluginActionResult", handleMessage);
     const unsubscribeSquadRoster = messenger.onMessage("squadRosterUpdate", handleMessage);
     const unsubscribeSquadDocs = messenger.onMessage("squadDocsUpdate", handleMessage);
     const unsubscribeSquadLogs = messenger.onMessage("squadLogsUpdate", handleMessage);
-    const unsubscribeSquadPresets = messenger.onMessage("squadPresetsUpdate", handleMessage);
     const unsubscribeSquadDoctor = messenger.onMessage("squadDoctorUpdate", handleMessage);
+    const unsubscribeSquadUpdates = messenger.onMessage("squadUpdatesUpdate", handleMessage);
+    const unsubscribeSquadCharterSaved = messenger.onMessage("squadCharterSaved", handleMessage);
+    const unsubscribeSquadDocSaved = messenger.onMessage("squadDocSaved", handleMessage);
+    const unsubscribeSquadModelConfig = messenger.onMessage("squadModelConfigUpdate", handleMessage);
+    const unsubscribeSquadModelConfigSaved = messenger.onMessage("squadModelConfigSaved", handleMessage);
     const unsubscribeSquadLoading = messenger.onMessage("squadLoading", handleMessage);
     const unsubscribeSquadError = messenger.onMessage("squadError", handleMessage);
     const unsubscribeSquadPresetsDiscovered = messenger.onMessage("squadPresetsDiscovered", handleMessage);
     const unsubscribeSquadPresetsLoading = messenger.onMessage("squadPresetsLoading", handleMessage);
     const unsubscribeSquadPresetsError = messenger.onMessage("squadPresetsError", handleMessage);
     const unsubscribeSquadInitResult = messenger.onMessage("squadInitResult", handleMessage);
+    const unsubscribeSquadUpstreamStarted = messenger.onMessage("squadUpstreamOperationStarted", handleMessage);
+    const unsubscribeSquadUpstreamResult = messenger.onMessage("squadUpstreamOperationResult", handleMessage);
 
     // Request initial state from extension
     messenger.sendMessage({ command: "webviewReady" });
@@ -344,17 +470,25 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
       unsubscribeWorkflows();
       unsubscribeUpdatesAvailable();
       unsubscribeSquadStatus();
+      unsubscribeSquadPlugins();
+      unsubscribeSquadPluginAction();
       unsubscribeSquadRoster();
       unsubscribeSquadDocs();
       unsubscribeSquadLogs();
-      unsubscribeSquadPresets();
       unsubscribeSquadDoctor();
+      unsubscribeSquadUpdates();
+      unsubscribeSquadCharterSaved();
+      unsubscribeSquadDocSaved();
+      unsubscribeSquadModelConfig();
+      unsubscribeSquadModelConfigSaved();
       unsubscribeSquadLoading();
       unsubscribeSquadError();
       unsubscribeSquadPresetsDiscovered();
       unsubscribeSquadPresetsLoading();
       unsubscribeSquadPresetsError();
       unsubscribeSquadInitResult();
+      unsubscribeSquadUpstreamStarted();
+      unsubscribeSquadUpstreamResult();
     };
   }, [messenger]);
 

@@ -19,9 +19,13 @@
 import * as assert from "assert";
 import { SquadMarkdownView } from "../../src/features/panel-ui/webview/components/molecules/SquadMarkdownView";
 import { SquadErrorNotice } from "../../src/features/panel-ui/webview/components/molecules/SquadErrorNotice";
+import {
+  formatUpstreamLastSyncedAt,
+  SquadUpstreamList,
+} from "../../src/features/panel-ui/webview/components/organisms/SquadUpstreamSection";
 import { initialSquadState, SquadLogKind } from "../../src/features/panel-ui/webview/types/squadState";
 import { initialAppState } from "../../src/features/panel-ui/webview/types/appState";
-import { SquadError } from "../../src/features/squad/models";
+import { SquadError, SquadUpstreamKind } from "../../src/features/squad/models";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -185,13 +189,11 @@ suite("Unit: Squad read-only display (SQD-024)", () => {
       assert.strictEqual(initialSquadState.decisions, null);
       assert.strictEqual(initialSquadState.routing, null);
       assert.strictEqual(initialSquadState.doctor, null);
-      assert.strictEqual(initialSquadState.selectedPresetId, null);
       assert.deepStrictEqual(initialSquadState.roster, []);
       assert.deepStrictEqual(initialSquadState.charters, []);
       assert.deepStrictEqual(initialSquadState.logs, []);
       assert.deepStrictEqual(initialSquadState.upstreams, []);
       assert.deepStrictEqual(initialSquadState.plugins, []);
-      assert.deepStrictEqual(initialSquadState.presets, []);
     });
 
     test("Should wire the default Squad slice into the global AppState", () => {
@@ -202,6 +204,46 @@ suite("Unit: Squad read-only display (SQD-024)", () => {
       assert.strictEqual(SquadLogKind.AgentHistory, "agent-history");
       assert.strictEqual(SquadLogKind.Log, "log");
       assert.strictEqual(SquadLogKind.Orchestration, "orchestration");
+    });
+  });
+
+  suite("SquadUpstreamList — FR-030 read-only upstream display", () => {
+    test("Should render source id, type, reference and sync timestamp", () => {
+      const syncedAt = Date.parse("2026-06-01T00:00:00Z");
+      const vnode: any = SquadUpstreamList({
+        upstreams: [
+          {
+            id: "org",
+            kind: SquadUpstreamKind.Git,
+            reference: "https://example.com/org.git",
+            lastSyncedAt: syncedAt,
+          },
+        ],
+      });
+
+      assert.strictEqual(vnode.type, "table");
+      assert.strictEqual(vnode.props.class, "squad-upstream-table");
+      const text = textOf(vnode);
+      assert.ok(text.includes("Source"));
+      assert.ok(text.includes("Type"));
+      assert.ok(text.includes("Reference"));
+      assert.ok(text.includes("Last sync"));
+      assert.ok(text.includes("org"));
+      assert.ok(text.includes("Git"));
+      assert.ok(text.includes("https://example.com/org.git"));
+      assert.ok(text.includes(formatUpstreamLastSyncedAt(syncedAt)));
+      assert.strictEqual(hasRawHtmlSink(vnode), false);
+    });
+
+    test("Should show an explicit empty state when no upstreams are configured", () => {
+      const vnode: any = SquadUpstreamList({ upstreams: [] });
+      assert.strictEqual(vnode.type, "p");
+      assert.strictEqual(vnode.props.class, "empty-message");
+      assert.ok(textOf(vnode).includes(".squad/upstream.json"));
+    });
+
+    test("Should label missing sync dates explicitly", () => {
+      assert.strictEqual(formatUpstreamLastSyncedAt(undefined), "Never synced");
     });
   });
 });

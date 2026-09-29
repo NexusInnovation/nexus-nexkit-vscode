@@ -24,9 +24,9 @@
  */
 
 import type * as vscode from "vscode";
-import { SettingsManager } from "../../core/settingsManager";
-import { LoggingService } from "../../shared/services/loggingService";
-import { SquadCliSource, squadErr, squadOk, type SquadDoctorReport, type SquadResult } from "./models";
+import { SettingsManager } from "../../../core/settingsManager";
+import { LoggingService } from "../../../shared/services/loggingService";
+import { SquadCliSource, squadErr, squadOk, type SquadDoctorReport, type SquadResult } from "../models";
 import { ChildProcessSquadRunner, type SquadProcessRunner } from "./squadProcessRunner";
 import { parseSquadDoctorReport } from "./squadDoctorParser";
 
@@ -117,19 +117,19 @@ export const SQUAD_CLI_COMMAND_SPECS: Readonly<Record<SquadCliCommand, SquadCliC
   },
   [SquadCliCommand.Upstream]: {
     argv: ["upstream"],
-    allowedFlags: ["--yes"],
+    allowedFlags: ["--yes", "--name", "--ref"],
     allowsOperands: true,
     defaultTimeoutMs: SQUAD_CLI_TIMEOUTS_MS.standard,
   },
   [SquadCliCommand.Plugin]: {
     argv: ["plugin"],
-    allowedFlags: ["--yes"],
+    allowedFlags: ["--yes", "--json"],
     allowsOperands: true,
     defaultTimeoutMs: SQUAD_CLI_TIMEOUTS_MS.standard,
   },
   [SquadCliCommand.Export]: {
     argv: ["export"],
-    allowedFlags: ["--output"],
+    allowedFlags: ["--output", "--ref", "--path"],
     allowsOperands: true,
     defaultTimeoutMs: SQUAD_CLI_TIMEOUTS_MS.standard,
   },

@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { LoggingService } from "../../shared/services/loggingService";
+import { LoggingService } from "../../../shared/services/loggingService";
 import {
   SQUAD_SOURCE_VERSION,
   SquadProjectVersion,
@@ -7,7 +7,7 @@ import {
   SquadResult,
   squadErr,
   squadOk,
-} from "./models";
+} from "../models";
 
 /**
  * Workspace-root-relative path of the Squad project agent file that carries the

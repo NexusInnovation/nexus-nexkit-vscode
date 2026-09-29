@@ -5,18 +5,34 @@ import { ExtensionMessage, WebviewMessage } from "./types/webviewMessages";
 import {
   SquadCharter,
   SquadDetectionResult,
+  SquadDocKind,
   SquadError,
+  SquadMarketplaceRef,
+  SquadModelConfigDocument,
   SquadPluginRef,
   SquadResult,
   SquadRosterMember,
+  SquadUpstreamRecommendations,
   SquadUpstreamSource,
   isSquadErr,
 } from "../squad/models";
-import {
-  SquadFileService,
-  SquadLogKind as SquadFileLogKind,
-} from "../squad/services/squadFileService";
+import { SquadFileService, SquadLogKind as SquadFileLogKind } from "../squad/services/squadFileService";
+import { SquadControlledWriteOutcome } from "../squad/services/squadFileWriteService";
+import { SquadPluginService } from "../squad/services/squadPluginService";
+import { SquadUpstreamRecommendationService } from "../squad/services/squadUpstreamRecommendationService";
 import { SquadLogDocument, SquadLogKind } from "./webview/types/squadState";
+
+/** Upstream sources plus their recommendations; `null` recommendations mean "not evaluated". */
+interface SquadUpstreamSnapshot {
+  upstreams: SquadUpstreamSource[];
+  recommendations: SquadUpstreamRecommendations | null;
+}
+
+interface SquadPluginInventory {
+  marketplaces: SquadMarketplaceRef[];
+  plugins: SquadPluginRef[];
+  error?: SquadError;
+}
 
 /**
  * Routes Squad webview requests (SQD-007 contract) to the Squad detection and
@@ -29,18 +45,19 @@ import { SquadLogDocument, SquadLogKind } from "./webview/types/squadState";
  * response types; failures always surface as a structured, actionable
  * {@link SquadError} via `squadError` — never a silent success.
  *
- * Write-back flows (`saveSquadCharter`, `saveSquadDoc`) and the CLI-backed
- * preset flow (`applySquadPreset`) depend on services still in flight (a write
- * service / preset source); they respond with a clear "not available yet"
- * {@link SquadError} rather than faking success. Squad Doctor (`runSquadDoctor`)
- * is wired to {@link SquadCliService} (SQD-021).
+ * Write-back flows (`saveSquadCharter`, `saveSquadDoc`, `saveSquadModelConfig`)
+ * are delegated to the
+ * controlled write service, which invokes BackupService before every write
+ * (SQD-026, FR-006/FR-023). Squad Doctor (`runSquadDoctor`) is wired to
+ * {@link SquadCliService} (SQD-021).
  */
 export class SquadPanelMessageHandler {
   private readonly _logger: LoggingService;
 
   constructor(
     private readonly _services: ServiceContainer,
-    private readonly _postMessage: (message: ExtensionMessage) => void
+    private readonly _postMessage: (message: ExtensionMessage) => void,
+    private readonly _upstreamRecommender: SquadUpstreamRecommendationService = new SquadUpstreamRecommendationService()
   ) {
     this._logger = _services.logging;
   }
@@ -57,20 +74,26 @@ export class SquadPanelMessageHandler {
       case "refreshSquadDetection":
         await this.handleRefreshSquadDetection();
         return true;
+      case "checkSquadUpdates":
+        await this.handleCheckSquadUpdates();
+        return true;
       case "saveSquadCharter":
-        await this.handleSaveSquadCharter();
+        await this.handleSaveSquadCharter(message);
         return true;
       case "saveSquadDoc":
-        await this.handleSaveSquadDoc();
+        await this.handleSaveSquadDoc(message);
         return true;
-      case "selectSquadPreset":
-        this.handleSelectSquadPreset(message.presetId);
-        return true;
-      case "applySquadPreset":
-        await this.handleApplySquadPreset();
+      case "saveSquadModelConfig":
+        await this.handleSaveSquadModelConfig(message);
         return true;
       case "runSquadDoctor":
         await this.handleRunSquadDoctor();
+        return true;
+      case "exportSquad":
+        await this.handleExportSquad(message);
+        return true;
+      case "refreshSquadPlugins":
+        await this.handleRefreshSquadPlugins();
         return true;
       default:
         return false;
@@ -91,15 +114,21 @@ export class SquadPanelMessageHandler {
       return;
     }
 
+    let firstError: SquadError | undefined;
     const fileService = this._services.squadFile;
-    const upstreams = fileService ? await this._readUpstreams(fileService) : [];
-    this._emitStatus(detection.value, upstreams, []);
+    const upstreams = await this._readUpstreams(fileService, (error) => (firstError ??= error));
+    const pluginInventory = await this._readPluginInventory(this._services.squadPlugins);
+    if (pluginInventory.error) {
+      firstError ??= pluginInventory.error;
+    }
+    this._emitStatus(detection.value, upstreams, pluginInventory.marketplaces, pluginInventory.plugins);
 
     if (!fileService) {
+      if (firstError) {
+        this._emitError(firstError);
+      }
       return;
     }
-
-    let firstError: SquadError | undefined;
 
     const roster = this._unwrap(await fileService.readRoster(), (error) => (firstError ??= error)) ?? [];
     const charters = await this._readCharters(fileService, roster, (error) => (firstError ??= error));
@@ -108,6 +137,9 @@ export class SquadPanelMessageHandler {
     const decisions = this._unwrap(await fileService.readDecisions(), (error) => (firstError ??= error)) ?? null;
     const routing = this._unwrap(await fileService.readRouting(), (error) => (firstError ??= error)) ?? null;
     this._postMessage({ command: "squadDocsUpdate", decisions, routing });
+
+    const modelConfig = await this._readModelConfig(fileService, (error) => (firstError ??= error));
+    this._postMessage({ command: "squadModelConfigUpdate", modelConfig });
 
     const logs = await this._collectLogs(fileService, roster, (error) => (firstError ??= error));
     this._postMessage({ command: "squadLogsUpdate", logs });
@@ -126,48 +158,148 @@ export class SquadPanelMessageHandler {
         this._emitError(detection.error);
         return;
       }
+      let upstreamError: SquadError | undefined;
       const fileService = this._services.squadFile;
-      const upstreams = fileService ? await this._readUpstreams(fileService) : [];
-      this._emitStatus(detection.value, upstreams, []);
+      const upstreams = await this._readUpstreams(fileService, (error) => (upstreamError = error));
+      const pluginInventory = await this._readPluginInventory(this._services.squadPlugins);
+      this._emitStatus(detection.value, upstreams, pluginInventory.marketplaces, pluginInventory.plugins);
+      const error = upstreamError ?? pluginInventory.error;
+      if (error) {
+        this._emitError(error);
+      }
     } finally {
       this._setLoading(false);
     }
   }
 
-  /** Charter write-back is not available yet (write service in flight). */
-  private async handleSaveSquadCharter(): Promise<void> {
-    this._emitError({
-      code: "file-write-failed",
-      message: "Saving Squad charters is not available yet.",
-      remediation: "Editing charters from the panel will be enabled in an upcoming NexKit release.",
-    });
+  /**
+   * Check for CLI/project updates without executing upgrades (SQD-030,
+   * FR-005). The returned contract is reusable by the follow-up confirmed
+   * upgrade flows; failures surface as `squadError`, never as empty success.
+   */
+  private async handleCheckSquadUpdates(): Promise<void> {
+    this._setLoading(true);
+    try {
+      const updates = await this._services.squadUpdates.checkUpdates(this._workspaceRoot());
+      if (isSquadErr(updates)) {
+        this._emitError(updates.error);
+        return;
+      }
+
+      const fileService = this._services.squadFile;
+      let upstreamError: SquadError | undefined;
+      const upstreams = await this._readUpstreams(fileService, (error) => (upstreamError = error));
+      const pluginInventory = await this._readPluginInventory(this._services.squadPlugins);
+      this._emitStatus(updates.value.detection, upstreams, pluginInventory.marketplaces, pluginInventory.plugins);
+      this._postMessage({ command: "squadUpdatesUpdate", updates: updates.value });
+      const error = upstreamError ?? pluginInventory.error;
+      if (error) {
+        this._emitError(error);
+      }
+    } finally {
+      this._setLoading(false);
+    }
   }
 
-  /** Governance-doc write-back is not available yet (write service in flight). */
-  private async handleSaveSquadDoc(): Promise<void> {
-    this._emitError({
-      code: "file-write-failed",
-      message: "Saving Squad documents is not available yet.",
-      remediation: "Editing decisions/routing from the panel will be enabled in an upcoming NexKit release.",
-    });
+  /** Save an edited charter through the backup-first controlled write service. */
+  private async handleSaveSquadCharter(message: Extract<WebviewMessage, { command: "saveSquadCharter" }>): Promise<void> {
+    const writer = this._services.squadWrite;
+    if (!writer) {
+      this._emitNoWorkspaceWriteError();
+      return;
+    }
+
+    this._setLoading(true);
+    try {
+      const result = await writer.saveCharter(message.agentId, message.content);
+      if (isSquadErr(result)) {
+        this._emitError(result.error);
+        return;
+      }
+
+      this._postMessage({
+        command: "squadCharterSaved",
+        charter: result.value.charter,
+        result: this._toWriteSummary(result.value),
+      });
+    } finally {
+      this._setLoading(false);
+    }
+  }
+
+  /** Save an edited governance doc through the backup-first controlled write service. */
+  private async handleSaveSquadDoc(message: Extract<WebviewMessage, { command: "saveSquadDoc" }>): Promise<void> {
+    const writer = this._services.squadWrite;
+    if (!writer) {
+      this._emitNoWorkspaceWriteError();
+      return;
+    }
+
+    if (!this._isSupportedDocKind(message.kind)) {
+      this._emitError({
+        code: "file-write-failed",
+        message: "Unsupported Squad document type.",
+        remediation: "Refresh the Squad panel and try saving a supported document.",
+        detail: String(message.kind),
+      });
+      return;
+    }
+
+    this._setLoading(true);
+    try {
+      const result = await writer.saveMarkdownDoc(message.kind, message.content, {
+        baseContentHash: message.baseContentHash,
+      });
+      if (isSquadErr(result)) {
+        this._emitError(result.error);
+        return;
+      }
+
+      this._postMessage({
+        command: "squadDocSaved",
+        doc: result.value.doc,
+        result: this._toWriteSummary(result.value),
+      });
+    } finally {
+      this._setLoading(false);
+    }
   }
 
   /**
-   * Echo the preset selection back to the webview. No preset source is wired
-   * yet, so the available list stays empty while the selection is preserved.
+   * Validate and save `.squad/model-config.json` (SQD-028, FR-063) through the
+   * backup-first controlled write service. JSON/schema failures surface as a
+   * `parse-failed` squadError and nothing is written.
    */
-  private handleSelectSquadPreset(presetId: string): void {
-    this._postMessage({ command: "squadPresetsUpdate", presets: [], selectedPresetId: presetId });
-  }
+  private async handleSaveSquadModelConfig(
+    message: Extract<WebviewMessage, { command: "saveSquadModelConfig" }>
+  ): Promise<void> {
+    const writer = this._services.squadWrite;
+    if (!writer) {
+      this._emitNoWorkspaceWriteError();
+      return;
+    }
 
-  /** Preset application is CLI-backed and not available yet (SQD-005 in flight). */
-  private async handleApplySquadPreset(): Promise<void> {
+    if (typeof message.content !== "string") {
+      this._emitError({
+        code: "file-write-failed",
+        message: "The Squad model configuration could not be saved because the edit was empty or malformed.",
+        remediation: "Reopen the model configuration editor and try saving again.",
+      });
+      return;
+    }
+
     this._setLoading(true);
     try {
-      this._emitError({
-        code: "preset-fetch-failed",
-        message: "Applying Squad presets is not available yet.",
-        remediation: "Preset initialization will be enabled once the Squad CLI integration ships.",
+      const result = await writer.saveModelConfig(message.content);
+      if (isSquadErr(result)) {
+        this._emitError(result.error);
+        return;
+      }
+
+      this._postMessage({
+        command: "squadModelConfigSaved",
+        modelConfig: result.value.document,
+        result: this._toWriteSummary(result.value),
       });
     } finally {
       this._setLoading(false);
@@ -194,15 +326,104 @@ export class SquadPanelMessageHandler {
     }
   }
 
+  /**
+   * Export Squad via the dedicated service (SQD-033, FR-061). The service owns
+   * the CLI invocation and any file picker; this host layer only preserves the
+   * central webview message contract and visible error/loading behavior.
+   */
+  private async handleExportSquad(message: Extract<WebviewMessage, { command: "exportSquad" }>): Promise<void> {
+    this._setLoading(true);
+    try {
+      const result = await this._services.squadExport.exportSquad(message.request ?? {});
+      if (isSquadErr(result)) {
+        this._emitError(result.error);
+        return;
+      }
+      this._postMessage({ command: "squadExportResult", export: result.value });
+    } finally {
+      this._setLoading(false);
+    }
+  }
+
+  /** Refresh plugin marketplaces and installed plugins without re-running full detection. */
+  private async handleRefreshSquadPlugins(): Promise<void> {
+    this._setLoading(true);
+    try {
+      const inventory = await this._readPluginInventory(this._services.squadPlugins);
+      this._postMessage({
+        command: "squadPluginsUpdate",
+        marketplaces: inventory.marketplaces,
+        plugins: inventory.plugins,
+      });
+      if (inventory.error) {
+        this._emitError(inventory.error);
+      }
+    } finally {
+      this._setLoading(false);
+    }
+  }
+
   // --- helpers ----------------------------------------------------------
 
-  private async _readUpstreams(fileService: SquadFileService): Promise<SquadUpstreamSource[]> {
+  /**
+   * Read upstream sources and evaluate the org → team → project
+   * recommendations (SQD-037). A read failure yields `null` recommendations so
+   * the webview never renders an error as a clean recommendation state.
+   */
+  private async _readUpstreams(
+    fileService: SquadFileService | undefined,
+    onError: (error: SquadError) => void
+  ): Promise<SquadUpstreamSnapshot> {
+    if (!fileService) {
+      return { upstreams: [], recommendations: null };
+    }
     const result = await fileService.readUpstreams();
     if (isSquadErr(result)) {
       this._logger.warn("Squad: failed to read upstream sources", result.error);
-      return [];
+      onError(result.error);
+      return { upstreams: [], recommendations: null };
     }
-    return result.value;
+    return { upstreams: result.value, recommendations: this._upstreamRecommender.recommend(result.value) };
+  }
+
+  private async _readModelConfig(
+    fileService: SquadFileService,
+    onError: (error: SquadError) => void
+  ): Promise<SquadModelConfigDocument | null> {
+    const result = await fileService.readModelConfig();
+    if (isSquadErr(result)) {
+      this._logger.warn("Squad: failed to read model configuration", result.error);
+      onError(result.error);
+      return null;
+    }
+    if (result.value.validationError) {
+      onError(result.value.validationError);
+    }
+    return result.value.document;
+  }
+
+  private async _readPluginInventory(pluginService: SquadPluginService | undefined): Promise<SquadPluginInventory> {
+    if (!pluginService) {
+      return { marketplaces: [], plugins: [] };
+    }
+
+    let firstError: SquadError | undefined;
+
+    const marketplacesResult = await pluginService.readMarketplaces();
+    const marketplaces =
+      this._unwrap(marketplacesResult, (error) => {
+        this._logger.warn("Squad: failed to read plugin marketplaces", error);
+        firstError ??= error;
+      }) ?? [];
+
+    const pluginsResult = await pluginService.listInstalledPlugins({ cwd: this._workspaceRoot() });
+    const plugins =
+      this._unwrap(pluginsResult, (error) => {
+        this._logger.warn("Squad: failed to list installed plugins", error);
+        firstError ??= error;
+      }) ?? [];
+
+    return { marketplaces, plugins, error: firstError };
   }
 
   private async _readCharters(
@@ -281,14 +502,30 @@ export class SquadPanelMessageHandler {
 
   private _emitStatus(
     detection: SquadDetectionResult,
-    upstreams: SquadUpstreamSource[],
+    { upstreams, recommendations }: SquadUpstreamSnapshot,
+    marketplaces: SquadMarketplaceRef[],
     plugins: SquadPluginRef[]
   ): void {
-    this._postMessage({ command: "squadStatusUpdate", detection, upstreams, plugins });
+    this._postMessage({
+      command: "squadStatusUpdate",
+      detection,
+      upstreams,
+      upstreamRecommendations: recommendations,
+      marketplaces,
+      plugins,
+    });
   }
 
   private _emitError(error: SquadError): void {
     this._postMessage({ command: "squadError", error });
+  }
+
+  private _emitNoWorkspaceWriteError(): void {
+    this._emitError({
+      code: "not-a-workspace",
+      message: "Cannot save Squad files without an open workspace folder.",
+      remediation: "Open the repository containing .squad/, then try saving again.",
+    });
   }
 
   private _setLoading(isLoading: boolean): void {
@@ -301,6 +538,24 @@ export class SquadPanelMessageHandler {
       return undefined;
     }
     return result.value;
+  }
+
+  private _toWriteSummary(result: SquadControlledWriteOutcome): {
+    relativePath: string;
+    created: boolean;
+    backupCreated: boolean;
+    bytesWritten: number;
+  } {
+    return {
+      relativePath: result.relativePath,
+      created: result.created,
+      backupCreated: result.backupPath !== null,
+      bytesWritten: result.bytesWritten,
+    };
+  }
+
+  private _isSupportedDocKind(kind: SquadDocKind): kind is SquadDocKind {
+    return kind === SquadDocKind.Decisions || kind === SquadDocKind.Routing;
   }
 
   private _workspaceRoot(): vscode.Uri | undefined {
