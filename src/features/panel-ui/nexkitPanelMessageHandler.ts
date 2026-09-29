@@ -49,7 +49,8 @@ export class NexkitPanelMessageHandler {
       async () => {
         await this._squadHandler.handle({ command: "refreshSquadDetection" });
       },
-      _services.logging
+      _services.logging,
+      _services.squadTelemetry
     );
     this._squadCliUpgradeHandler = new SquadCliUpgradeMessageHandler(
       _services.squadCliUpgrade,

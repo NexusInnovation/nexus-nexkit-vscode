@@ -1,13 +1,13 @@
 import * as vscode from "vscode";
 import { ServiceContainer } from "../../core/serviceContainer";
 import { LoggingService } from "../../shared/services/loggingService";
-import {
-  SquadError,
-  SquadPluginAction,
-  SquadPluginActionTargetKind,
-  isSquadErr,
-} from "../squad/models";
+import { SquadError, SquadPluginAction, SquadPluginActionTargetKind, isSquadErr } from "../squad/models";
 import { SquadPluginActionService } from "../squad/services/squadPluginActionService";
+import {
+  SquadFeatureTelemetryEvent,
+  SquadTelemetryFeature,
+  SquadTelemetryOutcome,
+} from "../squad/services/squadTelemetryService";
 import { ExtensionMessage, WebviewMessage } from "./types/webviewMessages";
 
 /** Prompts used when the webview did not supply an action operand. Injectable for tests. */
@@ -77,11 +77,13 @@ export class SquadPluginActionMessageHandler {
   private async _handleRunAction(action: SquadPluginAction, requestedTarget: string | undefined): Promise<void> {
     const service = this._services.squadPluginActions;
     if (!service) {
-      this._fail(action, requestedTarget, {
+      const error: SquadError = {
         code: "not-a-workspace",
         message: "Squad plugin actions need an open workspace folder.",
         remediation: "Open the folder that contains your Squad, then try again.",
-      });
+      };
+      this._fail(action, requestedTarget, error);
+      this._trackActionTelemetry(action, SquadTelemetryOutcome.Failure, error.code);
       return;
     }
 
@@ -97,6 +99,7 @@ export class SquadPluginActionMessageHandler {
           remediation: "Run the action again when you are ready. Nothing was changed.",
         },
       });
+      this._trackActionTelemetry(action, SquadTelemetryOutcome.Cancelled, "cancelled");
       return;
     }
 
@@ -105,6 +108,11 @@ export class SquadPluginActionMessageHandler {
       const result = await service.runAction({ action, target });
       if (isSquadErr(result)) {
         this._fail(action, target, result.error);
+        this._trackActionTelemetry(
+          action,
+          result.error.code === "cancelled" ? SquadTelemetryOutcome.Cancelled : SquadTelemetryOutcome.Failure,
+          result.error.code
+        );
         return;
       }
 
@@ -120,14 +128,17 @@ export class SquadPluginActionMessageHandler {
       if (result.value.changed) {
         await this._refreshInventory();
       }
+      this._trackActionTelemetry(action, SquadTelemetryOutcome.Success, undefined, result.value.changed);
     } catch (error) {
       this._logger.error("Squad plugins: unexpected failure running a plugin action", error);
-      this._fail(action, target, {
+      const squadError: SquadError = {
         code: "plugin-action-failed",
         message: "The Squad plugin action failed unexpectedly.",
         remediation: "Check the Nexkit output channel for details and try again.",
         cause: error,
-      });
+      };
+      this._fail(action, target, squadError);
+      this._trackActionTelemetry(action, SquadTelemetryOutcome.Failure, squadError.code);
     } finally {
       this._setLoading(false);
     }
@@ -185,5 +196,28 @@ export class SquadPluginActionMessageHandler {
 
   private _setLoading(isLoading: boolean): void {
     this._postMessage({ command: "squadLoading", isLoading });
+  }
+
+  private _trackActionTelemetry(
+    action: SquadPluginAction,
+    outcome: SquadTelemetryOutcome,
+    errorCode?: SquadError["code"],
+    changed?: boolean
+  ): void {
+    const descriptor = SquadPluginActionService.describe(action);
+    this._trackTelemetry({
+      feature: SquadTelemetryFeature.Plugins,
+      action,
+      outcome,
+      errorCode,
+      properties: {
+        targetKind: descriptor?.targetKind ?? SquadPluginActionTargetKind.None,
+        changed,
+      },
+    });
+  }
+
+  private _trackTelemetry(event: SquadFeatureTelemetryEvent): void {
+    this._services.squadTelemetry?.trackFeatureUsage(event);
   }
 }

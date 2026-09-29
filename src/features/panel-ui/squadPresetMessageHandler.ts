@@ -2,6 +2,11 @@ import { ServiceContainer } from "../../core/serviceContainer";
 import { LoggingService } from "../../shared/services/loggingService";
 import { ExtensionMessage, WebviewMessage } from "./types/webviewMessages";
 import { SquadError, isSquadErr } from "../squad/models";
+import {
+  SquadFeatureTelemetryEvent,
+  SquadTelemetryFeature,
+  SquadTelemetryOutcome,
+} from "../squad/services/squadTelemetryService";
 
 /**
  * Routes the Squad preset selection screen requests (SQD-019 / #234) to the
@@ -62,6 +67,12 @@ export class SquadPresetMessageHandler {
       if (isSquadErr(result)) {
         this._logger.warn("Squad: preset discovery failed", result.error);
         this._postMessage({ command: "squadPresetsError", error: result.error });
+        this._trackTelemetry({
+          feature: SquadTelemetryFeature.Presets,
+          action: "list",
+          outcome: SquadTelemetryOutcome.Failure,
+          errorCode: result.error.code,
+        });
         return;
       }
       const { presets, rejected, unreachable } = result.value;
@@ -70,6 +81,16 @@ export class SquadPresetMessageHandler {
         presets,
         rejected,
         unreachable: unreachable ?? [],
+      });
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.Presets,
+        action: "list",
+        outcome: SquadTelemetryOutcome.Success,
+        measurements: {
+          presetCount: presets.length,
+          rejectedPresetCount: rejected.length,
+          unreachableSourceCount: unreachable?.length ?? 0,
+        },
       });
     } catch (error) {
       const squadError: SquadError = {
@@ -81,6 +102,12 @@ export class SquadPresetMessageHandler {
       };
       this._logger.error("Squad: preset discovery threw", squadError);
       this._postMessage({ command: "squadPresetsError", error: squadError });
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.Presets,
+        action: "list",
+        outcome: SquadTelemetryOutcome.Failure,
+        errorCode: squadError.code,
+      });
     } finally {
       this._postMessage({ command: "squadPresetsLoading", isLoading: false });
     }
@@ -107,16 +134,33 @@ export class SquadPresetMessageHandler {
       };
       this._logger.error("Squad: init from preset threw", squadError);
       this._postMessage({ command: "squadInitResult", presetId, ok: false, error: squadError });
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.Presets,
+        action: "init",
+        outcome: SquadTelemetryOutcome.Failure,
+        errorCode: squadError.code,
+      });
       return;
     }
 
     if (isSquadErr(result)) {
       this._logger.warn("Squad: init from preset failed", result.error);
       this._postMessage({ command: "squadInitResult", presetId, ok: false, error: result.error });
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.Presets,
+        action: "init",
+        outcome: result.error.code === "cancelled" ? SquadTelemetryOutcome.Cancelled : SquadTelemetryOutcome.Failure,
+        errorCode: result.error.code,
+      });
       return;
     }
 
     this._postMessage({ command: "squadInitResult", presetId, ok: true });
+    this._trackTelemetry({
+      feature: SquadTelemetryFeature.Presets,
+      action: "init",
+      outcome: SquadTelemetryOutcome.Success,
+    });
     if (result.value.detection) {
       this._postMessage({
         command: "squadStatusUpdate",
@@ -128,5 +172,9 @@ export class SquadPresetMessageHandler {
         plugins: [],
       });
     }
+  }
+
+  private _trackTelemetry(event: SquadFeatureTelemetryEvent): void {
+    this._services.squadTelemetry?.trackFeatureUsage(event);
   }
 }

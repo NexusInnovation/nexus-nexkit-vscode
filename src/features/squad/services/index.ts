@@ -34,3 +34,4 @@ export * from "./squadWatchService";
 export * from "./squadCeremonyParser";
 export * from "./squadCeremonyService";
 export * from "./squadProfileService";
+export * from "./squadTelemetryService";

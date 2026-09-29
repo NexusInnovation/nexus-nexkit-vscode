@@ -3,6 +3,11 @@ import { ServiceContainer } from "../../core/serviceContainer";
 import { LoggingService } from "../../shared/services/loggingService";
 import { ExtensionMessage, WebviewMessage } from "./types/webviewMessages";
 import { SquadError, SquadResult, SquadUpstreamOperation, SquadUpstreamSource, isSquadErr } from "../squad/models";
+import {
+  SquadFeatureTelemetryEvent,
+  SquadTelemetryFeature,
+  SquadTelemetryOutcome,
+} from "../squad/services/squadTelemetryService";
 import type { SquadUpstreamOperationOutcome } from "../squad/services/squadUpstreamService";
 
 /**
@@ -88,16 +93,40 @@ export class SquadUpstreamMessageHandler {
         ok: true,
         upstreams: result.value.upstreams,
       });
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.Upstreams,
+        action: "operation",
+        outcome: SquadTelemetryOutcome.Success,
+        properties: {
+          operation,
+          hasUpstreams: result.value.upstreams.length > 0,
+          hasWorkspace: root !== undefined,
+        },
+        measurements: { upstreamCount: result.value.upstreams.length },
+      });
       return;
     }
 
+    const upstreams = await this._currentUpstreams(root);
     this._postMessage({
       command: "squadUpstreamOperationResult",
       operation,
       name,
       ok: false,
-      upstreams: await this._currentUpstreams(root),
+      upstreams,
       error: this._toWebviewError(result.error),
+    });
+    this._trackTelemetry({
+      feature: SquadTelemetryFeature.Upstreams,
+      action: "operation",
+      outcome: result.error.code === "cancelled" ? SquadTelemetryOutcome.Cancelled : SquadTelemetryOutcome.Failure,
+      errorCode: result.error.code,
+      properties: {
+        operation,
+        hasUpstreams: upstreams.length > 0,
+        hasWorkspace: root !== undefined,
+      },
+      measurements: { upstreamCount: upstreams.length },
     });
   }
 
@@ -119,5 +148,9 @@ export class SquadUpstreamMessageHandler {
   private _toWebviewError(error: SquadError): SquadError {
     const { cause: _cause, ...serializable } = error;
     return serializable;
+  }
+
+  private _trackTelemetry(event: SquadFeatureTelemetryEvent): void {
+    this._services.squadTelemetry?.trackFeatureUsage(event);
   }
 }
