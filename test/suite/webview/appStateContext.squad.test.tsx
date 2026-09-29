@@ -31,6 +31,7 @@ import {
 } from "./harness/renderSquad";
 import { dispatchExtensionMessage, resetVsCodeApiMock, postedMessagesOfCommand } from "./harness/vscodeApiMock";
 import { SquadUpstreamRecommendationService } from "../../../src/features/squad/services/squadUpstreamRecommendationService";
+import { initialSquadWatchStatus, SquadWatchState } from "../../../src/features/squad/models";
 
 function SquadProbe() {
   const { squad } = useAppState();
@@ -409,6 +410,28 @@ suite("AppStateContext — Squad messages", () => {
     const state = squad();
     assert.strictEqual(state.doctor?.overall, doctor.overall);
     assert.strictEqual(state.isLoading, false);
+  });
+
+  test("squadWatchUpdate stores the health snapshot and surfaces failed status errors", () => {
+    const squad = renderProbe();
+    const error = makeError({ code: "watch-failed", message: "Squad watch crashed." });
+    send({
+      command: "squadWatchUpdate",
+      snapshot: {
+        status: {
+          ...initialSquadWatchStatus,
+          state: SquadWatchState.Failed,
+          error,
+          logLineCount: 1,
+        },
+        logs: [{ seq: 1, timestamp: 1_700_000_000_000, stream: "stderr", text: "boom" }],
+      },
+    });
+
+    const state = squad();
+    assert.strictEqual(state.watch.status.state, SquadWatchState.Failed);
+    assert.strictEqual(state.watch.logs[0].text, "boom");
+    assert.deepStrictEqual(state.error, error);
   });
 
   test("squadPresetsDiscovered fills the picker slice and marks it loaded", () => {

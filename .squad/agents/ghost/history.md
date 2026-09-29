@@ -98,3 +98,9 @@ Implemented 5 major SQD webview tickets (see `.squad/decisions.md` for full deta
 - Backlog provider state belongs in the Squad `AppState` slice as its own sub-state (`backlog`) rather than overloading the existing Squad detection snapshot; GitHub/ADO failures must render in the backlog card instead of becoming a success-shaped empty state.
 - The SQD-042/043 host contract is easiest to consume as dedicated `squadBacklogLoading` / `squadBacklogUpdate` / `squadBacklogError` messages, keeping all webview message handling centralized in `AppStateContext.tsx`.
 - When adding host messages to `SquadPanelMessageHandler`, update the older handler tests' service mocks at the same time; otherwise partial `ServiceContainer` fixtures will miss newly required services even though production DI is wired.
+
+## 2026-09-29 — SQD-046 (#261): Squad watch health and log UI
+
+- Consumed Link's SQD-045 `squadWatchUpdate` contract directly from the existing `SquadState.watch` slice; no component-level `window` listeners were needed.
+- `getSquadState` does not include a watch snapshot, so the mounted watch section must explicitly call `getSquadWatchStatus` and then rely on live centralized updates.
+- Component tests for watch UI must run through `node .\out\test\runWebviewTest.js`; `npm run test:unit` still excludes `test/suite/webview/**`.
