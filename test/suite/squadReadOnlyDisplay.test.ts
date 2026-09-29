@@ -31,8 +31,6 @@ import { initialSquadState, SquadLogKind } from "../../src/features/panel-ui/web
 import { initialAppState } from "../../src/features/panel-ui/webview/types/appState";
 import { SquadError, SquadUpstreamKind } from "../../src/features/squad/models";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 type VNodeLike = { type: unknown; props: any } | string | number | boolean | null | undefined;
 
 /** Normalise a vnode's children into a flat, render-order array. */
