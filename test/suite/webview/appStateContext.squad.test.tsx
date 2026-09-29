@@ -12,9 +12,20 @@ import * as assert from "assert";
 import { useAppState } from "../../../src/features/panel-ui/webview/hooks/useAppState";
 import type { SquadState } from "../../../src/features/panel-ui/webview/types/squadState";
 import { SquadLogKind } from "../../../src/features/panel-ui/webview/types/squadState";
-import { renderWithProvider, act, cleanup, makeDetection, makeError, makePreset, makeRejectedPreset, makeUnreachableSource, makeDoctorReport } from "./harness/renderSquad";
+import {
+  renderWithProvider,
+  act,
+  cleanup,
+  makeDetection,
+  makeError,
+  makePreset,
+  makeRejectedPreset,
+  makeUnreachableSource,
+  makeDoctorReport,
+} from "./harness/renderSquad";
 import { dispatchExtensionMessage, resetVsCodeApiMock, postedMessagesOfCommand } from "./harness/vscodeApiMock";
 import { SquadUpstreamRecommendationService } from "../../../src/features/squad/services/squadUpstreamRecommendationService";
+import { initialSquadWatchStatus, SquadWatchState } from "../../../src/features/squad/models";
 
 function SquadProbe() {
   const { squad } = useAppState();
@@ -84,7 +95,13 @@ suite("AppStateContext — Squad messages", () => {
     const recommendations = new SquadUpstreamRecommendationService().recommend([
       { id: "nexus-org", kind: "git", reference: "https://github.com/acme/squad/tree/main/org" },
     ]);
-    send({ command: "squadStatusUpdate", detection: makeDetection(), upstreams: [], upstreamRecommendations: recommendations, plugins: [] });
+    send({
+      command: "squadStatusUpdate",
+      detection: makeDetection(),
+      upstreams: [],
+      upstreamRecommendations: recommendations,
+      plugins: [],
+    });
 
     assert.deepStrictEqual(squad().upstreamRecommendations, recommendations);
 
@@ -259,6 +276,28 @@ suite("AppStateContext — Squad messages", () => {
     const state = squad();
     assert.strictEqual(state.doctor?.overall, doctor.overall);
     assert.strictEqual(state.isLoading, false);
+  });
+
+  test("squadWatchUpdate stores the health snapshot and surfaces failed status errors", () => {
+    const squad = renderProbe();
+    const error = makeError({ code: "watch-failed", message: "Squad watch crashed." });
+    send({
+      command: "squadWatchUpdate",
+      snapshot: {
+        status: {
+          ...initialSquadWatchStatus,
+          state: SquadWatchState.Failed,
+          error,
+          logLineCount: 1,
+        },
+        logs: [{ seq: 1, timestamp: 1_700_000_000_000, stream: "stderr", text: "boom" }],
+      },
+    });
+
+    const state = squad();
+    assert.strictEqual(state.watch.status.state, SquadWatchState.Failed);
+    assert.strictEqual(state.watch.logs[0].text, "boom");
+    assert.deepStrictEqual(state.error, error);
   });
 
   test("squadPresetsDiscovered fills the picker slice and marks it loaded", () => {

@@ -66,3 +66,9 @@ Implemented 5 major SQD webview tickets (see `.squad/decisions.md` for full deta
 **Cross-team note:** Link (SQD-R2) consolidated 5 Squad service files under src/features/squad/services/ — service/provider/parser/reader modules now follow canonical folder layout. Trinity validated Preact webview test harness (69 tests passing, isolated from extension-host suite). All three changes landed safely.
 
 **MVP Status:** All 23 SQD PRs merged into squad/mvp-integration branch (Morpheus reviewed, 744 tests passing). Ready for Eric's merge to feature/squad-support.
+
+## 2026-09-29 — SQD-046 (#261): Squad watch health and log UI
+
+- Consumed Link's SQD-045 `squadWatchUpdate` contract directly from the existing `SquadState.watch` slice; no component-level `window` listeners were needed.
+- `getSquadState` does not include a watch snapshot, so the mounted watch section must explicitly call `getSquadWatchStatus` and then rely on live centralized updates.
+- Component tests for watch UI must run through `node .\out\test\runWebviewTest.js`; `npm run test:unit` still excludes `test/suite/webview/**`.
