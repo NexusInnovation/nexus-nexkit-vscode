@@ -12,6 +12,7 @@ import { SquadUpstreamSection } from "./SquadUpstreamSection";
 import { SquadPluginsSection } from "./SquadPluginsSection";
 import { SquadWorktreeSection } from "./SquadWorktreeSection";
 import { SquadWatchSection } from "./SquadWatchSection";
+import { SquadCeremonySection } from "./SquadCeremonySection";
 import { SquadInstallState } from "../../../../squad/models";
 
 /**
@@ -96,6 +97,9 @@ export function SquadSection() {
           </CollapsibleSection>
           <CollapsibleSection id="squad-watch-section" title="Watch health & logs" defaultExpanded>
             <SquadWatchSection />
+          </CollapsibleSection>
+          <CollapsibleSection id="squad-ceremonies-section" title="Ceremonies" defaultExpanded>
+            <SquadCeremonySection />
           </CollapsibleSection>
           <CollapsibleSection id="squad-governance-section" title="Governance">
             <SquadGovernanceSection />

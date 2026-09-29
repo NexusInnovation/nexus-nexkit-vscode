@@ -11,6 +11,7 @@ import { useAppState } from "./useAppState";
 import { useVSCodeAPI } from "./useVSCodeAPI";
 import type {
   SquadCharter,
+  SquadCeremoniesDocument,
   SquadCliSource,
   SquadCliUpgradeSummary,
   SquadDetectionResult,
@@ -37,6 +38,7 @@ import type {
   SquadUpstreamOperationState,
   SquadWriteOutcome,
   SquadBacklogState,
+  SquadCeremonyActionState,
 } from "../types/squadState";
 
 /**
@@ -93,6 +95,21 @@ export interface UseSquadStateResult {
 
   /** GitHub Issues / Azure DevOps backlog status (FR-050/FR-051). */
   backlog: SquadBacklogState;
+
+  /** Read-only `.squad/ceremonies.md` quick-action model. */
+  ceremonies: SquadCeremoniesDocument | null;
+
+  /** True while ceremonies are being refreshed. */
+  ceremoniesLoading: boolean;
+
+  /** Last ceremonies read/open error, or `null`. */
+  ceremoniesError: SquadError | null;
+
+  /** Ceremony currently being launched, or `null`. */
+  runningCeremonyId: string | null;
+
+  /** Latest ceremony launch action state, or `null`. */
+  lastCeremonyAction: SquadCeremonyActionState | null;
 
   /** Latest Squad Doctor report, when produced. */
   doctor: SquadDoctorReport | null;
@@ -211,6 +228,15 @@ export interface UseSquadStateResult {
 
   /** Remove an upstream; the host asks for confirmation first (FR-032). */
   removeUpstream: (name: string) => void;
+
+  /** Re-read `.squad/ceremonies.md` for quick actions (FR-055). */
+  refreshCeremonies: () => void;
+
+  /** Launch a ceremony in Copilot Chat by id. */
+  runCeremony: (ceremonyId: string) => void;
+
+  /** Open `.squad/ceremonies.md` for editing. */
+  openCeremonies: () => void;
 }
 
 /**
@@ -320,6 +346,18 @@ export function useSquadState(): UseSquadStateResult {
     messenger.sendMessage({ command: "removeSquadUpstream", name });
   };
 
+  const refreshCeremonies = () => {
+    messenger.sendMessage({ command: "getSquadCeremonies" });
+  };
+
+  const runCeremony = (ceremonyId: string) => {
+    messenger.sendMessage({ command: "runSquadCeremony", ceremonyId });
+  };
+
+  const openCeremonies = () => {
+    messenger.sendMessage({ command: "openSquadCeremonies" });
+  };
+
   return {
     isReady: squad.isReady,
     isLoading: squad.isLoading,
@@ -338,6 +376,11 @@ export function useSquadState(): UseSquadStateResult {
     plugins: squad.plugins,
     lastPluginAction: squad.lastPluginAction,
     backlog: squad.backlog,
+    ceremonies: squad.ceremonies,
+    ceremoniesLoading: squad.ceremoniesLoading,
+    ceremoniesError: squad.ceremoniesError,
+    runningCeremonyId: squad.runningCeremonyId,
+    lastCeremonyAction: squad.lastCeremonyAction,
     doctor: squad.doctor,
     updates: squad.updates,
     cliUpgrade: squad.cliUpgrade,
@@ -369,5 +412,8 @@ export function useSquadState(): UseSquadStateResult {
     addUpstream,
     syncUpstream,
     removeUpstream,
+    refreshCeremonies,
+    runCeremony,
+    openCeremonies,
   };
 }

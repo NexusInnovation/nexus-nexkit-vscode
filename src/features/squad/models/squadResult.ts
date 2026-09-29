@@ -39,6 +39,7 @@ export const SQUAD_ERROR_CODES = [
   "watch-failed",
   "watch-already-running",
   "watch-not-running",
+  "ceremony-failed",
   "not-a-workspace",
   "git-not-found",
   "not-a-git-repository",

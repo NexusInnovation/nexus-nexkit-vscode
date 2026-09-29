@@ -31,3 +31,5 @@ export * from "./worktreeRemover";
 export * from "./squadWorktreeService";
 export * from "./squadLongRunningProcess";
 export * from "./squadWatchService";
+export * from "./squadCeremonyParser";
+export * from "./squadCeremonyService";

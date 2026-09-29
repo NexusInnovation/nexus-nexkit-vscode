@@ -7,6 +7,7 @@ import { WorkflowInfo } from "../../github-workflow-runner/githubWorkflowRunnerS
 import type {
   RejectedSquadPreset,
   SquadBacklogDetection,
+  SquadCeremoniesDocument,
   SquadCharter,
   SquadCliSource,
   SquadCliUpgradeSummary,
@@ -149,7 +150,11 @@ export type WebviewMessage =
   | { command: "openSquadWorktree"; worktreeId: string; newWindow?: boolean }
   | { command: "findSquadWorktreeCleanup" }
   | { command: "cleanupSquadWorktree"; request: SquadWorktreeCleanupRequest }
-  | { command: "retrySquadWorktreeDependencies"; worktreeId: string; dependencies?: SquadWorktreeDependencyMode };
+  | { command: "retrySquadWorktreeDependencies"; worktreeId: string; dependencies?: SquadWorktreeDependencyMode }
+  // Squad ceremony quick actions (SQD-047 / #262, FR-055)
+  | { command: "getSquadCeremonies" }
+  | { command: "runSquadCeremony"; ceremonyId: string }
+  | { command: "openSquadCeremonies" };
 
 /**
  * Messages sent FROM the extension TO the webview
@@ -422,4 +427,28 @@ export type ExtensionMessage =
       command: "squadWorktreeDependencyRetried";
       worktreeId: string;
       outcome: SquadWorktreeDependencyOutcome;
+    }
+  // Squad ceremony quick actions (SQD-047 / #262, FR-055)
+  | {
+      command: "squadCeremoniesLoading";
+      isLoading: boolean;
+    }
+  | {
+      command: "squadCeremoniesUpdate";
+      ceremonies: SquadCeremoniesDocument;
+    }
+  | {
+      command: "squadCeremoniesError";
+      error: SquadError;
+    }
+  | {
+      command: "squadCeremonyActionStarted";
+      ceremonyId: string;
+    }
+  | {
+      command: "squadCeremonyActionResult";
+      ceremonyId: string;
+      ok: boolean;
+      /** Actionable error; always present when `ok` is false. */
+      error?: SquadError;
     };

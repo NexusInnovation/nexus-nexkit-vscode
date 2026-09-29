@@ -160,6 +160,41 @@ suite("Unit: SquadFileService", () => {
     assert.strictEqual(result.value.contentHash, createHash("sha256").update(big, "utf8").digest("hex"));
   });
 
+  // --- ceremonies (FR-055) ---
+
+  test("readCeremonies parses quick-action ceremonies when ceremonies.md exists", async () => {
+    writeFile(
+      ".squad/ceremonies.md",
+      `# Ceremonies
+
+## Standup
+| Field | Value |
+| --- | --- |
+| Trigger | manual |
+| Enabled | yes |
+
+**Agenda:**
+1. Share progress
+`
+    );
+
+    const result = await service.readCeremonies();
+
+    assert.ok(isSquadOk(result));
+    assert.strictEqual(result.value.exists, true);
+    assert.strictEqual(result.value.relativePath, ".squad/ceremonies.md");
+    assert.strictEqual(result.value.ceremonies[0].id, "standup");
+    assert.deepStrictEqual(result.value.ceremonies[0].agenda, ["Share progress"]);
+  });
+
+  test("readCeremonies reports an absent file as exists:false without an error", async () => {
+    const result = await service.readCeremonies();
+
+    assert.ok(isSquadOk(result));
+    assert.strictEqual(result.value.exists, false);
+    assert.deepStrictEqual(result.value.ceremonies, []);
+  });
+
   // --- histories & logs (FR-025) ---
 
   test("readAgentHistory returns content and truncated flag for large files", async () => {

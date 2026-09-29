@@ -23,6 +23,10 @@ import {
   formatUpstreamLastSyncedAt,
   SquadUpstreamList,
 } from "../../src/features/panel-ui/webview/components/organisms/SquadUpstreamSection";
+import {
+  SquadCeremonyCard,
+  SquadCeremonyList,
+} from "../../src/features/panel-ui/webview/components/organisms/SquadCeremonySection";
 import { initialSquadState, SquadLogKind } from "../../src/features/panel-ui/webview/types/squadState";
 import { initialAppState } from "../../src/features/panel-ui/webview/types/appState";
 import { SquadError, SquadUpstreamKind } from "../../src/features/squad/models";
@@ -194,6 +198,11 @@ suite("Unit: Squad read-only display (SQD-024)", () => {
       assert.deepStrictEqual(initialSquadState.logs, []);
       assert.deepStrictEqual(initialSquadState.upstreams, []);
       assert.deepStrictEqual(initialSquadState.plugins, []);
+      assert.strictEqual(initialSquadState.ceremonies, null);
+      assert.strictEqual(initialSquadState.ceremoniesLoading, false);
+      assert.strictEqual(initialSquadState.ceremoniesError, null);
+      assert.strictEqual(initialSquadState.runningCeremonyId, null);
+      assert.strictEqual(initialSquadState.lastCeremonyAction, null);
     });
 
     test("Should wire the default Squad slice into the global AppState", () => {
@@ -244,6 +253,56 @@ suite("Unit: Squad read-only display (SQD-024)", () => {
 
     test("Should label missing sync dates explicitly", () => {
       assert.strictEqual(formatUpstreamLastSyncedAt(undefined), "Never synced");
+    });
+  });
+
+  suite("SquadCeremonyList — FR-055 quick actions", () => {
+    test("Should render enabled and disabled ceremonies with actionable run state", () => {
+      const running: any = SquadCeremonyCard({
+        ceremony: {
+          id: "standup",
+          name: "Standup",
+          trigger: "manual",
+          when: "daily",
+          facilitator: "Ralph",
+          participants: "Ghost, Link",
+          enabled: true,
+          agenda: ["Share progress"],
+        },
+        running: true,
+        lastAction: { ceremonyId: "standup", status: "running", error: null },
+        onRun: () => undefined,
+      });
+      const disabled: any = SquadCeremonyCard({
+        ceremony: { id: "retro", name: "Retro", enabled: false, agenda: [] },
+        running: false,
+        lastAction: null,
+        onRun: () => undefined,
+      });
+
+      const text = `${textOf(running)} ${textOf(disabled)}`;
+      assert.ok(text.includes("Standup"));
+      assert.ok(text.includes("Trigger: manual"));
+      assert.ok(text.includes("Participants: Ghost, Link"));
+      assert.ok(text.includes("Share progress"));
+      assert.ok(text.includes("Starting"));
+      assert.ok(text.includes("Retro"));
+      assert.ok(text.includes("Disabled in .squad/ceremonies.md"));
+      assert.strictEqual(hasRawHtmlSink(running), false);
+      assert.strictEqual(hasRawHtmlSink(disabled), false);
+    });
+
+    test("Should show explicit missing-file guidance instead of empty success", () => {
+      const vnode: any = SquadCeremonyList({
+        document: { relativePath: ".squad/ceremonies.md", exists: false, ceremonies: [] },
+        runningCeremonyId: null,
+        lastAction: null,
+        onRun: () => undefined,
+        onOpenFile: () => undefined,
+      });
+
+      assert.strictEqual(findByClass(vnode, "squad-ceremony-empty info-message"), vnode);
+      assert.ok(textOf(vnode).includes("No .squad/ceremonies.md was found"));
     });
   });
 });
