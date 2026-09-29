@@ -3,6 +3,12 @@ import { SettingsManager } from "../../core/settingsManager";
 import { LoggingService } from "../../shared/services/loggingService";
 import { SquadCliSource } from "../squad/models";
 import { SQUAD_CLI_NPX_PACKAGE } from "../squad/services/squadCliService";
+import {
+  SquadFeatureTelemetryEvent,
+  SquadTelemetryFeature,
+  SquadTelemetryOutcome,
+  SquadTelemetryService,
+} from "../squad/services/squadTelemetryService";
 import { ExtensionMessage, WebviewMessage } from "./types/webviewMessages";
 
 /**
@@ -36,7 +42,8 @@ export class SquadCliSetupMessageHandler {
   constructor(
     private readonly _postMessage: (message: ExtensionMessage) => void,
     private readonly _redetect: () => Promise<void>,
-    private readonly _logger?: LoggingService
+    private readonly _logger?: LoggingService,
+    private readonly _telemetry?: SquadTelemetryService
   ) {}
 
   /**
@@ -69,6 +76,13 @@ export class SquadCliSetupMessageHandler {
               remediation: "Enter the full path to your Squad CLI executable, then apply the choice again.",
             },
           });
+          this._trackTelemetry({
+            feature: SquadTelemetryFeature.CliSetup,
+            action: "set-invocation",
+            outcome: SquadTelemetryOutcome.Failure,
+            errorCode: "cli-not-found",
+            properties: { source },
+          });
           return;
         }
         await SettingsManager.setSquadCliPath(trimmed);
@@ -77,6 +91,12 @@ export class SquadCliSetupMessageHandler {
       await SettingsManager.setSquadCliSource(source);
       this._logger?.info(`Squad CLI invocation set to '${source}'.`);
       await this._redetect();
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.CliSetup,
+        action: "set-invocation",
+        outcome: SquadTelemetryOutcome.Success,
+        properties: { source },
+      });
     } catch (error) {
       this._logger?.error("Failed to set Squad CLI invocation", error);
       this._postMessage({
@@ -87,6 +107,13 @@ export class SquadCliSetupMessageHandler {
           remediation: "Check your VS Code settings permissions and try again.",
           cause: error,
         },
+      });
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.CliSetup,
+        action: "set-invocation",
+        outcome: SquadTelemetryOutcome.Failure,
+        errorCode: "unknown",
+        properties: { source },
       });
     }
   }
@@ -99,6 +126,12 @@ export class SquadCliSetupMessageHandler {
       confirm
     );
     if (choice !== confirm) {
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.CliSetup,
+        action: "install",
+        outcome: SquadTelemetryOutcome.Cancelled,
+        properties: { source: SquadCliSource.Global },
+      });
       return;
     }
 
@@ -111,6 +144,12 @@ export class SquadCliSetupMessageHandler {
       await SettingsManager.setSquadCliSource(SquadCliSource.Global);
       this._logger?.info("Squad CLI global install started in a terminal.");
       await this._redetect();
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.CliSetup,
+        action: "install",
+        outcome: SquadTelemetryOutcome.Success,
+        properties: { source: SquadCliSource.Global },
+      });
     } catch (error) {
       this._logger?.error("Failed to start Squad CLI install", error);
       this._postMessage({
@@ -122,6 +161,17 @@ export class SquadCliSetupMessageHandler {
           cause: error,
         },
       });
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.CliSetup,
+        action: "install",
+        outcome: SquadTelemetryOutcome.Failure,
+        errorCode: "unknown",
+        properties: { source: SquadCliSource.Global },
+      });
     }
+  }
+
+  private _trackTelemetry(event: SquadFeatureTelemetryEvent): void {
+    this._telemetry?.trackFeatureUsage(event);
   }
 }

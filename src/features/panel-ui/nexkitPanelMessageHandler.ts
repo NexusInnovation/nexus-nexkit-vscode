@@ -43,11 +43,10 @@ export class NexkitPanelMessageHandler {
       async () => {
         await this._squadHandler.handle({ command: "refreshSquadDetection" });
       },
-      _services.logging
+      _services.logging,
+      _services.squadTelemetry
     );
-    this._squadPluginActionHandler = new SquadPluginActionMessageHandler(_services, (message) =>
-      this.sendToWebview(message)
-    );
+    this._squadPluginActionHandler = new SquadPluginActionMessageHandler(_services, (message) => this.sendToWebview(message));
     this._messageHandlers = new Map([
       ["webviewReady", this.handleWebviewReady.bind(this)],
       ["initWorkspace", this.handleInitWorkspace.bind(this)],

@@ -47,6 +47,7 @@ import { SquadFileWriteService } from "../features/squad/services/squadFileWrite
 import { SquadPluginService } from "../features/squad/services/squadPluginService";
 import { SquadPluginActionService } from "../features/squad/services/squadPluginActionService";
 import { SquadProfileService } from "../features/squad/services/squadProfileService";
+import { SquadTelemetryService } from "../features/squad/services/squadTelemetryService";
 
 /**
  * Service container for dependency injection
@@ -55,6 +56,7 @@ import { SquadProfileService } from "../features/squad/services/squadProfileServ
 export interface ServiceContainer {
   logging: LoggingService;
   telemetry: TelemetryService;
+  squadTelemetry: SquadTelemetryService;
   confirmation: ConfirmationService;
   mcpConfig: MCPConfigService;
   aiTemplateData: AITemplateDataService;
@@ -164,10 +166,11 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const logging = LoggingService.getInstance();
   logging.info("Initializing Nexkit extension services...");
 
-  // Telemetry setup performs a network lookup (public IP, up to 5s). Run it in
-  // the background so activation — and the Nexkit panel — never wait on it.
+  // Run telemetry initialization in the background so activation — and the
+  // Nexkit panel — never wait on it.
   const telemetry = new TelemetryService();
   void telemetry.initialize().then(() => telemetry.trackActivation());
+  const squadTelemetry = new SquadTelemetryService(telemetry);
 
   // Initialize other services
   const extensionUpdate = new ExtensionUpdateService();
@@ -286,6 +289,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   return {
     logging,
     telemetry,
+    squadTelemetry,
     confirmation,
     mcpConfig,
     aiTemplateData,

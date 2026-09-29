@@ -19,6 +19,11 @@ import {
 import { SquadFileService, SquadLogKind as SquadFileLogKind } from "../squad/services/squadFileService";
 import { SquadControlledWriteOutcome } from "../squad/services/squadFileWriteService";
 import { SquadPluginService } from "../squad/services/squadPluginService";
+import {
+  SquadFeatureTelemetryEvent,
+  SquadTelemetryFeature,
+  SquadTelemetryOutcome,
+} from "../squad/services/squadTelemetryService";
 import { SquadUpstreamRecommendationService } from "../squad/services/squadUpstreamRecommendationService";
 import { SquadLogDocument, SquadLogKind } from "./webview/types/squadState";
 
@@ -111,6 +116,12 @@ export class SquadPanelMessageHandler {
     const detection = await this._services.squadDetection.detect(this._workspaceRoot());
     if (isSquadErr(detection)) {
       this._emitError(detection.error);
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.State,
+        action: "get",
+        outcome: SquadTelemetryOutcome.Failure,
+        errorCode: detection.error.code,
+      });
       return;
     }
 
@@ -127,6 +138,14 @@ export class SquadPanelMessageHandler {
       if (firstError) {
         this._emitError(firstError);
       }
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.State,
+        action: "get",
+        outcome: firstError ? SquadTelemetryOutcome.Partial : SquadTelemetryOutcome.Success,
+        errorCode: firstError?.code,
+        properties: this._detectionTelemetryProperties(detection.value, upstreams, pluginInventory),
+        measurements: this._inventoryTelemetryMeasurements(upstreams, pluginInventory),
+      });
       return;
     }
 
@@ -147,6 +166,19 @@ export class SquadPanelMessageHandler {
     if (firstError) {
       this._emitError(firstError);
     }
+    this._trackTelemetry({
+      feature: SquadTelemetryFeature.State,
+      action: "get",
+      outcome: firstError ? SquadTelemetryOutcome.Partial : SquadTelemetryOutcome.Success,
+      errorCode: firstError?.code,
+      properties: this._detectionTelemetryProperties(detection.value, upstreams, pluginInventory),
+      measurements: {
+        ...this._inventoryTelemetryMeasurements(upstreams, pluginInventory),
+        rosterCount: roster.length,
+        charterCount: charters.length,
+        logCount: logs.length,
+      },
+    });
   }
 
   /** Re-run detection, wrapping the work with a loading state. */
@@ -156,6 +188,12 @@ export class SquadPanelMessageHandler {
       const detection = await this._services.squadDetection.detect(this._workspaceRoot());
       if (isSquadErr(detection)) {
         this._emitError(detection.error);
+        this._trackTelemetry({
+          feature: SquadTelemetryFeature.Detection,
+          action: "refresh",
+          outcome: SquadTelemetryOutcome.Failure,
+          errorCode: detection.error.code,
+        });
         return;
       }
       let upstreamError: SquadError | undefined;
@@ -167,6 +205,14 @@ export class SquadPanelMessageHandler {
       if (error) {
         this._emitError(error);
       }
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.Detection,
+        action: "refresh",
+        outcome: error ? SquadTelemetryOutcome.Partial : SquadTelemetryOutcome.Success,
+        errorCode: error?.code,
+        properties: this._detectionTelemetryProperties(detection.value, upstreams, pluginInventory),
+        measurements: this._inventoryTelemetryMeasurements(upstreams, pluginInventory),
+      });
     } finally {
       this._setLoading(false);
     }
@@ -183,6 +229,12 @@ export class SquadPanelMessageHandler {
       const updates = await this._services.squadUpdates.checkUpdates(this._workspaceRoot());
       if (isSquadErr(updates)) {
         this._emitError(updates.error);
+        this._trackTelemetry({
+          feature: SquadTelemetryFeature.Updates,
+          action: "check",
+          outcome: SquadTelemetryOutcome.Failure,
+          errorCode: updates.error.code,
+        });
         return;
       }
 
@@ -196,6 +248,14 @@ export class SquadPanelMessageHandler {
       if (error) {
         this._emitError(error);
       }
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.Updates,
+        action: "check",
+        outcome: error ? SquadTelemetryOutcome.Partial : SquadTelemetryOutcome.Success,
+        errorCode: error?.code,
+        properties: this._detectionTelemetryProperties(updates.value.detection, upstreams, pluginInventory),
+        measurements: this._inventoryTelemetryMeasurements(upstreams, pluginInventory),
+      });
     } finally {
       this._setLoading(false);
     }
@@ -206,6 +266,13 @@ export class SquadPanelMessageHandler {
     const writer = this._services.squadWrite;
     if (!writer) {
       this._emitNoWorkspaceWriteError();
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.Write,
+        action: "save-charter",
+        outcome: SquadTelemetryOutcome.Failure,
+        errorCode: "not-a-workspace",
+        properties: { hasWorkspace: false, docKind: "charter" },
+      });
       return;
     }
 
@@ -214,6 +281,13 @@ export class SquadPanelMessageHandler {
       const result = await writer.saveCharter(message.agentId, message.content);
       if (isSquadErr(result)) {
         this._emitError(result.error);
+        this._trackTelemetry({
+          feature: SquadTelemetryFeature.Write,
+          action: "save-charter",
+          outcome: SquadTelemetryOutcome.Failure,
+          errorCode: result.error.code,
+          properties: { hasWorkspace: true, docKind: "charter" },
+        });
         return;
       }
 
@@ -221,6 +295,17 @@ export class SquadPanelMessageHandler {
         command: "squadCharterSaved",
         charter: result.value.charter,
         result: this._toWriteSummary(result.value),
+      });
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.Write,
+        action: "save-charter",
+        outcome: SquadTelemetryOutcome.Success,
+        properties: {
+          hasWorkspace: true,
+          docKind: "charter",
+          created: result.value.created,
+          backupCreated: result.value.backupPath !== null,
+        },
       });
     } finally {
       this._setLoading(false);
@@ -232,15 +317,30 @@ export class SquadPanelMessageHandler {
     const writer = this._services.squadWrite;
     if (!writer) {
       this._emitNoWorkspaceWriteError();
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.Write,
+        action: "save-doc",
+        outcome: SquadTelemetryOutcome.Failure,
+        errorCode: "not-a-workspace",
+        properties: { hasWorkspace: false },
+      });
       return;
     }
 
     if (!this._isSupportedDocKind(message.kind)) {
-      this._emitError({
+      const error: SquadError = {
         code: "file-write-failed",
         message: "Unsupported Squad document type.",
         remediation: "Refresh the Squad panel and try saving a supported document.",
         detail: String(message.kind),
+      };
+      this._emitError(error);
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.Write,
+        action: "save-doc",
+        outcome: SquadTelemetryOutcome.Failure,
+        errorCode: error.code,
+        properties: { hasWorkspace: true },
       });
       return;
     }
@@ -252,6 +352,13 @@ export class SquadPanelMessageHandler {
       });
       if (isSquadErr(result)) {
         this._emitError(result.error);
+        this._trackTelemetry({
+          feature: SquadTelemetryFeature.Write,
+          action: "save-doc",
+          outcome: SquadTelemetryOutcome.Failure,
+          errorCode: result.error.code,
+          properties: { hasWorkspace: true, docKind: message.kind },
+        });
         return;
       }
 
@@ -259,6 +366,17 @@ export class SquadPanelMessageHandler {
         command: "squadDocSaved",
         doc: result.value.doc,
         result: this._toWriteSummary(result.value),
+      });
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.Write,
+        action: "save-doc",
+        outcome: SquadTelemetryOutcome.Success,
+        properties: {
+          hasWorkspace: true,
+          docKind: message.kind,
+          created: result.value.created,
+          backupCreated: result.value.backupPath !== null,
+        },
       });
     } finally {
       this._setLoading(false);
@@ -270,20 +388,33 @@ export class SquadPanelMessageHandler {
    * backup-first controlled write service. JSON/schema failures surface as a
    * `parse-failed` squadError and nothing is written.
    */
-  private async handleSaveSquadModelConfig(
-    message: Extract<WebviewMessage, { command: "saveSquadModelConfig" }>
-  ): Promise<void> {
+  private async handleSaveSquadModelConfig(message: Extract<WebviewMessage, { command: "saveSquadModelConfig" }>): Promise<void> {
     const writer = this._services.squadWrite;
     if (!writer) {
       this._emitNoWorkspaceWriteError();
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.ModelConfig,
+        action: "save",
+        outcome: SquadTelemetryOutcome.Failure,
+        errorCode: "not-a-workspace",
+        properties: { hasWorkspace: false },
+      });
       return;
     }
 
     if (typeof message.content !== "string") {
-      this._emitError({
+      const error: SquadError = {
         code: "file-write-failed",
         message: "The Squad model configuration could not be saved because the edit was empty or malformed.",
         remediation: "Reopen the model configuration editor and try saving again.",
+      };
+      this._emitError(error);
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.ModelConfig,
+        action: "save",
+        outcome: SquadTelemetryOutcome.Failure,
+        errorCode: error.code,
+        properties: { hasWorkspace: true },
       });
       return;
     }
@@ -293,6 +424,13 @@ export class SquadPanelMessageHandler {
       const result = await writer.saveModelConfig(message.content);
       if (isSquadErr(result)) {
         this._emitError(result.error);
+        this._trackTelemetry({
+          feature: SquadTelemetryFeature.ModelConfig,
+          action: "save",
+          outcome: SquadTelemetryOutcome.Failure,
+          errorCode: result.error.code,
+          properties: { hasWorkspace: true },
+        });
         return;
       }
 
@@ -300,6 +438,16 @@ export class SquadPanelMessageHandler {
         command: "squadModelConfigSaved",
         modelConfig: result.value.document,
         result: this._toWriteSummary(result.value),
+      });
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.ModelConfig,
+        action: "save",
+        outcome: SquadTelemetryOutcome.Success,
+        properties: {
+          hasWorkspace: true,
+          created: result.value.created,
+          backupCreated: result.value.backupPath !== null,
+        },
       });
     } finally {
       this._setLoading(false);
@@ -318,9 +466,20 @@ export class SquadPanelMessageHandler {
       const result = await this._services.squadCli.runDoctor({ cwd: this._workspaceRoot() });
       if (isSquadErr(result)) {
         this._emitError(result.error);
+        this._trackTelemetry({
+          feature: SquadTelemetryFeature.Doctor,
+          action: "run",
+          outcome: result.error.code === "cancelled" ? SquadTelemetryOutcome.Cancelled : SquadTelemetryOutcome.Failure,
+          errorCode: result.error.code,
+        });
         return;
       }
       this._postMessage({ command: "squadDoctorUpdate", doctor: result.value });
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.Doctor,
+        action: "run",
+        outcome: SquadTelemetryOutcome.Success,
+      });
     } finally {
       this._setLoading(false);
     }
@@ -337,9 +496,21 @@ export class SquadPanelMessageHandler {
       const result = await this._services.squadExport.exportSquad(message.request ?? {});
       if (isSquadErr(result)) {
         this._emitError(result.error);
+        this._trackTelemetry({
+          feature: SquadTelemetryFeature.Export,
+          action: "run",
+          outcome: result.error.code === "cancelled" ? SquadTelemetryOutcome.Cancelled : SquadTelemetryOutcome.Failure,
+          errorCode: result.error.code,
+        });
         return;
       }
       this._postMessage({ command: "squadExportResult", export: result.value });
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.Export,
+        action: "run",
+        outcome: SquadTelemetryOutcome.Success,
+        properties: { targetKind: result.value.target.kind },
+      });
     } finally {
       this._setLoading(false);
     }
@@ -358,6 +529,20 @@ export class SquadPanelMessageHandler {
       if (inventory.error) {
         this._emitError(inventory.error);
       }
+      this._trackTelemetry({
+        feature: SquadTelemetryFeature.Plugins,
+        action: "refresh",
+        outcome: inventory.error ? SquadTelemetryOutcome.Partial : SquadTelemetryOutcome.Success,
+        errorCode: inventory.error?.code,
+        properties: {
+          hasMarketplaces: inventory.marketplaces.length > 0,
+          hasPlugins: inventory.plugins.length > 0,
+        },
+        measurements: {
+          marketplaceCount: inventory.marketplaces.length,
+          pluginCount: inventory.plugins.length,
+        },
+      });
     } finally {
       this._setLoading(false);
     }
@@ -556,6 +741,38 @@ export class SquadPanelMessageHandler {
 
   private _isSupportedDocKind(kind: SquadDocKind): kind is SquadDocKind {
     return kind === SquadDocKind.Decisions || kind === SquadDocKind.Routing;
+  }
+
+  private _trackTelemetry(event: SquadFeatureTelemetryEvent): void {
+    this._services.squadTelemetry?.trackFeatureUsage(event);
+  }
+
+  private _detectionTelemetryProperties(
+    detection: SquadDetectionResult,
+    upstreams: SquadUpstreamSnapshot,
+    pluginInventory: SquadPluginInventory
+  ): Record<string, boolean | string> {
+    return {
+      projectInstallState: detection.project.installState,
+      projectVersionStatus: detection.project.versionStatus,
+      cliInstalled: detection.cli.installed,
+      cliSource: detection.cli.source ?? "unknown",
+      cliVersionStatus: detection.cli.versionStatus,
+      hasUpstreams: upstreams.upstreams.length > 0,
+      hasMarketplaces: pluginInventory.marketplaces.length > 0,
+      hasPlugins: pluginInventory.plugins.length > 0,
+    };
+  }
+
+  private _inventoryTelemetryMeasurements(
+    upstreams: SquadUpstreamSnapshot,
+    pluginInventory: SquadPluginInventory
+  ): Record<string, number> {
+    return {
+      upstreamCount: upstreams.upstreams.length,
+      marketplaceCount: pluginInventory.marketplaces.length,
+      pluginCount: pluginInventory.plugins.length,
+    };
   }
 
   private _workspaceRoot(): vscode.Uri | undefined {
