@@ -1,9 +1,12 @@
+import * as path from "path";
 import * as vscode from "vscode";
 import { LoggingService } from "../shared/services/loggingService";
 import { TelemetryService } from "../shared/services/telemetryService";
 import { ConfirmationService } from "../shared/services/confirmationService";
 import { MCPConfigService } from "../features/mcp-management/mcpConfigService";
 import { MarketplaceService } from "../features/marketplace-management/marketplaceService";
+import { MarketplacePluginReader } from "../features/marketplace-management/marketplacePluginReader";
+import { VsCodePluginEnablementReader } from "../features/marketplace-management/vsCodePluginEnablementReader";
 import { UserDirectoryService } from "../shared/services/userDirectoryService";
 import { UpdateStatusBarService } from "../features/extension-updates/updateStatusBarService";
 import { GitHubTemplateBackupService } from "../features/backup-management/backupService";
@@ -85,7 +88,13 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const workspaceInitialization = new WorkspaceInitializationService();
   const modeSelection = new ModeSelectionService();
   const devOpsConfig = new DevOpsMcpConfigService();
-  const marketplace = new MarketplaceService();
+  const marketplace = new MarketplaceService(
+    new MarketplacePluginReader(),
+    // VS Code's state.vscdb sits next to the per-extension global storage folders.
+    new VsCodePluginEnablementReader(
+      context.globalStorageUri ? path.join(path.dirname(context.globalStorageUri.fsPath), "state.vscdb") : undefined
+    )
+  );
   const commitMessage = new CommitMessageService();
   const githubAuthPrompt = new GitHubAuthPromptService();
   const hooksConfigDeployer = new HooksConfigDeployer();

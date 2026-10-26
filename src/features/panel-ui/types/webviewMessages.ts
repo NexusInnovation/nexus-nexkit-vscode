@@ -1,5 +1,5 @@
 import { OperationMode } from "../../../shared/constants/operationMode";
-import { MarketplaceSuggestion } from "../../marketplace-management/models/marketplace";
+import { MarketplaceNode, MarketplaceSuggestion } from "../../marketplace-management/models/marketplace";
 import { DevOpsConnection } from "../../apm-devops/models/devOpsConnection";
 import { WorkflowInfo } from "../../github-workflow-runner/githubWorkflowRunnerService";
 
@@ -13,6 +13,10 @@ export type WebviewMessage =
   | { command: "getMarketplaces" }
   | { command: "addMarketplace"; source: string }
   | { command: "removeMarketplace"; source: string }
+  | { command: "toggleMarketplace"; source: string; enabled: boolean }
+  | { command: "togglePlugin"; path: string; enabled: boolean }
+  | { command: "openMarketplaceRepo"; source: string }
+  | { command: "openVsCodePluginSettings" }
   | { command: "openPluginBrowser" }
   | { command: "openFeedback" }
   | { command: "openConvertToMarkdown" }
@@ -42,6 +46,8 @@ export type ExtensionMessage =
       /** Entries of `chat.plugins.marketplaces` (user scope). */
       configured: string[];
       suggested: MarketplaceSuggestion[];
+      /** Configured marketplaces with their plugins. */
+      tree: MarketplaceNode[];
     }
   | {
       command: "marketplaceError";

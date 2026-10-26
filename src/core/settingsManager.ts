@@ -11,6 +11,7 @@ export class SettingsManager {
   private static readonly TELEMETRY_SECTION = "telemetry";
   private static readonly CHAT_SECTION = "chat";
   private static readonly PLUGIN_MARKETPLACES = "plugins.marketplaces";
+  private static readonly PLUGIN_LOCATIONS = "pluginLocations";
 
   // Workspace state keys
   private static readonly WORKSPACE_INITIALIZED_KEY = "workspaceInitialized";
@@ -194,6 +195,16 @@ export class SettingsManager {
     await vscode.workspace
       .getConfiguration(this.CHAT_SECTION)
       .update(this.PLUGIN_MARKETPLACES, marketplaces, vscode.ConfigurationTarget.Global);
+  }
+
+  // Agent plugin locations (VS Code `chat.pluginLocations`, user scope): plugin folder → enabled
+  static getPluginLocations(): Record<string, boolean> {
+    const value = vscode.workspace.getConfiguration(this.CHAT_SECTION).inspect<Record<string, boolean>>(this.PLUGIN_LOCATIONS)?.globalValue;
+    return value && typeof value === "object" && !Array.isArray(value) ? { ...value } : {};
+  }
+
+  static async setPluginLocations(locations: Record<string, boolean>): Promise<void> {
+    await vscode.workspace.getConfiguration(this.CHAT_SECTION).update(this.PLUGIN_LOCATIONS, locations, vscode.ConfigurationTarget.Global);
   }
 
   // Commit Message

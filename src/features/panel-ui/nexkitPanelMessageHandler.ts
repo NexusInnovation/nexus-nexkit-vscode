@@ -3,6 +3,8 @@ import { SettingsManager } from "../../core/settingsManager";
 import { Commands } from "../../shared/constants/commands";
 import { WebviewMessage, ExtensionMessage } from "./types/webviewMessages";
 import { ServiceContainer } from "../../core/serviceContainer";
+import { MarketplaceNode } from "../marketplace-management/models/marketplace";
+import { MarketplacePluginReader } from "../marketplace-management/marketplacePluginReader";
 
 /**
  * Handles message processing and business logic for the Nexkit panel webview
@@ -30,6 +32,10 @@ export class NexkitPanelMessageHandler {
       ["getMarketplaces", this.handleGetMarketplaces.bind(this)],
       ["addMarketplace", this.handleAddMarketplace.bind(this)],
       ["removeMarketplace", this.handleRemoveMarketplace.bind(this)],
+      ["toggleMarketplace", this.handleToggleMarketplace.bind(this)],
+      ["togglePlugin", this.handleTogglePlugin.bind(this)],
+      ["openMarketplaceRepo", this.handleOpenMarketplaceRepo.bind(this)],
+      ["openVsCodePluginSettings", this.handleOpenVsCodePluginSettings.bind(this)],
       ["openPluginBrowser", this.handleOpenPluginBrowser.bind(this)],
       ["openFeedback", this.handleOpenFeedback.bind(this)],
       ["openConvertToMarkdown", this.handleOpenConvertToMarkdown.bind(this)],
@@ -45,7 +51,7 @@ export class NexkitPanelMessageHandler {
     ]);
 
     // Auto-refresh marketplaces when the setting changes (including manual settings.json edits)
-    this._services.marketplace.onDidChange(() => this.sendMarketplaces());
+    this._services.marketplace.onDidChange(() => void this.sendMarketplaces());
 
     // Auto-refresh all data when workspace is initialized
     this._services.workspaceInitialization.onWorkspaceInitialized(() => this.initialize());
@@ -66,7 +72,7 @@ export class NexkitPanelMessageHandler {
 
   public async initialize(): Promise<void> {
     this.sendWorkspaceState();
-    this.sendMarketplaces();
+    await this.sendMarketplaces();
     this.sendDevOpsConnections();
     this.sendWorkflowList();
   }
@@ -96,14 +102,14 @@ export class NexkitPanelMessageHandler {
   // ============================================================================
 
   private async handleGetMarketplaces(message: WebviewMessage): Promise<void> {
-    this.sendMarketplaces();
+    await this.sendMarketplaces();
   }
 
   private async handleAddMarketplace(message: WebviewMessage & { command: "addMarketplace" }): Promise<void> {
     this.trackWebviewAction("addMarketplace");
     try {
       await this._services.marketplace.add(message.source);
-      this.sendMarketplaces();
+      await this.sendMarketplaces();
     } catch (error) {
       this.sendToWebview({
         command: "marketplaceError",
@@ -116,7 +122,7 @@ export class NexkitPanelMessageHandler {
     this.trackWebviewAction("removeMarketplace");
     try {
       await this._services.marketplace.remove(message.source);
-      this.sendMarketplaces();
+      await this.sendMarketplaces();
     } catch (error) {
       console.error("Failed to remove marketplace:", error);
       this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
@@ -126,6 +132,50 @@ export class NexkitPanelMessageHandler {
         command: "marketplaceError",
         error: error instanceof Error ? error.message : String(error),
       });
+    }
+  }
+
+  private async handleToggleMarketplace(message: WebviewMessage & { command: "toggleMarketplace" }): Promise<void> {
+    this.trackWebviewAction("toggleMarketplace");
+    await this.runMarketplaceAction("toggleMarketplace", () => this._services.marketplace.setMarketplaceEnabled(message.source, message.enabled));
+  }
+
+  private async handleTogglePlugin(message: WebviewMessage & { command: "togglePlugin" }): Promise<void> {
+    this.trackWebviewAction("togglePlugin");
+    await this.runMarketplaceAction("togglePlugin", () => this._services.marketplace.setPluginEnabled(message.path, message.enabled));
+  }
+
+  private async handleOpenMarketplaceRepo(message: WebviewMessage & { command: "openMarketplaceRepo" }): Promise<void> {
+    this.trackWebviewAction("openMarketplaceRepo");
+    const url = MarketplacePluginReader.toUrl(message.source);
+    if (!url) {
+      return;
+    }
+    if (url.toLowerCase().startsWith("file:")) {
+      await vscode.commands.executeCommand("revealFileInOS", vscode.Uri.parse(url));
+    } else {
+      await vscode.env.openExternal(vscode.Uri.parse(url));
+    }
+  }
+
+  private async handleOpenVsCodePluginSettings(message: WebviewMessage): Promise<void> {
+    this.trackWebviewAction("openVsCodePluginSettings");
+    try {
+      await vscode.commands.executeCommand("aiCustomization.openManagementEditor", "plugins");
+    } catch {
+      // Older VS Code builds: fall back to the plugin browser.
+      await vscode.commands.executeCommand("workbench.agentPlugins.browse");
+    }
+  }
+
+  private async runMarketplaceAction(context: string, action: () => Promise<void>): Promise<void> {
+    try {
+      await action();
+      await this.sendMarketplaces();
+    } catch (error) {
+      console.error(`Failed to ${context}:`, error);
+      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), { context: `webview.${context}` });
+      this.sendToWebview({ command: "marketplaceError", error: error instanceof Error ? error.message : String(error) });
     }
   }
 
@@ -260,11 +310,18 @@ export class NexkitPanelMessageHandler {
     });
   }
 
-  private sendMarketplaces(): void {
+  private async sendMarketplaces(): Promise<void> {
+    let tree: MarketplaceNode[] = [];
+    try {
+      tree = await this._services.marketplace.getTree();
+    } catch (error) {
+      console.error("Failed to read marketplace plugins:", error);
+    }
     this.sendToWebview({
       command: "marketplacesUpdate",
       configured: this._services.marketplace.getConfigured(),
       suggested: this._services.marketplace.getSuggestions(),
+      tree,
     });
   }
 

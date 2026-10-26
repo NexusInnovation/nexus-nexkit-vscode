@@ -56,6 +56,7 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
             marketplaces: {
               configured: message.configured,
               suggested: message.suggested,
+              tree: message.tree,
               isReady: true,
               error: undefined,
             },

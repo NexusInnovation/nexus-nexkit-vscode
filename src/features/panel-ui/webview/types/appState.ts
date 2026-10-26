@@ -1,5 +1,5 @@
 import { OperationMode } from "../../../../shared/constants/operationMode";
-import { MarketplaceSuggestion } from "../../../marketplace-management/models/marketplace";
+import { MarketplaceNode, MarketplaceSuggestion } from "../../../marketplace-management/models/marketplace";
 /**
  * Global application state types for the Nexkit webview
  * Centralized state management to prevent timing issues with component mounting
@@ -29,6 +29,7 @@ export interface AppState {
   marketplaces: {
     configured: string[];
     suggested: MarketplaceSuggestion[];
+    tree: MarketplaceNode[];
     isReady: boolean;
     error?: string;
   };
@@ -65,6 +66,7 @@ export const initialAppState: AppState = {
   marketplaces: {
     configured: [],
     suggested: [],
+    tree: [],
     isReady: false,
   },
   devOpsConnections: {
