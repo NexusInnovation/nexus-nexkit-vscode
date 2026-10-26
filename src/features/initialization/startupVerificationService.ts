@@ -1,6 +1,5 @@
 import { LoggingService } from "../../shared/services/loggingService";
 import { GitExcludeConfigDeployer } from "./gitExcludeConfigDeployer";
-import { NexkitFileMigrationService, MigrationSummary } from "./nexkitFileMigrationService";
 import { HooksConfigDeployer } from "./hooksConfigDeployer";
 import { GitHubAuthPromptService } from "./githubAuthPromptService";
 import { getWorkspaceRoot } from "../../shared/utils/fileHelper";
@@ -17,7 +16,6 @@ export class StartupVerificationService {
   constructor(
     private readonly _gitExcludeConfigDeployer: GitExcludeConfigDeployer,
     private readonly _hooksConfigDeployer: HooksConfigDeployer,
-    private readonly _nexkitFileMigration: NexkitFileMigrationService,
     private readonly _githubAuthPrompt: GitHubAuthPromptService
   ) {}
 
@@ -45,15 +43,11 @@ export class StartupVerificationService {
    * This is READ-ONLY with respect to settings.json — it never deploys user- or workspace-level settings.
    * Settings deployment is performed only from the sanctioned initialization and migration entry points.
    * @param workspaceRoot Absolute path to the workspace root
-   * @returns Summary of migrated files, or null if nothing was migrated
    */
-  public async verifyWorkspaceConfiguration(workspaceRoot: string): Promise<MigrationSummary | null> {
+  public async verifyWorkspaceConfiguration(workspaceRoot: string): Promise<void> {
     await this._gitExcludeConfigDeployer.deployGitExclude(workspaceRoot);
 
     // Always deploy the run-tests hook into the workspace .nexkit directory when a workspace is open.
     await this._hooksConfigDeployer.deployRunTestsHook(workspaceRoot);
-
-    // Migrate any nexkit.* files still in .github/<type>/ to .nexkit/<type>/
-    return await this._nexkitFileMigration.migrateNexkitFiles(workspaceRoot);
   }
 }

@@ -18,12 +18,14 @@
     "Other"
   ],
   "dependencies": {
-    "applicationinsights": "^3.15.1",
-    "markdown-it": "^14.1.0",
+    "applicationinsights": "^3.17.0",
+    "markdown-it": "^14.3.3",
     "prettier": "^3.7.4"
   },
   "overrides": {
-    "@opentelemetry/propagator-jaeger": "2.10.0"
+    "@opentelemetry/propagator-jaeger": "2.10.0",
+    "@grpc/grpc-js": "^1.14.5",
+    "@azure/msal-node": "^7.1.0"
   },
   "activationEvents": [
     "onStartupFinished"
@@ -68,43 +70,15 @@
         "icon": "$(gear)"
       },
       {
-        "command": "nexus-nexkit-vscode.restoreBackup",
-        "title": "Nexkit: Restore Template Backup",
+        "command": "nexus-nexkit-vscode.addNexusMarketplace",
+        "title": "Nexkit: Add Nexus Plugin Marketplace",
         "category": "Nexkit"
-      },
-      {
-        "command": "nexus-nexkit-vscode.cleanupBackup",
-        "title": "Nexkit: Cleanup Template Backups",
-        "category": "Nexkit"
-      },
-      {
-        "command": "nexus-nexkit-vscode.updateInstalledTemplates",
-        "title": "Nexkit: Update Installed Templates",
-        "category": "Nexkit"
-      },
-      {
-        "command": "nexus-nexkit-vscode.saveProfile",
-        "title": "Nexkit: Save Current Profile",
-        "category": "Nexkit",
-        "icon": "$(save)"
       },
       {
         "command": "nexus-nexkit-vscode.goToModeSelection",
         "title": "Nexkit: Go to Mode Selection",
         "category": "Nexkit",
         "icon": "$(home)"
-      },
-      {
-        "command": "nexus-nexkit-vscode.applyProfile",
-        "title": "Nexkit: Apply Profile",
-        "category": "Nexkit",
-        "icon": "$(rocket)"
-      },
-      {
-        "command": "nexus-nexkit-vscode.deleteProfile",
-        "title": "Nexkit: Delete Profile",
-        "category": "Nexkit",
-        "icon": "$(trash)"
       },
       {
         "command": "nexus-nexkit-vscode.switchMode",
@@ -150,24 +124,14 @@
           "group": "navigation@1"
         },
         {
-          "command": "nexus-nexkit-vscode.saveProfile",
+          "command": "nexus-nexkit-vscode.installUserMCPs",
           "when": "view == nexkitPanelView",
           "group": "navigation@2"
         },
         {
-          "command": "nexus-nexkit-vscode.applyProfile",
-          "when": "view == nexkitPanelView",
-          "group": "navigation@3"
-        },
-        {
-          "command": "nexus-nexkit-vscode.installUserMCPs",
-          "when": "view == nexkitPanelView",
-          "group": "navigation@4"
-        },
-        {
           "command": "nexus-nexkit-vscode.openSettings",
           "when": "view == nexkitPanelView",
-          "group": "navigation@5"
+          "group": "navigation@3"
         }
       ],
       "scm/title": [
@@ -222,88 +186,6 @@
     "configuration": {
       "title": "Nexkit",
       "properties": {
-        "nexkit.repositories": {
-          "type": "array",
-          "default": [
-            {
-              "name": "Awesome Copilot",
-              "type": "github",
-              "url": "https://github.com/github/awesome-copilot",
-              "enabled": true,
-              "paths": {
-                "agents": "agents",
-                "prompts": "prompts",
-                "skills": "skills",
-                "instructions": "instructions"
-              }
-            }
-          ],
-          "scope": "application",
-          "markdownDescription": "Additional repository sources for agents, prompts, and instructions. Supports both **GitHub repositories** and **local folders**. Default repository \"Nexus Templates\" is always included.\n\n**GitHub Example:**\n```json\n{\n  \"name\": \"My GitHub Repo\",\n  \"type\": \"github\",\n  \"url\": \"https://github.com/owner/repo\",\n  \"enabled\": true,\n  \"paths\": { \"agents\": \"agents\" }\n}\n```\n\n**Local Folder Example:**\n```json\n{\n  \"name\": \"My Local Templates\",\n  \"type\": \"local\",\n  \"url\": \"./templates\",\n  \"enabled\": true,\n  \"paths\": { \"prompts\": \"prompts\" }\n}\n```",
-          "items": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string",
-                "description": "Display name for the repository"
-              },
-              "type": {
-                "type": "string",
-                "enum": [
-                  "github",
-                  "local"
-                ],
-                "default": "github",
-                "description": "Repository type: 'github' for GitHub repositories, 'local' for local folders"
-              },
-              "url": {
-                "type": "string",
-                "description": "GitHub repository URL (e.g., https://github.com/owner/repo) or local folder path (e.g., ./templates, C:\\templates, ~/templates)"
-              },
-              "branch": {
-                "type": "string",
-                "default": "main",
-                "description": "Git branch to use (GitHub repositories only)"
-              },
-              "enabled": {
-                "type": "boolean",
-                "default": true,
-                "description": "Enable or disable this repository"
-              },
-              "paths": {
-                "type": "object",
-                "description": "Paths to different content types in the repository",
-                "properties": {
-                  "agents": {
-                    "type": "string",
-                    "description": "Path to agents directory"
-                  },
-                  "prompts": {
-                    "type": "string",
-                    "description": "Path to prompts directory"
-                  },
-                  "skills": {
-                    "type": "string",
-                    "description": "Path to skills directory"
-                  },
-                  "instructions": {
-                    "type": "string",
-                    "description": "Path to instructions directory"
-                  },
-                  "chatmodes": {
-                    "type": "string",
-                    "description": "Path to chatmodes directory"
-                  }
-                }
-              }
-            },
-            "required": [
-              "name",
-              "url",
-              "paths"
-            ]
-          }
-        },
         "nexkit.extension.autoCheckUpdates": {
           "type": "boolean",
           "default": true,
@@ -315,29 +197,6 @@
           "default": 24,
           "scope": "application",
           "description": "Hours between automatic extension update checks."
-        },
-        "nexkit.templates.autoRefreshIntervalMinutes": {
-          "type": "number",
-          "default": 30,
-          "minimum": 5,
-          "scope": "application",
-          "description": "Minutes between automatic remote template refresh checks."
-        },
-        "nexkit.templates.autoUpdateOnRefresh": {
-          "type": "boolean",
-          "default": true,
-          "scope": "application",
-          "description": "Automatically update installed templates when new versions are detected from repositories. When disabled, a button will appear in the sidebar to manually trigger updates."
-        },
-        "nexkit.templates.deployMode": {
-          "type": "string",
-          "enum": [
-            "user",
-            "workspace"
-          ],
-          "default": "workspace",
-          "scope": "resource",
-          "description": "Where templates are deployed. 'workspace' installs to .nexkit/ in the current workspace (default). 'user' installs to the user-level .nexkit directory for backward compatibility."
         },
         "nexkit.mcpSetup.dismissed": {
           "type": "boolean",
@@ -371,43 +230,7 @@
           ],
           "default": "Developers",
           "scope": "application",
-          "description": "Nexkit operation mode. Developers mode shows all features (Actions, Profiles, Templates, Repositories). APM mode shows only essential features."
-        },
-        "nexkit.profiles.confirmBeforeSwitch": {
-          "type": "boolean",
-          "default": true,
-          "scope": "application",
-          "description": "Ask to save current templates before switching profiles if changes are detected. When enabled, you'll be prompted to update your last applied profile or save as new before switching."
-        },
-        "nexkit.profiles": {
-          "type": "array",
-          "default": [],
-          "scope": "application",
-          "description": "Saved template profiles for quick workspace setup. Each profile is a collection of templates that can be applied to a workspace.",
-          "items": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string",
-                "description": "Profile name"
-              },
-              "templates": {
-                "type": "array",
-                "description": "Collection of templates in this profile",
-                "items": {
-                  "type": "object"
-                }
-              },
-              "createdAt": {
-                "type": "number",
-                "description": "Timestamp when profile was created"
-              },
-              "updatedAt": {
-                "type": "number",
-                "description": "Timestamp when profile was last updated"
-              }
-            }
-          }
+          "description": "Nexkit operation mode. Developers mode shows all features (Marketplaces, Tools). APM mode shows only essential features."
         },
         "nexkit.userMode": {
           "type": "string",
@@ -418,7 +241,7 @@
           ],
           "default": "notset",
           "scope": "application",
-          "markdownDescription": "User mode for Nexkit. **APM Mode** provides optimized templates and settings for Application Performance Management workflows. **Developer Mode** provides comprehensive development tools and templates."
+          "markdownDescription": "User mode for Nexkit. **APM Mode** provides optimized settings for Application Performance Management workflows. **Developer Mode** provides comprehensive development tools."
         },
         "nexkit.commitMessage.enabled": {
           "type": "boolean",

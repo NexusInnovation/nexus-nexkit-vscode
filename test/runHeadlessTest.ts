@@ -12,7 +12,7 @@ import { glob } from "glob";
  * Tests that can run headlessly (no direct or transitive 'vscode' dependency).
  * All other tests require the VS Code Electron host.
  */
-const HEADLESS_TESTS: string[] = ["devOpsUrlParser.test.js", "fuzzySearch.test.js", "templateDiagnostics.test.js"];
+const HEADLESS_TESTS: string[] = ["devOpsUrlParser.test.js"];
 
 async function main(): Promise<void> {
   const mocha = new Mocha({

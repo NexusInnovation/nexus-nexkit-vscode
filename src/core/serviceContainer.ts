@@ -1,10 +1,13 @@
+import * as path from "path";
 import * as vscode from "vscode";
 import { LoggingService } from "../shared/services/loggingService";
 import { TelemetryService } from "../shared/services/telemetryService";
 import { ConfirmationService } from "../shared/services/confirmationService";
 import { MCPConfigService } from "../features/mcp-management/mcpConfigService";
-import { AITemplateDataService } from "../features/ai-template-files/services/aiTemplateDataService";
-import { TemplateMetadataService } from "../features/ai-template-files/services/templateMetadataService";
+import { MarketplaceService } from "../features/marketplace-management/marketplaceService";
+import { MarketplacePluginReader } from "../features/marketplace-management/marketplacePluginReader";
+import { VsCodePluginEnablementReader } from "../features/marketplace-management/vsCodePluginEnablementReader";
+import { UserDirectoryService } from "../shared/services/userDirectoryService";
 import { UpdateStatusBarService } from "../features/extension-updates/updateStatusBarService";
 import { GitHubTemplateBackupService } from "../features/backup-management/backupService";
 import { ExtensionUpdateService } from "../features/extension-updates/extensionUpdateService";
@@ -12,23 +15,16 @@ import { GitExcludeConfigDeployer } from "../features/initialization/gitExcludeC
 import { MCPConfigDeployer } from "../features/initialization/mcpConfigDeployer";
 import { RecommendedExtensionsConfigDeployer } from "../features/initialization/recommendedExtensionsConfigDeployer";
 import { RecommendedSettingsConfigDeployer } from "../features/initialization/recommendedSettingsConfigDeployer";
-import { AITemplateFilesDeployer } from "../features/initialization/aiTemplateFilesDeployer";
 import { WorkspaceInitPromptService } from "../features/initialization/workspaceInitPromptService";
 import { WorkspaceInitializationService } from "../features/initialization/workspaceInitializationService";
 import { ModeSelectionPromptService } from "../features/initialization/modeSelectionPromptService";
-import { InstalledTemplatesStateManager } from "../features/ai-template-files/services/installedTemplatesStateManager";
-import { ProfileService } from "../features/profile-management/services/profileService";
 import { ModeSelectionService } from "../features/initialization/modeSelectionService";
 import { DevOpsMcpConfigService } from "../features/apm-devops/devOpsMcpConfigService";
-import { NexkitFileMigrationService } from "../features/initialization/nexkitFileMigrationService";
 import { CommitMessageService } from "../features/commit-management/commitMessageService";
-import { TemplateMetadataScannerService } from "../features/ai-template-files/services/templateMetadataScannerService";
 import { GitHubAuthPromptService } from "../features/initialization/githubAuthPromptService";
 import { StartupVerificationService } from "../features/initialization/startupVerificationService";
-import { NexkitFileWatcherService } from "../features/nexkit-file-watcher/nexkitFileWatcherService";
 import { GitHubWorkflowRunnerService } from "../features/github-workflow-runner/githubWorkflowRunnerService";
 import { HooksConfigDeployer } from "../features/initialization/hooksConfigDeployer";
-import { UserDirectoryService } from "../features/ai-template-files/services/userDirectoryService";
 import { ConvertToMarkdownPanelService } from "../features/convert-to-markdown/convertToMarkdownPanelService";
 import { MarkitdownConversionService } from "../features/convert-to-markdown/markitdownConversionService";
 
@@ -41,9 +37,6 @@ export interface ServiceContainer {
   telemetry: TelemetryService;
   confirmation: ConfirmationService;
   mcpConfig: MCPConfigService;
-  aiTemplateData: AITemplateDataService;
-  templateMetadata: TemplateMetadataService;
-  installedTemplatesState: InstalledTemplatesStateManager;
   updateStatusBar: UpdateStatusBarService;
   extensionUpdate: ExtensionUpdateService;
   backup: GitHubTemplateBackupService;
@@ -51,22 +44,17 @@ export interface ServiceContainer {
   mcpConfigDeployer: MCPConfigDeployer;
   recommendedExtensionsConfigDeployer: RecommendedExtensionsConfigDeployer;
   recommendedSettingsConfigDeployer: RecommendedSettingsConfigDeployer;
-  aiTemplateFilesDeployer: AITemplateFilesDeployer;
   workspaceInitPrompt: WorkspaceInitPromptService;
   modeSelectionPrompt: ModeSelectionPromptService;
   workspaceInitialization: WorkspaceInitializationService;
-  profileService: ProfileService;
   modeSelection: ModeSelectionService;
   devOpsConfig: DevOpsMcpConfigService;
-  nexkitFileMigration: NexkitFileMigrationService;
+  marketplace: MarketplaceService;
   commitMessage: CommitMessageService;
-  templateMetadataScanner: TemplateMetadataScannerService;
   githubAuthPrompt: GitHubAuthPromptService;
   hooksConfigDeployer: HooksConfigDeployer;
   startupVerification: StartupVerificationService;
-  nexkitFileWatcher: NexkitFileWatcherService;
   githubWorkflowRunner: GitHubWorkflowRunnerService;
-  userDirectory: UserDirectoryService;
   convertToMarkdown: ConvertToMarkdownPanelService;
   markitdownConversion: MarkitdownConversionService;
 }
@@ -89,45 +77,41 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const confirmation = new ConfirmationService();
   const mcpConfig = new MCPConfigService(confirmation);
   const userDirectory = new UserDirectoryService();
-  const installedTemplatesState = new InstalledTemplatesStateManager(context, userDirectory);
-  const aiTemplateData = new AITemplateDataService(installedTemplatesState, userDirectory);
-  const templateMetadata = new TemplateMetadataService(aiTemplateData.getRepositoryManager());
   const backup = new GitHubTemplateBackupService(userDirectory);
   const updateStatusBar = new UpdateStatusBarService(context, extensionUpdate);
   const gitExcludeConfigDeployer = new GitExcludeConfigDeployer();
   const mcpConfigDeployer = new MCPConfigDeployer(confirmation);
   const recommendedExtensionsConfigDeployer = new RecommendedExtensionsConfigDeployer();
   const recommendedSettingsConfigDeployer = new RecommendedSettingsConfigDeployer();
-  const aiTemplateFilesDeployer = new AITemplateFilesDeployer(aiTemplateData);
   const workspaceInitPrompt = new WorkspaceInitPromptService();
   const modeSelectionPrompt = new ModeSelectionPromptService(telemetry);
   const workspaceInitialization = new WorkspaceInitializationService();
-  const profileService = new ProfileService(installedTemplatesState, aiTemplateData, backup);
   const modeSelection = new ModeSelectionService();
   const devOpsConfig = new DevOpsMcpConfigService();
-  const nexkitFileMigration = new NexkitFileMigrationService();
+  const marketplace = new MarketplaceService(
+    new MarketplacePluginReader(),
+    // VS Code's state.vscdb sits next to the per-extension global storage folders.
+    new VsCodePluginEnablementReader(
+      context.globalStorageUri ? path.join(path.dirname(context.globalStorageUri.fsPath), "state.vscdb") : undefined
+    )
+  );
   const commitMessage = new CommitMessageService();
-  const templateMetadataScanner = new TemplateMetadataScannerService(templateMetadata, aiTemplateData);
   const githubAuthPrompt = new GitHubAuthPromptService();
   const hooksConfigDeployer = new HooksConfigDeployer();
   const startupVerification = new StartupVerificationService(
     gitExcludeConfigDeployer,
     hooksConfigDeployer,
-    nexkitFileMigration,
     githubAuthPrompt
   );
-  const nexkitFileWatcher = NexkitFileWatcherService.getInstance();
   const githubWorkflowRunner = new GitHubWorkflowRunnerService(context.extensionUri);
   const markitdownConversion = new MarkitdownConversionService(logging);
   const convertToMarkdown = new ConvertToMarkdownPanelService(context.extensionUri, markitdownConversion);
 
   // Register for disposal
   context.subscriptions.push(logging);
-  context.subscriptions.push(aiTemplateData);
   context.subscriptions.push(telemetry);
   context.subscriptions.push(devOpsConfig);
-  context.subscriptions.push(templateMetadataScanner);
-  context.subscriptions.push(nexkitFileWatcher);
+  context.subscriptions.push(marketplace);
   context.subscriptions.push(convertToMarkdown);
 
   logging.info("All services initialized successfully");
@@ -137,9 +121,6 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     telemetry,
     confirmation,
     mcpConfig,
-    aiTemplateData,
-    templateMetadata,
-    installedTemplatesState,
     updateStatusBar,
     extensionUpdate,
     backup,
@@ -147,22 +128,17 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     mcpConfigDeployer,
     recommendedExtensionsConfigDeployer,
     recommendedSettingsConfigDeployer,
-    aiTemplateFilesDeployer,
     workspaceInitPrompt,
     modeSelectionPrompt,
     workspaceInitialization,
-    profileService,
     modeSelection,
     devOpsConfig,
-    nexkitFileMigration,
+    marketplace,
     commitMessage,
-    templateMetadataScanner,
     githubAuthPrompt,
     hooksConfigDeployer,
     startupVerification,
-    nexkitFileWatcher,
     githubWorkflowRunner,
-    userDirectory,
     convertToMarkdown,
     markitdownConversion,
   };

@@ -1,7 +1,5 @@
-import { AITemplateFile, OperationMode, RepositoryTemplatesMap } from "../../ai-template-files/models/aiTemplateFile";
-import { TemplateMetadata } from "../../ai-template-files/models/templateMetadata";
-import { TemplateMetadataEntry, MetadataScanProgress } from "../../ai-template-files/services/templateMetadataScannerService";
-import { Profile } from "../../profile-management/models/profile";
+import { OperationMode } from "../../../shared/constants/operationMode";
+import { MarketplaceNode, MarketplaceSuggestion } from "../../marketplace-management/models/marketplace";
 import { DevOpsConnection } from "../../apm-devops/models/devOpsConnection";
 import { WorkflowInfo } from "../../github-workflow-runner/githubWorkflowRunnerService";
 
@@ -12,13 +10,14 @@ export type WebviewMessage =
   | { command: "webviewReady" }
   | { command: "initWorkspace" }
   | { command: "dismissInitWorkspace" }
-  | { command: "getTemplateData" }
-  | { command: "installTemplate"; template: AITemplateFile }
-  | { command: "uninstallTemplate"; template: AITemplateFile }
-  | { command: "updateInstalledTemplates"; mode?: OperationMode }
-  | { command: "getTemplateMetadata"; template: AITemplateFile }
-  | { command: "applyProfile"; profile: Profile }
-  | { command: "deleteProfile"; profile: Profile }
+  | { command: "getMarketplaces" }
+  | { command: "addMarketplace"; source: string }
+  | { command: "removeMarketplace"; source: string }
+  | { command: "toggleMarketplace"; source: string; enabled: boolean }
+  | { command: "togglePlugin"; path: string; enabled: boolean }
+  | { command: "openMarketplaceRepo"; source: string }
+  | { command: "openVsCodePluginSettings" }
+  | { command: "openPluginBrowser" }
   | { command: "openFeedback" }
   | { command: "openConvertToMarkdown" }
   | { command: "setMode"; mode: OperationMode }
@@ -41,33 +40,18 @@ export type ExtensionMessage =
       isInitialized: boolean;
       isInitRefused: boolean;
       mode: OperationMode;
-      deployMode: "user" | "workspace";
-      workspaceOverrideActive: boolean;
     }
   | {
-      command: "templateDataUpdate";
-      repositories: RepositoryTemplatesMap[];
+      command: "marketplacesUpdate";
+      /** Entries of `chat.plugins.marketplaces` (user scope). */
+      configured: string[];
+      suggested: MarketplaceSuggestion[];
+      /** Configured marketplaces with their plugins. */
+      tree: MarketplaceNode[];
     }
   | {
-      command: "installedTemplatesUpdate";
-      installed: {
-        agents: string[];
-        prompts: string[];
-        skills: string[];
-        instructions: string[];
-        chatmodes: string[];
-        hooks: string[];
-      };
-    }
-  | {
-      command: "templateMetadataResponse";
-      template: AITemplateFile;
-      metadata: TemplateMetadata | null;
-      error?: string;
-    }
-  | {
-      command: "profilesUpdate";
-      profiles: Profile[];
+      command: "marketplaceError";
+      error: string;
     }
   // APM DevOps connection messages
   | {
@@ -77,19 +61,6 @@ export type ExtensionMessage =
   | {
       command: "devOpsConnectionError";
       error: string;
-    }
-  | {
-      command: "metadataScanProgress";
-      progress: MetadataScanProgress;
-    }
-  | {
-      command: "metadataScanComplete";
-      index: TemplateMetadataEntry[];
-    }
-  // Template updates available
-  | {
-      command: "templateUpdatesAvailable";
-      updatesAvailable: boolean;
     }
   // GitHub workflow runner messages
   | {

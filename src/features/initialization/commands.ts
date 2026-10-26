@@ -3,8 +3,7 @@ import { ServiceContainer } from "../../core/serviceContainer";
 import { SettingsManager } from "../../core/settingsManager";
 import { registerCommand } from "../../shared/commands/commandRegistry";
 import { Commands } from "../../shared/constants/commands";
-import { ProfileSelectionPromptService } from "./profileSelectionPromptService";
-import { OperationMode } from "../ai-template-files/models/aiTemplateFile";
+import { OperationMode } from "../../shared/constants/operationMode";
 
 /**
  * Register initialization-related commands
@@ -47,38 +46,11 @@ export function registerInitializeWorkspaceCommand(context: vscode.ExtensionCont
       await SettingsManager.setMode(selectedMode);
       services.logging.info(`Selected mode: ${selectedMode}`);
 
-      // Prompt user to select a profile if any are saved
-      const selectedProfileName = await new ProfileSelectionPromptService(services.profileService).promptProfileSelection();
-
       services.logging.info("Running workspace initialization...");
-      const { deploymentSummary, backupPath, migrationSummary } = await services.workspaceInitialization.initializeWorkspace(
-        workspaceFolder,
-        selectedProfileName,
-        services
-      );
+      await services.workspaceInitialization.initializeWorkspace(workspaceFolder, services);
 
-      services.logging.info("Workspace initialization completed successfully", {
-        installedTemplates: deploymentSummary?.installed ?? 0,
-        migratedFiles: migrationSummary?.migratedCount ?? 0,
-        backupPath,
-      });
-
-      // Show success message with deployment summary
-      let resultMessage = "Nexkit project initialized successfully!";
-
-      if (migrationSummary) {
-        resultMessage += ` Migrated ${migrationSummary.migratedCount} file(s) from .github to .nexkit.`;
-      }
-
-      if (deploymentSummary !== null && deploymentSummary.installed > 0) {
-        resultMessage += ` Installed ${deploymentSummary.installed} templates.`;
-      }
-
-      if (backupPath) {
-        resultMessage += ` Backed up existing templates to: ${backupPath}.`;
-      }
-
-      vscode.window.showInformationMessage(`${resultMessage}`);
+      services.logging.info("Workspace initialization completed successfully");
+      vscode.window.showInformationMessage("Nexkit project initialized successfully!");
     },
     services.telemetry
   );
@@ -123,13 +95,13 @@ export function registerSwitchModeCommand(context: vscode.ExtensionContext, serv
         {
           label: OperationMode.Developers,
           description: "Full feature set",
-          detail: "Access to Actions, Profiles, Templates, Repositories, and Footer sections",
+          detail: "Access to Marketplaces and Tools sections",
           picked: currentMode === OperationMode.Developers,
         },
         {
           label: OperationMode.APM,
           description: "Essential features only",
-          detail: "Access to Footer section only",
+          detail: "Access to Marketplaces, Tools, and Project sections",
           picked: currentMode === OperationMode.APM,
         },
       ];

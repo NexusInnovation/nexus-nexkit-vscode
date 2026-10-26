@@ -1,9 +1,6 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
 import { TelemetryService } from "../../shared/services/telemetryService";
-import { AITemplateDataService } from "../ai-template-files/services/aiTemplateDataService";
-import { TemplateMetadataService } from "../ai-template-files/services/templateMetadataService";
-import { ProfileService } from "../profile-management/services/profileService";
 import { WorkspaceInitializationService } from "../initialization/workspaceInitializationService";
 import { NexkitPanelMessageHandler } from "./nexkitPanelMessageHandler";
 import { ServiceContainer } from "../../core/serviceContainer";
