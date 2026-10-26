@@ -4,7 +4,7 @@
  */
 
 import { useAppState } from "./useAppState";
-import { OperationMode } from "../../../ai-template-files/models/aiTemplateFile";
+import { OperationMode } from "../../../../shared/constants/operationMode";
 
 /**
  * Mode hook result

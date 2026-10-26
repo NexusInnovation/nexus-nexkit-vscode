@@ -12,11 +12,7 @@ const LEGACY_PLUGIN_MARKETPLACE = `${OFFICIAL_PLUGIN_MARKETPLACE}#main`;
  * Mapping from VS Code chat setting keys to workspace .nexkit subdirectory names.
  */
 const CHAT_LOCATION_SETTINGS: Record<string, string> = {
-  "chat.agentFilesLocations": "agents",
-  "chat.agentSkillsLocations": "skills",
   "chat.hookFilesLocations": "hooks",
-  "chat.instructionsFilesLocations": "instructions",
-  "chat.promptFilesLocations": "prompts",
 };
 
 /**

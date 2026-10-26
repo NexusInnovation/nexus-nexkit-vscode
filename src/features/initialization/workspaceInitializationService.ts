@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import { ServiceContainer } from "../../core/serviceContainer";
 import { SettingsManager } from "../../core/settingsManager";
-import { BatchInstallSummary } from "../ai-template-files/services/templateFileOperations";
 
 /**
  * Service for managing workspace initialization events
@@ -19,43 +18,19 @@ export class WorkspaceInitializationService {
     this._onWorkspaceInitializedEmitter.fire();
   }
 
-  public async initializeWorkspace(
-    workspaceFolder: vscode.WorkspaceFolder,
-    profileName: string | null,
-    services: ServiceContainer
-  ) {
-    // Run shared verification checks (gitignore, settings, file migration)
+  public async initializeWorkspace(workspaceFolder: vscode.WorkspaceFolder, services: ServiceContainer): Promise<void> {
+    // Run shared verification checks (git exclude, settings, hooks).
     // Delegates to StartupVerificationService — same checks that run at every startup.
-    // Returns migration summary for initialization reporting.
-    const migrationSummary = await services.startupVerification.verifyWorkspaceConfiguration(workspaceFolder.uri.fsPath);
+    await services.startupVerification.verifyWorkspaceConfiguration(workspaceFolder.uri.fsPath);
 
-    // Backup and delete existing .nexkit template folders if they exist
-    const backupPath = await services.backup.backupTemplates(workspaceFolder.uri.fsPath);
-
-    // Deploy init-only workspace configuration files only in workspace mode
-    if (!SettingsManager.isUserDeployMode()) {
-      await services.recommendedExtensionsConfigDeployer.deployVscodeExtensions(workspaceFolder.uri.fsPath);
-      await services.mcpConfigDeployer.deployWorkspaceMCPServers(workspaceFolder.uri.fsPath);
-    }
-
-    let deploymentSummary: BatchInstallSummary | null = null;
-
-    // Apply selected profile or use default behavior
-    if (profileName) {
-      // User selected a profile - apply it (explicitly create backup during initialization)
-      const { summary } = await services.profileService.applyProfile(profileName, false);
-      deploymentSummary = summary;
-    } else {
-      // User skipped or no profiles exist - deploy default template files (agents, prompts, chatmodes) from the Nexus Templates
-      deploymentSummary = await services.aiTemplateFilesDeployer.deployTemplateFiles();
-    }
+    // Deploy init-only workspace configuration files
+    await services.recommendedExtensionsConfigDeployer.deployVscodeExtensions(workspaceFolder.uri.fsPath);
+    await services.mcpConfigDeployer.deployWorkspaceMCPServers(workspaceFolder.uri.fsPath);
 
     // Update workspace settings
     await SettingsManager.setWorkspaceInitialized(true);
 
     // Notify listeners that workspace was initialized
     services.workspaceInitialization.notifyWorkspaceInitialized();
-
-    return { deploymentSummary, backupPath, migrationSummary };
   }
 }

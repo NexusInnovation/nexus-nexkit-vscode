@@ -1,8 +1,6 @@
-import * as vscode from "vscode";
 import { LoggingService } from "../../shared/services/loggingService";
 import { GitExcludeConfigDeployer } from "./gitExcludeConfigDeployer";
 import { RecommendedSettingsConfigDeployer } from "./recommendedSettingsConfigDeployer";
-import { NexkitFileMigrationService, MigrationSummary } from "./nexkitFileMigrationService";
 import { HooksConfigDeployer } from "./hooksConfigDeployer";
 import { GitHubAuthPromptService } from "./githubAuthPromptService";
 import { getWorkspaceRoot } from "../../shared/utils/fileHelper";
@@ -19,7 +17,6 @@ export class StartupVerificationService {
     private readonly _gitExcludeConfigDeployer: GitExcludeConfigDeployer,
     private readonly _recommendedSettingsConfigDeployer: RecommendedSettingsConfigDeployer,
     private readonly _hooksConfigDeployer: HooksConfigDeployer,
-    private readonly _nexkitFileMigration: NexkitFileMigrationService,
     private readonly _githubAuthPrompt: GitHubAuthPromptService
   ) {}
 
@@ -48,12 +45,11 @@ export class StartupVerificationService {
    * Startup verification can skip user-level settings writes; explicit workspace initialization performs the full flow.
    * @param workspaceRoot Absolute path to the workspace root
    * @param options Verification options
-   * @returns Summary of migrated files, or null if nothing was migrated
    */
   public async verifyWorkspaceConfiguration(
     workspaceRoot: string,
     options: { deployUserLevelSettings?: boolean } = {}
-  ): Promise<MigrationSummary | null> {
+  ): Promise<void> {
     const { deployUserLevelSettings = true } = options;
 
     await this._gitExcludeConfigDeployer.deployGitExclude(workspaceRoot);
@@ -64,8 +60,5 @@ export class StartupVerificationService {
 
     // Always deploy the run-tests hook into the workspace .nexkit directory when a workspace is open.
     await this._hooksConfigDeployer.deployRunTestsHook(workspaceRoot);
-
-    // Migrate any nexkit.* files still in .github/<type>/ to .nexkit/<type>/
-    return await this._nexkitFileMigration.migrateNexkitFiles(workspaceRoot);
   }
 }

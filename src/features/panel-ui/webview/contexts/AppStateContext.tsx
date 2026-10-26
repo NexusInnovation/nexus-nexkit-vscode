@@ -45,40 +45,29 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
               isInitialized: message.isInitialized,
               isInitRefused: message.isInitRefused,
               mode: message.mode,
-              deployMode: message.deployMode,
-              workspaceOverrideActive: message.workspaceOverrideActive,
               isReady: true,
             },
           }));
           break;
 
-        case "templateDataUpdate":
+        case "marketplacesUpdate":
           setState((prev) => ({
             ...prev,
-            templates: {
-              ...prev.templates,
-              repositories: message.repositories,
+            marketplaces: {
+              configured: message.configured,
+              suggested: message.suggested,
               isReady: true,
+              error: undefined,
             },
           }));
           break;
 
-        case "installedTemplatesUpdate":
+        case "marketplaceError":
           setState((prev) => ({
             ...prev,
-            templates: {
-              ...prev.templates,
-              installed: message.installed,
-            },
-          }));
-          break;
-
-        case "profilesUpdate":
-          setState((prev) => ({
-            ...prev,
-            profiles: {
-              list: message.profiles,
-              isReady: true,
+            marketplaces: {
+              ...prev.marketplaces,
+              error: message.error,
             },
           }));
           break;
@@ -104,31 +93,6 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
           }));
           break;
 
-        case "metadataScanProgress":
-          setState((prev) => ({
-            ...prev,
-            metadataScan: {
-              ...prev.metadataScan,
-              isScanning: message.progress.isScanning,
-              scannedCount: message.progress.scannedCount,
-              totalCount: message.progress.totalCount,
-            },
-          }));
-          break;
-
-        case "metadataScanComplete":
-          setState((prev) => ({
-            ...prev,
-            metadataScan: {
-              isScanning: false,
-              scannedCount: prev.metadataScan.totalCount,
-              totalCount: prev.metadataScan.totalCount,
-              isComplete: true,
-              index: message.index,
-            },
-          }));
-          break;
-
         case "workflowListUpdate":
           setState((prev) => ({
             ...prev,
@@ -138,31 +102,16 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
             },
           }));
           break;
-
-        case "templateUpdatesAvailable":
-          setState((prev) => ({
-            ...prev,
-            templates: {
-              ...prev.templates,
-              updatesAvailable: message.updatesAvailable,
-            },
-          }));
-          break;
       }
     };
 
     // Set up message listeners for all message types
     const unsubscribeWorkspace = messenger.onMessage("workspaceStateUpdate", handleMessage);
-    const unsubscribeTemplateData = messenger.onMessage("templateDataUpdate", handleMessage);
-    const unsubscribeInstalled = messenger.onMessage("installedTemplatesUpdate", handleMessage);
-    const unsubscribeProfiles = messenger.onMessage("profilesUpdate", handleMessage);
-    const unsubscribeMetadata = messenger.onMessage("templateMetadataResponse", handleMessage);
+    const unsubscribeMarketplaces = messenger.onMessage("marketplacesUpdate", handleMessage);
+    const unsubscribeMarketplaceError = messenger.onMessage("marketplaceError", handleMessage);
     const unsubscribeDevOpsConnections = messenger.onMessage("devOpsConnectionsUpdate", handleMessage);
     const unsubscribeDevOpsError = messenger.onMessage("devOpsConnectionError", handleMessage);
-    const unsubscribeScanProgress = messenger.onMessage("metadataScanProgress", handleMessage);
-    const unsubscribeScanComplete = messenger.onMessage("metadataScanComplete", handleMessage);
     const unsubscribeWorkflows = messenger.onMessage("workflowListUpdate", handleMessage);
-    const unsubscribeUpdatesAvailable = messenger.onMessage("templateUpdatesAvailable", handleMessage);
 
     // Request initial state from extension
     messenger.sendMessage({ command: "webviewReady" });
@@ -170,16 +119,11 @@ export function AppStateProvider({ children }: AppStateProviderProps) {
     // Cleanup all subscriptions on unmount
     return () => {
       unsubscribeWorkspace();
-      unsubscribeTemplateData();
-      unsubscribeInstalled();
-      unsubscribeProfiles();
-      unsubscribeMetadata();
+      unsubscribeMarketplaces();
+      unsubscribeMarketplaceError();
       unsubscribeDevOpsConnections();
       unsubscribeDevOpsError();
-      unsubscribeScanProgress();
-      unsubscribeScanComplete();
       unsubscribeWorkflows();
-      unsubscribeUpdatesAvailable();
     };
   }, [messenger]);
 

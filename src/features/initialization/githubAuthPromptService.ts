@@ -34,7 +34,7 @@ export class GitHubAuthPromptService {
 
     // No existing session — prompt the user
     const result = await vscode.window.showWarningMessage(
-      "Nexkit requires GitHub authentication to access template repositories. Please sign in to continue.",
+      "Nexkit requires GitHub authentication to access plugin marketplaces. Please sign in to continue.",
       "Sign in with GitHub",
       "Later"
     );

@@ -3,14 +3,13 @@ import { SettingsManager } from "../../core/settingsManager";
 import { Commands } from "../../shared/constants/commands";
 import { WebviewMessage, ExtensionMessage } from "./types/webviewMessages";
 import { ServiceContainer } from "../../core/serviceContainer";
-import { getApmAgentDiagnostics } from "./utils/templateDiagnostics";
 
 /**
  * Handles message processing and business logic for the Nexkit panel webview
  *
  * This class acts as a bridge between:
  * - The webview UI (Preact components)
- * - The extension backend services (AITemplateDataService, TelemetryService, etc.)
+ * - The extension backend services (MarketplaceService, TelemetryService, etc.)
  *
  * Message Flow:
  * 1. Webview sends message → handleMessage() routes to appropriate handler
@@ -19,7 +18,6 @@ import { getApmAgentDiagnostics } from "./utils/templateDiagnostics";
  */
 export class NexkitPanelMessageHandler {
   private readonly _messageHandlers: Map<string, (message: WebviewMessage) => Promise<void>>;
-  private _lastApmEmptySignature: string | undefined;
 
   constructor(
     private readonly getWebview: () => vscode.WebviewView | undefined,
@@ -29,13 +27,10 @@ export class NexkitPanelMessageHandler {
       ["webviewReady", this.handleWebviewReady.bind(this)],
       ["initWorkspace", this.handleInitWorkspace.bind(this)],
       ["dismissInitWorkspace", this.handleDismissInitWorkspace.bind(this)],
-      ["getTemplateData", this.handleGetTemplateData.bind(this)],
-      ["installTemplate", this.handleInstallTemplate.bind(this)],
-      ["uninstallTemplate", this.handleUninstallTemplate.bind(this)],
-      ["updateInstalledTemplates", this.handleUpdateInstalledTemplates.bind(this)],
-      ["getTemplateMetadata", this.handleGetTemplateMetadata.bind(this)],
-      ["applyProfile", this.handleApplyProfile.bind(this)],
-      ["deleteProfile", this.handleDeleteProfile.bind(this)],
+      ["getMarketplaces", this.handleGetMarketplaces.bind(this)],
+      ["addMarketplace", this.handleAddMarketplace.bind(this)],
+      ["removeMarketplace", this.handleRemoveMarketplace.bind(this)],
+      ["openPluginBrowser", this.handleOpenPluginBrowser.bind(this)],
       ["openFeedback", this.handleOpenFeedback.bind(this)],
       ["openConvertToMarkdown", this.handleOpenConvertToMarkdown.bind(this)],
       ["setMode", this.handleSetMode.bind(this)],
@@ -49,11 +44,8 @@ export class NexkitPanelMessageHandler {
       ["runWorkflow", this.handleRunWorkflow.bind(this)],
     ]);
 
-    // Auto-refresh template data when it changes (e.g., after config update)
-    this._services.aiTemplateData.onDataChanged(() => this.sendTemplateData());
-
-    // Auto-refresh profiles when they change (e.g., after save/apply/delete)
-    this._services.profileService.onProfilesChanged(() => this.sendProfilesData());
+    // Auto-refresh marketplaces when the setting changes (including manual settings.json edits)
+    this._services.marketplace.onDidChange(() => this.sendMarketplaces());
 
     // Auto-refresh all data when workspace is initialized
     this._services.workspaceInitialization.onWorkspaceInitialized(() => this.initialize());
@@ -61,20 +53,6 @@ export class NexkitPanelMessageHandler {
     // Auto-refresh DevOps connections when they change
     this._services.devOpsConfig.onConnectionsChanged(() => this.sendDevOpsConnections());
 
-    // Forward metadata scan progress to webview
-    this._services.templateMetadataScanner.onScanProgressChanged((progress) => {
-      this.sendToWebview({ command: "metadataScanProgress", progress });
-    });
-
-    // Forward metadata scan completion to webview
-    this._services.templateMetadataScanner.onScanComplete((index) => {
-      this.sendToWebview({ command: "metadataScanComplete", index });
-    });
-
-    // Forward template updates available state to webview
-    this._services.aiTemplateData.onUpdatesAvailableChanged((updatesAvailable) => {
-      this.sendToWebview({ command: "templateUpdatesAvailable", updatesAvailable });
-    });
   }
 
   public async handleMessage(message: WebviewMessage): Promise<void> {
@@ -88,13 +66,8 @@ export class NexkitPanelMessageHandler {
 
   public async initialize(): Promise<void> {
     this.sendWorkspaceState();
-    await this.sendTemplateData();
-    await this._services.aiTemplateData.syncInstalledTemplates();
-    this.sendInstalledTemplates();
-    this.sendUpdatesAvailable();
-    this.sendProfilesData();
+    this.sendMarketplaces();
     this.sendDevOpsConnections();
-    this.sendMetadataScanState();
     this.sendWorkflowList();
   }
 
@@ -110,7 +83,6 @@ export class NexkitPanelMessageHandler {
     this.trackWebviewAction("initWorkspace");
     await vscode.commands.executeCommand(Commands.INIT_WORKSPACE);
     this.sendWorkspaceState();
-    this.sendInstalledTemplates();
   }
 
   private async handleDismissInitWorkspace(message: WebviewMessage): Promise<void> {
@@ -119,84 +91,48 @@ export class NexkitPanelMessageHandler {
     this.sendWorkspaceState();
   }
 
-  private async handleGetTemplateData(message: WebviewMessage): Promise<void> {
-    await this.sendTemplateData();
+  // ============================================================================
+  // MARKETPLACE HANDLERS
+  // ============================================================================
+
+  private async handleGetMarketplaces(message: WebviewMessage): Promise<void> {
+    this.sendMarketplaces();
   }
 
-  private async handleInstallTemplate(message: WebviewMessage & { command: "installTemplate" }): Promise<void> {
-    this.trackWebviewAction("installTemplate");
+  private async handleAddMarketplace(message: WebviewMessage & { command: "addMarketplace" }): Promise<void> {
+    this.trackWebviewAction("addMarketplace");
     try {
-      await this._services.aiTemplateData.installTemplate(message.template);
-      // Clear last applied profile since templates were manually modified
-      await SettingsManager.setLastAppliedProfile(null);
-      this.sendInstalledTemplates();
+      await this._services.marketplace.add(message.source);
+      this.sendMarketplaces();
     } catch (error) {
-      console.error("Failed to install template:", error);
-      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
-        context: "webview.installTemplate",
-        templateType: message.template.type,
-      });
-    }
-  }
-
-  private async handleUninstallTemplate(message: WebviewMessage & { command: "uninstallTemplate" }): Promise<void> {
-    this.trackWebviewAction("uninstallTemplate");
-    try {
-      await this._services.aiTemplateData.uninstallTemplate(message.template);
-      // Clear last applied profile since templates were manually modified
-      await SettingsManager.setLastAppliedProfile(null);
-      this.sendInstalledTemplates();
-    } catch (error) {
-      console.error("Failed to uninstall template:", error);
-      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
-        context: "webview.uninstallTemplate",
-        templateType: message.template.type,
-      });
-    }
-  }
-
-  private async handleUpdateInstalledTemplates(message: WebviewMessage & { command: "updateInstalledTemplates" }): Promise<void> {
-    this.trackWebviewAction("updateInstalledTemplates");
-    await vscode.commands.executeCommand(Commands.UPDATE_INSTALLED_TEMPLATES, message.mode);
-    this.sendInstalledTemplates();
-    this.sendUpdatesAvailable();
-  }
-
-  private async handleGetTemplateMetadata(message: WebviewMessage & { command: "getTemplateMetadata" }): Promise<void> {
-    try {
-      const metadata = await this._services.templateMetadata.getMetadata(message.template);
       this.sendToWebview({
-        command: "templateMetadataResponse",
-        template: message.template,
-        metadata,
-      });
-    } catch (error) {
-      console.error("Failed to get template metadata:", error);
-      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
-        context: "webview.getTemplateMetadata",
-      });
-      this.sendToWebview({
-        command: "templateMetadataResponse",
-        template: message.template,
-        metadata: null,
+        command: "marketplaceError",
         error: error instanceof Error ? error.message : String(error),
       });
     }
   }
 
-  private async handleApplyProfile(message: WebviewMessage & { command: "applyProfile" }): Promise<void> {
-    this.trackWebviewAction("applyProfile");
-    await vscode.commands.executeCommand(Commands.APPLY_PROFILE, message.profile);
-    this.sendInstalledTemplates();
-    this.sendProfilesData();
+  private async handleRemoveMarketplace(message: WebviewMessage & { command: "removeMarketplace" }): Promise<void> {
+    this.trackWebviewAction("removeMarketplace");
+    try {
+      await this._services.marketplace.remove(message.source);
+      this.sendMarketplaces();
+    } catch (error) {
+      console.error("Failed to remove marketplace:", error);
+      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+        context: "webview.removeMarketplace",
+      });
+      this.sendToWebview({
+        command: "marketplaceError",
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
-  private async handleDeleteProfile(message: WebviewMessage & { command: "deleteProfile" }): Promise<void> {
-    this.trackWebviewAction("deleteProfile");
-    await vscode.commands.executeCommand(Commands.DELETE_PROFILE, message.profile);
-    this.sendProfilesData();
+  private async handleOpenPluginBrowser(message: WebviewMessage): Promise<void> {
+    this.trackWebviewAction("openPluginBrowser");
+    await vscode.commands.executeCommand("workbench.agentPlugins.browse");
   }
-
   private async handleOpenFeedback(message: WebviewMessage): Promise<void> {
     this.trackWebviewAction("openFeedback");
     await vscode.commands.executeCommand(Commands.OPEN_FEEDBACK);
@@ -314,8 +250,6 @@ export class NexkitPanelMessageHandler {
     const isInitialized = SettingsManager.isWorkspaceInitialized();
     const isInitRefused = SettingsManager.isWorkspaceInitPromptDismissed();
     const mode = SettingsManager.getMode();
-    const deployMode = SettingsManager.getTemplateDeployMode();
-    const workspaceOverrideActive = SettingsManager.isWorkspaceOverrideActive();
 
     this.sendToWebview({
       command: "workspaceStateUpdate",
@@ -323,79 +257,15 @@ export class NexkitPanelMessageHandler {
       isInitialized,
       isInitRefused,
       mode,
-      deployMode,
-      workspaceOverrideActive,
     });
   }
 
-  private async sendTemplateData(): Promise<void> {
-    try {
-      await this._services.aiTemplateData.waitForReady();
-
-      const repositories = this._services.aiTemplateData.getRepositoryTemplatesMap();
-
-      // Diagnostics for the reported issue: in APM mode the "Agent Templates" section exists but is empty.
-      // We only warn when APM-visible repos exist but contain zero agent templates.
-      const apmDiagnostics = getApmAgentDiagnostics(repositories);
-      if (apmDiagnostics.apmRepositoryCount > 0 && apmDiagnostics.apmAgentCount === 0) {
-        const signature = JSON.stringify(
-          apmDiagnostics.apmRepositories.map((r) => ({ name: r.name, agentCount: r.agentCount, modes: r.modes }))
-        );
-
-        if (signature !== this._lastApmEmptySignature) {
-          this._lastApmEmptySignature = signature;
-          this._services.logging.warn("[APM] Agent Templates is empty (0 agents loaded from APM repositories)", {
-            modeSetting: SettingsManager.getMode(),
-            ...apmDiagnostics,
-            hint: "Check earlier [Templates] logs for GitHub auth/rate-limit, 404 path, or branch/path mismatches for the APM template repository.",
-          });
-        }
-      }
-
-      this.sendToWebview({
-        command: "templateDataUpdate",
-        repositories,
-      });
-    } catch (error) {
-      console.error("Failed to fetch template data:", error);
-      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
-        context: "webview.sendTemplateData",
-      });
-      vscode.window.showErrorMessage(`Failed to load template data: ${error}`);
-    }
-  }
-
-  private sendInstalledTemplates(): void {
-    try {
-      this.sendToWebview({
-        command: "installedTemplatesUpdate",
-        installed: this._services.aiTemplateData.getInstalledTemplates(),
-      });
-    } catch (error) {
-      console.error("Failed to fetch installed templates:", error);
-      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
-        context: "webview.sendInstalledTemplates",
-      });
-    }
-  }
-
-  private sendUpdatesAvailable(): void {
+  private sendMarketplaces(): void {
     this.sendToWebview({
-      command: "templateUpdatesAvailable",
-      updatesAvailable: this._services.aiTemplateData.getUpdatesAvailable(),
+      command: "marketplacesUpdate",
+      configured: this._services.marketplace.getConfigured(),
+      suggested: this._services.marketplace.getSuggestions(),
     });
-  }
-
-  private sendProfilesData(): void {
-    try {
-      const profiles = this._services.profileService.getProfiles();
-      this.sendToWebview({
-        command: "profilesUpdate",
-        profiles,
-      });
-    } catch (error) {
-      console.error("Failed to fetch profiles:", error);
-    }
   }
 
   private async sendDevOpsConnections(): Promise<void> {
@@ -410,26 +280,6 @@ export class NexkitPanelMessageHandler {
       this.sendToWebview({
         command: "devOpsConnectionError",
         error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-
-  /**
-   * Send current metadata scan state to the webview.
-   * If the scan is already complete, sends the full index immediately.
-   * Otherwise, sends the current progress.
-   */
-  private sendMetadataScanState(): void {
-    const scanner = this._services.templateMetadataScanner;
-    if (scanner.isScanComplete()) {
-      this.sendToWebview({
-        command: "metadataScanComplete",
-        index: [...scanner.getIndex()],
-      });
-    } else {
-      this.sendToWebview({
-        command: "metadataScanProgress",
-        progress: scanner.getProgress(),
       });
     }
   }

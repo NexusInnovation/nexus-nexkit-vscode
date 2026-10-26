@@ -5,7 +5,7 @@ import { useWebviewPersistentState } from "./useWebviewPersistentState";
  * Hook to manage expansion state for a specific collapsible section
  * State persists across panel reloads using a unique key
  *
- * @param key - Unique identifier for the section (e.g., "templates", "profiles", "repo::type")
+ * @param key - Unique identifier for the section (e.g., "marketplaces-list")
  * @param defaultExpanded - Default expansion state if key is not in persistent storage (default: false)
  * @returns Tuple of [isExpanded, setIsExpanded]
  */
