@@ -18,12 +18,14 @@
     "Other"
   ],
   "dependencies": {
-    "applicationinsights": "^3.15.1",
-    "markdown-it": "^14.1.0",
+    "applicationinsights": "^3.17.0",
+    "markdown-it": "^14.3.3",
     "prettier": "^3.7.4"
   },
   "overrides": {
-    "@opentelemetry/propagator-jaeger": "2.10.0"
+    "@opentelemetry/propagator-jaeger": "2.10.0",
+    "@grpc/grpc-js": "^1.14.5",
+    "@azure/msal-node": "^7.1.0"
   },
   "activationEvents": [
     "onStartupFinished"
