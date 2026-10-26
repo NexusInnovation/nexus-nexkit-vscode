@@ -23,6 +23,17 @@ export class WorkspaceInitializationService {
     // Delegates to StartupVerificationService — same checks that run at every startup.
     await services.startupVerification.verifyWorkspaceConfiguration(workspaceFolder.uri.fsPath);
 
+    // Deploy recommended user-level chat settings — sanctioned settings.json write entry point.
+    // Gated behind the confirmation dialog (see #162): only writes when the user accepts.
+    const chatSettingsConfirmation = await services.confirmation.confirm(
+      "Nexkit wants to update your VS Code chat settings",
+      "Nexkit will update your user-level (global) VS Code chat settings (chat locations and the Nexus plugin marketplace). Your workspace settings.json is never modified.",
+      SettingsManager.CONFIRMATION_KEYS.CHAT_SETTINGS
+    );
+    if (chatSettingsConfirmation === "accepted") {
+      await services.recommendedSettingsConfigDeployer.deployVscodeSettings(workspaceFolder.uri.fsPath, "initialization");
+    }
+
     // Deploy init-only workspace configuration files
     await services.recommendedExtensionsConfigDeployer.deployVscodeExtensions(workspaceFolder.uri.fsPath);
     await services.mcpConfigDeployer.deployWorkspaceMCPServers(workspaceFolder.uri.fsPath);

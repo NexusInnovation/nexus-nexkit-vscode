@@ -1,29 +1,27 @@
 import { LoggingService } from "../../shared/services/loggingService";
 import { GitExcludeConfigDeployer } from "./gitExcludeConfigDeployer";
-import { RecommendedSettingsConfigDeployer } from "./recommendedSettingsConfigDeployer";
 import { HooksConfigDeployer } from "./hooksConfigDeployer";
 import { GitHubAuthPromptService } from "./githubAuthPromptService";
 import { getWorkspaceRoot } from "../../shared/utils/fileHelper";
 
 /**
  * Service that runs essential Nexkit verification checks at every VS Code startup.
- * Startup verification ensures required user-level and workspace configuration stays in sync.
- * Workspace initialization (initWorkspace command) reuses the same service and performs the full configuration flow.
+ * Startup verification keeps workspace-local configuration (git exclude, hooks, nexkit file layout) in sync.
+ * It is READ-ONLY with respect to VS Code settings.json: it never writes user- or workspace-level settings.
+ * Settings deployment happens exclusively from the sanctioned initialization/migration entry points.
  */
 export class StartupVerificationService {
   private readonly _logging = LoggingService.getInstance();
 
   constructor(
     private readonly _gitExcludeConfigDeployer: GitExcludeConfigDeployer,
-    private readonly _recommendedSettingsConfigDeployer: RecommendedSettingsConfigDeployer,
     private readonly _hooksConfigDeployer: HooksConfigDeployer,
     private readonly _githubAuthPrompt: GitHubAuthPromptService
   ) {}
 
   /**
    * Run all startup verification checks for the active workspace.
-   * User-level settings are applied to keep NexKit defaults (including plugin marketplace priority) enforced.
-   * This method does not block extension activation — errors are logged but not re-thrown.
+   * This method does not write settings.json and does not block extension activation — errors are logged but not re-thrown.
    */
   public async verifyOnStartup(): Promise<void> {
     let workspaceRoot: string;
@@ -41,22 +39,13 @@ export class StartupVerificationService {
   }
 
   /**
-   * Verify and apply essential workspace configuration.
-   * Startup verification can skip user-level settings writes; explicit workspace initialization performs the full flow.
+   * Verify and apply essential workspace-local configuration.
+   * This is READ-ONLY with respect to settings.json — it never deploys user- or workspace-level settings.
+   * Settings deployment is performed only from the sanctioned initialization and migration entry points.
    * @param workspaceRoot Absolute path to the workspace root
-   * @param options Verification options
    */
-  public async verifyWorkspaceConfiguration(
-    workspaceRoot: string,
-    options: { deployUserLevelSettings?: boolean } = {}
-  ): Promise<void> {
-    const { deployUserLevelSettings = true } = options;
-
+  public async verifyWorkspaceConfiguration(workspaceRoot: string): Promise<void> {
     await this._gitExcludeConfigDeployer.deployGitExclude(workspaceRoot);
-
-    if (deployUserLevelSettings) {
-      await this._recommendedSettingsConfigDeployer.deployVscodeSettings(workspaceRoot);
-    }
 
     // Always deploy the run-tests hook into the workspace .nexkit directory when a workspace is open.
     await this._hooksConfigDeployer.deployRunTestsHook(workspaceRoot);
