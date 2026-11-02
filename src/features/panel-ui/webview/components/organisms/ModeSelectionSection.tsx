@@ -4,7 +4,7 @@
  */
 
 import { useVSCodeAPI } from "../../hooks/useVSCodeAPI";
-import { OperationMode } from "../../../../ai-template-files/models/aiTemplateFile";
+import { OperationMode } from "../../../../../shared/constants/operationMode";
 
 /**
  * Mode selection section - shown when no mode is selected
@@ -40,9 +40,7 @@ export function ModeSelectionSection() {
             <p>Full feature set for development teams</p>
             <ul class="mode-card-features">
               <li>NexKit setup</li>
-              <li>Profile management</li>
-              <li>Template management</li>
-              <li>Repository configuration</li>
+              <li>Plugin marketplaces</li>
             </ul>
           </div>
         </button>
@@ -59,7 +57,7 @@ export function ModeSelectionSection() {
             <h3>APM Mode</h3>
             <p>Essential features for application management</p>
             <ul class="mode-card-features">
-              <li>Template management</li>
+              <li>Plugin marketplaces</li>
               <li>NexKit setup</li>
               <li>Azure DevOps integration</li>
               <li>Streamlined interface</li>

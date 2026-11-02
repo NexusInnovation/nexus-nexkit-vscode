@@ -16,12 +16,12 @@ export class ModeSelectionService {
         label: "$(briefcase) APM Mode",
         description: "Application Performance Management",
         detail:
-          "Optimized templates and settings for APM workflows. Best for monitoring, observability, and performance analysis.",
+          "Optimized settings for APM workflows. Best for monitoring, observability, and performance analysis.",
       },
       {
         label: "$(code) Developer Mode",
         description: "Comprehensive Development Tools",
-        detail: "Full suite of development tools and templates. Best for software development and coding workflows.",
+        detail: "Full suite of development tools and plugin marketplaces. Best for software development and coding workflows.",
       },
     ];
 
@@ -96,8 +96,7 @@ export class ModeSelectionService {
     console.log(`Applying ${mode} mode configuration...`);
 
     // Future enhancements could include:
-    // - Different default repositories based on mode
-    // - Different template sets
+    // - Different default marketplaces based on mode
     // - Mode-specific settings
   }
 }

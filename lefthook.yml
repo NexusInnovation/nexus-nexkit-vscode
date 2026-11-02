@@ -1,11 +1,11 @@
 commit-msg:
   jobs:
-    - run: npx commitlint --edit {1}
+    - run: pnpm dlx commitlint --edit {1}
 
 pre-commit:
   jobs:
-    - run: npm run pretest
+    - run: pnpm run pretest
 
 pre-push:
   jobs:
-    - run: npm run pretest && npm run test:headless
+    - run: pnpm run pretest && pnpm run test:headless
