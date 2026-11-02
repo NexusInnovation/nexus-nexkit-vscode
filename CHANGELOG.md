@@ -1,3 +1,15 @@
+## [4.0.0-beta.1](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v3.14.0-beta.1...v4.0.0-beta.1) (2026-11-02)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** the nexkit.templates, nexkit.repositories and nexkit.profiles settings and the restore, cleanup, update and profile commands are removed. AI templates are now managed through marketplace plugins.
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+
+### Features
+
+* **core:** remove templates, profiles and repositories features ([4192751](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4192751f2b028d00d5e040f090ce3af4201f4fda))
+
 ## [3.14.0-beta.1](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v3.13.0...v3.14.0-beta.1) (2026-11-02)
 
 ### Features
