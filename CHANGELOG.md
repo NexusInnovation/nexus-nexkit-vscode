@@ -1,3 +1,14 @@
+## [3.14.0-beta.1](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v3.13.0...v3.14.0-beta.1) (2026-11-02)
+
+### Features
+
+* **initialization:** restrict settings writes to init and migration entry points ([f2e6049](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/f2e604905249433cc16504146ba33f68a5564f50)), closes [#163](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/163)
+
+### Bug Fixes
+
+* **ci:** run semantic-release from local install ([69112d6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/69112d6b267059027b5911235b47698bddcdcd65))
+* **pnpm:** Merge pull request [#211](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/211) from NexusInnovation/feature/migrate-npm-to-pnpm ([2e48737](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2e487371a0cf99d0ed635a378ea61ae8fc0b3d7c))
+
 ## 3.13.0 (2026-08-27)
 
 * fix(initialization): Merge pull request #210 from NexusInnovation/develop ([c80f623](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c80f623)), closes [#210](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/210)
