@@ -1,3 +1,22 @@
+## [4.0.0](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v3.13.0...v4.0.0) (2026-11-02)
+
+### ⚠ BREAKING CHANGES
+
+* **core:** the nexkit.templates, nexkit.repositories and nexkit.profiles settings and the restore, cleanup, update and profile commands are removed. AI templates are now managed through marketplace plugins.
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+
+### Features
+
+* **core:** remove templates, profiles and repositories features ([4192751](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4192751f2b028d00d5e040f090ce3af4201f4fda))
+* **initialization:** restrict settings writes to init and migration entry points ([f2e6049](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/f2e604905249433cc16504146ba33f68a5564f50)), closes [#163](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/163)
+
+### Bug Fixes
+
+* **ci:** run semantic-release from local install ([69112d6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/69112d6b267059027b5911235b47698bddcdcd65))
+* **pnpm:** Merge pull request [#211](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/211) from NexusInnovation/feature/migrate-npm-to-pnpm ([2e48737](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2e487371a0cf99d0ed635a378ea61ae8fc0b3d7c))
+* **release:** allow version bump after changelog generation ([#334](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/334)) ([3d19275](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3d19275415dfc764f40bea8ca7208b29248efdb3))
+
 ## [4.0.0-beta.1](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v3.14.0-beta.1...v4.0.0-beta.1) (2026-11-02)
 
 ### ⚠ BREAKING CHANGES
