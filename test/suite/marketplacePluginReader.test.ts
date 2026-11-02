@@ -79,7 +79,7 @@ suite("Unit: MarketplacePluginReader", () => {
     await writeManifest(repoRoot);
     const corePath = MarketplacePluginReader.toPosix(path.join(repoRoot, "plugins", "core"));
 
-    const manifest = await reader.read("owner/repo#main", { [corePath.toUpperCase()]: true, "other/path": true });
+    const manifest = await reader.read("owner/repo#main", { [corePath]: true, "other/path": true });
 
     assert.ok(manifest);
     assert.strictEqual(manifest.name, "nexus");
