@@ -124,8 +124,9 @@ export class MarketplacePluginReader {
     return p.replace(/\\/g, "/");
   }
 
-  /** Comparison key for `chat.pluginLocations` entries: forward slashes, no trailing slash, case-insensitive. */
-  public static pathKey(p: string): string {
-    return MarketplacePluginReader.toPosix(p).replace(/\/+$/, "").toLowerCase();
+  /** Comparison key for `chat.pluginLocations` entries: forward slashes, no trailing slash, lowercased unless the platform is case-sensitive. */
+  public static pathKey(p: string, caseSensitive: boolean = process.platform === "linux"): string {
+    const key = MarketplacePluginReader.toPosix(p).replace(/\/+$/, "");
+    return caseSensitive ? key : key.toLowerCase();
   }
 }

@@ -57,6 +57,14 @@ suite("Unit: MarketplacePluginReader", () => {
     assert.strictEqual(MarketplacePluginReader.parseRepository("not a repo"), undefined);
   });
 
+  test("pathKey keeps the case on case-sensitive platforms only", () => {
+    assert.notStrictEqual(MarketplacePluginReader.pathKey("/p/Tools", true), MarketplacePluginReader.pathKey("/p/tools", true));
+    assert.strictEqual(
+      MarketplacePluginReader.pathKey("C:/p/Tools", false),
+      MarketplacePluginReader.pathKey("c:/p/tools/", false)
+    );
+  });
+
   test("toUrl builds a browsable repository URL", () => {
     assert.strictEqual(MarketplacePluginReader.toUrl("owner/repo#main"), "https://github.com/owner/repo");
     assert.strictEqual(MarketplacePluginReader.toUrl("file:///c%3A/m"), "file:///c%3A/m");

@@ -134,7 +134,9 @@ body {
   color: var(--vscode-foreground);
   cursor: pointer;
   opacity: 0.6;
-  transition: opacity 0.15s ease, border-color 0.15s ease;
+  transition:
+    opacity 0.15s ease,
+    border-color 0.15s ease;
   font-size: 16px;
 }
 
@@ -873,6 +875,76 @@ body {
   cursor: default;
   font-style: italic;
   color: var(--vscode-descriptionForeground);
+}
+
+.skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 12px;
+}
+
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--vscode-editor-inactiveSelectionBackground) 25%,
+    var(--vscode-list-hoverBackground) 50%,
+    var(--vscode-editor-inactiveSelectionBackground) 75%
+  );
+  background-size: 200% 100%;
+  border-radius: 3px;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-line-sm {
+  height: 8px;
+}
+
+.skeleton-line-md {
+  height: 12px;
+}
+
+.skeleton-line-lg {
+  height: 16px;
+}
+
+.skeleton-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.skeleton-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes skeleton-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
 }
 
 .tree-actions {

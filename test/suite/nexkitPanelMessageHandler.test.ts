@@ -16,6 +16,7 @@ function createServices(): ServiceContainer {
       setMarketplaceEnabled: async () => undefined,
       add: async () => [],
       remove: async () => [],
+      countEnabledPlugins: async () => 0,
     },
     workspaceInitialization: {
       onWorkspaceInitialized: () => ({ dispose: () => undefined }),
@@ -134,7 +135,10 @@ suite("Unit: NexkitPanelMessageHandler", () => {
       await handler.handleMessage({ command: "toggleMarketplace", source: "owner/repo", enabled: true });
 
       assert.ok(setMarketplace.calledOnceWithExactly("owner/repo", true));
-      assert.deepStrictEqual(posted.find((m) => m.command === "marketplaceError"), { command: "marketplaceError", error: "boom" });
+      assert.deepStrictEqual(
+        posted.find((m) => m.command === "marketplaceError"),
+        { command: "marketplaceError", error: "boom" }
+      );
     });
 
     test("openMarketplaceRepo opens the GitHub repository", async () => {

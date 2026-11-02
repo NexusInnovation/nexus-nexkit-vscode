@@ -53,7 +53,10 @@ export class InstalledPluginsStore {
     if (kept.length === file.installed.length) {
       return false;
     }
-    await fs.promises.writeFile(this.filePath, JSON.stringify({ ...file, installed: kept }, null, "\t"), "utf8");
+    // Atomic replace keeps a concurrent reader (e.g. VS Code) from seeing a half-written file.
+    const tempPath = `${this.filePath}.${process.pid}.tmp`;
+    await fs.promises.writeFile(tempPath, JSON.stringify({ ...file, installed: kept }, null, "\t"), "utf8");
+    await fs.promises.rename(tempPath, this.filePath);
     return true;
   }
 
