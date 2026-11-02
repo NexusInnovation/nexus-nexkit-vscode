@@ -1,3 +1,14 @@
+## 3.13.0 (2026-08-27)
+
+* fix(initialization): Merge pull request #210 from NexusInnovation/develop ([c80f623](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c80f623)), closes [#210](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/210)
+* chore(release): v3.12.0-beta.2 [skip ci] ([f138307](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/f138307))
+* chore(release): v3.13.0-beta.1 [skip ci] ([bad8783](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/bad8783))
+* Merge pull request #209 from NexusInnovation/develop ([c3da96e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c3da96e)), closes [#209](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/209)
+* Merge remote-tracking branch 'origin/main' into develop ([4e21f95](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4e21f95))
+* test(initialization): assert legacy plugin warning ([99d09ff](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/99d09ff))
+* feat(initialization): normalize legacy plugin marketplace references ([8c27b1f](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8c27b1f))
+* refactor(initialization): normalize plugin marketplace identifier ([a70c5ae](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a70c5ae))
+
 ## 3.13.0-beta.1 (2026-08-27)
 
 * Merge pull request #209 from NexusInnovation/develop ([c3da96e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c3da96e)), closes [#209](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/209)
