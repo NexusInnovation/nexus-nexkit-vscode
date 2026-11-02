@@ -58,7 +58,6 @@ export class NexkitPanelMessageHandler {
 
     // Auto-refresh DevOps connections when they change
     this._services.devOpsConfig.onConnectionsChanged(() => this.sendDevOpsConnections());
-
   }
 
   public async handleMessage(message: WebviewMessage): Promise<void> {
@@ -121,6 +120,17 @@ export class NexkitPanelMessageHandler {
   private async handleRemoveMarketplace(message: WebviewMessage & { command: "removeMarketplace" }): Promise<void> {
     this.trackWebviewAction("removeMarketplace");
     try {
+      const enabledCount = await this._services.marketplace.countEnabledPlugins(message.source);
+      if (enabledCount > 0) {
+        const choice = await vscode.window.showWarningMessage(
+          `Removing this marketplace will disable its ${enabledCount} enabled plugin(s).`,
+          { modal: true },
+          "Remove"
+        );
+        if (choice !== "Remove") {
+          return;
+        }
+      }
       await this._services.marketplace.remove(message.source);
       await this.sendMarketplaces();
     } catch (error) {
@@ -137,12 +147,16 @@ export class NexkitPanelMessageHandler {
 
   private async handleToggleMarketplace(message: WebviewMessage & { command: "toggleMarketplace" }): Promise<void> {
     this.trackWebviewAction("toggleMarketplace");
-    await this.runMarketplaceAction("toggleMarketplace", () => this._services.marketplace.setMarketplaceEnabled(message.source, message.enabled));
+    await this.runMarketplaceAction("toggleMarketplace", () =>
+      this._services.marketplace.setMarketplaceEnabled(message.source, message.enabled)
+    );
   }
 
   private async handleTogglePlugin(message: WebviewMessage & { command: "togglePlugin" }): Promise<void> {
     this.trackWebviewAction("togglePlugin");
-    await this.runMarketplaceAction("togglePlugin", () => this._services.marketplace.setPluginEnabled(message.path, message.enabled));
+    await this.runMarketplaceAction("togglePlugin", () =>
+      this._services.marketplace.setPluginEnabled(message.path, message.enabled)
+    );
   }
 
   private async handleOpenMarketplaceRepo(message: WebviewMessage & { command: "openMarketplaceRepo" }): Promise<void> {
@@ -174,7 +188,9 @@ export class NexkitPanelMessageHandler {
       await this.sendMarketplaces();
     } catch (error) {
       console.error(`Failed to ${context}:`, error);
-      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), { context: `webview.${context}` });
+      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+        context: `webview.${context}`,
+      });
       this.sendToWebview({ command: "marketplaceError", error: error instanceof Error ? error.message : String(error) });
     }
   }

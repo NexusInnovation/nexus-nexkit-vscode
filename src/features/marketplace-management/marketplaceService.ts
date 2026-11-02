@@ -109,11 +109,32 @@ export class MarketplaceService implements vscode.Disposable {
     return updated;
   }
 
+  /** Number of plugins of a marketplace that are currently enabled, including those installed through VS Code. */
+  public async countEnabledPlugins(source: string): Promise<number> {
+    const key = MarketplaceService.keyOf(source);
+    const node = (await this.getTree()).find((m) => MarketplaceService.keyOf(m.source) === key);
+    const enabled = new Set<string>();
+    for (const plugin of node?.plugins ?? []) {
+      if (plugin.enabled && plugin.path) {
+        enabled.add(MarketplacePluginReader.pathKey(plugin.path));
+      }
+    }
+    for (const installedPath of await this._installed.getPathsForMarketplace(source)) {
+      enabled.add(MarketplacePluginReader.pathKey(installedPath));
+    }
+    return enabled.size;
+  }
+
+  /** Removes a marketplace after disabling its plugins, since VS Code keeps them enabled otherwise. */
   public async remove(source: string): Promise<string[]> {
     const key = MarketplaceService.keyOf(source);
     const current = this.getConfigured();
     const updated = current.filter((entry) => MarketplaceService.keyOf(entry) !== key);
     if (updated.length !== current.length) {
+      // Must run before the setting changes: the plugin list is resolved from the configured marketplaces.
+      await this.setMarketplaceEnabled(source, false);
+      // Plugins installed through the plugin browser may live outside the manifest paths: match them by marketplace.
+      await this._installed.remove(await this._installed.getPathsForMarketplace(source));
       await SettingsManager.setPluginMarketplaces(updated);
     }
     return updated;

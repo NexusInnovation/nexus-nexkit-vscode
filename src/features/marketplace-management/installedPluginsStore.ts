@@ -5,6 +5,7 @@ import { MarketplacePluginReader } from "./marketplacePluginReader";
 
 interface InstalledEntry {
   pluginUri?: string;
+  marketplace?: string;
   [key: string]: unknown;
 }
 
@@ -29,6 +30,16 @@ export class InstalledPluginsStore {
   public async getInstalledKeys(): Promise<Set<string>> {
     const file = await this.read();
     return new Set((file?.installed ?? []).map((e) => InstalledPluginsStore.entryKey(e)).filter((k): k is string => !!k));
+  }
+
+  /** Plugin folders installed through VS Code from the given marketplace source (matched on `installed.json`'s `marketplace`). */
+  public async getPathsForMarketplace(source: string): Promise<string[]> {
+    const file = await this.read();
+    const key = InstalledPluginsStore.marketplaceKey(source);
+    return (file?.installed ?? [])
+      .filter((e) => typeof e.marketplace === "string" && InstalledPluginsStore.marketplaceKey(e.marketplace) === key)
+      .map((e) => InstalledPluginsStore.entryPath(e))
+      .filter((p): p is string => !!p);
   }
 
   /** Removes the given plugin folders from installed.json. Returns true when the file changed. */
@@ -62,14 +73,24 @@ export class InstalledPluginsStore {
     }
   }
 
-  private static entryKey(entry: InstalledEntry): string | undefined {
+  private static entryPath(entry: InstalledEntry): string | undefined {
     if (typeof entry?.pluginUri !== "string") {
       return undefined;
     }
     try {
-      return MarketplacePluginReader.pathKey(vscode.Uri.parse(entry.pluginUri).fsPath);
+      return vscode.Uri.parse(entry.pluginUri).fsPath;
     } catch {
       return undefined;
     }
+  }
+
+  private static entryKey(entry: InstalledEntry): string | undefined {
+    const entryPath = InstalledPluginsStore.entryPath(entry);
+    return entryPath ? MarketplacePluginReader.pathKey(entryPath) : undefined;
+  }
+
+  /** Source without `#ref`, forward slashes, case-insensitive. */
+  private static marketplaceKey(source: string): string {
+    return source.split("#")[0].trim().replace(/\\/g, "/").toLowerCase();
   }
 }
