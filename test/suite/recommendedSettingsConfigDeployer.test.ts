@@ -5,7 +5,6 @@ import * as path from "path";
 import * as vscode from "vscode";
 import * as sinon from "sinon";
 import { RecommendedSettingsConfigDeployer } from "../../src/features/initialization/recommendedSettingsConfigDeployer";
-import { SettingsManager } from "../../src/core/settingsManager";
 
 suite("Unit: RecommendedSettingsConfigDeployer", () => {
   let deployer: RecommendedSettingsConfigDeployer;
@@ -63,19 +62,17 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
     await deployer.deployVscodeSettings(tempDir, "initialization");
 
     const updateCalls = updateStub.getCalls();
-    const agentCall = updateCalls.find((c: sinon.SinonSpyCall) => c.args[0] === "agentFilesLocations");
-    assert.ok(agentCall, "Should update agentFilesLocations");
-    assert.deepStrictEqual(agentCall.args[1], {
-      ".nexkit/agents": true,
+    const hookCall = updateCalls.find((c: sinon.SinonSpyCall) => c.args[0] === "hookFilesLocations");
+    assert.ok(hookCall, "Should update hookFilesLocations");
+    assert.deepStrictEqual(hookCall.args[1], {
+      ".nexkit/hooks": true,
     });
-    assert.strictEqual(agentCall.args[2], vscode.ConfigurationTarget.Global);
+    assert.strictEqual(hookCall.args[2], vscode.ConfigurationTarget.Global);
 
-    const promptCall = updateCalls.find((c: sinon.SinonSpyCall) => c.args[0] === "promptFilesLocations");
-    assert.ok(promptCall, "Should update promptFilesLocations");
-    assert.deepStrictEqual(promptCall.args[1], {
-      ".nexkit/prompts": true,
-    });
-    assert.strictEqual(promptCall.args[2], vscode.ConfigurationTarget.Global);
+    assert.ok(
+      !updateCalls.some((c: sinon.SinonSpyCall) => ["agentFilesLocations", "promptFilesLocations"].includes(c.args[0])),
+      "Template location settings are no longer written"
+    );
 
     const useHooksCall = updateCalls.find((c: sinon.SinonSpyCall) => c.args[0] === "useHooks");
     assert.ok(useHooksCall, "Should update useHooks");
@@ -85,18 +82,18 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
 
   test("Should merge with existing user-level settings without overwriting", async () => {
     inspectStub.callsFake((key: string) => {
-      if (key === "promptFilesLocations") {
-        return { globalValue: { "custom/my-prompts": true } };
+      if (key === "hookFilesLocations") {
+        return { globalValue: { "custom/my-hooks": true } };
       }
       return { globalValue: undefined };
     });
 
     await deployer.deployVscodeSettings(tempDir, "initialization");
 
-    const promptCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "promptFilesLocations");
-    assert.ok(promptCall, "Should update promptFilesLocations");
-    assert.strictEqual(promptCall.args[1]["custom/my-prompts"], true);
-    assert.strictEqual(promptCall.args[1][".nexkit/prompts"], true);
+    const hookCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "hookFilesLocations");
+    assert.ok(hookCall, "Should update hookFilesLocations");
+    assert.strictEqual(hookCall.args[1]["custom/my-hooks"], true);
+    assert.strictEqual(hookCall.args[1][".nexkit/hooks"], true);
   });
 
   test("Should not update useHooks if already set to true at user-level", async () => {
@@ -124,11 +121,7 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
       }
 
       const settingMap: Record<string, Record<string, boolean>> = {
-        agentFilesLocations: { ".nexkit/agents": true },
-        agentSkillsLocations: { ".nexkit/skills": true },
         hookFilesLocations: { ".nexkit/hooks": true },
-        instructionsFilesLocations: { ".nexkit/instructions": true },
-        promptFilesLocations: { ".nexkit/prompts": true },
       };
 
       return { globalValue: settingMap[key] };
@@ -282,7 +275,13 @@ suite("Unit: RecommendedSettingsConfigDeployer", () => {
   test("Should move official marketplace to front when it appears in the middle", async () => {
     inspectStub.callsFake((key: string) => {
       if (key === "plugins.marketplaces") {
-        return { globalValue: ["github/copilot-plugins", "NexusInnovation/nexus-plugin-marketplace", "github/awesome-copilot#marketplace"] };
+        return {
+          globalValue: [
+            "github/copilot-plugins",
+            "NexusInnovation/nexus-plugin-marketplace",
+            "github/awesome-copilot#marketplace",
+          ],
+        };
       }
       return { globalValue: undefined };
     });
@@ -369,64 +368,31 @@ suite("Unit: RecommendedSettingsConfigDeployer — Workspace Paths", () => {
     }
   });
 
-  test("Should add relative workspace paths to global chat settings", async () => {
+  test("Should add relative workspace hooks path to global chat settings", async () => {
     await deployer.deployVscodeSettings(tempDir, "initialization");
 
-    const agentCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "agentFilesLocations");
-    assert.ok(agentCall, "Should update agentFilesLocations");
+    const hookCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "hookFilesLocations");
+    assert.ok(hookCall, "Should update hookFilesLocations");
 
-    const locations = agentCall.args[1] as Record<string, boolean>;
-    assert.strictEqual(locations[".nexkit/agents"], true, "Relative workspace path should be present");
-  });
-
-  test("Should always add workspace paths even if deploy mode remains user", async () => {
-    sandbox.stub(SettingsManager, "getTemplateDeployMode").returns("user");
-
-    await deployer.deployVscodeSettings(tempDir, "initialization");
-
-    const agentCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "agentFilesLocations");
-    assert.ok(agentCall, "Should update agentFilesLocations");
-
-    const locations = agentCall.args[1] as Record<string, boolean>;
-    assert.strictEqual(locations[".nexkit/agents"], true, "Workspace path should always be present");
-  });
-
-  test("Should add relative workspace paths for all template types", async () => {
-    await deployer.deployVscodeSettings(tempDir, "initialization");
-
-    const settingKeys = [
-      "agentFilesLocations",
-      "agentSkillsLocations",
-      "hookFilesLocations",
-      "instructionsFilesLocations",
-      "promptFilesLocations",
-    ];
-    const subdirs = ["agents", "skills", "hooks", "instructions", "prompts"];
-
-    for (let i = 0; i < settingKeys.length; i++) {
-      const call = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === settingKeys[i]);
-      assert.ok(call, `Should update ${settingKeys[i]}`);
-
-      const locations = call.args[1] as Record<string, boolean>;
-      assert.strictEqual(locations[`.nexkit/${subdirs[i]}`], true, `Relative workspace path for ${subdirs[i]} should be present`);
-    }
+    const locations = hookCall.args[1] as Record<string, boolean>;
+    assert.strictEqual(locations[".nexkit/hooks"], true, "Relative workspace path should be present");
   });
 
   test("Should merge workspace paths with existing user entries", async () => {
     inspectStub.callsFake((key: string) => {
-      if (key === "promptFilesLocations") {
-        return { globalValue: { "custom/my-prompts": true } };
+      if (key === "hookFilesLocations") {
+        return { globalValue: { "custom/my-hooks": true } };
       }
       return { globalValue: undefined };
     });
 
     await deployer.deployVscodeSettings(tempDir, "initialization");
 
-    const promptCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "promptFilesLocations");
-    assert.ok(promptCall, "Should update promptFilesLocations");
+    const hookCall = updateStub.getCalls().find((c: sinon.SinonSpyCall) => c.args[0] === "hookFilesLocations");
+    assert.ok(hookCall, "Should update hookFilesLocations");
 
-    const locations = promptCall.args[1] as Record<string, boolean>;
-    assert.strictEqual(locations["custom/my-prompts"], true, "Existing custom entry should be preserved");
-    assert.strictEqual(locations[".nexkit/prompts"], true, "Relative workspace path should be present");
+    const locations = hookCall.args[1] as Record<string, boolean>;
+    assert.strictEqual(locations["custom/my-hooks"], true, "Existing custom entry should be preserved");
+    assert.strictEqual(locations[".nexkit/hooks"], true, "Relative workspace path should be present");
   });
 });

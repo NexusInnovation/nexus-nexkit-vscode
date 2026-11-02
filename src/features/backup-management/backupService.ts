@@ -1,14 +1,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { fileExists, copyDirectory } from "../../shared/utils/fileHelper";
-import { AI_TEMPLATE_FILE_TYPES } from "../ai-template-files/models/aiTemplateFile";
-import { UserDirectoryService } from "../ai-template-files/services/userDirectoryService";
-import { NexkitFileWatcherService } from "../nexkit-file-watcher/nexkitFileWatcherService";
-
-/**
- * Template folder names in .nexkit directory
- */
-const TEMPLATE_FOLDERS = AI_TEMPLATE_FILE_TYPES;
+import { UserDirectoryService } from "../../shared/services/userDirectoryService";
 
 /**
  * Maximum number of backups to retain in user directory
@@ -16,7 +9,7 @@ const TEMPLATE_FOLDERS = AI_TEMPLATE_FILE_TYPES;
 const MAX_BACKUPS = 5;
 
 /**
- * Service for managing Nexkit template folder backups.
+ * Service for backing up workspace artifacts before destructive operations.
  * Stores backups in the user directory (via UserDirectoryService) instead of the workspace.
  */
 export class GitHubTemplateBackupService {
@@ -24,62 +17,6 @@ export class GitHubTemplateBackupService {
 
   constructor(userDirectoryService: UserDirectoryService) {
     this._userDirectoryService = userDirectoryService;
-  }
-
-  /**
-   * Backup Nexkit template folders and delete them from the workspace.
-   * Backups are stored in the user directory under backups/<timestamp>/.
-   * Automatically enforces retention policy (keeps last 5 backups).
-   * @param workspaceRoot Absolute path to workspace root
-   * @returns Path to backup directory or null if nothing was backed up
-   */
-  public async backupTemplates(workspaceRoot: string): Promise<string | null> {
-    const nexkitPath = path.join(workspaceRoot, ".nexkit");
-
-    if (!(await fileExists(nexkitPath))) {
-      return null;
-    }
-
-    const hasTemplates = await this._hasAnyTemplateFolders(nexkitPath);
-    if (!hasTemplates) {
-      return null;
-    }
-
-    // Create backup in user directory
-    const backupPath = await this._createBackupDirectory(nexkitPath);
-
-    // Delete template folders from original location
-    await this.deleteTemplateFolders(workspaceRoot);
-
-    // Enforce retention policy
-    await this._enforceRetentionPolicy();
-
-    return backupPath;
-  }
-
-  /**
-   * Delete template folders from .nexkit directory
-   * @param workspaceRoot Absolute path to workspace root
-   */
-  public async deleteTemplateFolders(workspaceRoot: string): Promise<void> {
-    const nexkitPath = path.join(workspaceRoot, ".nexkit");
-
-    if (!(await fileExists(nexkitPath))) {
-      return;
-    }
-
-    const watcher = NexkitFileWatcherService.getInstance();
-    watcher.beginBulkOperation();
-    try {
-      for (const folderName of TEMPLATE_FOLDERS) {
-        const folderPath = path.join(nexkitPath, folderName);
-        if (await fileExists(folderPath)) {
-          await fs.promises.rm(folderPath, { recursive: true, force: true });
-        }
-      }
-    } finally {
-      await watcher.endBulkOperation();
-    }
   }
 
   /**
@@ -102,75 +39,6 @@ export class GitHubTemplateBackupService {
       return dirs.sort().reverse();
     } catch {
       return [];
-    }
-  }
-
-  /**
-   * Restore template folders from a specific backup in user directory
-   * @param workspaceRoot Absolute path to workspace root
-   * @param backupName Name of the backup folder (timestamp, e.g., "2024-01-01_12-00-00")
-   */
-  public async restoreBackup(workspaceRoot: string, backupName: string): Promise<void> {
-    const backupDir = this._userDirectoryService.getUserBackupDir();
-    const backupPath = path.join(backupDir, backupName);
-
-    if (!(await fileExists(backupPath))) {
-      throw new Error(`Backup ${backupName} not found`);
-    }
-
-    const nexkitPath = path.join(workspaceRoot, ".nexkit");
-
-    // Create .nexkit directory if it doesn't exist
-    await fs.promises.mkdir(nexkitPath, { recursive: true });
-
-    // Create temp backup of current template folders for rollback
-    const tempBackupPath = path.join(backupDir, ".restore-temp");
-    if (await this._hasAnyTemplateFolders(nexkitPath)) {
-      await fs.promises.mkdir(tempBackupPath, { recursive: true });
-      for (const folderName of TEMPLATE_FOLDERS) {
-        const sourcePath = path.join(nexkitPath, folderName);
-        if (await fileExists(sourcePath)) {
-          const destPath = path.join(tempBackupPath, folderName);
-          await copyDirectory(sourcePath, destPath);
-        }
-      }
-    }
-
-    const watcher = NexkitFileWatcherService.getInstance();
-    watcher.beginBulkOperation();
-    try {
-      // Delete current template folders
-      await this.deleteTemplateFolders(workspaceRoot);
-
-      // Restore template folders from backup
-      for (const folderName of TEMPLATE_FOLDERS) {
-        const sourcePath = path.join(backupPath, folderName);
-        if (await fileExists(sourcePath)) {
-          const destPath = path.join(nexkitPath, folderName);
-          await copyDirectory(sourcePath, destPath);
-        }
-      }
-
-      // Clean up temp backup on success
-      if (await fileExists(tempBackupPath)) {
-        await fs.promises.rm(tempBackupPath, { recursive: true, force: true });
-      }
-    } catch (error) {
-      // Restore temp backup if something went wrong
-      if (await fileExists(tempBackupPath)) {
-        await this.deleteTemplateFolders(workspaceRoot);
-        for (const folderName of TEMPLATE_FOLDERS) {
-          const sourcePath = path.join(tempBackupPath, folderName);
-          if (await fileExists(sourcePath)) {
-            const destPath = path.join(nexkitPath, folderName);
-            await copyDirectory(sourcePath, destPath);
-          }
-        }
-        await fs.promises.rm(tempBackupPath, { recursive: true, force: true });
-      }
-      throw error;
-    } finally {
-      await watcher.endBulkOperation();
     }
   }
 
@@ -199,44 +67,105 @@ export class GitHubTemplateBackupService {
   }
 
   /**
-   * Check if any template folders exist in .nexkit directory
+   * Back up an explicit set of workspace-relative files/directories into a
+   * fresh `<label>-<ts>` folder in the user backup directory.
+   *
+   * Paths that do not exist are skipped. Returns `null` when none exist.
+   * Retention is intentionally NOT enforced here so a just-created backup cannot
+   * be pruned before a caller uses it for rollback; callers may invoke
+   * {@link cleanupBackups} afterwards.
+   *
+   * @param workspaceRoot Absolute path to the workspace root.
+   * @param relativePaths Workspace-relative paths; must stay inside the root.
+   * @param label Backup folder prefix (safe single path segment).
+   * @throws Error when a path escapes the workspace root or the label is unsafe.
    */
-  private async _hasAnyTemplateFolders(nexkitPath: string): Promise<boolean> {
-    for (const folderName of TEMPLATE_FOLDERS) {
-      const folderPath = path.join(nexkitPath, folderName);
-      if (await fileExists(folderPath)) {
-        return true;
+  public async backupWorkspaceArtifacts(
+    workspaceRoot: string,
+    relativePaths: readonly string[],
+    label: string
+  ): Promise<string | null> {
+    if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(label)) {
+      throw new Error(`Invalid backup label: ${label}`);
+    }
+
+    const present: string[] = [];
+    for (const relative of relativePaths) {
+      this._assertInsideRoot(workspaceRoot, relative);
+      if (await fileExists(path.join(workspaceRoot, relative))) {
+        present.push(relative);
       }
     }
-    return false;
-  }
 
-  /**
-   * Create backup directory with template folders in user directory
-   * @param nexkitPath Absolute path to .nexkit directory in workspace
-   * @returns Absolute path to the created backup directory
-   */
-  private async _createBackupDirectory(nexkitPath: string): Promise<string> {
+    if (present.length === 0) {
+      return null;
+    }
+
     const timestamp = new Date().toISOString().slice(0, 19).replace(/T/g, "_").replace(/:/g, "-");
     const backupDir = this._userDirectoryService.getUserBackupDir();
-    const backupPath = path.join(backupDir, timestamp);
+    const backupPath = path.join(backupDir, `${label}-${timestamp}`);
     await fs.promises.mkdir(backupPath, { recursive: true });
 
-    for (const folderName of TEMPLATE_FOLDERS) {
-      const sourcePath = path.join(nexkitPath, folderName);
-      if (await fileExists(sourcePath)) {
-        const destPath = path.join(backupPath, folderName);
-        await copyDirectory(sourcePath, destPath);
-      }
+    for (const relative of present) {
+      await this._copyArtifact(path.join(workspaceRoot, relative), path.join(backupPath, relative));
     }
 
     return backupPath;
   }
 
   /**
-   * Enforce retention policy by removing oldest backups beyond MAX_BACKUPS
+   * Restore an explicit set of workspace-relative paths from a backup created
+   * by {@link backupWorkspaceArtifacts}. Each listed path is removed first, then
+   * copied back when present in the backup, so paths that did not exist at
+   * backup time end up absent again.
+   *
+   * @throws Error when a path escapes the workspace root.
    */
-  private async _enforceRetentionPolicy(): Promise<void> {
-    await this.cleanupBackups(MAX_BACKUPS);
+  public async restoreWorkspaceArtifacts(
+    workspaceRoot: string,
+    backupPath: string,
+    relativePaths: readonly string[]
+  ): Promise<void> {
+    for (const relative of relativePaths) {
+      this._assertInsideRoot(workspaceRoot, relative);
+    }
+
+    for (const relative of relativePaths) {
+      const current = path.join(workspaceRoot, relative);
+      if (await fileExists(current)) {
+        await fs.promises.rm(current, { recursive: true, force: true });
+      }
+    }
+
+    for (const relative of relativePaths) {
+      const source = path.join(backupPath, relative);
+      if (await fileExists(source)) {
+        await this._copyArtifact(source, path.join(workspaceRoot, relative));
+      }
+    }
+  }
+
+  private _assertInsideRoot(workspaceRoot: string, relative: string): void {
+    const resolved = path.resolve(workspaceRoot, relative);
+    const fromRoot = path.relative(path.resolve(workspaceRoot), resolved);
+    if (
+      relative.length === 0 ||
+      path.isAbsolute(relative) ||
+      fromRoot === "" ||
+      fromRoot === ".." ||
+      fromRoot.startsWith(`..${path.sep}`) ||
+      path.isAbsolute(fromRoot)
+    ) {
+      throw new Error(`Backup path escapes the workspace root: ${relative}`);
+    }
+  }
+
+  /** Copy a file or directory, creating the destination's parent directory. */
+  private async _copyArtifact(source: string, destination: string): Promise<void> {
+    const stats = await fs.promises.stat(source);
+    if (!stats.isDirectory()) {
+      await fs.promises.mkdir(path.dirname(destination), { recursive: true });
+    }
+    await copyDirectory(source, destination);
   }
 }

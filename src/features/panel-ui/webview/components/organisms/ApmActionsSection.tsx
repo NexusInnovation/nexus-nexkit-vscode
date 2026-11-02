@@ -21,7 +21,7 @@ export function ApmActionsSection({ isInitialized }: ApmActionsSectionProps) {
         <button class="action-button" onClick={initializeWorkspace}>
           <span>Set Up NexKit</span>
         </button>
-        <p class="button-description">Install NexKit templates and configuration to your user directory</p>
+        <p class="button-description">Install NexKit configuration for your workspace</p>
       </div>
     </div>
   );

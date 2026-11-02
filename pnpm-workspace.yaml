@@ -8,3 +8,5 @@ allowBuilds:
 
 overrides:
   '@opentelemetry/propagator-jaeger': '2.10.0'
+  '@grpc/grpc-js': '^1.14.5'
+  '@azure/msal-node': '^7.1.0'
