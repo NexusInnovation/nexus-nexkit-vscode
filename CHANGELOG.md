@@ -1,3 +1,9 @@
+## [4.0.0-beta.2](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v4.0.0-beta.1...v4.0.0-beta.2) (2026-11-25)
+
+### Features
+
+* **devops:** add Azure DevOps builds view and build log panel ([#335](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/335)) ([09dbba1](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/09dbba1eeb55f88a38a11f8558496e278705ed77))
+
 ## [4.0.0-beta.1](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v3.14.0-beta.1...v4.0.0-beta.1) (2026-11-02)
 
 ### ⚠ BREAKING CHANGES
