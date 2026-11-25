@@ -2,6 +2,7 @@ import { useMemo } from "preact/hooks";
 import { useAppState } from "../hooks/useAppState";
 import { useMode } from "../hooks/useMode";
 import { useActiveTab } from "../hooks/useActiveTab";
+import { useTabOrder } from "../hooks/useTabOrder";
 import { ApmActionsSection } from "./organisms/ApmActionsSection";
 import { FooterSection } from "./organisms/FooterSection";
 import { MarketplaceSection } from "./organisms/MarketplaceSection";
@@ -24,16 +25,16 @@ export function App() {
   const { workspace } = useAppState();
   const { isNoneMode, isDevelopersMode, isAPMMode } = useMode();
 
-  // Build the list of visible tabs based on the current mode
-  const tabs = useMemo<TabDefinition[]>(() => {
-    if (isDevelopersMode) {
-      return [TAB_DEFINITIONS.marketplaces, TAB_DEFINITIONS.tools];
-    }
-    if (isAPMMode) {
-      return [TAB_DEFINITIONS.marketplaces, TAB_DEFINITIONS.tools, TAB_DEFINITIONS.project];
+  // Project is the default (first) tab in both Developers and APM modes; the user can reorder them
+  const defaultTabIds = useMemo<string[]>(() => {
+    if (isDevelopersMode || isAPMMode) {
+      return ["project", "marketplaces", "tools"];
     }
     return [];
   }, [isDevelopersMode, isAPMMode]);
+
+  const [tabOrder, setTabOrder] = useTabOrder(defaultTabIds);
+  const tabs = useMemo<TabDefinition[]>(() => tabOrder.map((id) => TAB_DEFINITIONS[id]), [tabOrder]);
 
   const tabIds = useMemo(() => tabs.map((t) => t.id), [tabs]);
   const [activeTab, setActiveTab] = useActiveTab(tabIds);
@@ -74,7 +75,7 @@ export function App() {
     <div class="container">
       {isAPMMode && <ApmActionsSection isInitialized={workspace.isInitialized} />}
 
-      <TabBar tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} badges={badges} />
+      <TabBar tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} badges={badges} onReorder={setTabOrder} />
 
       <div class="tab-content">
         {isDevelopersMode && <InitializationBanner />}
@@ -88,7 +89,7 @@ export function App() {
             <ToolsSection />
           </div>
         )}
-        {isAPMMode && activeTab === "project" && (
+        {activeTab === "project" && (
           <div class="tab-panel" role="tabpanel" id="project-tabpanel">
             <ApmConnectionSection />
           </div>
