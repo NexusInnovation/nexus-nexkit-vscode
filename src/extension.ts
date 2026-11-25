@@ -18,6 +18,7 @@ import { registerShowLogsCommand } from "./shared/commands/loggingCommand";
 import { registerAddDevOpsConnectionCommand, registerRemoveDevOpsConnectionCommand } from "./features/apm-devops/commands";
 import { registerGenerateCommitMessageCommand } from "./features/commit-management/commands";
 import { registerOpenConvertToMarkdownCommand } from "./features/convert-to-markdown/commands";
+import { registerBuildLogView, registerOpenDevOpsPipelinesCommand } from "./features/devops-pipelines/commands";
 
 /**
  * Extension activation
@@ -59,6 +60,8 @@ export async function activate(context: vscode.ExtensionContext) {
   registerRemoveDevOpsConnectionCommand(context, services);
   registerGenerateCommitMessageCommand(context, services);
   registerOpenConvertToMarkdownCommand(context, services);
+  registerOpenDevOpsPipelinesCommand(context, services);
+  registerBuildLogView(context, services);
 
   // Register webview panel
   const nexkitPanelProvider = new NexkitPanelViewProvider();
@@ -115,7 +118,7 @@ function setupGlobalErrorHandling(
         return new Error(error);
       } else if (error !== null && typeof error === "object") {
         // Try to extract a meaningful message from the object
-        const message = (error.message || error.msg || error.reason || error.toString());
+        const message = error.message || error.msg || error.reason || error.toString();
         return new Error(String(message));
       } else {
         return new Error(String(error));
