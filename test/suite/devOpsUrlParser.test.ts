@@ -3,7 +3,7 @@
  */
 
 import * as assert from "assert";
-import { parseDevOpsUrl, generateConnectionId } from "../../src/features/apm-devops/devOpsUrlParser";
+import { parseDevOpsUrl, generateConnectionId, parseAzureReposGitRemoteUrl } from "../../src/features/apm-devops/devOpsUrlParser";
 
 suite("Unit: DevOps URL Parser", () => {
   suite("parseDevOpsUrl", () => {
@@ -153,6 +153,81 @@ suite("Unit: DevOps URL Parser", () => {
       const result = generateConnectionId("MyOrg", "MyProject");
 
       assert.strictEqual(result, "myorg-myproject");
+    });
+  });
+
+  suite("parseAzureReposGitRemoteUrl", () => {
+    test("Should parse dev.azure.com https git remote", () => {
+      const result = parseAzureReposGitRemoteUrl("https://dev.azure.com/myorg/myproject/_git/myrepo");
+
+      assert.strictEqual(result.isAzureRepos, true);
+      assert.strictEqual(result.organization, "myorg");
+      assert.strictEqual(result.project, "myproject");
+      assert.strictEqual(result.repository, "myrepo");
+    });
+
+    test("Should parse dev.azure.com https git remote with org@ prefix", () => {
+      const result = parseAzureReposGitRemoteUrl("https://myorg@dev.azure.com/myorg/myproject/_git/myrepo");
+
+      assert.strictEqual(result.isAzureRepos, true);
+      assert.strictEqual(result.organization, "myorg");
+      assert.strictEqual(result.project, "myproject");
+      assert.strictEqual(result.repository, "myrepo");
+    });
+
+    test("Should parse dev.azure.com SSH git remote", () => {
+      const result = parseAzureReposGitRemoteUrl("git@ssh.dev.azure.com:v3/myorg/myproject/myrepo");
+
+      assert.strictEqual(result.isAzureRepos, true);
+      assert.strictEqual(result.organization, "myorg");
+      assert.strictEqual(result.project, "myproject");
+      assert.strictEqual(result.repository, "myrepo");
+    });
+
+    test("Should parse legacy visualstudio.com https git remote", () => {
+      const result = parseAzureReposGitRemoteUrl("https://myorg.visualstudio.com/myproject/_git/myrepo");
+
+      assert.strictEqual(result.isAzureRepos, true);
+      assert.strictEqual(result.organization, "myorg");
+      assert.strictEqual(result.project, "myproject");
+      assert.strictEqual(result.repository, "myrepo");
+    });
+
+    test("Should parse legacy visualstudio.com https git remote with DefaultCollection", () => {
+      const result = parseAzureReposGitRemoteUrl("https://myorg.visualstudio.com/DefaultCollection/myproject/_git/myrepo");
+
+      assert.strictEqual(result.isAzureRepos, true);
+      assert.strictEqual(result.organization, "myorg");
+      assert.strictEqual(result.project, "myproject");
+      assert.strictEqual(result.repository, "myrepo");
+    });
+
+    test("Should parse legacy vs-ssh.visualstudio.com SSH git remote", () => {
+      const result = parseAzureReposGitRemoteUrl("myorg@vs-ssh.visualstudio.com:v3/myorg/myproject/myrepo");
+
+      assert.strictEqual(result.isAzureRepos, true);
+      assert.strictEqual(result.organization, "myorg");
+      assert.strictEqual(result.project, "myproject");
+      assert.strictEqual(result.repository, "myrepo");
+    });
+
+    test("Should return isAzureRepos false for GitHub URL", () => {
+      const result = parseAzureReposGitRemoteUrl("https://github.com/myorg/myrepo.git");
+
+      assert.strictEqual(result.isAzureRepos, false);
+      assert.strictEqual(result.organization, undefined);
+    });
+
+    test("Should return isAzureRepos false for GitHub SSH URL", () => {
+      const result = parseAzureReposGitRemoteUrl("git@github.com:myorg/myrepo.git");
+
+      assert.strictEqual(result.isAzureRepos, false);
+    });
+
+    test("Should return isAzureRepos false for empty/invalid input", () => {
+      assert.strictEqual(parseAzureReposGitRemoteUrl("").isAzureRepos, false);
+      assert.strictEqual(parseAzureReposGitRemoteUrl(null as any).isAzureRepos, false);
+      assert.strictEqual(parseAzureReposGitRemoteUrl("not a url").isAzureRepos, false);
     });
   });
 });

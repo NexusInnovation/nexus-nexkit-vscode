@@ -2,7 +2,7 @@
   "name": "nexus-nexkit-vscode",
   "displayName": "Nexkit",
   "description": "VS Code extension for Nexkit",
-  "version": "4.0.0-beta.2",
+  "version": "4.1.0-beta.2",
   "publisher": "NexusInnovation",
   "private": true,
   "license": "MIT",
@@ -12,7 +12,7 @@
   },
   "engines": {
     "vscode": "^1.105.0",
-    "node": ">=22"
+    "node": ">=26.13"
   },
   "categories": [
     "Other"
@@ -117,6 +117,12 @@
         "category": "Nexkit"
       },
       {
+        "command": "nexus-nexkit-vscode.createBranchFromWorkItem",
+        "title": "Nexkit: Create Branch from Work Item",
+        "category": "Nexkit",
+        "icon": "$(git-branch)"
+      },
+      {
         "command": "nexus-nexkit-vscode.openDevOpsPipelines",
         "title": "Nexkit: Open Azure DevOps Builds",
         "category": "Nexkit"
@@ -152,6 +158,11 @@
           "command": "nexus-nexkit-vscode.generateCommitMessage",
           "when": "scmProvider == git",
           "group": "1_generate@1"
+        },
+        {
+          "command": "nexus-nexkit-vscode.createBranchFromWorkItem",
+          "when": "scmProvider == git",
+          "group": "1_generate@2"
         },
         {
           "command": "nexus-nexkit-vscode.openSettings",

@@ -15,6 +15,7 @@ export class ExtensionGitHubReleaseService {
   private static readonly REPO_OWNER = "NexusInnovation";
   private static readonly REPO_NAME = "nexus-nexkit-vscode";
   private static readonly BASE_URL = "https://api.github.com";
+  private static _signInDeclined = false;
 
   /**
    * Get GitHub authentication session with required scopes
@@ -48,6 +49,11 @@ export class ExtensionGitHubReleaseService {
       return false;
     }
 
+    // Do not ask again in this window once the user declined or dismissed the prompt
+    if (ExtensionGitHubReleaseService._signInDeclined) {
+      return false;
+    }
+
     // GitHub returns 404 for private repositories when not authenticated
     // This is a security feature to not reveal the existence of private repos
     if (response.status === 401 || response.status === 403 || response.status === 404) {
@@ -65,6 +71,7 @@ export class ExtensionGitHubReleaseService {
         const session = await this.getGitHubSession(true);
         return session !== undefined;
       }
+      ExtensionGitHubReleaseService._signInDeclined = true;
     }
     return false;
   }

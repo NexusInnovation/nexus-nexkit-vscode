@@ -6,7 +6,9 @@ import {
   BuildStatus,
   BuildSummary,
   HostToWebviewMessage,
+  PipelineSummary,
   PipelinesViewState,
+  RunOptions,
   StageState,
   StageSummary,
   WebviewToHostMessage,
@@ -20,6 +22,7 @@ const vscode = acquireVsCodeApi();
 const CLOCK_TICK_MS = 5_000;
 
 type Filter = "all" | "running";
+type Tab = "builds" | "pipelines";
 
 function postToHost(message: WebviewToHostMessage): void {
   vscode.postMessage(message);
@@ -181,6 +184,9 @@ function StageBox({
   layout,
   expanded,
   now,
+  highlight,
+  dependsOnNames,
+  onHover,
   onToggleJob,
   onOpenLog,
 }: {
@@ -188,11 +194,20 @@ function StageBox({
   layout: PlacedNode;
   expanded: Set<string>;
   now: number;
+  highlight?: "self" | "upstream" | "downstream";
+  dependsOnNames: string[];
+  onHover: (stageId: string | undefined) => void;
   onToggleJob: (jobId: string) => void;
   onOpenLog: (recordId: string) => void;
 }) {
   return (
-    <div class="stage" style={{ left: layout.x, top: layout.y, width: layout.width, height: layout.height }}>
+    <div
+      class={`stage ${highlight ?? ""}`}
+      style={{ left: layout.x, top: layout.y, width: layout.width, height: layout.height }}
+      title={dependsOnNames.length > 0 ? `Depends on: ${dependsOnNames.join(", ")}` : "No dependency"}
+      onMouseEnter={() => onHover(stage.id)}
+      onMouseLeave={() => onHover(undefined)}
+    >
       <div class="stage-title" title={stage.name}>
         <StatusIcon status={stage.state} />
         <span>{stage.name}</span>
@@ -257,6 +272,7 @@ function StageGraph({
   onOpenLog: (recordId: string) => void;
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [hovered, setHovered] = useState<string | undefined>();
   const autoExpanded = useRef<Set<string>>(new Set());
   const toggleJob = (jobId: string): void =>
     setExpanded((current) => {
@@ -290,6 +306,20 @@ function StageGraph({
   );
   const stageById = new Map(stages.map((s) => [s.id, s]));
 
+  // Highlight the declared (not only the drawn) links of the hovered stage: redundant links are hidden from the drawing
+  const highlightOf = (id: string): "self" | "upstream" | "downstream" | undefined => {
+    if (!hovered) {
+      return undefined;
+    }
+    if (id === hovered) {
+      return "self";
+    }
+    if (stageById.get(hovered)?.dependsOn.includes(id)) {
+      return "upstream";
+    }
+    return stageById.get(id)?.dependsOn.includes(hovered) ? "downstream" : undefined;
+  };
+
   return (
     <div class="graph-scroll">
       {dependenciesInferred && (
@@ -302,9 +332,19 @@ function StageGraph({
               <path class="arrow" d="M0 0 L8 4 L0 8 z" />
             </marker>
           </defs>
-          {layout.edges.map((edge) => (
-            <path key={`${edge.from}-${edge.to}`} class="edge" d={edgePath(edge.points)} marker-end="url(#arrowhead)" />
-          ))}
+          {layout.edges.map((edge) => {
+            const touchesHovered = edge.from === hovered || edge.to === hovered;
+            const state = stageById.get(edge.from)?.state ?? "pending";
+            const emphasis = hovered ? (touchesHovered ? "active" : "dim") : "";
+            return (
+              <path
+                key={`${edge.from}-${edge.to}`}
+                class={`edge ${state} ${emphasis}`}
+                d={edgePath(edge.points)}
+                marker-end="url(#arrowhead)"
+              />
+            );
+          })}
         </svg>
         {layout.nodes.map((node) => {
           const stage = stageById.get(node.id);
@@ -315,6 +355,9 @@ function StageGraph({
               layout={node}
               expanded={expanded}
               now={now}
+              highlight={highlightOf(node.id)}
+              dependsOnNames={stage.dependsOn.map((id) => stageById.get(id)?.name ?? id)}
+              onHover={setHovered}
               onToggleJob={toggleJob}
               onOpenLog={onOpenLog}
             />
@@ -442,6 +485,95 @@ function DetailView({
   );
 }
 
+function PipelineRow({ pipeline, now, onRun }: { pipeline: PipelineSummary; now: number; onRun: (id: number) => void }) {
+  const last = pipeline.lastRun;
+  return (
+    <div class="row pipeline-row">
+      {last ? <StatusIcon status={last.status} size="large" /> : <span class="icon pending large" aria-label="never run" />}
+      <div>
+        <div class="row-title" title={pipeline.name}>
+          {pipeline.name}
+        </div>
+        <div class="row-sub">
+          {pipeline.folder && <span class="meta">{pipeline.folder}</span>}
+          {last ? (
+            <>
+              <span class="meta">#{last.buildNumber}</span>
+              {last.branch && (
+                <span class="meta ref">
+                  <BranchIcon />
+                  {last.branch}
+                </span>
+              )}
+            </>
+          ) : (
+            <span class="meta">Never run</span>
+          )}
+        </div>
+      </div>
+      <div class="row-time">
+        <div>{last ? formatRelativeTime(last.startTime, now) : ""}</div>
+        <div>{last ? (durationBetween(last.startTime, last.finishTime, now) ?? "") : ""}</div>
+      </div>
+      <button class="primary" onClick={() => onRun(pipeline.id)}>
+        Run pipeline
+      </button>
+    </div>
+  );
+}
+
+function RunDialog({
+  pipeline,
+  options,
+  running,
+  error,
+  onRun,
+  onCancel,
+}: {
+  pipeline: PipelineSummary;
+  options?: RunOptions;
+  running: boolean;
+  error?: string;
+  onRun: (branch: string) => void;
+  onCancel: () => void;
+}) {
+  const [branch, setBranch] = useState("");
+  useEffect(() => {
+    if (options) {
+      setBranch(options.defaultBranch);
+    }
+  }, [options]);
+
+  return (
+    <div class="dialog-backdrop" onClick={onCancel}>
+      <div class="dialog" role="dialog" aria-label="Run pipeline" onClick={(e) => e.stopPropagation()}>
+        <h2>Run pipeline</h2>
+        <div class="muted">{pipeline.name}</div>
+        {!options ? (
+          <p class="muted">Loading branches…</p>
+        ) : (
+          <label class="field">
+            <span class="label">Branch</span>
+            <input list="run-branches" value={branch} onInput={(e) => setBranch((e.target as HTMLInputElement).value)} />
+            <datalist id="run-branches">
+              {options.branches.map((name) => (
+                <option key={name} value={name} />
+              ))}
+            </datalist>
+          </label>
+        )}
+        {error && <div class="banner error">{error}</div>}
+        <div class="dialog-actions">
+          <button onClick={onCancel}>Cancel</button>
+          <button class="primary" disabled={!options || running || branch.trim() === ""} onClick={() => onRun(branch)}>
+            {running ? "Starting…" : "Run"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [viewState, setViewState] = useState<PipelinesViewState>("loading");
   const [message, setMessage] = useState<string | undefined>();
@@ -454,6 +586,14 @@ function App() {
   const [detailError, setDetailError] = useState<string | undefined>();
   const [cancelNote, setCancelNote] = useState<string | undefined>();
   const [now, setNow] = useState(Date.now());
+  const [tab, setTab] = useState<Tab>("builds");
+  const [pipelines, setPipelines] = useState<PipelineSummary[] | undefined>();
+  const [pipelinesError, setPipelinesError] = useState<string | undefined>();
+  const [pipelineQuery, setPipelineQuery] = useState("");
+  const [runTarget, setRunTarget] = useState<number | undefined>();
+  const [runOptions, setRunOptions] = useState<RunOptions | undefined>();
+  const [runError, setRunError] = useState<string | undefined>();
+  const [runStarting, setRunStarting] = useState(false);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent<HostToWebviewMessage>): void => {
@@ -469,6 +609,7 @@ function App() {
             setBuilds([]);
             setSelectedId(undefined);
             setDetail(undefined);
+            setPipelines(undefined);
           }
           break;
         case "builds":
@@ -485,6 +626,31 @@ function App() {
           break;
         case "cancel-result":
           setCancelNote(msg.message);
+          break;
+        case "pipelines":
+          setPipelines(msg.pipelines);
+          setPipelinesError(undefined);
+          break;
+        case "pipelines-error":
+          setPipelinesError(msg.message);
+          break;
+        case "run-options":
+          setRunOptions(msg.options);
+          break;
+        case "run-result":
+          setRunStarting(false);
+          if (msg.success && msg.buildId !== undefined) {
+            setRunTarget(undefined);
+            setRunOptions(undefined);
+            setTab("builds");
+            setSelectedId(msg.buildId);
+            setDetail(undefined);
+            setDetailError(undefined);
+            setCancelNote(undefined);
+            postToHost({ type: "select-build", buildId: msg.buildId });
+          } else {
+            setRunError(msg.message ?? "The pipeline could not be started.");
+          }
           break;
       }
     };
@@ -554,36 +720,120 @@ function App() {
     );
   }
 
+  const openPipelinesTab = (): void => {
+    setTab("pipelines");
+    postToHost({ type: "load-pipelines" });
+  };
+
+  const startRunDialog = (pipelineId: number): void => {
+    setRunTarget(pipelineId);
+    setRunOptions(undefined);
+    setRunError(undefined);
+    setRunStarting(false);
+    postToHost({ type: "prepare-run", pipelineId });
+  };
+
+  const closeRunDialog = (): void => {
+    setRunTarget(undefined);
+    setRunOptions(undefined);
+    setRunError(undefined);
+    setRunStarting(false);
+  };
+
+  const submitRun = (branch: string): void => {
+    if (runTarget === undefined) {
+      return;
+    }
+    setRunError(undefined);
+    setRunStarting(true);
+    postToHost({ type: "run-pipeline", pipelineId: runTarget, branch });
+  };
+
+  const query = pipelineQuery.trim().toLowerCase();
+  const visiblePipelines = (pipelines ?? []).filter(
+    (p) => query === "" || p.name.toLowerCase().includes(query) || p.folder.toLowerCase().includes(query)
+  );
+  const runPipelineTarget = pipelines?.find((p) => p.id === runTarget);
+
   return (
     <div>
       <h1>Azure DevOps Builds</h1>
       <div class="muted">{projectLabel}</div>
-      <div class="toolbar">
+      <div class="toolbar main-tabs">
         <div class="tabs">
-          <button class={filter === "all" ? "active" : ""} onClick={() => setFilter("all")}>
-            All
+          <button class={tab === "builds" ? "active" : ""} onClick={() => setTab("builds")}>
+            Builds
           </button>
-          <button class={filter === "running" ? "active" : ""} onClick={() => setFilter("running")}>
-            In progress ({runningCount})
+          <button class={tab === "pipelines" ? "active" : ""} onClick={openPipelinesTab}>
+            Pipelines
           </button>
         </div>
-        <span class="spacer" />
-        {updatedAt && <span class="muted">Updated {new Date(updatedAt).toLocaleTimeString()}</span>}
-        <button onClick={() => postToHost({ type: "refresh" })}>Refresh</button>
       </div>
 
-      {viewState === "error" && <div class="banner error">{message}</div>}
-      {viewState === "loading" && builds.length === 0 && <p class="muted">Loading builds…</p>}
-      {viewState !== "loading" && viewState !== "error" && visibleBuilds.length === 0 && (
-        <p class="empty muted">{filter === "running" ? "No build is currently running." : "No builds found."}</p>
-      )}
+      {tab === "pipelines" ? (
+        <>
+          <div class="toolbar">
+            <input
+              class="search"
+              type="search"
+              placeholder="Filter pipelines"
+              value={pipelineQuery}
+              onInput={(e) => setPipelineQuery((e.target as HTMLInputElement).value)}
+            />
+            <span class="spacer" />
+            <button onClick={() => postToHost({ type: "load-pipelines" })}>Refresh</button>
+          </div>
+          {pipelinesError && <div class="banner error">{pipelinesError}</div>}
+          {!pipelines && !pipelinesError && <p class="muted">Loading pipelines…</p>}
+          {pipelines && visiblePipelines.length === 0 && <p class="empty muted">No pipeline found.</p>}
+          {visiblePipelines.length > 0 && (
+            <div class="list">
+              {visiblePipelines.map((pipeline) => (
+                <PipelineRow key={pipeline.id} pipeline={pipeline} now={now} onRun={startRunDialog} />
+              ))}
+            </div>
+          )}
+          {runPipelineTarget && (
+            <RunDialog
+              pipeline={runPipelineTarget}
+              options={runOptions?.pipelineId === runPipelineTarget.id ? runOptions : undefined}
+              running={runStarting}
+              error={runError}
+              onRun={submitRun}
+              onCancel={closeRunDialog}
+            />
+          )}
+        </>
+      ) : (
+        <>
+          <div class="toolbar">
+            <div class="tabs">
+              <button class={filter === "all" ? "active" : ""} onClick={() => setFilter("all")}>
+                All
+              </button>
+              <button class={filter === "running" ? "active" : ""} onClick={() => setFilter("running")}>
+                In progress ({runningCount})
+              </button>
+            </div>
+            <span class="spacer" />
+            {updatedAt && <span class="muted">Updated {new Date(updatedAt).toLocaleTimeString()}</span>}
+            <button onClick={() => postToHost({ type: "refresh" })}>Refresh</button>
+          </div>
 
-      {visibleBuilds.length > 0 && (
-        <div class="list">
-          {visibleBuilds.map((build) => (
-            <BuildRow key={build.id} build={build} now={now} onSelect={selectBuild} />
-          ))}
-        </div>
+          {viewState === "error" && <div class="banner error">{message}</div>}
+          {viewState === "loading" && builds.length === 0 && <p class="muted">Loading builds…</p>}
+          {viewState !== "loading" && viewState !== "error" && visibleBuilds.length === 0 && (
+            <p class="empty muted">{filter === "running" ? "No build is currently running." : "No builds found."}</p>
+          )}
+
+          {visibleBuilds.length > 0 && (
+            <div class="list">
+              {visibleBuilds.map((build) => (
+                <BuildRow key={build.id} build={build} now={now} onSelect={selectBuild} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

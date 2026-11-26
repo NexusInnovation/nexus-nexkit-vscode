@@ -303,9 +303,36 @@
         fill: none;
         stroke: var(--muted);
         stroke-width: 1.5;
+        transition: opacity 0.12s;
+      }
+      .graph .edge.succeeded {
+        stroke: var(--ok);
+      }
+      .graph .edge.failed {
+        stroke: var(--fail);
+      }
+      .graph .edge.running {
+        stroke: var(--run);
+      }
+      .graph .edge.dim {
+        opacity: 0.12;
+      }
+      .graph .edge.active {
+        stroke-width: 2.5;
       }
       .graph .arrow {
         fill: var(--muted);
+      }
+      .stage.self {
+        border-color: var(--vscode-focusBorder);
+      }
+      .stage.upstream {
+        border-color: var(--vscode-focusBorder);
+        border-style: dashed;
+      }
+      .stage.downstream {
+        border-color: var(--vscode-textLink-foreground);
+        border-style: dashed;
       }
       .stage {
         position: absolute;
@@ -384,6 +411,58 @@
         color: var(--muted);
         font-size: 0.9em;
         margin: 0 0 8px;
+      }
+      .main-tabs {
+        margin-bottom: 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .search,
+      .field input {
+        font-family: inherit;
+        font-size: inherit;
+        color: var(--vscode-input-foreground);
+        background: var(--vscode-input-background);
+        border: 1px solid var(--vscode-input-border, var(--border));
+        border-radius: 2px;
+        padding: 4px 8px;
+        min-width: 220px;
+      }
+      .pipeline-row {
+        grid-template-columns: 28px minmax(0, 3fr) minmax(100px, 1fr) auto;
+        cursor: default;
+      }
+      .dialog-backdrop {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.45);
+        z-index: 10;
+      }
+      .dialog {
+        width: min(420px, 90vw);
+        padding: 16px 20px;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: var(--vscode-editorWidget-background);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin: 12px 0;
+      }
+      .field .label {
+        color: var(--muted);
+        font-size: 0.9em;
+      }
+      .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 12px;
       }
     </style>
   </head>

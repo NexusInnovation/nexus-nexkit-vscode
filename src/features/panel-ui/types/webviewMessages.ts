@@ -20,6 +20,7 @@ export type WebviewMessage =
   | { command: "openPluginBrowser" }
   | { command: "openFeedback" }
   | { command: "openConvertToMarkdown" }
+  | { command: "createBranchFromWorkItem" }
   | { command: "openDevOpsPipelines" }
   | { command: "setMode"; mode: OperationMode }
   // APM DevOps connection messages
