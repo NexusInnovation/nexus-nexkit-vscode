@@ -27,6 +27,7 @@ import { GitHubWorkflowRunnerService } from "../features/github-workflow-runner/
 import { HooksConfigDeployer } from "../features/initialization/hooksConfigDeployer";
 import { ConvertToMarkdownPanelService } from "../features/convert-to-markdown/convertToMarkdownPanelService";
 import { MarkitdownConversionService } from "../features/convert-to-markdown/markitdownConversionService";
+import { GitHooksService } from "../features/git-hooks-management";
 import { AzureDevOpsAuthService } from "../features/devops-branch-creation/azureDevOpsAuthService";
 import { AzureDevOpsRestClient } from "../features/devops-branch-creation/azureDevOpsRestClient";
 import { DevOpsBranchCreationService } from "../features/devops-branch-creation/devOpsBranchCreationService";
@@ -69,6 +70,7 @@ export interface ServiceContainer {
   githubWorkflowRunner: GitHubWorkflowRunnerService;
   convertToMarkdown: ConvertToMarkdownPanelService;
   markitdownConversion: MarkitdownConversionService;
+  gitHooks: GitHooksService;
   devOpsBranchCreation: DevOpsBranchCreationService;
   devOpsPipelines: DevOpsPipelinesPanelService;
   devOpsBuildLog: BuildLogViewService;
@@ -123,6 +125,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const aiCreditStatusBar = new AiCreditStatusBarService(context, aiCreditUsage);
   const markitdownConversion = new MarkitdownConversionService(logging);
   const convertToMarkdown = new ConvertToMarkdownPanelService(context.extensionUri, markitdownConversion);
+  const gitHooks = new GitHooksService();
   const azureDevOpsAuthService = new AzureDevOpsAuthService();
   const azureDevOpsRestClient = new AzureDevOpsRestClient(azureDevOpsAuthService);
   const devOpsBranchCreation = new DevOpsBranchCreationService(devOpsConfig, azureDevOpsRestClient, telemetry);
@@ -185,6 +188,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     githubWorkflowRunner,
     convertToMarkdown,
     markitdownConversion,
+    gitHooks,
     devOpsBranchCreation,
     devOpsPipelines,
     devOpsBuildLog,

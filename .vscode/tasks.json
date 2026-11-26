@@ -79,6 +79,17 @@
       "options": {
         "cwd": "${workspaceFolder}/infrastructure\\badge-service"
       }
+    },
+    {
+      "type": "func",
+      "label": "func: host start",
+      "command": "host start",
+      "problemMatcher": "$func-node-watch",
+      "isBackground": true,
+      "dependsOn": "npm watch (functions)",
+      "options": {
+        "cwd": "${workspaceFolder}/infrastructure\\badge-service"
+      }
     }
   ]
 }
