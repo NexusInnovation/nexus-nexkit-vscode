@@ -1,3 +1,13 @@
+## [4.3.0-beta.2](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v4.3.0-beta.1...v4.3.0-beta.2) (2026-11-26)
+
+### Features
+
+* **extension-updates:** prompt for sign-in only on manual update checks ([1c84dac](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/1c84dac3cb86481d6004bff57118b1ee7e538af8))
+
+### Bug Fixes
+
+* **apm-devops:** avoid window reload on project change ([8ae529e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8ae529e86fa56c302374718197f4d9e732876374))
+
 ## [4.3.0-beta.1](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v4.2.0...v4.3.0-beta.1) (2026-11-26)
 
 ### Features
