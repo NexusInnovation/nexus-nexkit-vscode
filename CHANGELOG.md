@@ -2,30 +2,30 @@
 
 ### Features
 
-* **devops-pipelines:** add live build log following and status styling ([4780f88](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4780f8832cc03987364456cc7e37a3ce1745c13c))
+- **devops-pipelines:** add live build log following and status styling ([4780f88](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4780f8832cc03987364456cc7e37a3ce1745c13c))
 
 ## [4.4.0-beta.2](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v4.4.0-beta.1...v4.4.0-beta.2) (2026-11-26)
 
 ### Bug Fixes
 
-* remove unused Azure DevOps project argument ([6a27409](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/6a2740935bc8060c0809857bba9c56535277251f))
+- remove unused Azure DevOps project argument ([6a27409](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/6a2740935bc8060c0809857bba9c56535277251f))
 
 ## [4.4.0-beta.1](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v4.3.0...v4.4.0-beta.1) (2026-11-26)
 
 ### Features
 
-* **extension-updates:** prompt for sign-in only on manual update checks ([1c84dac](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/1c84dac3cb86481d6004bff57118b1ee7e538af8))
-* **mcp:** add Azure DevOps MCP server configuration ([fc293ef](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/fc293ef0656ea1ed2af6c5e0d6d3fcbe1e2042fe))
+- **extension-updates:** prompt for sign-in only on manual update checks ([1c84dac](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/1c84dac3cb86481d6004bff57118b1ee7e538af8))
+- **mcp:** add Azure DevOps MCP server configuration ([fc293ef](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/fc293ef0656ea1ed2af6c5e0d6d3fcbe1e2042fe))
 
 ### Bug Fixes
 
-* **apm-devops:** avoid window reload on project change ([8ae529e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8ae529e86fa56c302374718197f4d9e732876374))
+- **apm-devops:** avoid window reload on project change ([8ae529e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8ae529e86fa56c302374718197f4d9e732876374))
 
 ## [4.3.0-beta.3](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v4.3.0-beta.2...v4.3.0-beta.3) (2026-11-26)
 
 ### Features
 
-* **mcp:** add Azure DevOps MCP server configuration ([fc293ef](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/fc293ef0656ea1ed2af6c5e0d6d3fcbe1e2042fe))
+- **mcp:** add Azure DevOps MCP server configuration ([fc293ef](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/fc293ef0656ea1ed2af6c5e0d6d3fcbe1e2042fe))
 
 ## [4.3.0-beta.2](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v4.3.0-beta.1...v4.3.0-beta.2) (2026-11-26)
 
