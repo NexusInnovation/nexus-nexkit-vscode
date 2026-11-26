@@ -3,6 +3,11 @@ import { parseStageDependencies } from "./stageDependencies";
 
 const API_VERSION = "7.1";
 const DEFAULT_TOP = 30;
+const PIPELINES_PAGE_SIZE = 200;
+const ACTIVE_BUILDS_PAGE_SIZE = 100;
+/** Safety net against a continuation token that never ends */
+const MAX_PAGES = 50;
+const MAX_BRANCHES = 500;
 const MAX_AVATAR_BYTES = 128 * 1024;
 
 export type DevOpsApiErrorKind = "auth" | "forbidden" | "notFound" | "rateLimited" | "http" | "network";
@@ -81,6 +86,22 @@ export interface RawTimeline {
   records?: RawTimelineRecord[];
 }
 
+/** Subset of a build definition (pipeline) with its latest run, as returned by the definitions list */
+export interface RawDefinition {
+  id: number;
+  name: string;
+  path?: string;
+  latestBuild?: RawBuild;
+}
+
+export interface PipelineSource {
+  /** Repository type, e.g. "TfsGit" or "GitHub" */
+  repositoryType?: string;
+  repositoryId?: string;
+  /** Full ref, e.g. refs/heads/main */
+  defaultBranch?: string;
+}
+
 export function buildWebUrl(ref: DevOpsProjectRef, buildId: number): string {
   return `${projectBaseUrl(ref)}/_build/results?buildId=${buildId}`;
 }
@@ -106,6 +127,15 @@ export class DevOpsBuildsClient {
     return result.value ?? [];
   }
 
+  /** Number of builds currently running or waiting to start (all pages are counted) */
+  public async countActiveBuilds(ref: DevOpsProjectRef): Promise<number> {
+    const url =
+      `${projectBaseUrl(ref)}/_apis/build/builds?statusFilter=inProgress,notStarted&$top=${ACTIVE_BUILDS_PAGE_SIZE}` +
+      `&queryOrder=queueTimeDescending&api-version=${API_VERSION}`;
+    const pages = await this._requestAllPages<unknown>(url);
+    return pages.length;
+  }
+
   public async getBuild(ref: DevOpsProjectRef, buildId: number): Promise<RawBuild> {
     const url = `${projectBaseUrl(ref)}/_apis/build/builds/${buildId}?api-version=${API_VERSION}`;
     return this._request<RawBuild>(url);
@@ -119,6 +149,40 @@ export class DevOpsBuildsClient {
   public async cancelBuild(ref: DevOpsProjectRef, buildId: number): Promise<void> {
     const url = `${projectBaseUrl(ref)}/_apis/build/builds/${buildId}?api-version=${API_VERSION}`;
     await this._request<unknown>(url, { method: "PATCH", body: JSON.stringify({ status: "cancelling" }) });
+  }
+
+  /** Lists all the pipelines (YAML and classic) of the project with their latest run */
+  public async listPipelines(ref: DevOpsProjectRef, pageSize: number = PIPELINES_PAGE_SIZE): Promise<RawDefinition[]> {
+    const url =
+      `${projectBaseUrl(ref)}/_apis/build/definitions?includeLatestBuilds=true&queryOrder=definitionNameAscending` +
+      `&$top=${pageSize}&api-version=${API_VERSION}`;
+    return this._requestAllPages<RawDefinition>(url);
+  }
+
+  /** Queues a run of a pipeline on the given full ref (e.g. refs/heads/main) and returns the created build */
+  public async runPipeline(ref: DevOpsProjectRef, definitionId: number, sourceBranch: string): Promise<RawBuild> {
+    const url = `${projectBaseUrl(ref)}/_apis/build/builds?api-version=${API_VERSION}`;
+    const body = { definition: { id: definitionId }, sourceBranch };
+    return this._request<RawBuild>(url, { method: "POST", body: JSON.stringify(body) });
+  }
+
+  public async getPipelineSource(ref: DevOpsProjectRef, definitionId: number): Promise<PipelineSource> {
+    const url = `${projectBaseUrl(ref)}/_apis/build/definitions/${definitionId}?api-version=${API_VERSION}`;
+    const definition = await this._request<{ repository?: { id?: string; type?: string; defaultBranch?: string } }>(url);
+    return {
+      repositoryType: definition.repository?.type,
+      repositoryId: definition.repository?.id,
+      defaultBranch: definition.repository?.defaultBranch,
+    };
+  }
+
+  /** Branch refs (refs/heads/...) of an Azure Repos Git repository */
+  public async listBranches(ref: DevOpsProjectRef, repositoryId: string): Promise<string[]> {
+    const url =
+      `${projectBaseUrl(ref)}/_apis/git/repositories/${encodeURIComponent(repositoryId)}/refs` +
+      `?filter=heads/&$top=${MAX_BRANCHES}&api-version=${API_VERSION}`;
+    const result = await this._request<{ value?: Array<{ name?: string }> }>(url);
+    return (result.value ?? []).map((r) => r.name).filter((n): n is string => !!n);
   }
 
   /**
@@ -247,7 +311,30 @@ export class DevOpsBuildsClient {
     return result.value ?? [];
   }
 
+  /** Follows the x-ms-continuationtoken header and returns the items of every page */
+  private async _requestAllPages<T>(url: string): Promise<T[]> {
+    const items: T[] = [];
+    let continuationToken: string | undefined;
+    for (let page = 0; page < MAX_PAGES; page++) {
+      const pageUrl = continuationToken ? `${url}&continuationToken=${encodeURIComponent(continuationToken)}` : url;
+      const { data, continuationToken: next } = await this._requestWithHeaders<{ value?: T[] }>(pageUrl);
+      items.push(...(data.value ?? []));
+      if (!next) {
+        return items;
+      }
+      continuationToken = next;
+    }
+    throw new Error(`Azure DevOps returned more than ${MAX_PAGES} pages; the result would be incomplete.`);
+  }
+
   private async _request<T>(url: string, init: { method?: string; body?: string } = {}): Promise<T> {
+    return (await this._requestWithHeaders<T>(url, init)).data;
+  }
+
+  private async _requestWithHeaders<T>(
+    url: string,
+    init: { method?: string; body?: string } = {}
+  ): Promise<{ data: T; continuationToken?: string }> {
     const token = await this._auth.getAccessToken(false);
     if (!token) {
       throw new DevOpsApiError("auth", "Not signed in to Azure DevOps.");
@@ -279,7 +366,10 @@ export class DevOpsBuildsClient {
       throw new DevOpsApiError("auth", "Azure DevOps did not accept the credentials.", response.status);
     }
 
-    return (await response.json()) as T;
+    return {
+      data: (await response.json()) as T,
+      continuationToken: response.headers.get("x-ms-continuationtoken") || undefined,
+    };
   }
 
   private _toApiError(response: Response): DevOpsApiError {

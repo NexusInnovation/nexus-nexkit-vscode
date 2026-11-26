@@ -1,5 +1,10 @@
 import * as assert from "assert";
-import { layoutStageGraph, GraphLayout, Point } from "../../src/features/devops-pipelines/webview/graphLayout";
+import {
+  layoutStageGraph,
+  reduceDependencies,
+  GraphLayout,
+  Point,
+} from "../../src/features/devops-pipelines/webview/graphLayout";
 
 /** True when an axis-aligned segment passes through the interior of any node box */
 function crossesAnyNode(layout: GraphLayout, from: Point, to: Point, ignore: string[]): boolean {
@@ -92,5 +97,48 @@ suite("Unit: layoutStageGraph", () => {
 
   test("an empty graph has no size", () => {
     assert.deepStrictEqual(layoutStageGraph([]), { nodes: [], edges: [], width: 0, height: 0 });
+  });
+
+  test("drops links already implied by another dependency", () => {
+    const layout = layoutStageGraph([
+      node("detect"),
+      node("build", ["detect"]),
+      node("deploy", ["detect", "build"]),
+      node("notify", ["detect", "build", "deploy"]),
+    ]);
+
+    assert.deepStrictEqual(layout.edges.map((e) => `${e.from}->${e.to}`).sort(), [
+      "build->deploy",
+      "deploy->notify",
+      "detect->build",
+    ]);
+    assert.deepStrictEqual(
+      layout.nodes.map((n) => n.column),
+      [0, 1, 2, 3]
+    );
+    assertNoCrossing(layout);
+  });
+
+  test("keeps independent dependencies of a fan-in", () => {
+    const reduced = reduceDependencies(
+      new Map([
+        ["a", []],
+        ["b", []],
+        ["c", ["a", "b"]],
+      ])
+    );
+
+    assert.deepStrictEqual(reduced.get("c"), ["a", "b"]);
+  });
+
+  test("reduction terminates on dependency cycles", () => {
+    const reduced = reduceDependencies(
+      new Map([
+        ["a", ["b"]],
+        ["b", ["a"]],
+      ])
+    );
+
+    assert.deepStrictEqual(reduced.get("a"), ["b"]);
   });
 });

@@ -2,12 +2,18 @@ import * as vscode from "vscode";
 import { GitHubAuthHelper } from "../../shared/utils/githubAuthHelper";
 import { LoggingService } from "../../shared/services/loggingService";
 
+const PROMPT_DEFERRED_STATE_KEY = "nexkit.githubAuth.promptDeferredAt";
+const PROMPT_DEFER_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+
 /**
  * Service for verifying GitHub authentication at extension startup.
- * Prompts the user to authenticate if no session is found.
+ * Reuses the GitHub session VS Code already holds; only asks the user to sign in when there is none,
+ * and not again for a week once the prompt was dismissed.
  */
 export class GitHubAuthPromptService {
   private readonly _logging = LoggingService.getInstance();
+
+  public constructor(private readonly _state?: vscode.Memento) {}
 
   /**
    * Verify that the user is authenticated with GitHub.
@@ -32,6 +38,11 @@ export class GitHubAuthPromptService {
       return true;
     }
 
+    if (this._isPromptDeferred()) {
+      this._logging.info("GitHub authentication prompt skipped (dismissed recently)");
+      return false;
+    }
+
     // No existing session — prompt the user
     const result = await vscode.window.showWarningMessage(
       "Nexkit requires GitHub authentication to access plugin marketplaces. Please sign in to continue.",
@@ -43,13 +54,20 @@ export class GitHubAuthPromptService {
       const session = await GitHubAuthHelper.getGitHubSession(["repo"], true, false);
       if (session) {
         this._logging.info("GitHub authentication successful");
+        await this._state?.update(PROMPT_DEFERRED_STATE_KEY, undefined);
         return true;
       }
       this._logging.warn("GitHub authentication was not completed");
       return false;
     }
 
+    await this._state?.update(PROMPT_DEFERRED_STATE_KEY, Date.now());
     this._logging.warn("User deferred GitHub authentication");
     return false;
+  }
+
+  private _isPromptDeferred(): boolean {
+    const deferredAt = this._state?.get<number>(PROMPT_DEFERRED_STATE_KEY);
+    return deferredAt !== undefined && Date.now() - deferredAt < PROMPT_DEFER_DURATION_MS;
   }
 }
