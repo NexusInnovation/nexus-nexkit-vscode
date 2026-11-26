@@ -1,3 +1,10 @@
+## [4.1.0-beta.2](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v4.1.0-beta.1...v4.1.0-beta.2) (2026-11-26)
+
+### Features
+
+* **auth:** reuse existing GitHub session and defer sign-in prompts ([c70ca5f](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c70ca5f77321eff4ecc4f51e7d6a2d8c44693c9e))
+* **devops:** add build activity badge and build log enhancements ([0fcc9b7](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/0fcc9b7fb1162f4e66bd7f94b3fe3075afed03e7))
+
 ## [4.1.0-beta.1](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v4.0.0...v4.1.0-beta.1) (2026-11-26)
 
 ### Features
