@@ -29,6 +29,10 @@ export const Commands = {
   // Commit message generation
   GENERATE_COMMIT_MESSAGE: "nexus-nexkit-vscode.generateCommitMessage",
 
+  // AI Credit usage commands
+  OPEN_AI_CREDIT_SETTINGS: "nexus-nexkit-vscode.openAiCreditSettings",
+  REFRESH_AI_CREDIT_USAGE: "nexus-nexkit-vscode.refreshAiCreditUsage",
+
   // Developer tools
   OPEN_CONVERT_TO_MARKDOWN: "nexus-nexkit-vscode.openConvertToMarkdown",
 } as const;

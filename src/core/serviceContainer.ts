@@ -33,6 +33,8 @@ import { DevOpsPipelinesPanelService } from "../features/devops-pipelines/devOps
 import { BuildLogViewService } from "../features/devops-pipelines/buildLogViewService";
 import { DevOpsProjectBrowserService } from "../features/apm-devops/devOpsProjectBrowserService";
 import { DevOpsProjectDiscoveryClient } from "../features/apm-devops/devOpsProjectDiscoveryClient";
+import { AiCreditUsageService } from "../features/ai-credit-usage/services/aiCreditUsageService";
+import { AiCreditStatusBarService } from "../features/ai-credit-usage/services/aiCreditStatusBarService";
 
 /**
  * Service container for dependency injection
@@ -66,6 +68,8 @@ export interface ServiceContainer {
   devOpsPipelines: DevOpsPipelinesPanelService;
   devOpsBuildLog: BuildLogViewService;
   devOpsProjectBrowser: DevOpsProjectBrowserService;
+  aiCreditUsage: AiCreditUsageService;
+  aiCreditStatusBar: AiCreditStatusBarService;
 }
 
 /**
@@ -109,6 +113,8 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const hooksConfigDeployer = new HooksConfigDeployer();
   const startupVerification = new StartupVerificationService(gitExcludeConfigDeployer, hooksConfigDeployer, githubAuthPrompt);
   const githubWorkflowRunner = new GitHubWorkflowRunnerService(context.extensionUri);
+  const aiCreditUsage = new AiCreditUsageService(context);
+  const aiCreditStatusBar = new AiCreditStatusBarService(context, aiCreditUsage);
   const markitdownConversion = new MarkitdownConversionService(logging);
   const convertToMarkdown = new ConvertToMarkdownPanelService(context.extensionUri, markitdownConversion);
   const devOpsAuth = new DevOpsAuthProvider();
@@ -138,6 +144,8 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   context.subscriptions.push(convertToMarkdown);
   context.subscriptions.push(devOpsPipelines);
   context.subscriptions.push(devOpsBuildLog);
+  context.subscriptions.push(aiCreditUsage);
+  context.subscriptions.push(aiCreditStatusBar);
 
   logging.info("All services initialized successfully");
 
@@ -169,5 +177,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     devOpsPipelines,
     devOpsBuildLog,
     devOpsProjectBrowser,
+    aiCreditUsage,
+    aiCreditStatusBar,
   };
 }
