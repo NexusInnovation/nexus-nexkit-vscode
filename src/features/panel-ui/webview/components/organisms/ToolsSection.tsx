@@ -21,6 +21,10 @@ export function ToolsSection() {
     messenger.sendMessage({ command: "openRegexBuilder" });
   };
 
+  const createBranchFromWorkItem = (): void => {
+    messenger.sendMessage({ command: "createBranchFromWorkItem" });
+  };
+
   // Request workflow list when the section mounts (if not already loaded)
   useEffect(() => {
     if (!workflows.isReady) {
@@ -38,6 +42,11 @@ export function ToolsSection() {
       <CollapsibleSection id="tools-regex-builder" title="RegEx Builder">
         <button class="action-button" onClick={openRegexBuilder}>
           Open RegEx Builder
+        </button>
+      </CollapsibleSection>
+      <CollapsibleSection id="tools-create-branch-from-work-item" title="Create Branch from Work Item">
+        <button class="action-button" onClick={createBranchFromWorkItem}>
+          Create Branch from Work Item
         </button>
       </CollapsibleSection>
       <CollapsibleSection id="tools-workflow-runner" title="GitHub Workflow Runner">
