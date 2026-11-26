@@ -19,13 +19,15 @@ const DIRECTIVE_KINDS: Record<string, BuildLogLineKind> = {
   group: "group",
 };
 
-// "exit code 0" is a success; "0 errors" / "no errors" are summaries, not failures
-const ERROR_KEYWORD_PATTERN = /\b(?:errors?|fail(?:s|ed|ure|ures)?|fatal|abort(?:ed)?|exception|exit code [1-9]\d*)\b/i;
-const NO_ERROR_PATTERN = /\b(?:0|no|zero|without)\s+(?:errors?|failures?|failed)\b/i;
+// "exit code 0" is a success; "0 errors" / "no errors" are summaries, not failures.
+// Non-zero exit codes may be negative (e.g. "exit code -1" on Windows crashes).
+const ERROR_KEYWORD_PATTERN = /\b(?:errors?|fail(?:s|ed|ure|ures)?|fatal|abort(?:ed)?|exception|exit code -?[1-9]\d*)\b/i;
+const NO_ERROR_PATTERN = /\b(?:0|no|zero|without)\s+(?:errors?|failures?|failed)\b/gi;
 
 /** True when an unclassified log line reads like a failure (fail, fatal, error, abort, non-zero exit code...) */
 export function looksLikeError(text: string): boolean {
-  return ERROR_KEYWORD_PATTERN.test(text) && !NO_ERROR_PATTERN.test(text);
+  // Only the neutral phrases are ignored: the rest of the line may still report a failure
+  return ERROR_KEYWORD_PATTERN.test(text.replace(NO_ERROR_PATTERN, ""));
 }
 
 /**

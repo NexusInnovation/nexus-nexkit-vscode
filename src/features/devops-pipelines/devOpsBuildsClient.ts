@@ -3,8 +3,10 @@ import { parseStageDependencies } from "./stageDependencies";
 
 const API_VERSION = "7.1";
 const DEFAULT_TOP = 30;
-const MAX_PIPELINES = 200;
-const MAX_ACTIVE_BUILDS = 100;
+const PIPELINES_PAGE_SIZE = 200;
+const ACTIVE_BUILDS_PAGE_SIZE = 100;
+/** Safety net against a continuation token that never ends */
+const MAX_PAGES = 50;
 const MAX_BRANCHES = 500;
 const MAX_AVATAR_BYTES = 128 * 1024;
 
@@ -125,13 +127,13 @@ export class DevOpsBuildsClient {
     return result.value ?? [];
   }
 
-  /** Number of builds currently running or waiting to start */
+  /** Number of builds currently running or waiting to start (all pages are counted) */
   public async countActiveBuilds(ref: DevOpsProjectRef): Promise<number> {
     const url =
-      `${projectBaseUrl(ref)}/_apis/build/builds?statusFilter=inProgress,notStarted&$top=${MAX_ACTIVE_BUILDS}` +
+      `${projectBaseUrl(ref)}/_apis/build/builds?statusFilter=inProgress,notStarted&$top=${ACTIVE_BUILDS_PAGE_SIZE}` +
       `&queryOrder=queueTimeDescending&api-version=${API_VERSION}`;
-    const result = await this._request<{ count?: number; value?: unknown[] }>(url);
-    return result.value?.length ?? result.count ?? 0;
+    const pages = await this._requestAllPages<unknown>(url);
+    return pages.length;
   }
 
   public async getBuild(ref: DevOpsProjectRef, buildId: number): Promise<RawBuild> {
@@ -149,13 +151,12 @@ export class DevOpsBuildsClient {
     await this._request<unknown>(url, { method: "PATCH", body: JSON.stringify({ status: "cancelling" }) });
   }
 
-  /** Lists the pipelines (YAML and classic) of the project with their latest run */
-  public async listPipelines(ref: DevOpsProjectRef, top: number = MAX_PIPELINES): Promise<RawDefinition[]> {
+  /** Lists all the pipelines (YAML and classic) of the project with their latest run */
+  public async listPipelines(ref: DevOpsProjectRef, pageSize: number = PIPELINES_PAGE_SIZE): Promise<RawDefinition[]> {
     const url =
       `${projectBaseUrl(ref)}/_apis/build/definitions?includeLatestBuilds=true&queryOrder=definitionNameAscending` +
-      `&$top=${top}&api-version=${API_VERSION}`;
-    const result = await this._request<{ value?: RawDefinition[] }>(url);
-    return result.value ?? [];
+      `&$top=${pageSize}&api-version=${API_VERSION}`;
+    return this._requestAllPages<RawDefinition>(url);
   }
 
   /** Queues a run of a pipeline on the given full ref (e.g. refs/heads/main) and returns the created build */
@@ -310,7 +311,30 @@ export class DevOpsBuildsClient {
     return result.value ?? [];
   }
 
+  /** Follows the x-ms-continuationtoken header and returns the items of every page */
+  private async _requestAllPages<T>(url: string): Promise<T[]> {
+    const items: T[] = [];
+    let continuationToken: string | undefined;
+    for (let page = 0; page < MAX_PAGES; page++) {
+      const pageUrl = continuationToken ? `${url}&continuationToken=${encodeURIComponent(continuationToken)}` : url;
+      const { data, continuationToken: next } = await this._requestWithHeaders<{ value?: T[] }>(pageUrl);
+      items.push(...(data.value ?? []));
+      if (!next) {
+        return items;
+      }
+      continuationToken = next;
+    }
+    throw new Error(`Azure DevOps returned more than ${MAX_PAGES} pages; the result would be incomplete.`);
+  }
+
   private async _request<T>(url: string, init: { method?: string; body?: string } = {}): Promise<T> {
+    return (await this._requestWithHeaders<T>(url, init)).data;
+  }
+
+  private async _requestWithHeaders<T>(
+    url: string,
+    init: { method?: string; body?: string } = {}
+  ): Promise<{ data: T; continuationToken?: string }> {
     const token = await this._auth.getAccessToken(false);
     if (!token) {
       throw new DevOpsApiError("auth", "Not signed in to Azure DevOps.");
@@ -342,7 +366,10 @@ export class DevOpsBuildsClient {
       throw new DevOpsApiError("auth", "Azure DevOps did not accept the credentials.", response.status);
     }
 
-    return (await response.json()) as T;
+    return {
+      data: (await response.json()) as T,
+      continuationToken: response.headers.get("x-ms-continuationtoken") || undefined,
+    };
   }
 
   private _toApiError(response: Response): DevOpsApiError {

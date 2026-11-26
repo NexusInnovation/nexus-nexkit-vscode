@@ -81,6 +81,49 @@ suite("Unit: DevOpsBuildsClient", () => {
     assert.ok(fetchStub.getCall(0).args[0].includes("statusFilter=inProgress,notStarted"));
   });
 
+  test("countActiveBuilds sums every page", async () => {
+    const page = (items: unknown[], token?: string): Response =>
+      new Response(JSON.stringify({ value: items }), {
+        status: 200,
+        headers: { "content-type": "application/json", ...(token ? { "x-ms-continuationtoken": token } : {}) },
+      });
+    fetchStub.onCall(0).resolves(page([{ id: 1 }, { id: 2 }], "next page"));
+    fetchStub.onCall(1).resolves(page([{ id: 3 }]));
+
+    assert.strictEqual(await client.countActiveBuilds(ref), 3);
+    assert.ok(fetchStub.getCall(1).args[0].includes("continuationToken=next%20page"));
+  });
+
+  test("listPipelines fails instead of returning a partial list when the page limit is reached", async () => {
+    fetchStub.callsFake(
+      async () =>
+        new Response(JSON.stringify({ value: [{ id: 1, name: "A" }] }), {
+          status: 200,
+          headers: { "content-type": "application/json", "x-ms-continuationtoken": "more" },
+        })
+    );
+
+    await assert.rejects(() => client.listPipelines(ref), /more than 50 pages/);
+  });
+
+  test("listPipelines follows the continuation token", async () => {
+    fetchStub.onCall(0).resolves(
+      new Response(JSON.stringify({ value: [{ id: 1, name: "A" }] }), {
+        status: 200,
+        headers: { "content-type": "application/json", "x-ms-continuationtoken": "t1" },
+      })
+    );
+    fetchStub.onCall(1).resolves(jsonResponse({ value: [{ id: 2, name: "B" }] }));
+
+    const pipelines = await client.listPipelines(ref);
+
+    assert.deepStrictEqual(
+      pipelines.map((p) => p.name),
+      ["A", "B"]
+    );
+    assert.strictEqual(fetchStub.callCount, 2);
+  });
+
   test("throws an auth error without calling the API when no token is available", async () => {
     (auth.getAccessToken as sinon.SinonStub).resolves(undefined);
 
