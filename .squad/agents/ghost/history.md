@@ -22,6 +22,11 @@
 
 ## Learnings
 
+- 2026-08-06: Added the panel UI trigger for "Create Branch from Work Item" — `createBranchFromWorkItem` handler +
+  new `CollapsibleSection` in `ToolsSection.tsx`, mirroring the existing `openConvertToMarkdown` fire-and-forget
+  button pattern exactly. No new `AppState`/hook needed when the extension host already owns the command, message
+  type, and handler wiring — the panel button can stay a thin trigger. No test file existed yet for
+  `ToolsSection.tsx`, so none was added. `npm run check:types` clean, `npm test` → 420 passing, no regressions.
 - 2026-07-10: The standalone RTF converter is fully client-side in `src/features/rtf-converter/webview/main.tsx`; its host-side panel test suite only verifies HTML injection and panel lifecycle. A rendered Markdown mode can remain local Preact state while `handleCopy` continues to copy the shared raw `markdownValue`. `markdown-it` requires `@types/markdown-it` for strict TypeScript compilation and is imported as `import MarkdownIt = require("markdown-it")` under this project's compiler settings.
 
 ## Team update — 2026-07-20 (RTF converter to markitdown migration)

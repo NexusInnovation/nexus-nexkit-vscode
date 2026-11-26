@@ -21,12 +21,18 @@ export const Commands = {
   // APM DevOps commands
   ADD_DEVOPS_CONNECTION: "nexus-nexkit-vscode.addDevOpsConnection",
   REMOVE_DEVOPS_CONNECTION: "nexus-nexkit-vscode.removeDevOpsConnection",
+  CREATE_BRANCH_FROM_WORK_ITEM: "nexus-nexkit-vscode.createBranchFromWorkItem",
+  OPEN_DEVOPS_PIPELINES: "nexus-nexkit-vscode.openDevOpsPipelines",
 
   // Logging commands
   SHOW_LOGS: "nexus-nexkit-vscode.showLogs",
 
   // Commit message generation
   GENERATE_COMMIT_MESSAGE: "nexus-nexkit-vscode.generateCommitMessage",
+
+  // AI Credit usage commands
+  OPEN_AI_CREDIT_SETTINGS: "nexus-nexkit-vscode.openAiCreditSettings",
+  REFRESH_AI_CREDIT_USAGE: "nexus-nexkit-vscode.refreshAiCreditUsage",
 
   // Developer tools
   OPEN_CONVERT_TO_MARKDOWN: "nexus-nexkit-vscode.openConvertToMarkdown",

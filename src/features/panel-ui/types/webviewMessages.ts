@@ -20,10 +20,13 @@ export type WebviewMessage =
   | { command: "openPluginBrowser" }
   | { command: "openFeedback" }
   | { command: "openConvertToMarkdown" }
+  | { command: "createBranchFromWorkItem" }
+  | { command: "openDevOpsPipelines" }
   | { command: "setMode"; mode: OperationMode }
   // APM DevOps connection messages
   | { command: "getDevOpsConnections" }
   | { command: "addDevOpsConnection"; url: string }
+  | { command: "browseDevOpsProjects" }
   | { command: "removeDevOpsConnection"; connectionId: string }
   | { command: "setActiveDevOpsConnection"; connectionId: string }
   // GitHub workflow runner messages

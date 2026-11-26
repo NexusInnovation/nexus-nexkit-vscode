@@ -18,6 +18,9 @@ import { registerShowLogsCommand } from "./shared/commands/loggingCommand";
 import { registerAddDevOpsConnectionCommand, registerRemoveDevOpsConnectionCommand } from "./features/apm-devops/commands";
 import { registerGenerateCommitMessageCommand } from "./features/commit-management/commands";
 import { registerOpenConvertToMarkdownCommand } from "./features/convert-to-markdown/commands";
+import { registerCreateBranchFromWorkItemCommand } from "./features/devops-branch-creation/commands";
+import { registerBuildLogView, registerOpenDevOpsPipelinesCommand } from "./features/devops-pipelines/commands";
+import { registerAiCreditCommands } from "./features/ai-credit-usage/commands";
 
 /**
  * Extension activation
@@ -58,7 +61,11 @@ export async function activate(context: vscode.ExtensionContext) {
   registerAddDevOpsConnectionCommand(context, services);
   registerRemoveDevOpsConnectionCommand(context, services);
   registerGenerateCommitMessageCommand(context, services);
+  registerAiCreditCommands(context, services);
   registerOpenConvertToMarkdownCommand(context, services);
+  registerCreateBranchFromWorkItemCommand(context, services);
+  registerOpenDevOpsPipelinesCommand(context, services);
+  registerBuildLogView(context, services);
 
   // Register webview panel
   const nexkitPanelProvider = new NexkitPanelViewProvider();
@@ -70,6 +77,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Initialize status bar
   services.updateStatusBar.initializeUpdateStatusBar();
+
+  // Initialize AI credit usage monitoring
+  services.aiCreditUsage.initialize().catch((error) => {
+    services.logging.error("Failed to initialize AI credit usage service", error);
+  });
+  services.aiCreditStatusBar.initialize().catch((error) => {
+    services.logging.error("Failed to initialize AI credit status bar", error);
+  });
 
   // Check for required MCP servers on activation
   services.mcpConfig.promptInstallRequiredMCPsOnActivation();
@@ -115,7 +130,7 @@ function setupGlobalErrorHandling(
         return new Error(error);
       } else if (error !== null && typeof error === "object") {
         // Try to extract a meaningful message from the object
-        const message = (error.message || error.msg || error.reason || error.toString());
+        const message = error.message || error.msg || error.reason || error.toString();
         return new Error(String(message));
       } else {
         return new Error(String(error));

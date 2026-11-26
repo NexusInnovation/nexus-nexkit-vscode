@@ -39,10 +39,13 @@ export class NexkitPanelMessageHandler {
       ["openPluginBrowser", this.handleOpenPluginBrowser.bind(this)],
       ["openFeedback", this.handleOpenFeedback.bind(this)],
       ["openConvertToMarkdown", this.handleOpenConvertToMarkdown.bind(this)],
+      ["createBranchFromWorkItem", this.handleCreateBranchFromWorkItem.bind(this)],
+      ["openDevOpsPipelines", this.handleOpenDevOpsPipelines.bind(this)],
       ["setMode", this.handleSetMode.bind(this)],
       // APM DevOps connection handlers
       ["getDevOpsConnections", this.handleGetDevOpsConnections.bind(this)],
       ["addDevOpsConnection", this.handleAddDevOpsConnection.bind(this)],
+      ["browseDevOpsProjects", this.handleBrowseDevOpsProjects.bind(this)],
       ["removeDevOpsConnection", this.handleRemoveDevOpsConnection.bind(this)],
       ["setActiveDevOpsConnection", this.handleSetActiveDevOpsConnection.bind(this)],
       // GitHub workflow runner handlers
@@ -209,6 +212,16 @@ export class NexkitPanelMessageHandler {
     await vscode.commands.executeCommand(Commands.OPEN_CONVERT_TO_MARKDOWN);
   }
 
+  private async handleCreateBranchFromWorkItem(message: WebviewMessage): Promise<void> {
+    this.trackWebviewAction("createBranchFromWorkItem");
+    await vscode.commands.executeCommand(Commands.CREATE_BRANCH_FROM_WORK_ITEM);
+  }
+
+  private async handleOpenDevOpsPipelines(message: WebviewMessage): Promise<void> {
+    this.trackWebviewAction("openDevOpsPipelines");
+    await vscode.commands.executeCommand(Commands.OPEN_DEVOPS_PIPELINES);
+  }
+
   private async handleSetMode(message: WebviewMessage & { command: "setMode" }): Promise<void> {
     this.trackWebviewAction("setMode");
     try {
@@ -244,6 +257,26 @@ export class NexkitPanelMessageHandler {
       console.error("Failed to add DevOps connection:", error);
       this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
         context: "webview.addDevOpsConnection",
+      });
+      this.sendToWebview({
+        command: "devOpsConnectionError",
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  private async handleBrowseDevOpsProjects(): Promise<void> {
+    this.trackWebviewAction("browseDevOpsProjects");
+    try {
+      const url = await this._services.devOpsProjectBrowser.browse();
+      if (url) {
+        await this._services.devOpsConfig.addConnection(url);
+        this.sendDevOpsConnections();
+      }
+    } catch (error) {
+      console.error("Failed to browse DevOps projects:", error);
+      this._services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
+        context: "webview.browseDevOpsProjects",
       });
       this.sendToWebview({
         command: "devOpsConnectionError",

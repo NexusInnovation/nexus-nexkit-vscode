@@ -2,7 +2,7 @@
   "name": "nexus-nexkit-vscode",
   "displayName": "Nexkit",
   "description": "VS Code extension for Nexkit",
-  "version": "4.0.0",
+  "version": "4.1.0-beta.1",
   "publisher": "NexusInnovation",
   "private": true,
   "license": "MIT",
@@ -12,7 +12,7 @@
   },
   "engines": {
     "vscode": "^1.105.0",
-    "node": ">=22"
+    "node": ">=26.13"
   },
   "categories": [
     "Other"
@@ -20,7 +20,8 @@
   "dependencies": {
     "applicationinsights": "^3.17.0",
     "markdown-it": "^14.3.3",
-    "prettier": "^3.7.4"
+    "prettier": "^3.7.4",
+    "yaml": "^2.9.1"
   },
   "overrides": {
     "@opentelemetry/propagator-jaeger": "2.10.0",
@@ -114,6 +115,17 @@
         "command": "nexus-nexkit-vscode.openConvertToMarkdown",
         "title": "Nexkit: Convert to Markdown",
         "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.createBranchFromWorkItem",
+        "title": "Nexkit: Create Branch from Work Item",
+        "category": "Nexkit",
+        "icon": "$(git-branch)"
+      },
+      {
+        "command": "nexus-nexkit-vscode.openDevOpsPipelines",
+        "title": "Nexkit: Open Azure DevOps Builds",
+        "category": "Nexkit"
       }
     ],
     "menus": {
@@ -148,6 +160,11 @@
           "group": "1_generate@1"
         },
         {
+          "command": "nexus-nexkit-vscode.createBranchFromWorkItem",
+          "when": "scmProvider == git",
+          "group": "1_generate@2"
+        },
+        {
           "command": "nexus-nexkit-vscode.openSettings",
           "when": "scmProvider == git",
           "group": "2_settings@1"
@@ -171,6 +188,13 @@
           "title": "Nexkit",
           "icon": "media/Nexus_Symbole_MONOCHROME.svg"
         }
+      ],
+      "panel": [
+        {
+          "id": "nexkit-build-log",
+          "title": "Nexkit Build Log",
+          "icon": "media/Nexus_Symbole_MONOCHROME.svg"
+        }
       ]
     },
     "views": {
@@ -180,6 +204,13 @@
           "icon": "media/Nexus_Symbole_MONOCHROME.svg",
           "type": "webview",
           "name": "Welcome!"
+        }
+      ],
+      "nexkit-build-log": [
+        {
+          "id": "nexkit.buildLog",
+          "type": "webview",
+          "name": "Build Log"
         }
       ]
     },
