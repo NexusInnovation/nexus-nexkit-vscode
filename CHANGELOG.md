@@ -1,3 +1,9 @@
+## [4.3.0-beta.3](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v4.3.0-beta.2...v4.3.0-beta.3) (2026-11-26)
+
+### Features
+
+* **mcp:** add Azure DevOps MCP server configuration ([fc293ef](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/fc293ef0656ea1ed2af6c5e0d6d3fcbe1e2042fe))
+
 ## [4.3.0-beta.2](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v4.3.0-beta.1...v4.3.0-beta.2) (2026-11-26)
 
 ### Features
