@@ -522,6 +522,8 @@ function PipelineRow({ pipeline, now, onRun }: { pipeline: PipelineSummary; now:
   );
 }
 
+const FOCUSABLE_SELECTOR = 'button:not([disabled]), input:not([disabled]), [href], select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 function RunDialog({
   pipeline,
   options,
@@ -538,16 +540,70 @@ function RunDialog({
   onCancel: () => void;
 }) {
   const [branch, setBranch] = useState("");
+  const dialogRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (options) {
       setBranch(options.defaultBranch);
     }
   }, [options]);
 
+  // Modal behavior: take the focus on open and give it back to the opener on close
+  useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null;
+    dialogRef.current?.focus();
+    return () => {
+      if (opener?.isConnected) {
+        opener.focus();
+      }
+    };
+  }, []);
+
+  // Once the branch field exists, move the focus from the dialog itself to it
+  useEffect(() => {
+    if (options && document.activeElement === dialogRef.current) {
+      dialogRef.current?.querySelector<HTMLElement>("input")?.focus();
+    }
+  }, [options]);
+
+  const handleKeyDown = (e: KeyboardEvent): void => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      onCancel();
+      return;
+    }
+    if (e.key !== "Tab" || !dialogRef.current) {
+      return;
+    }
+    const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+    if (focusable.length === 0) {
+      e.preventDefault();
+      return;
+    }
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+    if (e.shiftKey && (active === first || active === dialogRef.current)) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
+
   return (
     <div class="dialog-backdrop" onClick={onCancel}>
-      <div class="dialog" role="dialog" aria-label="Run pipeline" onClick={(e) => e.stopPropagation()}>
-        <h2>Run pipeline</h2>
+      <div
+        class="dialog"
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="run-dialog-title"
+        tabIndex={-1}
+        onKeyDown={handleKeyDown}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id="run-dialog-title">Run pipeline</h2>
         <div class="muted">{pipeline.name}</div>
         {!options ? (
           <p class="muted">Loading branches…</p>
@@ -594,22 +650,54 @@ function App() {
   const [runOptions, setRunOptions] = useState<RunOptions | undefined>();
   const [runError, setRunError] = useState<string | undefined>();
   const [runStarting, setRunStarting] = useState(false);
+  // The message listener is registered once: it reads the latest values through refs
+  const projectRef = useRef<string | undefined>();
+  const tabRef = useRef<Tab>("builds");
+  const runRequestRef = useRef<number | undefined>();
+  const runCounterRef = useRef(0);
 
   useEffect(() => {
+    const clearRunDialog = (): void => {
+      runRequestRef.current = undefined;
+      setRunTarget(undefined);
+      setRunOptions(undefined);
+      setRunError(undefined);
+      setRunStarting(false);
+    };
+
     const handleMessage = (event: MessageEvent<HostToWebviewMessage>): void => {
       const msg = event.data;
       switch (msg.type) {
         case "view-state":
           setViewState(msg.state);
           setMessage(msg.message);
-          if (msg.projectLabel) {
-            setProjectLabel(msg.projectLabel);
-          }
           if (msg.state === "no-connection") {
+            projectRef.current = undefined;
+            setProjectLabel(undefined);
             setBuilds([]);
             setSelectedId(undefined);
             setDetail(undefined);
             setPipelines(undefined);
+            setPipelinesError(undefined);
+            clearRunDialog();
+          } else if (msg.projectLabel) {
+            if (projectRef.current !== undefined && projectRef.current !== msg.projectLabel) {
+              // Switching project: nothing loaded for the previous one may stay visible or actionable
+              setBuilds([]);
+              setUpdatedAt(undefined);
+              setSelectedId(undefined);
+              setDetail(undefined);
+              setDetailError(undefined);
+              setCancelNote(undefined);
+              setPipelines(undefined);
+              setPipelinesError(undefined);
+              clearRunDialog();
+              if (tabRef.current === "pipelines") {
+                postToHost({ type: "load-pipelines" });
+              }
+            }
+            projectRef.current = msg.projectLabel;
+            setProjectLabel(msg.projectLabel);
           }
           break;
         case "builds":
@@ -628,20 +716,29 @@ function App() {
           setCancelNote(msg.message);
           break;
         case "pipelines":
-          setPipelines(msg.pipelines);
-          setPipelinesError(undefined);
+          if (msg.project === projectRef.current) {
+            setPipelines(msg.pipelines);
+            setPipelinesError(undefined);
+          }
           break;
         case "pipelines-error":
-          setPipelinesError(msg.message);
+          if (msg.project === projectRef.current) {
+            setPipelinesError(msg.message);
+          }
           break;
         case "run-options":
-          setRunOptions(msg.options);
+          if (msg.requestId === runRequestRef.current) {
+            setRunOptions(msg.options);
+          }
           break;
         case "run-result":
+          if (msg.requestId !== runRequestRef.current) {
+            break;
+          }
           setRunStarting(false);
           if (msg.success && msg.buildId !== undefined) {
-            setRunTarget(undefined);
-            setRunOptions(undefined);
+            clearRunDialog();
+            tabRef.current = "builds";
             setTab("builds");
             setSelectedId(msg.buildId);
             setDetail(undefined);
@@ -670,6 +767,11 @@ function App() {
     [builds, filter]
   );
   const runningCount = useMemo(() => builds.filter((b) => isActive(b.status)).length, [builds]);
+
+  const showTab = (next: Tab): void => {
+    tabRef.current = next;
+    setTab(next);
+  };
 
   const selectBuild = (id: number): void => {
     setSelectedId(id);
@@ -721,19 +823,26 @@ function App() {
   }
 
   const openPipelinesTab = (): void => {
-    setTab("pipelines");
+    showTab("pipelines");
     postToHost({ type: "load-pipelines" });
   };
 
   const startRunDialog = (pipelineId: number): void => {
+    const project = projectRef.current;
+    if (!project) {
+      return;
+    }
+    const requestId = ++runCounterRef.current;
+    runRequestRef.current = requestId;
     setRunTarget(pipelineId);
     setRunOptions(undefined);
     setRunError(undefined);
     setRunStarting(false);
-    postToHost({ type: "prepare-run", pipelineId });
+    postToHost({ type: "prepare-run", requestId, project, pipelineId });
   };
 
   const closeRunDialog = (): void => {
+    runRequestRef.current = undefined;
     setRunTarget(undefined);
     setRunOptions(undefined);
     setRunError(undefined);
@@ -741,12 +850,14 @@ function App() {
   };
 
   const submitRun = (branch: string): void => {
-    if (runTarget === undefined) {
+    const requestId = runRequestRef.current;
+    const project = projectRef.current;
+    if (runTarget === undefined || requestId === undefined || !project) {
       return;
     }
     setRunError(undefined);
     setRunStarting(true);
-    postToHost({ type: "run-pipeline", pipelineId: runTarget, branch });
+    postToHost({ type: "run-pipeline", requestId, project, pipelineId: runTarget, branch });
   };
 
   const query = pipelineQuery.trim().toLowerCase();
@@ -761,7 +872,7 @@ function App() {
       <div class="muted">{projectLabel}</div>
       <div class="toolbar main-tabs">
         <div class="tabs">
-          <button class={tab === "builds" ? "active" : ""} onClick={() => setTab("builds")}>
+          <button class={tab === "builds" ? "active" : ""} onClick={() => showTab("builds")}>
             Builds
           </button>
           <button class={tab === "pipelines" ? "active" : ""} onClick={openPipelinesTab}>

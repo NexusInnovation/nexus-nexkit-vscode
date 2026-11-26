@@ -29,6 +29,11 @@ import { BuildSummary, HostToWebviewMessage, StageSummary, WebviewToHostMessage 
 const ACTIVE_POLL_INTERVAL_MS = 10_000;
 const IDLE_POLL_INTERVAL_MS = 30_000;
 const TIMELINE_CONCURRENCY = 5;
+const PROJECT_CHANGED_MESSAGE = "The active Azure DevOps project changed. Reopen the dialog to continue.";
+
+function projectLabelOf(ref: DevOpsProjectRef): string {
+  return `${ref.organization}/${ref.project}`;
+}
 
 export interface IDevOpsConnectionSource {
   getActiveConnection(): Promise<DevOpsConnection | null>;
@@ -154,10 +159,10 @@ export class DevOpsPipelinesPanelService implements vscode.Disposable {
         await this._loadPipelines();
         break;
       case "prepare-run":
-        await this._prepareRun(message.pipelineId);
+        await this._prepareRun(message.requestId, message.project, message.pipelineId);
         break;
       case "run-pipeline":
-        await this._runPipeline(message.pipelineId, message.branch);
+        await this._runPipeline(message.requestId, message.project, message.pipelineId, message.branch);
         break;
     }
   }
@@ -167,19 +172,27 @@ export class DevOpsPipelinesPanelService implements vscode.Disposable {
     if (!ref) {
       return;
     }
+    const project = projectLabelOf(ref);
     try {
       const pipelines = await this._client.listPipelines(ref);
-      this._post({ type: "pipelines", pipelines: pipelines.map(toPipelineSummary) });
+      this._post({ type: "pipelines", project, pipelines: pipelines.map(toPipelineSummary) });
     } catch (error) {
       this._logging.warn("Could not list the Azure DevOps pipelines", error);
-      this._post({ type: "pipelines-error", message: this._describeError(error) });
+      this._post({ type: "pipelines-error", project, message: this._describeError(error) });
     }
   }
 
-  /** Resolves the branches offered by the Run dialog; free typing stays possible when they cannot be listed */
-  private async _prepareRun(pipelineId: number): Promise<void> {
+  /** The project the webview asked about, or undefined when it is no longer the active one */
+  private async _resolveRunRef(project: string): Promise<DevOpsProjectRef | undefined> {
     const ref = this._currentRef ?? (await this._resolveRef());
+    return ref && projectLabelOf(ref) === project ? ref : undefined;
+  }
+
+  /** Resolves the branches offered by the Run dialog; free typing stays possible when they cannot be listed */
+  private async _prepareRun(requestId: number, project: string, pipelineId: number): Promise<void> {
+    const ref = await this._resolveRunRef(project);
     if (!ref) {
+      this._post({ type: "run-result", requestId, pipelineId, success: false, message: PROJECT_CHANGED_MESSAGE });
       return;
     }
 
@@ -197,13 +210,17 @@ export class DevOpsPipelinesPanelService implements vscode.Disposable {
     const defaultBranch = shortBranchName(source.defaultBranch);
     const names = branches.map(shortBranchName);
     const ordered = defaultBranch ? [defaultBranch, ...names.filter((n) => n !== defaultBranch)] : names;
-    this._post({ type: "run-options", options: { pipelineId, branches: ordered, defaultBranch } });
+    this._post({ type: "run-options", requestId, options: { pipelineId, branches: ordered, defaultBranch } });
   }
 
-  private async _runPipeline(pipelineId: number, branch: string): Promise<void> {
-    const ref = this._currentRef ?? (await this._resolveRef());
+  private async _runPipeline(requestId: number, project: string, pipelineId: number, branch: string): Promise<void> {
     const name = branch.trim();
-    if (!ref || !name) {
+    if (!name) {
+      return;
+    }
+    const ref = await this._resolveRunRef(project);
+    if (!ref) {
+      this._post({ type: "run-result", requestId, pipelineId, success: false, message: PROJECT_CHANGED_MESSAGE });
       return;
     }
 
@@ -211,10 +228,10 @@ export class DevOpsPipelinesPanelService implements vscode.Disposable {
       const sourceBranch = name.startsWith("refs/") ? name : `refs/heads/${name}`;
       const build = await this._client.runPipeline(ref, pipelineId, sourceBranch);
       this._telemetry.trackEvent("devopsPipelines.runPipeline");
-      this._post({ type: "run-result", pipelineId, success: true, buildId: build.id });
+      this._post({ type: "run-result", requestId, pipelineId, success: true, buildId: build.id });
     } catch (error) {
       this._logging.warn(`Could not run pipeline ${pipelineId}`, error);
-      this._post({ type: "run-result", pipelineId, success: false, message: this._describeError(error) });
+      this._post({ type: "run-result", requestId, pipelineId, success: false, message: this._describeError(error) });
       return;
     }
     await this._refresh();
@@ -292,7 +309,7 @@ export class DevOpsPipelinesPanelService implements vscode.Disposable {
         this._resetData();
       }
       this._currentRef = ref;
-      const projectLabel = `${ref.organization}/${ref.project}`;
+      const projectLabel = projectLabelOf(ref);
 
       if (this._builds.length === 0) {
         this._post({ type: "view-state", state: "loading", projectLabel });

@@ -115,11 +115,13 @@ export type WebviewToHostMessage =
   | { type: "open-log"; buildId: number; recordId: string }
   | { type: "open-in-browser"; buildId: number }
   | { type: "load-pipelines" }
-  | { type: "prepare-run"; pipelineId: number }
-  | { type: "run-pipeline"; pipelineId: number; branch: string };
+  | { type: "prepare-run"; requestId: number; project: string; pipelineId: number }
+  | { type: "run-pipeline"; requestId: number; project: string; pipelineId: number; branch: string };
 
 /**
- * Messages sent FROM the extension host TO the webview
+ * Messages sent FROM the extension host TO the webview.
+ * Project-scoped replies carry the "organization/project" label they were produced for, and run dialog
+ * replies echo the requestId of the dialog, so the webview can drop answers that are no longer relevant.
  */
 export type HostToWebviewMessage =
   | { type: "view-state"; state: PipelinesViewState; message?: string; projectLabel?: string }
@@ -127,7 +129,7 @@ export type HostToWebviewMessage =
   | { type: "build-detail"; detail: BuildDetail }
   | { type: "build-detail-error"; buildId: number; message: string }
   | { type: "cancel-result"; buildId: number; success: boolean; message: string }
-  | { type: "pipelines"; pipelines: PipelineSummary[] }
-  | { type: "pipelines-error"; message: string }
-  | { type: "run-options"; options: RunOptions }
-  | { type: "run-result"; pipelineId: number; success: boolean; message?: string; buildId?: number };
+  | { type: "pipelines"; project: string; pipelines: PipelineSummary[] }
+  | { type: "pipelines-error"; project: string; message: string }
+  | { type: "run-options"; requestId: number; options: RunOptions }
+  | { type: "run-result"; requestId: number; pipelineId: number; success: boolean; message?: string; buildId?: number };

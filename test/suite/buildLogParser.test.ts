@@ -10,6 +10,9 @@ suite("Unit: buildLogParser", () => {
       "Build FAILED.",
       "The operation was aborted",
       "Unhandled exception. System.InvalidOperationException",
+      "Process completed with exit code -1.",
+      "Build FAILED. 0 errors.",
+      "0 errors; process completed with exit code 1.",
     ];
     for (const text of failures) {
       assert.strictEqual(parseLogLine(`2025-01-01T10:20:30.123Z ${text}`)?.kind, "error", text);
