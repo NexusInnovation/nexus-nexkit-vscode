@@ -35,7 +35,7 @@ const ICON_GLYPHS: Partial<Record<BuildStatus | StageState, string>> = {
   partiallySucceeded: "!",
   canceled: "–",
   cancelling: "–",
-  skipped: "»",
+  skipped: "›",
 };
 
 function StatusIcon({ status, size }: { status: BuildStatus | StageState; size?: "large" | "dot" }) {
@@ -60,7 +60,7 @@ function StageDots({ stages }: { stages?: StageSummary[] }) {
         <Fragment key={`${stage.name}-${index}`}>
           {index > 0 && <span class="link-line" />}
           <span title={`${stage.name}: ${stage.state}`}>
-            <StatusIcon status={stage.state} size="dot" />
+            <StatusIcon status={stage.state} />
           </span>
         </Fragment>
       ))}
@@ -224,7 +224,7 @@ function StageBox({
             >
               {job.steps.length === 0 ? "" : expanded.has(job.id) ? "▾" : "▸"}
             </button>
-            <StatusIcon status={job.state} size="dot" />
+            <StatusIcon status={job.state} />
             <button
               class="name"
               disabled={!job.hasLog}
@@ -238,7 +238,7 @@ function StageBox({
           {expanded.has(job.id) &&
             job.steps.map((step) => (
               <div class="step" key={step.id}>
-                <StatusIcon status={step.state} size="dot" />
+                <StatusIcon status={step.state} />
                 <button
                   class="name"
                   disabled={!step.hasLog}
@@ -411,6 +411,9 @@ function DetailView({
         <h1>
           #{build.buildNumber} • {build.title}
         </h1>
+        {isActive(build.status) && (
+          <button onClick={() => postToHost({ type: "follow-log", buildId: build.id })}>Suivre le log</button>
+        )}
         <button onClick={() => postToHost({ type: "open-in-browser", buildId: build.id })}>Open in Azure DevOps</button>
         {isActive(build.status) && (
           <button

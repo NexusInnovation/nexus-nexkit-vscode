@@ -150,6 +150,9 @@ export class DevOpsPipelinesPanelService implements vscode.Disposable {
       case "open-log":
         await this._openLog(message.buildId, message.recordId);
         break;
+      case "follow-log":
+        await this._openLog(message.buildId);
+        break;
       case "open-in-browser":
         if (this._currentRef) {
           await vscode.env.openExternal(vscode.Uri.parse(buildWebUrl(this._currentRef, message.buildId)));
@@ -246,7 +249,7 @@ export class DevOpsPipelinesPanelService implements vscode.Disposable {
     await this._refresh();
   }
 
-  private async _openLog(buildId: number, recordId: string): Promise<void> {
+  private async _openLog(buildId: number, recordId?: string): Promise<void> {
     const ref = this._currentRef ?? (await this._resolveRef());
     if (!ref) {
       return;
@@ -254,7 +257,11 @@ export class DevOpsPipelinesPanelService implements vscode.Disposable {
     const buildNumber = this._builds.find((b) => b.id === buildId)?.buildNumber ?? String(buildId);
     try {
       this._telemetry.trackEvent("devopsPipelines.openLog");
-      await this._buildLog.open(ref, buildId, buildNumber, recordId);
+      if (recordId === undefined) {
+        await this._buildLog.followBuild(ref, buildId, buildNumber);
+      } else {
+        await this._buildLog.open(ref, buildId, buildNumber, recordId);
+      }
     } catch (error) {
       this._logging.warn(`Could not open log for build ${buildId}`, error);
       void vscode.window.showWarningMessage(`Could not open the build log: ${this._describeError(error)}`);

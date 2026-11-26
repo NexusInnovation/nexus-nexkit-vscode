@@ -74,6 +74,17 @@ export class BuildLogViewService implements vscode.WebviewViewProvider, vscode.D
     await this._run(session);
   }
 
+  public async followBuild(ref: DevOpsProjectRef, buildId: number, buildNumber: string): Promise<void> {
+    this._stopSession();
+    const session: LogSession = { ref, buildId, buildNumber, recordId: "", cancelled: false };
+    this._session = session;
+    this._reset(`Build #${buildNumber}`);
+    this._setStatus("Loading…", true);
+
+    await vscode.commands.executeCommand(FOCUS_COMMAND);
+    await this._runBuild(session);
+  }
+
   public dispose(): void {
     this._stopSession();
   }
@@ -85,6 +96,68 @@ export class BuildLogViewService implements vscode.WebviewViewProvider, vscode.D
     this._session = undefined;
     this._wake?.();
     this._wake = undefined;
+  }
+
+  private async _runBuild(session: LogSession): Promise<void> {
+    const nextLines = new Map<string, number>();
+    const completed = new Set<string>();
+    let lastRecordId: string | undefined;
+
+    while (!session.cancelled) {
+      try {
+        const build = await this._client.getBuild(session.ref, session.buildId);
+        if (session.cancelled) {
+          return;
+        }
+        const records =
+          build.status === "notStarted" ? [] : ((await this._client.getTimeline(session.ref, session.buildId)).records ?? []);
+        if (session.cancelled) {
+          return;
+        }
+        for (const record of records) {
+          if (
+            (record.type !== "Task" && record.type !== "Job") ||
+            record.log?.id === undefined ||
+            completed.has(record.id)
+          ) {
+            continue;
+          }
+          const lines = await this._client.getLogLines(
+            session.ref,
+            session.buildId,
+            record.log.id,
+            nextLines.get(record.id) ?? 1
+          );
+          if (session.cancelled) {
+            return;
+          }
+          nextLines.set(record.id, (nextLines.get(record.id) ?? 1) + lines.length);
+          if (lines.length > 0) {
+            if (lastRecordId !== record.id) {
+              this._append([`##[section]${record.name ?? record.id}`]);
+              lastRecordId = record.id;
+            }
+            this._append(lines);
+          }
+          if (record.state === "completed") {
+            completed.add(record.id);
+          }
+        }
+        if (build.status === "completed") {
+          this._setStatus(this._lines.length === 0 ? "No log available for this build." : "End of log", false);
+          return;
+        }
+        this._setStatus(nextLines.size === 0 ? "Waiting for the build to start…" : "Live", true);
+      } catch (error) {
+        if (session.cancelled) {
+          return;
+        }
+        this._logging.warn(`Could not load log for build ${session.buildId}`, error);
+        this._setStatus(`Unable to load the log: ${error instanceof Error ? error.message : "unexpected error"}`, false);
+        return;
+      }
+      await this._sleep(POLL_INTERVAL_MS);
+    }
   }
 
   private async _run(session: LogSession): Promise<void> {

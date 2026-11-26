@@ -113,6 +113,7 @@ export type WebviewToHostMessage =
   | { type: "deselect-build" }
   | { type: "cancel-build"; buildId: number }
   | { type: "open-log"; buildId: number; recordId: string }
+  | { type: "follow-log"; buildId: number }
   | { type: "open-in-browser"; buildId: number }
   | { type: "load-pipelines" }
   | { type: "prepare-run"; requestId: number; project: string; pipelineId: number }

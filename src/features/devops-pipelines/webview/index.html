@@ -184,6 +184,11 @@
         display: flex;
         align-items: center;
         gap: 4px;
+        min-width: 0;
+        overflow-x: auto;
+      }
+      .dots > span {
+        flex: none;
       }
       .dots .link-line {
         width: 6px;
@@ -205,19 +210,22 @@
         box-sizing: border-box;
       }
       .icon.succeeded {
-        background: var(--ok);
+        background: #2e7d32;
       }
       .icon.failed {
-        background: var(--fail);
+        background: #c62828;
       }
       .icon.warning,
       .icon.partiallySucceeded {
         background: var(--warn);
       }
       .icon.canceled,
-      .icon.cancelling,
-      .icon.skipped {
+      .icon.cancelling {
         background: var(--muted);
+      }
+      .icon.skipped {
+        background: #f2f2f2;
+        color: #303030;
       }
       .icon.queued,
       .icon.pending {
