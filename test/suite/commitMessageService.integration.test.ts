@@ -396,7 +396,7 @@ suite("Integration: CommitMessageService – Generate Commit Message", () => {
     assert.strictEqual(mockInputBox.value, "feat: change", "Commit message should still be set");
     assert.ok(showWarningMessageStub.calledOnce, "Should warn when committing on the protected 'main' branch");
     assert.ok(
-      executeCommandStub.calledOnceWithExactly(Commands.CREATE_BRANCH_FROM_WORK_ITEM),
+      executeCommandStub.calledOnceWithExactly(Commands.CREATE_BRANCH_FROM_WORK_ITEM, sinon.match.has("rootUri")),
       "Should execute the create-branch command when the user accepts"
     );
   });

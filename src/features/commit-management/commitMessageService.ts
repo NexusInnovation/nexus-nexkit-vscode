@@ -180,14 +180,13 @@ export class CommitMessageService {
     );
 
     if (choice === createBranchAction) {
-      await vscode.commands.executeCommand(Commands.CREATE_BRANCH_FROM_WORK_ITEM);
+      await vscode.commands.executeCommand(Commands.CREATE_BRANCH_FROM_WORK_ITEM, { rootUri: repo.rootUri });
     }
   }
 
   private async _getActiveRepository(rootUri?: vscode.Uri): Promise<GitRepository | undefined> {
     const gitExtension = vscode.extensions.getExtension("vscode.git")?.exports as
-      | { getAPI(version: 1): GitExtensionAPI }
-      | undefined;
+      { getAPI(version: 1): GitExtensionAPI } | undefined;
 
     if (!gitExtension) {
       this._logging.warn("Git extension not found");

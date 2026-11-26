@@ -214,7 +214,7 @@ export class NexkitPanelMessageHandler {
 
   private async handleCreateBranchFromWorkItem(message: WebviewMessage): Promise<void> {
     this.trackWebviewAction("createBranchFromWorkItem");
-    await vscode.commands.executeCommand(Commands.CREATE_BRANCH_FROM_WORK_ITEM);
+    await vscode.commands.executeCommand(Commands.CREATE_BRANCH_FROM_WORK_ITEM, { triggerSource: "panel" });
   }
 
   private async handleOpenDevOpsPipelines(message: WebviewMessage): Promise<void> {

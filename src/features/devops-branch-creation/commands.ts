@@ -10,8 +10,8 @@ export function registerCreateBranchFromWorkItemCommand(context: vscode.Extensio
   registerCommand(
     context,
     Commands.CREATE_BRANCH_FROM_WORK_ITEM,
-    async () => {
-      await services.devOpsBranchCreation.createBranchFromWorkItem("palette");
+    async (arg?: { rootUri?: vscode.Uri; triggerSource?: "palette" | "panel" }) => {
+      await services.devOpsBranchCreation.createBranchFromWorkItem(arg?.triggerSource ?? "palette", arg?.rootUri);
     },
     services.telemetry
   );
