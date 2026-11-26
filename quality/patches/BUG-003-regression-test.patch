@@ -1,0 +1,15 @@
+*** Begin Patch
+*** Update File: quality/test_regression.js
+@@
+   {
++    id: "BUG-003",
++    description: "Watcher restore should not rely exclusively on UTF-8 string reads/writes",
++    run: () => {
++      const watcher = read("src/features/nexkit-file-watcher/nexkitFileWatcherService.ts");
++      const hasUtf8Restore = watcher.includes('await fs.promises.writeFile(filePath, originalContent, "utf8")');
++      if (hasUtf8Restore) {
++        throw new Error("Found utf8 string restore path instead of byte-safe restore");
++      }
++    },
++  },
+*** End Patch

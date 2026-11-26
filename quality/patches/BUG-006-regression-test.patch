@@ -1,0 +1,16 @@
+*** Begin Patch
+*** Update File: quality/test_regression.js
+@@
+   {
++    id: "BUG-006",
++    description: "Global process handlers should have explicit teardown or dedupe guard",
++    run: () => {
++      const extension = read("src/extension.ts");
++      const hasHandlers = extension.includes('process.on("unhandledRejection"') && extension.includes('process.on("uncaughtException"');
++      const hasEmptyDeactivate = /export function deactivate\(\) \{\}/.test(extension);
++      if (hasHandlers && hasEmptyDeactivate) {
++        throw new Error("Found global process handlers without teardown in deactivate()");
++      }
++    },
++  },
+*** End Patch

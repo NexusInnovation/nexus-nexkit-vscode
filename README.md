@@ -112,6 +112,10 @@ Accédez aux commandes via la palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) :
   - Affiche votre consommation mensuelle de crédits IA directement dans la barre d'état
   - Voir [Configuration du Suivi des Crédits IA](./docs/AI-CREDIT-MONITORING.md) pour le guide complet
 
+- **Nexkit: Open Azure DevOps Builds** - Ouvre dans l'éditeur la liste des builds (pipelines) de la connexion Azure DevOps active : statut, déclencheur (CI/PR), branche, étapes, avertissements, annulation d'un run en cours et lien vers Azure DevOps. L'authentification utilise la session Microsoft de VS Code (aucun jeton à saisir). Également accessible via le bouton « View Builds » de l'onglet Projet (premier onglet du panneau latéral, disponible en modes Développeur et APM). Chaque ligne affiche le déclencheur, l'avatar et le nom de la personne à l'origine du run (l'auteur du commit est utilisé quand Azure DevOps ne fournit qu'un compte de service comme « GitHub »), la branche ou la PR et le commit. Le détail d'un build affiche le graphe des stages en chaîne horizontale selon leurs dépendances (déduites du timing du run si le YAML n'est pas accessible, par exemple pour une PR) ; chaque stage se déplie en jobs et étapes. Un clic sur un job ou une étape affiche uniquement son log dans la vue dédiée « Nexkit Build Log » du panneau inférieur, en direct tant que l'étape s'exécute, puis bascule automatiquement sur l'étape suivante dès qu'elle se termine ; cliquer une autre étape remplace le contenu.
+
+- **Nexkit: Add Azure DevOps Connection** - Ajoute un projet Azure DevOps en le choisissant parmi les organisations et projets accessibles au compte Microsoft connecté (« Browse projects… »), ou en saisissant son URL (« Enter URL… »). Le bouton « Add Project » du panneau latéral propose aussi « Browse… » à côté du champ URL.
+
 ### Panneau Latéral
 
 Un panneau dédié dans la barre d'activité offre :
@@ -120,6 +124,7 @@ Un panneau dédié dans la barre d'activité offre :
 - Installation de templates individuels ou par lots
 - Accès rapide aux paramètres et à l'installation MCP
 - Synchronisation en temps réel des dépôts de templates
+- Onglets réordonnables par glisser-déposer (ou `Alt+←` / `Alt+→` sur un onglet ayant le focus) ; l'ordre est mémorisé
 
 ### Système de Dépôts de Templates IA
 

@@ -88,7 +88,7 @@ export class LoggingService {
           this.outputChannel.error(`  Stack: ${error.stack}`);
         }
       } else if (error) {
-        this.outputChannel.error(`  Details: ${JSON.stringify(error)}`);
+        this.outputChannel.error(`  Details: ${this.serializeData(error)}`);
       }
     }
   }
@@ -118,13 +118,62 @@ export class LoggingService {
    * Internal logging method and colorized to match log level (if supported by output channel)
    */
   private showData(data?: unknown): void {
-    // Format timestamp to match YYYY-MM-DD HH:mm:ss.SSS
     if (data !== undefined) {
+      this.outputChannel.appendLine(`  Data: ${this.serializeData(data)}`);
+    }
+  }
+
+  private serializeData(data: unknown): string {
+    if (typeof data === "string") {
+      return data;
+    }
+
+    if (data instanceof Error) {
+      return `[Error: ${data.message}]`;
+    }
+
+    if (Buffer.isBuffer(data)) {
+      return `[Buffer: ${data.length} bytes]`;
+    }
+
+    try {
+      const seen = new WeakSet<object>();
+      const json = JSON.stringify(
+        data,
+        (_key: string, value: unknown) => {
+          if (typeof value === "object" && value !== null) {
+            if (seen.has(value)) {
+              return "[Circular Reference]";
+            }
+            seen.add(value);
+            if (Buffer.isBuffer(value)) {
+              return `[Buffer: ${value.length} bytes]`;
+            }
+            if (value instanceof Error) {
+              return `[Error: ${value.message}]`;
+            }
+          }
+          return value;
+        },
+        2
+      );
+      // If JSON.stringify returned a string representation of Error/Buffer, parse it back
+      // to avoid extra quotes in output (e.g., "\"[Error: ...]\"")
       try {
-        const dataStr = typeof data === "string" ? data : JSON.stringify(data, null, 2);
-        this.outputChannel.appendLine(`  Data: ${dataStr}`);
-      } catch (error) {
-        this.outputChannel.appendLine(`  Data: [Unable to stringify data]`);
+        const parsed = JSON.parse(json);
+        if (typeof parsed === "string" && (parsed.startsWith("[Error:") || parsed.startsWith("[Buffer:"))) {
+          return parsed;
+        }
+      } catch {
+        // If parse fails, just return the stringified version
+      }
+      return json;
+    } catch {
+      try {
+        const typeName = (data as { constructor?: { name?: string } })?.constructor?.name || typeof data;
+        return `[Non-serializable Object: ${typeName}]`;
+      } catch {
+        return "[Unable to stringify data]";
       }
     }
   }

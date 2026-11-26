@@ -13,6 +13,10 @@ export function ToolsSection() {
   const messenger = useVSCodeAPI();
   const { workflows } = useAppState();
 
+  const openConvertToMarkdown = (): void => {
+    messenger.sendMessage({ command: "openConvertToMarkdown" });
+  };
+
   // Request workflow list when the section mounts (if not already loaded)
   useEffect(() => {
     if (!workflows.isReady) {
@@ -21,8 +25,15 @@ export function ToolsSection() {
   }, []);
 
   return (
-    <CollapsibleSection id="tools-workflow-runner" title="GitHub Workflow Runner">
-      <WorkflowRunnerTool />
-    </CollapsibleSection>
+    <>
+      <CollapsibleSection id="tools-convert-to-markdown" title="Convert to Markdown">
+        <button class="action-button" onClick={openConvertToMarkdown}>
+          Open Convert to Markdown
+        </button>
+      </CollapsibleSection>
+      <CollapsibleSection id="tools-workflow-runner" title="GitHub Workflow Runner">
+        <WorkflowRunnerTool />
+      </CollapsibleSection>
+    </>
   );
 }

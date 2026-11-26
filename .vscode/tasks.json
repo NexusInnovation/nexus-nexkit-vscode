@@ -31,7 +31,7 @@
     {
       "type": "shell",
       "label": "npm build (functions)",
-      "command": "npm run build",
+      "command": "pnpm run build",
       "dependsOn": "npm clean (functions)",
       "problemMatcher": "$tsc",
       "options": {
@@ -41,7 +41,7 @@
     {
       "type": "shell",
       "label": "npm watch (functions)",
-      "command": "npm run watch",
+      "command": "pnpm run watch",
       "dependsOn": "npm clean (functions)",
       "problemMatcher": "$tsc-watch",
       "group": {
@@ -55,8 +55,8 @@
     },
     {
       "type": "shell",
-      "label": "npm install (functions)",
-      "command": "npm install",
+      "label": "pnpm install (functions)",
+      "command": "pnpm install",
       "options": {
         "cwd": "${workspaceFolder}/infrastructure\\badge-service"
       }
@@ -74,8 +74,8 @@
     {
       "type": "shell",
       "label": "npm clean (functions)",
-      "command": "npm run clean",
-      "dependsOn": "npm install (functions)",
+      "command": "pnpm run clean",
+      "dependsOn": "pnpm install (functions)",
       "options": {
         "cwd": "${workspaceFolder}/infrastructure\\badge-service"
       }

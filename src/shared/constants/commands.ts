@@ -9,15 +9,10 @@ export const Commands = {
   INSTALL_USER_MCPS: "nexus-nexkit-vscode.installUserMCPs",
   OPEN_SETTINGS: "nexus-nexkit-vscode.openSettings",
   OPEN_FEEDBACK: "nexus-nexkit-vscode.openFeedback",
-  RESTORE_BACKUP: "nexus-nexkit-vscode.restoreBackup",
-  CLEANUP_BACKUP: "nexus-nexkit-vscode.cleanupBackup",
-  UPDATE_INSTALLED_TEMPLATES: "nexus-nexkit-vscode.updateInstalledTemplates",
   RESET_WORKSPACE: "nexus-nexkit-vscode.resetWorkspace",
 
-  // Profile management commands
-  SAVE_PROFILE: "nexus-nexkit-vscode.saveProfile",
-  APPLY_PROFILE: "nexus-nexkit-vscode.applyProfile",
-  DELETE_PROFILE: "nexus-nexkit-vscode.deleteProfile",
+  // Marketplace commands
+  ADD_NEXUS_MARKETPLACE: "nexus-nexkit-vscode.addNexusMarketplace",
 
   // Mode management commands
   SWITCH_MODE: "nexus-nexkit-vscode.switchMode",
@@ -26,6 +21,7 @@ export const Commands = {
   // APM DevOps commands
   ADD_DEVOPS_CONNECTION: "nexus-nexkit-vscode.addDevOpsConnection",
   REMOVE_DEVOPS_CONNECTION: "nexus-nexkit-vscode.removeDevOpsConnection",
+  OPEN_DEVOPS_PIPELINES: "nexus-nexkit-vscode.openDevOpsPipelines",
 
   // Logging commands
   SHOW_LOGS: "nexus-nexkit-vscode.showLogs",
@@ -36,6 +32,9 @@ export const Commands = {
   // AI Credit usage commands
   OPEN_AI_CREDIT_SETTINGS: "nexus-nexkit-vscode.openAiCreditSettings",
   REFRESH_AI_CREDIT_USAGE: "nexus-nexkit-vscode.refreshAiCreditUsage",
+
+  // Developer tools
+  OPEN_CONVERT_TO_MARKDOWN: "nexus-nexkit-vscode.openConvertToMarkdown",
 } as const;
 
 // Type-safe command names

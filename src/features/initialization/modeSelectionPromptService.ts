@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { SettingsManager } from "../../core/settingsManager";
 import { TelemetryService } from "../../shared/services/telemetryService";
-import { OperationMode } from "../ai-template-files/models/aiTemplateFile";
+import { OperationMode } from "../../shared/constants/operationMode";
 
 /**
  * Service for prompting users to select an operation mode during workspace initialization
@@ -21,13 +21,13 @@ export class ModeSelectionPromptService {
       {
         label: OperationMode.Developers,
         description: "Full feature set",
-        detail: "Access to Actions, Profiles, Templates, Repositories, and Footer sections",
+        detail: "Access to Marketplaces and Tools sections",
         picked: currentMode === OperationMode.Developers,
       },
       {
         label: OperationMode.APM,
         description: "Essential features only",
-        detail: "Access to Footer section only",
+        detail: "Access to Marketplaces, Tools, and Project sections",
         picked: currentMode === OperationMode.APM,
       },
     ];

@@ -6,7 +6,7 @@ import { SettingsManager } from "../../core/settingsManager";
 import { registerCommand } from "../../shared/commands/commandRegistry";
 import { Commands } from "../../shared/constants/commands";
 import { fileExists } from "../../shared/utils/fileHelper";
-import { OperationMode } from "../ai-template-files/models/aiTemplateFile";
+import { OperationMode } from "../../shared/constants/operationMode";
 
 /**
  * Reset options that can be selected by the user
@@ -16,7 +16,6 @@ interface ResetOption {
   label: string;
   description: string;
   detail?: string;
-  requiresBackup?: boolean;
   picked?: boolean;
 }
 
@@ -30,27 +29,6 @@ const RESET_OPTIONS: ResetOption[] = [
     description: "Reset initialization flag, mode, and prompt dismissals",
     detail: "Workspace will appear as uninitialized and you'll need to select a mode",
     picked: true,
-  },
-  {
-    id: "templateFiles",
-    label: "All Template Files",
-    description: "Remove .nexkit template folders (agents, prompts, instructions, chatmodes)",
-    detail: "Warning: This will delete all installed template files",
-    requiresBackup: true,
-    picked: true,
-  },
-  {
-    id: "installedState",
-    label: "Installed Templates State",
-    description: "Clear tracking of which templates are installed",
-    detail: "Webview will show no templates as installed",
-    picked: true,
-  },
-  {
-    id: "profiles",
-    label: "Saved Profiles",
-    description: "Delete all saved template profiles",
-    detail: "All profiles will be permanently removed",
   },
   {
     id: "mcpConfig",
@@ -111,38 +89,17 @@ export function registerResetWorkspaceCommand(context: vscode.ExtensionContext, 
       }
 
       const selectedIds = selectedItems.map((item) => item.id);
-      const requiresBackup = selectedItems.some((item) => item.requiresBackup);
 
       // Confirm reset with warning
       const itemsList = selectedItems.map((item) => `  • ${item.label}`).join("\n");
-      const confirmMessage = `You are about to reset the following:\n\n${itemsList}\n\nThis action cannot be undone${requiresBackup ? " (except via backup)" : ""}.`;
+      const confirmMessage = `You are about to reset the following:\n\n${itemsList}\n\nThis action cannot be undone.`;
 
-      let backupOption: string | undefined = "Reset";
-      if (requiresBackup) {
-        backupOption = await vscode.window.showWarningMessage(
-          confirmMessage,
-          { modal: true },
-          "Reset with Backup",
-          "Reset without Backup",
-          "Cancel"
-        );
-      } else {
-        backupOption = await vscode.window.showWarningMessage(confirmMessage, { modal: true }, "Reset", "Cancel");
-      }
-
-      if (!backupOption || backupOption === "Cancel") {
+      const confirmation = await vscode.window.showWarningMessage(confirmMessage, { modal: true }, "Reset", "Cancel");
+      if (confirmation !== "Reset") {
         return;
       }
 
-      const createBackup = backupOption === "Reset with Backup";
-
       try {
-        // Create backup if requested and template files are being reset
-        let backupPath: string | null = null;
-        if (createBackup && selectedIds.includes("templateFiles")) {
-          backupPath = await services.backup.backupTemplates(workspaceFolder.uri.fsPath);
-        }
-
         // Perform reset operations based on selections
         const resetResults = await performReset(selectedIds, workspaceFolder, services);
 
@@ -151,16 +108,12 @@ export function registerResetWorkspaceCommand(context: vscode.ExtensionContext, 
         if (resetResults.length > 0) {
           message += `\n\nReset items:\n${resetResults.map((r) => `  • ${r}`).join("\n")}`;
         }
-        if (backupPath) {
-          message += `\n\nBackup created at: ${path.basename(backupPath)}`;
-        }
 
         vscode.window.showInformationMessage(message);
 
         // Track reset event
         services.telemetry.trackEvent("workspace.reset", {
           options: selectedIds.join(","),
-          withBackup: createBackup.toString(),
         });
       } catch (error) {
         console.error("Failed to reset workspace:", error);
@@ -188,31 +141,8 @@ async function performReset(
   if (selectedIds.includes("workspaceInit")) {
     await SettingsManager.setWorkspaceInitialized(false);
     await SettingsManager.setWorkspaceInitPromptDismissed(false);
-    await SettingsManager.setLastAppliedProfile(null);
     await SettingsManager.setMode(OperationMode.None); // Reset mode to None (user must select)
     results.push("Workspace initialization status");
-  }
-
-  // Remove all template files
-  if (selectedIds.includes("templateFiles")) {
-    await services.backup.deleteTemplateFolders(workspaceFolder.uri.fsPath);
-    results.push("All template files");
-  }
-
-  // Clear installed templates state
-  if (selectedIds.includes("installedState")) {
-    await services.installedTemplatesState.clearState();
-    results.push("Installed templates state");
-  }
-
-  // Delete all profiles
-  if (selectedIds.includes("profiles")) {
-    const profiles = services.profileService.getProfiles();
-    if (profiles.length > 0) {
-      const profileNames = profiles.map((p) => p.name);
-      await services.profileService.deleteProfiles(profileNames);
-      results.push(`Saved profiles (${profiles.length})`);
-    }
   }
 
   // Remove MCP configuration

@@ -1,5 +1,6 @@
 import { useState } from "preact/hooks";
 import { useDevOpsConnections } from "../../hooks/useDevOpsConnections";
+import { useVSCodeAPI } from "../../hooks/useVSCodeAPI";
 
 /**
  * ApmConnectionSection Component
@@ -9,7 +10,9 @@ import { useDevOpsConnections } from "../../hooks/useDevOpsConnections";
  * - Clicking an inactive connection makes it active
  */
 export function ApmConnectionSection() {
-  const { connections, isReady, error, addConnection, removeConnection, setActiveConnection } = useDevOpsConnections();
+  const { connections, isReady, error, addConnection, browseProjects, removeConnection, setActiveConnection } =
+    useDevOpsConnections();
+  const messenger = useVSCodeAPI();
 
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newUrl, setNewUrl] = useState("");
@@ -42,6 +45,13 @@ export function ApmConnectionSection() {
     }
 
     addConnection(trimmedUrl);
+    setIsAddingNew(false);
+    setNewUrl("");
+    setLocalError(null);
+  };
+
+  const handleBrowse = () => {
+    browseProjects();
     setIsAddingNew(false);
     setNewUrl("");
     setLocalError(null);
@@ -124,6 +134,9 @@ export function ApmConnectionSection() {
                 <button class="button secondary" onClick={handleCancelAdd}>
                   Cancel
                 </button>
+                <button class="button secondary" onClick={handleBrowse} title="Pick from the projects your account can access">
+                  <i class="codicon codicon-search"></i> Browse…
+                </button>
                 <button class="button primary" onClick={handleSubmitUrl}>
                   Add
                 </button>
@@ -132,6 +145,16 @@ export function ApmConnectionSection() {
           ) : (
             <button class="button add-connection-button" onClick={handleAddClick}>
               <i class="codicon codicon-add"></i> Add Project
+            </button>
+          )}
+
+          {/* Builds viewer (needs an active project) */}
+          {connections.some((c) => c.isActive) && (
+            <button
+              class="button add-connection-button"
+              onClick={() => messenger.sendMessage({ command: "openDevOpsPipelines" })}
+            >
+              <i class="codicon codicon-play-circle"></i> View Builds
             </button>
           )}
 
