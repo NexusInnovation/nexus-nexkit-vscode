@@ -19,7 +19,9 @@ import { registerAddDevOpsConnectionCommand, registerRemoveDevOpsConnectionComma
 import { registerGenerateCommitMessageCommand } from "./features/commit-management/commands";
 import { registerOpenConvertToMarkdownCommand } from "./features/convert-to-markdown/commands";
 import { registerSetupGitHooksCommand, registerSyncGitHooksCommand } from "./features/git-hooks-management/commands";
+import { registerCreateBranchFromWorkItemCommand } from "./features/devops-branch-creation/commands";
 import { registerBuildLogView, registerOpenDevOpsPipelinesCommand } from "./features/devops-pipelines/commands";
+import { registerAiCreditCommands } from "./features/ai-credit-usage/commands";
 
 /**
  * Extension activation
@@ -60,9 +62,11 @@ export async function activate(context: vscode.ExtensionContext) {
   registerAddDevOpsConnectionCommand(context, services);
   registerRemoveDevOpsConnectionCommand(context, services);
   registerGenerateCommitMessageCommand(context, services);
+  registerAiCreditCommands(context, services);
   registerOpenConvertToMarkdownCommand(context, services);
   registerSetupGitHooksCommand(context, services);
   registerSyncGitHooksCommand(context, services);
+  registerCreateBranchFromWorkItemCommand(context, services);
   registerOpenDevOpsPipelinesCommand(context, services);
   registerBuildLogView(context, services);
 
@@ -76,6 +80,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Initialize status bar
   services.updateStatusBar.initializeUpdateStatusBar();
+
+  // Initialize AI credit usage monitoring
+  services.aiCreditUsage.initialize().catch((error) => {
+    services.logging.error("Failed to initialize AI credit usage service", error);
+  });
+  services.aiCreditStatusBar.initialize().catch((error) => {
+    services.logging.error("Failed to initialize AI credit status bar", error);
+  });
 
   // Check for required MCP servers on activation
   services.mcpConfig.promptInstallRequiredMCPsOnActivation();
