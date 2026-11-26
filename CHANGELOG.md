@@ -1,3 +1,9 @@
+## [4.4.0-beta.2](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v4.4.0-beta.1...v4.4.0-beta.2) (2026-11-26)
+
+### Bug Fixes
+
+* remove unused Azure DevOps project argument ([6a27409](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/6a2740935bc8060c0809857bba9c56535277251f))
+
 ## [4.4.0-beta.1](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v4.3.0...v4.4.0-beta.1) (2026-11-26)
 
 ### Features
