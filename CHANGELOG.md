@@ -1,3 +1,14 @@
+## [4.3.0](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v4.2.0...v4.3.0) (2026-11-26)
+
+### Features
+
+* **devops-branch-creation:** add create branch from work item command ([1ce1e75](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/1ce1e7525b891b7079838bbe95079e92bcb2327b))
+
+### Bug Fixes
+
+* **devops-branch-creation:** route branch creation to invoked repository and guard rejected tokens ([9538f82](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9538f825906cdcc175f7145aba64c9c33caf590d))
+* **devops:** auto-activate sole connection and harden URL/repo matching ([169cfa7](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/169cfa75ec543bf0d9d6dea4cd483c29676fa28e))
+
 ## [4.2.0-beta.2](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v4.2.0-beta.1...v4.2.0-beta.2) (2026-11-26)
 
 ### Features
