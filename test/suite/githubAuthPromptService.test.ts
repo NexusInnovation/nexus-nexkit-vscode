@@ -83,4 +83,37 @@ suite("Unit: GitHubAuthPromptService", () => {
     const result = await service.ensureAuthenticated();
     assert.strictEqual(result, false);
   });
+
+  test("Should not ask again right after the prompt was deferred", async () => {
+    const store = new Map<string, unknown>();
+    const state = {
+      get: (key: string) => store.get(key),
+      update: async (key: string, value: unknown) => void store.set(key, value),
+    } as unknown as vscode.Memento;
+    service = new GitHubAuthPromptService(state);
+    sandbox.stub(GitHubAuthHelper, "isCI").returns(false);
+    sandbox.stub(GitHubAuthHelper, "getGitHubSession").resolves(undefined);
+    sandbox.stub(GitHubAuthHelper, "getGitHubTokenFromEnv").returns(undefined);
+    const warning = sandbox.stub(vscode.window, "showWarningMessage").resolves("Later" as any);
+
+    await service.ensureAuthenticated();
+    await service.ensureAuthenticated();
+
+    assert.strictEqual(warning.callCount, 1);
+  });
+
+  test("Auth headers reuse the VS Code session without prompting", async () => {
+    sandbox.stub(GitHubAuthHelper, "getGitHubTokenFromEnv").returns(undefined);
+    const getSession = sandbox.stub(GitHubAuthHelper, "getGitHubSession").resolves({
+      id: "s",
+      accessToken: "tok",
+      account: { label: "user", id: "1" },
+      scopes: ["repo"],
+    });
+
+    const headers = await GitHubAuthHelper.getAuthHeaders(["repo"]);
+
+    assert.strictEqual(headers.Authorization, "token tok");
+    assert.deepStrictEqual(getSession.firstCall.args, [["repo"], false, true]);
+  });
 });

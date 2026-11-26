@@ -1,5 +1,14 @@
-import { BuildDetail, BuildStageDetail, BuildStatus, BuildSummary, BuildWarning, StageState, StageSummary } from "./messages";
-import { RawBuild, RawChangeAuthor, RawIdentity, RawTimeline, RawTimelineRecord } from "./devOpsBuildsClient";
+import {
+  BuildDetail,
+  BuildStageDetail,
+  BuildStatus,
+  BuildSummary,
+  BuildWarning,
+  PipelineSummary,
+  StageState,
+  StageSummary,
+} from "./messages";
+import { RawBuild, RawChangeAuthor, RawDefinition, RawIdentity, RawTimeline, RawTimelineRecord } from "./devOpsBuildsClient";
 
 const COMMIT_LENGTH = 8;
 const DEFAULT_STAGE_NAME = "__default";
@@ -102,6 +111,29 @@ export function resolveRequester(raw: RawBuild, author?: RawChangeAuthor): Reque
     return { name: sender, imageUrl: raw.triggerInfo?.["pr.sender.avatarUrl"] };
   }
   return { name: raw.requestedFor?.displayName ?? raw.requestedBy?.displayName ?? "" };
+}
+
+export function toPipelineSummary(raw: RawDefinition): PipelineSummary {
+  const last = raw.latestBuild;
+  return {
+    id: raw.id,
+    name: raw.name,
+    folder: raw.path && raw.path !== "\\" ? raw.path : "",
+    lastRun: last
+      ? {
+          buildId: last.id,
+          buildNumber: last.buildNumber,
+          status: mapBuildStatus(last),
+          branch: shortBranch(last.sourceBranch),
+          startTime: last.startTime,
+          finishTime: last.finishTime,
+        }
+      : undefined,
+  };
+}
+
+export function shortBranchName(ref: string | undefined): string {
+  return shortBranch(ref);
 }
 
 export function toBuildSummary(raw: RawBuild, stages?: StageSummary[], requester?: ResolvedRequester): BuildSummary {

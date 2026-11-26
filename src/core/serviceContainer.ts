@@ -34,8 +34,11 @@ import { DevOpsAuthProvider } from "../features/devops-pipelines/devOpsAuthProvi
 import { DevOpsBuildsClient } from "../features/devops-pipelines/devOpsBuildsClient";
 import { DevOpsPipelinesPanelService } from "../features/devops-pipelines/devOpsPipelinesPanelService";
 import { BuildLogViewService } from "../features/devops-pipelines/buildLogViewService";
+import { BuildActivityBadgeService } from "../features/devops-pipelines/buildActivityBadgeService";
 import { DevOpsProjectBrowserService } from "../features/apm-devops/devOpsProjectBrowserService";
 import { DevOpsProjectDiscoveryClient } from "../features/apm-devops/devOpsProjectDiscoveryClient";
+import { AiCreditUsageService } from "../features/ai-credit-usage/services/aiCreditUsageService";
+import { AiCreditStatusBarService } from "../features/ai-credit-usage/services/aiCreditStatusBarService";
 
 /**
  * Service container for dependency injection
@@ -69,7 +72,10 @@ export interface ServiceContainer {
   devOpsBranchCreation: DevOpsBranchCreationService;
   devOpsPipelines: DevOpsPipelinesPanelService;
   devOpsBuildLog: BuildLogViewService;
+  devOpsBuildBadge: BuildActivityBadgeService;
   devOpsProjectBrowser: DevOpsProjectBrowserService;
+  aiCreditUsage: AiCreditUsageService;
+  aiCreditStatusBar: AiCreditStatusBarService;
 }
 
 /**
@@ -109,10 +115,12 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     )
   );
   const commitMessage = new CommitMessageService();
-  const githubAuthPrompt = new GitHubAuthPromptService();
+  const githubAuthPrompt = new GitHubAuthPromptService(context.globalState);
   const hooksConfigDeployer = new HooksConfigDeployer();
   const startupVerification = new StartupVerificationService(gitExcludeConfigDeployer, hooksConfigDeployer, githubAuthPrompt);
   const githubWorkflowRunner = new GitHubWorkflowRunnerService(context.extensionUri);
+  const aiCreditUsage = new AiCreditUsageService(context);
+  const aiCreditStatusBar = new AiCreditStatusBarService(context, aiCreditUsage);
   const markitdownConversion = new MarkitdownConversionService(logging);
   const convertToMarkdown = new ConvertToMarkdownPanelService(context.extensionUri, markitdownConversion);
   const azureDevOpsAuthService = new AzureDevOpsAuthService();
@@ -133,6 +141,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     telemetry,
     devOpsBuildLog
   );
+  const devOpsBuildBadge = new BuildActivityBadgeService(devOpsConfig, devOpsBuildsClient, logging);
   const devOpsProjectBrowser = new DevOpsProjectBrowserService(
     new DevOpsProjectDiscoveryClient(devOpsAuth, `nexus-nexkit-vscode/${context.extension?.packageJSON?.version ?? "unknown"}`)
   );
@@ -145,6 +154,9 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   context.subscriptions.push(convertToMarkdown);
   context.subscriptions.push(devOpsPipelines);
   context.subscriptions.push(devOpsBuildLog);
+  context.subscriptions.push(devOpsBuildBadge);
+  context.subscriptions.push(aiCreditUsage);
+  context.subscriptions.push(aiCreditStatusBar);
 
   logging.info("All services initialized successfully");
 
@@ -176,6 +188,9 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     devOpsBranchCreation,
     devOpsPipelines,
     devOpsBuildLog,
+    devOpsBuildBadge,
     devOpsProjectBrowser,
+    aiCreditUsage,
+    aiCreditStatusBar,
   };
 }

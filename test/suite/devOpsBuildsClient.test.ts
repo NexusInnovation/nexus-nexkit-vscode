@@ -44,6 +44,86 @@ suite("Unit: DevOpsBuildsClient", () => {
     assert.deepStrictEqual(JSON.parse(init.body), { status: "cancelling" });
   });
 
+  test("runPipeline queues a build of the definition on the given ref", async () => {
+    fetchStub.resolves(jsonResponse({ id: 77, buildNumber: "77" }));
+
+    const build = await client.runPipeline(ref, 12, "refs/heads/develop");
+
+    assert.strictEqual(build.id, 77);
+    const [url, init] = fetchStub.getCall(0).args;
+    assert.ok(url.includes("/_apis/build/builds?"));
+    assert.strictEqual(init.method, "POST");
+    assert.deepStrictEqual(JSON.parse(init.body), { definition: { id: 12 }, sourceBranch: "refs/heads/develop" });
+  });
+
+  test("listPipelines asks for the latest run of every definition", async () => {
+    fetchStub.resolves(jsonResponse({ value: [{ id: 1, name: "CI" }] }));
+
+    const pipelines = await client.listPipelines(ref);
+
+    assert.strictEqual(pipelines[0].name, "CI");
+    assert.ok(fetchStub.getCall(0).args[0].includes("/_apis/build/definitions?includeLatestBuilds=true"));
+  });
+
+  test("listBranches returns the head refs of a repository", async () => {
+    fetchStub.resolves(jsonResponse({ value: [{ name: "refs/heads/main" }, { name: "refs/heads/dev" }, {}] }));
+
+    const branches = await client.listBranches(ref, "repo-1");
+
+    assert.deepStrictEqual(branches, ["refs/heads/main", "refs/heads/dev"]);
+    assert.ok(fetchStub.getCall(0).args[0].includes("/_apis/git/repositories/repo-1/refs?filter=heads/"));
+  });
+
+  test("countActiveBuilds counts running and queued builds", async () => {
+    fetchStub.resolves(jsonResponse({ count: 2, value: [{ id: 1 }, { id: 2 }] }));
+
+    assert.strictEqual(await client.countActiveBuilds(ref), 2);
+    assert.ok(fetchStub.getCall(0).args[0].includes("statusFilter=inProgress,notStarted"));
+  });
+
+  test("countActiveBuilds sums every page", async () => {
+    const page = (items: unknown[], token?: string): Response =>
+      new Response(JSON.stringify({ value: items }), {
+        status: 200,
+        headers: { "content-type": "application/json", ...(token ? { "x-ms-continuationtoken": token } : {}) },
+      });
+    fetchStub.onCall(0).resolves(page([{ id: 1 }, { id: 2 }], "next page"));
+    fetchStub.onCall(1).resolves(page([{ id: 3 }]));
+
+    assert.strictEqual(await client.countActiveBuilds(ref), 3);
+    assert.ok(fetchStub.getCall(1).args[0].includes("continuationToken=next%20page"));
+  });
+
+  test("listPipelines fails instead of returning a partial list when the page limit is reached", async () => {
+    fetchStub.callsFake(
+      async () =>
+        new Response(JSON.stringify({ value: [{ id: 1, name: "A" }] }), {
+          status: 200,
+          headers: { "content-type": "application/json", "x-ms-continuationtoken": "more" },
+        })
+    );
+
+    await assert.rejects(() => client.listPipelines(ref), /more than 50 pages/);
+  });
+
+  test("listPipelines follows the continuation token", async () => {
+    fetchStub.onCall(0).resolves(
+      new Response(JSON.stringify({ value: [{ id: 1, name: "A" }] }), {
+        status: 200,
+        headers: { "content-type": "application/json", "x-ms-continuationtoken": "t1" },
+      })
+    );
+    fetchStub.onCall(1).resolves(jsonResponse({ value: [{ id: 2, name: "B" }] }));
+
+    const pipelines = await client.listPipelines(ref);
+
+    assert.deepStrictEqual(
+      pipelines.map((p) => p.name),
+      ["A", "B"]
+    );
+    assert.strictEqual(fetchStub.callCount, 2);
+  });
+
   test("throws an auth error without calling the API when no token is available", async () => {
     (auth.getAccessToken as sinon.SinonStub).resolves(undefined);
 

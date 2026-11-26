@@ -82,10 +82,41 @@ function computeColumns(nodes: GraphNodeInput[], deps: Map<string, string[]>): M
   return columns;
 }
 
+/**
+ * Transitive reduction: drops a dependency when another dependency of the same stage already depends on it
+ * (A -> C is redundant when A -> B -> C exists). Column depths are unchanged, only the drawn links shrink.
+ */
+export function reduceDependencies(deps: Map<string, string[]>): Map<string, string[]> {
+  const ancestorsOf = new Map<string, Set<string>>();
+  const collect = (id: string): Set<string> => {
+    const known = ancestorsOf.get(id);
+    if (known) {
+      return known;
+    }
+    const result = new Set<string>();
+    ancestorsOf.set(id, result); // registered first so a dependency cycle terminates
+    for (const dep of deps.get(id) ?? []) {
+      result.add(dep);
+      collect(dep).forEach((a) => result.add(a));
+    }
+    return result;
+  };
+
+  const reduced = new Map<string, string[]>();
+  for (const [id, direct] of deps) {
+    reduced.set(
+      id,
+      direct.filter((dep) => !direct.some((other) => other !== dep && collect(other).has(dep) && !collect(dep).has(other)))
+    );
+  }
+  return reduced;
+}
+
 export function layoutStageGraph(nodes: GraphNodeInput[], options: Partial<GraphLayoutOptions> = {}): GraphLayout {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   const ids = new Set(nodes.map((n) => n.id));
-  const deps = new Map(nodes.map((n) => [n.id, [...new Set(n.dependsOn)].filter((d) => ids.has(d) && d !== n.id)]));
+  const declared = new Map(nodes.map((n) => [n.id, [...new Set(n.dependsOn)].filter((d) => ids.has(d) && d !== n.id)]));
+  const deps = reduceDependencies(declared);
   const columns = computeColumns(nodes, deps);
   const columnCount = Math.max(0, ...[...columns.values()].map((c) => c + 1));
 
