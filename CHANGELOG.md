@@ -2,85 +2,85 @@
 
 ### ⚠ BREAKING CHANGES
 
-* **core:** the nexkit.templates, nexkit.repositories and nexkit.profiles settings and the restore, cleanup, update and profile commands are removed. AI templates are now managed through marketplace plugins.
+- **core:** the nexkit.templates, nexkit.repositories and nexkit.profiles settings and the restore, cleanup, update and profile commands are removed. AI templates are now managed through marketplace plugins.
 
 Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
 
 ### Features
 
-* **core:** remove templates, profiles and repositories features ([4192751](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4192751f2b028d00d5e040f090ce3af4201f4fda))
-* **initialization:** restrict settings writes to init and migration entry points ([f2e6049](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/f2e604905249433cc16504146ba33f68a5564f50)), closes [#163](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/163)
+- **core:** remove templates, profiles and repositories features ([4192751](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4192751f2b028d00d5e040f090ce3af4201f4fda))
+- **initialization:** restrict settings writes to init and migration entry points ([f2e6049](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/f2e604905249433cc16504146ba33f68a5564f50)), closes [#163](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/163)
 
 ### Bug Fixes
 
-* **ci:** run semantic-release from local install ([69112d6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/69112d6b267059027b5911235b47698bddcdcd65))
-* **pnpm:** Merge pull request [#211](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/211) from NexusInnovation/feature/migrate-npm-to-pnpm ([2e48737](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2e487371a0cf99d0ed635a378ea61ae8fc0b3d7c))
-* **release:** allow version bump after changelog generation ([#334](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/334)) ([3d19275](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3d19275415dfc764f40bea8ca7208b29248efdb3))
+- **ci:** run semantic-release from local install ([69112d6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/69112d6b267059027b5911235b47698bddcdcd65))
+- **pnpm:** Merge pull request [#211](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/211) from NexusInnovation/feature/migrate-npm-to-pnpm ([2e48737](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2e487371a0cf99d0ed635a378ea61ae8fc0b3d7c))
+- **release:** allow version bump after changelog generation ([#334](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/334)) ([3d19275](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/3d19275415dfc764f40bea8ca7208b29248efdb3))
 
 ## [4.0.0-beta.1](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v3.14.0-beta.1...v4.0.0-beta.1) (2026-11-02)
 
 ### ⚠ BREAKING CHANGES
 
-* **core:** the nexkit.templates, nexkit.repositories and nexkit.profiles settings and the restore, cleanup, update and profile commands are removed. AI templates are now managed through marketplace plugins.
+- **core:** the nexkit.templates, nexkit.repositories and nexkit.profiles settings and the restore, cleanup, update and profile commands are removed. AI templates are now managed through marketplace plugins.
 
 Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
 
 ### Features
 
-* **core:** remove templates, profiles and repositories features ([4192751](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4192751f2b028d00d5e040f090ce3af4201f4fda))
+- **core:** remove templates, profiles and repositories features ([4192751](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4192751f2b028d00d5e040f090ce3af4201f4fda))
 
 ## [3.14.0-beta.1](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v3.13.0...v3.14.0-beta.1) (2026-11-02)
 
 ### Features
 
-* **initialization:** restrict settings writes to init and migration entry points ([f2e6049](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/f2e604905249433cc16504146ba33f68a5564f50)), closes [#163](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/163)
+- **initialization:** restrict settings writes to init and migration entry points ([f2e6049](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/f2e604905249433cc16504146ba33f68a5564f50)), closes [#163](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/163)
 
 ### Bug Fixes
 
-* **ci:** run semantic-release from local install ([69112d6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/69112d6b267059027b5911235b47698bddcdcd65))
-* **pnpm:** Merge pull request [#211](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/211) from NexusInnovation/feature/migrate-npm-to-pnpm ([2e48737](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2e487371a0cf99d0ed635a378ea61ae8fc0b3d7c))
+- **ci:** run semantic-release from local install ([69112d6](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/69112d6b267059027b5911235b47698bddcdcd65))
+- **pnpm:** Merge pull request [#211](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/211) from NexusInnovation/feature/migrate-npm-to-pnpm ([2e48737](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/2e487371a0cf99d0ed635a378ea61ae8fc0b3d7c))
 
 ## 3.13.0 (2026-08-27)
 
-* fix(initialization): Merge pull request #210 from NexusInnovation/develop ([c80f623](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c80f623)), closes [#210](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/210)
-* chore(release): v3.12.0-beta.2 [skip ci] ([f138307](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/f138307))
-* chore(release): v3.13.0-beta.1 [skip ci] ([bad8783](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/bad8783))
-* Merge pull request #209 from NexusInnovation/develop ([c3da96e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c3da96e)), closes [#209](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/209)
-* Merge remote-tracking branch 'origin/main' into develop ([4e21f95](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4e21f95))
-* test(initialization): assert legacy plugin warning ([99d09ff](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/99d09ff))
-* feat(initialization): normalize legacy plugin marketplace references ([8c27b1f](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8c27b1f))
-* refactor(initialization): normalize plugin marketplace identifier ([a70c5ae](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a70c5ae))
+- fix(initialization): Merge pull request #210 from NexusInnovation/develop ([c80f623](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c80f623)), closes [#210](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/210)
+- chore(release): v3.12.0-beta.2 [skip ci] ([f138307](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/f138307))
+- chore(release): v3.13.0-beta.1 [skip ci] ([bad8783](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/bad8783))
+- Merge pull request #209 from NexusInnovation/develop ([c3da96e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c3da96e)), closes [#209](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/209)
+- Merge remote-tracking branch 'origin/main' into develop ([4e21f95](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4e21f95))
+- test(initialization): assert legacy plugin warning ([99d09ff](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/99d09ff))
+- feat(initialization): normalize legacy plugin marketplace references ([8c27b1f](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8c27b1f))
+- refactor(initialization): normalize plugin marketplace identifier ([a70c5ae](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a70c5ae))
 
 ## 3.13.0-beta.1 (2026-08-27)
 
-* Merge pull request #209 from NexusInnovation/develop ([c3da96e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c3da96e)), closes [#209](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/209)
-* Merge remote-tracking branch 'origin/main' into develop ([4e21f95](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4e21f95))
-* chore(release): v3.12.0-beta.2 [skip ci] ([f138307](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/f138307))
-* test(initialization): assert legacy plugin warning ([99d09ff](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/99d09ff))
-* feat(initialization): normalize legacy plugin marketplace references ([8c27b1f](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8c27b1f))
-* refactor(initialization): normalize plugin marketplace identifier ([a70c5ae](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a70c5ae))
+- Merge pull request #209 from NexusInnovation/develop ([c3da96e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/c3da96e)), closes [#209](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/209)
+- Merge remote-tracking branch 'origin/main' into develop ([4e21f95](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4e21f95))
+- chore(release): v3.12.0-beta.2 [skip ci] ([f138307](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/f138307))
+- test(initialization): assert legacy plugin warning ([99d09ff](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/99d09ff))
+- feat(initialization): normalize legacy plugin marketplace references ([8c27b1f](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8c27b1f))
+- refactor(initialization): normalize plugin marketplace identifier ([a70c5ae](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a70c5ae))
 
 ## 3.12.0-beta.2 (2026-08-26)
 
-* test(initialization): assert legacy plugin warning ([99d09ff](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/99d09ff))
-* feat(initialization): normalize legacy plugin marketplace references ([8c27b1f](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8c27b1f))
-* refactor(initialization): normalize plugin marketplace identifier ([a70c5ae](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a70c5ae))
-* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([44f78ed](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/44f78ed))
-* chore(build): require Node.js 22.x ([34d006f](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/34d006f))
+- test(initialization): assert legacy plugin warning ([99d09ff](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/99d09ff))
+- feat(initialization): normalize legacy plugin marketplace references ([8c27b1f](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8c27b1f))
+- refactor(initialization): normalize plugin marketplace identifier ([a70c5ae](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a70c5ae))
+- Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([44f78ed](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/44f78ed))
+- chore(build): require Node.js 22.x ([34d006f](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/34d006f))
 
 ## 3.12.0-beta.1 (2026-08-21)
 
-* Merge branch 'develop' ([a26e1b9](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a26e1b9))
-* Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([44f78ed](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/44f78ed))
-* chore(build): require Node.js 22.x ([34d006f](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/34d006f))
-* chore(release): v3.12.0-beta.1 [skip ci] ([de92a1f](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/de92a1f))
-* fix(marketplace): Merge pull request #206 from NexusInnovation:feature/nexus-markeplace-support ([00d0a4b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/00d0a4b)), closes [#206](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/206)
-* fix(test): upgrade @vscode/test-electron for macOS CI compatibility ([87b4dfb](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/87b4dfb))
-* docs: add user directive for discovery questions ([1235669](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/1235669))
-* docs(agents): add quality-playbook orchestrator agent ([61f9c7c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/61f9c7c))
-* docs(squad): record settings bootstrap and test triage decisions ([7736e64](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/7736e64))
-* test(settings): add marketplace config to deployer test ([9b1109b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9b1109b))
-* feat(initialization): enforce official plugin marketplace priority ([17ad8a4](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/17ad8a4))
+- Merge branch 'develop' ([a26e1b9](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/a26e1b9))
+- Merge branch 'develop' of https://github.com/NexusInnovation/nexus-nexkit-vscode into develop ([44f78ed](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/44f78ed))
+- chore(build): require Node.js 22.x ([34d006f](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/34d006f))
+- chore(release): v3.12.0-beta.1 [skip ci] ([de92a1f](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/de92a1f))
+- fix(marketplace): Merge pull request #206 from NexusInnovation:feature/nexus-markeplace-support ([00d0a4b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/00d0a4b)), closes [#206](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/206)
+- fix(test): upgrade @vscode/test-electron for macOS CI compatibility ([87b4dfb](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/87b4dfb))
+- docs: add user directive for discovery questions ([1235669](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/1235669))
+- docs(agents): add quality-playbook orchestrator agent ([61f9c7c](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/61f9c7c))
+- docs(squad): record settings bootstrap and test triage decisions ([7736e64](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/7736e64))
+- test(settings): add marketplace config to deployer test ([9b1109b](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9b1109b))
+- feat(initialization): enforce official plugin marketplace priority ([17ad8a4](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/17ad8a4))
 
 ## <small>3.11.4 (2026-07-23)</small>
 
