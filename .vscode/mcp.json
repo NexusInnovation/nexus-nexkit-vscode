@@ -1,19 +1,9 @@
 {
-	"servers": {
-		"azure-devops": {
-			"command": "npx",
-			"args": [
-				"-y",
-				"@azure-devops/mcp",
-				"nexusinno",
-				"Librairie Martin - SLIM v2",
-				"-d",
-				"core",
-				"work",
-				"work-items",
-				"search"
-			],
-			"type": "stdio"
-		}
-	}
+  "servers": {
+    "azure-devops": {
+      "command": "npx",
+      "args": ["-y", "@azure-devops/mcp", "nexusinno", "-d", "core", "work", "work-items", "search"],
+      "type": "stdio"
+    }
+  }
 }
