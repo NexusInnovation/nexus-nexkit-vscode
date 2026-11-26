@@ -1,0 +1,19 @@
+{
+	"servers": {
+		"azure-devops": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@azure-devops/mcp",
+				"nexusinno",
+				"Firebolt-Dashboard",
+				"-d",
+				"core",
+				"work",
+				"work-items",
+				"search"
+			],
+			"type": "stdio"
+		}
+	}
+}
