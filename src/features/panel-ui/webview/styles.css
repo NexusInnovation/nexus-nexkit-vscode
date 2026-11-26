@@ -151,6 +151,15 @@ body {
   color: var(--vscode-focusBorder);
 }
 
+.tab-button.dragging {
+  opacity: 0.35;
+}
+
+.tab-button.drop-target {
+  background-color: var(--vscode-list-hoverBackground);
+  box-shadow: inset 2px 0 0 var(--vscode-focusBorder);
+}
+
 .tab-icon-wrapper {
   position: relative;
   display: inline-flex;

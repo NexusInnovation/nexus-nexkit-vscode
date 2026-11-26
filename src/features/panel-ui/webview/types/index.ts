@@ -13,4 +13,6 @@ export interface WorkspaceState {
 export interface WebviewPersistentState {
   expandedState: Record<string, boolean>;
   activeTab?: string;
+  /** User-defined order of the panel tabs */
+  tabOrder?: string[];
 }

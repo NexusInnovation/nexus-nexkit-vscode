@@ -20,7 +20,8 @@
   "dependencies": {
     "applicationinsights": "^3.17.0",
     "markdown-it": "^14.3.3",
-    "prettier": "^3.7.4"
+    "prettier": "^3.7.4",
+    "yaml": "^2.9.1"
   },
   "overrides": {
     "@opentelemetry/propagator-jaeger": "2.10.0",
@@ -114,6 +115,11 @@
         "command": "nexus-nexkit-vscode.openConvertToMarkdown",
         "title": "Nexkit: Convert to Markdown",
         "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.openDevOpsPipelines",
+        "title": "Nexkit: Open Azure DevOps Builds",
+        "category": "Nexkit"
       }
     ],
     "menus": {
@@ -171,6 +177,13 @@
           "title": "Nexkit",
           "icon": "media/Nexus_Symbole_MONOCHROME.svg"
         }
+      ],
+      "panel": [
+        {
+          "id": "nexkit-build-log",
+          "title": "Nexkit Build Log",
+          "icon": "media/Nexus_Symbole_MONOCHROME.svg"
+        }
       ]
     },
     "views": {
@@ -180,6 +193,13 @@
           "icon": "media/Nexus_Symbole_MONOCHROME.svg",
           "type": "webview",
           "name": "Welcome!"
+        }
+      ],
+      "nexkit-build-log": [
+        {
+          "id": "nexkit.buildLog",
+          "type": "webview",
+          "name": "Build Log"
         }
       ]
     },
