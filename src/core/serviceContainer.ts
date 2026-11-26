@@ -115,7 +115,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     )
   );
   const commitMessage = new CommitMessageService();
-  const githubAuthPrompt = new GitHubAuthPromptService();
+  const githubAuthPrompt = new GitHubAuthPromptService(context.globalState);
   const hooksConfigDeployer = new HooksConfigDeployer();
   const startupVerification = new StartupVerificationService(gitExcludeConfigDeployer, hooksConfigDeployer, githubAuthPrompt);
   const githubWorkflowRunner = new GitHubWorkflowRunnerService(context.extensionUri);

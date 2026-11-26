@@ -243,7 +243,7 @@ export class AiCreditUsageService implements vscode.Disposable {
    */
   private async getCurrentUserLogin(): Promise<string | undefined> {
     try {
-      const session = await vscode.authentication.getSession("github", ["repo"], { createIfNone: false });
+      const session = await vscode.authentication.getSession("github", ["repo"], { createIfNone: false, silent: true });
       if (!session) {
         return undefined;
       }
