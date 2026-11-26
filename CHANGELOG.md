@@ -1,3 +1,10 @@
+## [4.1.0-beta.3](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v4.1.0-beta.2...v4.1.0-beta.3) (2026-11-26)
+
+### Bug Fixes
+
+* **devops-pipelines:** fail on page limit and stabilize project switching ([92baf87](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/92baf8738ac05549454f6d2bf428af31d59224eb))
+* **devops-pipelines:** follow continuation tokens and refine error detection ([07a1deb](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/07a1deb44805588643ef5abe51b9e13f011b036d))
+
 ## [4.1.0-beta.2](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v4.1.0-beta.1...v4.1.0-beta.2) (2026-11-26)
 
 ### Features
