@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline'; script-src 'nonce-{{nonce}}';">
+    <title>Nexkit: JSON Formatter</title>
+    <style>
+        :root {
+            color: var(--vscode-editor-foreground);
+            background: var(--vscode-editor-background);
+            font-family: var(--vscode-font-family);
+        }
+
+        body {
+            margin: 0;
+        }
+
+        .formatter {
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            height: 100vh;
+            padding: 12px;
+        }
+
+        .toolbar, .actions, .editor-grid {
+            display: flex;
+            gap: 8px;
+        }
+
+        .toolbar {
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        h1 {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        button {
+            background: var(--vscode-button-background);
+            border: 1px solid var(--vscode-button-border);
+            border-radius: 4px;
+            color: var(--vscode-button-foreground);
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--vscode-button-hoverBackground);
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .editor-grid {
+            flex: 1;
+            min-height: 0;
+        }
+
+        .editor-panel {
+            display: flex;
+            flex: 1 1 0;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 0;
+        }
+
+        textarea {
+            background: var(--vscode-input-background);
+            border: 1px solid var(--vscode-input-border);
+            box-sizing: border-box;
+            color: var(--vscode-input-foreground);
+            flex: 1;
+            font-family: var(--vscode-editor-font-family);
+            font-size: var(--vscode-editor-font-size);
+            line-height: 1.5;
+            min-height: 200px;
+            padding: 8px;
+            resize: none;
+            width: 100%;
+        }
+
+        textarea:focus {
+            border-color: var(--vscode-focusBorder);
+            outline: 1px solid var(--vscode-focusBorder);
+        }
+
+        .status {
+            color: var(--vscode-errorForeground);
+            margin: 0;
+            min-height: 20px;
+        }
+
+        .status.valid {
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .status.empty {
+            color: var(--vscode-descriptionForeground);
+        }
+
+        @media (max-width: 700px) {
+            .editor-grid {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script nonce="{{nonce}}" src="{{scriptUri}}"></script>
+</body>
+</html>

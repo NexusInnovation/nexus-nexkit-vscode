@@ -35,6 +35,7 @@ export const Commands = {
   REFRESH_AI_CREDIT_USAGE: "nexus-nexkit-vscode.refreshAiCreditUsage",
 
   // Developer tools
+  OPEN_JSON_FORMATTER: "nexus-nexkit-vscode.openJsonFormatter",
   OPEN_CONVERT_TO_MARKDOWN: "nexus-nexkit-vscode.openConvertToMarkdown",
 } as const;
 

@@ -28,7 +28,7 @@ module.exports = {
   },
   // Ignore semantic-release auto-generated commits and old merge commits
   ignores: [
-    (commit) => /^Initial plan$/.test(commit),
+    (commit) => /^Initial plan/.test(commit),
     (commit) => /^chore\(release\):/.test(commit),
     (commit) => /^BREAKING CHANGE:/.test(commit),
     (commit) => /BREAKING CHANGE:/.test(commit),  // Anywhere in message

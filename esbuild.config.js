@@ -60,6 +60,12 @@ function copyStaticFiles() {
       filesToCopy: ["index.html"],
       staticSubFolder: null,
     },
+    {
+      sourceDir: path.join(__dirname, "src", "features", "json-formatter", "webview"),
+      outputDir: path.join(__dirname, "out", "json-formatter"),
+      filesToCopy: ["index.html"],
+      staticSubFolder: null,
+    },
   ];
 
   staticConfigs.forEach((config) => {
@@ -93,9 +99,7 @@ function copyStaticFiles() {
           const dest = path.join(staticOutputDir, file);
           if (fs.statSync(source).isFile()) {
             fs.copyFileSync(source, dest);
-            console.log(
-              `[copy] ${config.staticSubFolder}/${file} -> ${path.relative(__dirname, staticOutputDir)}/${file}`
-            );
+            console.log(`[copy] ${config.staticSubFolder}/${file} -> ${path.relative(__dirname, staticOutputDir)}/${file}`);
           }
         });
       }
@@ -145,6 +149,11 @@ const watchStaticFilesPlugin = {
         },
         {
           sourceDir: path.join(__dirname, "src", "features", "devops-pipelines", "logview"),
+          filesToWatch: ["index.html"],
+          staticSubFolder: null,
+        },
+        {
+          sourceDir: path.join(__dirname, "src", "features", "json-formatter", "webview"),
           filesToWatch: ["index.html"],
           staticSubFolder: null,
         },
@@ -246,20 +255,38 @@ async function main() {
     plugins: [esbuildProblemMatcherPlugin, copyStaticFilesPlugin, watchStaticFilesPlugin],
   });
 
+  // JSON Formatter webview bundle
+  const jsonFormatterCtx = await esbuild.context({
+    entryPoints: ["src/features/json-formatter/webview/main.tsx"],
+    bundle: true,
+    format: "iife",
+    minify: production,
+    sourcemap: !production,
+    platform: "browser",
+    outfile: "out/jsonFormatter.js",
+    logLevel: "silent",
+    jsx: "automatic",
+    jsxImportSource: "preact",
+    plugins: [esbuildProblemMatcherPlugin, copyStaticFilesPlugin, watchStaticFilesPlugin],
+  });
+
   if (watch) {
     await extensionCtx.watch();
     await webviewCtx.watch();
     await convertToMarkdownCtx.watch();
     await devOpsPipelinesCtx.watch();
+    await jsonFormatterCtx.watch();
   } else {
     await extensionCtx.rebuild();
     await webviewCtx.rebuild();
     await convertToMarkdownCtx.rebuild();
     await devOpsPipelinesCtx.rebuild();
+    await jsonFormatterCtx.rebuild();
     await extensionCtx.dispose();
     await webviewCtx.dispose();
     await convertToMarkdownCtx.dispose();
     await devOpsPipelinesCtx.dispose();
+    await jsonFormatterCtx.dispose();
   }
 }
 

@@ -25,6 +25,7 @@ import { GitHubAuthPromptService } from "../features/initialization/githubAuthPr
 import { StartupVerificationService } from "../features/initialization/startupVerificationService";
 import { GitHubWorkflowRunnerService } from "../features/github-workflow-runner/githubWorkflowRunnerService";
 import { HooksConfigDeployer } from "../features/initialization/hooksConfigDeployer";
+import { JsonFormatterPanelService } from "../features/json-formatter/jsonFormatterPanelService";
 import { ConvertToMarkdownPanelService } from "../features/convert-to-markdown/convertToMarkdownPanelService";
 import { MarkitdownConversionService } from "../features/convert-to-markdown/markitdownConversionService";
 import { AzureDevOpsAuthService } from "../features/devops-branch-creation/azureDevOpsAuthService";
@@ -67,6 +68,7 @@ export interface ServiceContainer {
   hooksConfigDeployer: HooksConfigDeployer;
   startupVerification: StartupVerificationService;
   githubWorkflowRunner: GitHubWorkflowRunnerService;
+  jsonFormatter: JsonFormatterPanelService;
   convertToMarkdown: ConvertToMarkdownPanelService;
   markitdownConversion: MarkitdownConversionService;
   devOpsBranchCreation: DevOpsBranchCreationService;
@@ -119,6 +121,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const hooksConfigDeployer = new HooksConfigDeployer();
   const startupVerification = new StartupVerificationService(gitExcludeConfigDeployer, hooksConfigDeployer, githubAuthPrompt);
   const githubWorkflowRunner = new GitHubWorkflowRunnerService(context.extensionUri);
+  const jsonFormatter = new JsonFormatterPanelService(context.extensionUri);
   const aiCreditUsage = new AiCreditUsageService(context);
   const aiCreditStatusBar = new AiCreditStatusBarService(context, aiCreditUsage);
   const markitdownConversion = new MarkitdownConversionService(logging);
@@ -150,6 +153,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   context.subscriptions.push(logging);
   context.subscriptions.push(telemetry);
   context.subscriptions.push(devOpsConfig);
+  context.subscriptions.push(jsonFormatter);
   context.subscriptions.push(marketplace);
   context.subscriptions.push(convertToMarkdown);
   context.subscriptions.push(devOpsPipelines);
@@ -183,6 +187,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     hooksConfigDeployer,
     startupVerification,
     githubWorkflowRunner,
+    jsonFormatter,
     convertToMarkdown,
     markitdownConversion,
     devOpsBranchCreation,

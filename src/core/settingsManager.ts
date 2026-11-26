@@ -23,6 +23,10 @@ export class SettingsManager {
   // MCP Setup settings
   private static readonly MCP_SETUP_DISMISSED = "mcpSetup.dismissed";
 
+  // Ruleset validation state keys (WorkspaceState)
+  private static readonly RULESET_VALIDATION_APPROVED_STATE_KEY = "nexkit.rulesetValidation.approved";
+  private static readonly RULESET_VALIDATION_NOTICE_SHOWN_STATE_KEY = "nexkit.rulesetValidation.noticeShown";
+
   // Telemetry settings
   private static readonly TELEMETRY_ENABLED = "telemetry.enabled";
   private static readonly TELEMETRY_CONNECTION_STRING = "telemetry.connectionString";
@@ -109,6 +113,32 @@ export class SettingsManager {
       .update(this.MCP_SETUP_DISMISSED, value, vscode.ConfigurationTarget.Global);
   }
 
+  static isRulesetValidationApproved(repoFingerprint: string): boolean {
+    if (!this.context) {
+      return false;
+    }
+    const approvals = this.context.workspaceState.get<Record<string, boolean>>(this.RULESET_VALIDATION_APPROVED_STATE_KEY, {});
+    return approvals[repoFingerprint] ?? false;
+  }
+
+  static async setRulesetValidationApproved(repoFingerprint: string, value: boolean): Promise<void> {
+    if (!this.context) {
+      return;
+    }
+    const approvals = this.context.workspaceState.get<Record<string, boolean>>(this.RULESET_VALIDATION_APPROVED_STATE_KEY, {});
+    approvals[repoFingerprint] = value;
+    await this.context.workspaceState.update(this.RULESET_VALIDATION_APPROVED_STATE_KEY, approvals);
+  }
+
+  static async setRulesetValidationNoticeShown(repoFingerprint: string, value: boolean): Promise<void> {
+    if (!this.context) {
+      return;
+    }
+    const notices = this.context.workspaceState.get<Record<string, boolean>>(this.RULESET_VALIDATION_NOTICE_SHOWN_STATE_KEY, {});
+    notices[repoFingerprint] = value;
+    await this.context.workspaceState.update(this.RULESET_VALIDATION_NOTICE_SHOWN_STATE_KEY, notices);
+  }
+
   // Telemetry
   static isNexkitTelemetryEnabled(): boolean {
     return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<boolean>(this.TELEMETRY_ENABLED, true);
@@ -124,9 +154,7 @@ export class SettingsManager {
 
   // Convert to Markdown
   static getConvertToMarkdownPythonPath(): string {
-    return vscode.workspace
-      .getConfiguration(this.NEXKIT_SECTION)
-      .get<string>(this.CONVERT_TO_MARKDOWN_PYTHON_PATH, "");
+    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<string>(this.CONVERT_TO_MARKDOWN_PYTHON_PATH, "");
   }
 
   // Extension Updates
@@ -199,12 +227,16 @@ export class SettingsManager {
 
   // Agent plugin locations (VS Code `chat.pluginLocations`, user scope): plugin folder → enabled
   static getPluginLocations(): Record<string, boolean> {
-    const value = vscode.workspace.getConfiguration(this.CHAT_SECTION).inspect<Record<string, boolean>>(this.PLUGIN_LOCATIONS)?.globalValue;
+    const value = vscode.workspace
+      .getConfiguration(this.CHAT_SECTION)
+      .inspect<Record<string, boolean>>(this.PLUGIN_LOCATIONS)?.globalValue;
     return value && typeof value === "object" && !Array.isArray(value) ? { ...value } : {};
   }
 
   static async setPluginLocations(locations: Record<string, boolean>): Promise<void> {
-    await vscode.workspace.getConfiguration(this.CHAT_SECTION).update(this.PLUGIN_LOCATIONS, locations, vscode.ConfigurationTarget.Global);
+    await vscode.workspace
+      .getConfiguration(this.CHAT_SECTION)
+      .update(this.PLUGIN_LOCATIONS, locations, vscode.ConfigurationTarget.Global);
   }
 
   // Commit Message

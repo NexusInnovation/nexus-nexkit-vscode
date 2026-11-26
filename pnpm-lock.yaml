@@ -16,6 +16,9 @@ importers:
       applicationinsights:
         specifier: ^3.17.0
         version: 3.17.0(supports-color@8.1.1)
+      json5:
+        specifier: ^2.2.3
+        version: 2.2.3
       markdown-it:
         specifier: ^14.3.3
         version: 14.3.3

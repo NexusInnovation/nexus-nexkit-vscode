@@ -17,6 +17,10 @@ export function ToolsSection() {
     messenger.sendMessage({ command: "openConvertToMarkdown" });
   };
 
+  const openJsonFormatter = (): void => {
+    messenger.sendMessage({ command: "openJsonFormatter" });
+  };
+
   const createBranchFromWorkItem = (): void => {
     messenger.sendMessage({ command: "createBranchFromWorkItem" });
   };
@@ -33,6 +37,11 @@ export function ToolsSection() {
       <CollapsibleSection id="tools-convert-to-markdown" title="Convert to Markdown">
         <button class="action-button" onClick={openConvertToMarkdown}>
           Open Convert to Markdown
+        </button>
+      </CollapsibleSection>
+      <CollapsibleSection id="tools-json-formatter" title="JSON Formatter">
+        <button class="action-button" onClick={openJsonFormatter}>
+          Open JSON Formatter
         </button>
       </CollapsibleSection>
       <CollapsibleSection id="tools-create-branch-from-work-item" title="Create Branch from Work Item">
