@@ -67,12 +67,40 @@ export class GitHubAuthHelper {
     createIfNone: boolean = true,
     silent: boolean = true
   ): Promise<vscode.AuthenticationSession | undefined> {
+    // Concurrent interactive requests share one prompt instead of stacking several dialogs
+    if (createIfNone) {
+      const key = [...scopes].sort().join(" ");
+      const pending = this._pendingInteractive.get(key);
+      if (pending) {
+        return pending;
+      }
+      const request = this._requestSession(scopes, createIfNone, silent).finally(() => this._pendingInteractive.delete(key));
+      this._pendingInteractive.set(key, request);
+      return request;
+    }
+    return this._requestSession(scopes, createIfNone, silent);
+  }
+
+  /**
+   * Reuse the session VS Code already holds for Nexkit, without ever showing UI.
+   * Returns undefined when the user has not signed in or has not allowed Nexkit to use the account yet.
+   */
+  public static async getExistingSession(scopes: string[]): Promise<vscode.AuthenticationSession | undefined> {
+    return this.getGitHubSession(scopes, false, true);
+  }
+
+  private static readonly _pendingInteractive = new Map<string, Promise<vscode.AuthenticationSession | undefined>>();
+
+  private static async _requestSession(
+    scopes: string[],
+    createIfNone: boolean,
+    silent: boolean
+  ): Promise<vscode.AuthenticationSession | undefined> {
     try {
-      const session = await vscode.authentication.getSession(this.GITHUB_AUTH_PROVIDER_ID, scopes, {
+      return await vscode.authentication.getSession(this.GITHUB_AUTH_PROVIDER_ID, scopes, {
         createIfNone,
         silent,
       });
-      return session;
     } catch (error) {
       console.warn("Failed to get GitHub authentication session:", error);
       return undefined;
@@ -81,7 +109,8 @@ export class GitHubAuthHelper {
 
   /**
    * Get authentication headers for GitHub API requests
-   * Priority: 1. Environment token, 2. VS Code session, 3. No auth
+   * Priority: 1. Environment token, 2. Existing VS Code session (never prompts), 3. No auth
+   * Callers that need a sign-in must ask for it explicitly through getGitHubSession(scopes, true, false).
    * @param scopes Required OAuth scopes (for VS Code auth)
    * @param userAgent User agent string for API requests
    * @param requireAuth Whether authentication is required (affects logging)
@@ -103,9 +132,9 @@ export class GitHubAuthHelper {
       return headers;
     }
 
-    // Priority 2: Try VS Code authentication (silent, no prompts)
+    // Priority 2: Reuse the VS Code session (silent, no prompts)
     try {
-      const session = await this.getGitHubSession(scopes, true, false);
+      const session = await this.getExistingSession(scopes);
       if (session) {
         headers["Authorization"] = `token ${session.accessToken}`;
         return headers;
@@ -140,9 +169,9 @@ export class GitHubAuthHelper {
       return true;
     }
 
-    // Check VS Code session
+    // Check VS Code session (never prompts)
     try {
-      const session = await this.getGitHubSession(["repo"], true, false);
+      const session = await this.getExistingSession(["repo"]);
       return session !== undefined;
     } catch {
       return false;
@@ -159,7 +188,7 @@ export class GitHubAuthHelper {
     }
 
     try {
-      const session = await this.getGitHubSession(["repo"], true, false);
+      const session = await this.getExistingSession(["repo"]);
       if (session) {
         return { source: "vscode-session", available: true };
       }
