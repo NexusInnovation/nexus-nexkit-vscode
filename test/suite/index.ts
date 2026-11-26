@@ -28,8 +28,13 @@ export function run(): Promise<void> {
     // test artifacts (e.g., out/test/*.test.js) that may remain after refactors.
     glob("suite/**/*.test.js", { cwd: testsRoot })
       .then((files) => {
+        const currentTestFiles = files.filter((file) => {
+          const sourcePath = path.resolve(__dirname, "../../../test", file.replace(/\.js$/, ".ts"));
+          return require("fs").existsSync(sourcePath);
+        });
+
         // Add files to the test suite
-        files.forEach((f) => mocha.addFile(path.resolve(testsRoot, f)));
+        currentTestFiles.forEach((file) => mocha.addFile(path.resolve(testsRoot, file)));
 
         try {
           // Run the mocha test

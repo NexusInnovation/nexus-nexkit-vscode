@@ -7,24 +7,19 @@ import {
   registerInitializeWorkspaceCommand,
   registerSwitchModeCommand,
 } from "./features/initialization/commands";
-import { OperationMode } from "./features/ai-template-files/models/aiTemplateFile";
+import { OperationMode } from "./shared/constants/operationMode";
 import { registerResetWorkspaceCommand } from "./features/initialization/resetCommand";
 import { registerInstallUserMCPsCommand } from "./features/mcp-management/commands";
-import { registerCleanupBackupCommand, registerRestoreBackupCommand } from "./features/backup-management/commands";
 import { registerOpenSettingsCommand } from "./shared/commands/settingsCommand";
 import { registerCheckExtensionUpdateCommand } from "./features/extension-updates/commands";
-import { registerUpdateInstalledTemplatesCommand } from "./features/ai-template-files/commands";
-import {
-  registerApplyProfileCommand,
-  registerDeleteProfileCommand,
-  registerSaveProfileCommand,
-} from "./features/profile-management/commands";
+import { registerAddNexusMarketplaceCommand } from "./features/marketplace-management/commands";
 import { registerOpenFeedbackCommand } from "./shared/commands/feedbackCommand";
 import { registerShowLogsCommand } from "./shared/commands/loggingCommand";
 import { registerAddDevOpsConnectionCommand, registerRemoveDevOpsConnectionCommand } from "./features/apm-devops/commands";
 import { registerGenerateCommitMessageCommand } from "./features/commit-management/commands";
-import { registerOpenRtfConverterCommand } from "./features/rtf-converter/commands";
 import { registerOpenRegexBuilderCommand } from "./features/regex-builder/commands";
+import { registerOpenConvertToMarkdownCommand } from "./features/convert-to-markdown/commands";
+import { registerBuildLogView, registerOpenDevOpsPipelinesCommand } from "./features/devops-pipelines/commands";
 
 /**
  * Extension activation
@@ -57,21 +52,18 @@ export async function activate(context: vscode.ExtensionContext) {
   registerSwitchModeCommand(context, services);
   registerResetWorkspaceCommand(context, services);
   registerInstallUserMCPsCommand(context, services);
-  registerRestoreBackupCommand(context, services);
-  registerCleanupBackupCommand(context, services);
   registerCheckExtensionUpdateCommand(context, services);
-  registerUpdateInstalledTemplatesCommand(context, services);
+  registerAddNexusMarketplaceCommand(context, services);
   registerOpenSettingsCommand(context, services);
   registerShowLogsCommand(context, services);
   registerOpenFeedbackCommand(context, services);
-  registerSaveProfileCommand(context, services);
-  registerApplyProfileCommand(context, services);
-  registerDeleteProfileCommand(context, services);
   registerAddDevOpsConnectionCommand(context, services);
   registerRemoveDevOpsConnectionCommand(context, services);
   registerGenerateCommitMessageCommand(context, services);
-  registerOpenRtfConverterCommand(context, services);
   registerOpenRegexBuilderCommand(context, services);
+  registerOpenConvertToMarkdownCommand(context, services);
+  registerOpenDevOpsPipelinesCommand(context, services);
+  registerBuildLogView(context, services);
 
   // Register webview panel
   const nexkitPanelProvider = new NexkitPanelViewProvider();
@@ -87,48 +79,13 @@ export async function activate(context: vscode.ExtensionContext) {
   // Check for required MCP servers on activation
   services.mcpConfig.promptInstallRequiredMCPsOnActivation();
 
-  // Run startup verification checks (settings, gitignore, file migration, auth)
+  // Run startup verification checks (gitignore, hooks, auth)
   services.startupVerification.verifyOnStartup().catch((error) => {
     services.logging.error("Failed to run startup verification", error);
     services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
       context: "startupVerification.verifyOnStartup",
     });
   });
-
-  // Initialize AI template data asynchronously (don't block extension activation)
-  services.aiTemplateData
-    .initialize()
-    .then(() => {
-      // Start background metadata scan after templates are loaded
-      services.templateMetadataScanner.startScan().catch((error) => {
-        services.logging.error("Failed to complete metadata scan", error);
-        services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
-          context: "templateMetadataScanner.startScan",
-        });
-      });
-    })
-    .catch((error) => {
-      services.logging.error("Failed to initialize AI template data", error);
-      // Track initialization errors
-      services.telemetry.trackError(error instanceof Error ? error : new Error(String(error)), {
-        context: "aiTemplateData.initialize",
-      });
-    });
-
-  // Sync installed templates state with filesystem on activation
-  services.aiTemplateData.syncInstalledTemplates();
-
-  // Start watching .nexkit/ directory for external changes
-  services.nexkitFileWatcher.startWatching().catch((error) => {
-    services.logging.error("Failed to start .nexkit file watcher", error);
-  });
-
-  // Watch for template repository configuration changes (to refetch templates)
-  services.aiTemplateData.setupConfigurationWatcher();
-
-  // Periodically check remote GitHub repos for new commits and auto-refresh templates
-  services.aiTemplateData.setupRemoteAutoRefresh();
-
 }
 
 async function updateModeSelectedContext(): Promise<void> {
@@ -163,7 +120,7 @@ function setupGlobalErrorHandling(
         return new Error(error);
       } else if (error !== null && typeof error === "object") {
         // Try to extract a meaningful message from the object
-        const message = (error.message || error.msg || error.reason || error.toString());
+        const message = error.message || error.msg || error.reason || error.toString();
         return new Error(String(message));
       } else {
         return new Error(String(error));

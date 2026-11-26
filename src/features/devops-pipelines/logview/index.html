@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'nonce-{{nonce}}' {{cspSource}}; script-src 'nonce-{{nonce}}';"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Build Log</title>
+    <style nonce="{{nonce}}">
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        color: var(--vscode-editor-foreground);
+        background: var(--vscode-editor-background);
+        font-family: var(--vscode-editor-font-family, monospace);
+        font-size: var(--vscode-editor-font-size, 13px);
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 10px;
+        border-bottom: 1px solid var(--vscode-panel-border);
+        font-family: var(--vscode-font-family);
+        font-size: 12px;
+      }
+      #title {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-weight: 600;
+      }
+      #status {
+        color: var(--vscode-descriptionForeground);
+        white-space: nowrap;
+      }
+      #status.live::before {
+        content: "";
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        margin-right: 6px;
+        border-radius: 50%;
+        background: var(--vscode-testing-iconPassed, #3fb950);
+        animation: pulse 1.2s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        50% {
+          opacity: 0.25;
+        }
+      }
+      #log {
+        flex: 1;
+        overflow: auto;
+        padding: 6px 0;
+      }
+      #empty {
+        padding: 12px;
+        color: var(--vscode-descriptionForeground);
+        font-family: var(--vscode-font-family);
+      }
+      .line {
+        display: flex;
+        gap: 10px;
+        padding: 0 10px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        line-height: 1.45;
+      }
+      .line:hover {
+        background: var(--vscode-list-hoverBackground);
+      }
+      .time {
+        flex: none;
+        width: 8ch;
+        color: var(--vscode-descriptionForeground);
+        opacity: 0.7;
+        user-select: none;
+      }
+      .error {
+        color: var(--vscode-errorForeground);
+      }
+      .warning {
+        color: var(--vscode-editorWarning-foreground);
+      }
+      .section,
+      .group {
+        font-weight: 700;
+      }
+      .section {
+        color: var(--vscode-textLink-foreground);
+      }
+      .command {
+        color: var(--vscode-terminal-ansiBlue, var(--vscode-textLink-foreground));
+      }
+      .debug {
+        color: var(--vscode-descriptionForeground);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <span id="title"></span>
+      <span id="status"></span>
+    </header>
+    <div id="log">
+      <div id="empty">Select a job or a step in an Azure DevOps build to see its log here.</div>
+    </div>
+    <script nonce="{{nonce}}">
+      (function () {
+        var vscode = acquireVsCodeApi();
+        var log = document.getElementById("log");
+        var title = document.getElementById("title");
+        var status = document.getElementById("status");
+        var STICK_THRESHOLD = 40;
+
+        function nearBottom() {
+          return log.scrollHeight - log.scrollTop - log.clientHeight <= STICK_THRESHOLD;
+        }
+
+        function appendLines(lines) {
+          var stick = nearBottom();
+          var fragment = document.createDocumentFragment();
+          lines.forEach(function (line) {
+            var row = document.createElement("div");
+            row.className = "line " + line.kind;
+            var time = document.createElement("span");
+            time.className = "time";
+            time.textContent = line.time;
+            var text = document.createElement("span");
+            text.textContent = line.text;
+            row.appendChild(time);
+            row.appendChild(text);
+            fragment.appendChild(row);
+          });
+          log.appendChild(fragment);
+          if (stick) {
+            log.scrollTop = log.scrollHeight;
+          }
+        }
+
+        window.addEventListener("message", function (event) {
+          var message = event.data;
+          switch (message.type) {
+            case "reset":
+              log.textContent = "";
+              title.textContent = message.title;
+              title.title = message.title;
+              break;
+            case "lines":
+              appendLines(message.lines);
+              break;
+            case "status":
+              status.textContent = message.text;
+              status.className = message.live ? "live" : "";
+              break;
+          }
+        });
+
+        vscode.postMessage({ type: "ready" });
+      })();
+    </script>
+  </body>
+</html>

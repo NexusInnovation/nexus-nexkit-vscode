@@ -77,12 +77,11 @@ suite("Unit: Extension Activation", () => {
     const commands = await vscode.commands.getCommands(true);
     const nexkitCommands = [
       "nexus-nexkit-vscode.initProject",
-      "nexus-nexkit-vscode.updateTemplates",
       "nexus-nexkit-vscode.checkExtensionUpdate",
       "nexus-nexkit-vscode.installUserMCPs",
       "nexus-nexkit-vscode.configureAzureDevOps",
       "nexus-nexkit-vscode.openSettings",
-      "nexus-nexkit-vscode.restoreBackup",
+      "nexus-nexkit-vscode.addNexusMarketplace",
     ];
     nexkitCommands.forEach((cmd) => {
       assert.ok(commands.includes(cmd), `Command ${cmd} should be registered`);
@@ -118,16 +117,16 @@ suite("Unit: Extension Activation", () => {
     assert.strictEqual(menuEntry.group, "navigation@1");
   });
 
-  test("Should contribute RTF to Markdown command", () => {
+  test("Should contribute Convert to Markdown command", () => {
     const packageJsonPath = path.join(__dirname, "..", "..", "..", "package.json");
     const packageJsonRaw = fs.readFileSync(packageJsonPath, "utf8");
     const packageJson = JSON.parse(packageJsonRaw);
 
     const command = packageJson.contributes?.commands?.find(
-      (entry: { command: string }) => entry.command === "nexus-nexkit-vscode.openRtfConverter"
+      (entry: { command: string }) => entry.command === "nexus-nexkit-vscode.openConvertToMarkdown"
     );
-    assert.ok(command, "Expected openRtfConverter command contribution.");
-    assert.strictEqual(command.title, "Nexkit: RTF to Markdown");
+    assert.ok(command, "Expected openConvertToMarkdown command contribution.");
+    assert.strictEqual(command.title, "Nexkit: Convert to Markdown");
     assert.strictEqual(command.category, "Nexkit");
   });
 });

@@ -1,0 +1,41 @@
+{
+    "schema_version": "1.1",
+    "skill_version": "1.5.6",
+    "date": "2026-07-24",
+    "project": "nexus-nexkit-vscode",
+    "recommendation": "FIX BEFORE MERGE",
+    "groups": [
+        {
+            "group": 1,
+            "name": "Phase 5 surrogate",
+            "use_cases": [
+                "UC-01",
+                "UC-02",
+                "UC-03",
+                "UC-04",
+                "UC-05",
+                "UC-06"
+            ],
+            "result": "fail",
+            "tests_passed": 0,
+            "tests_failed": 6,
+            "junit_file": "",
+            "junit_available": false,
+            "notes": "No full integration test suite executed in this run; red-phase regression evidence indicates six open defects."
+        }
+    ],
+    "summary": {
+        "total_groups": 1,
+        "passed": 0,
+        "failed": 1,
+        "skipped": 0
+    },
+    "uc_coverage": {
+        "UC-01": "covered_fail",
+        "UC-02": "covered_fail",
+        "UC-03": "covered_fail",
+        "UC-04": "covered_fail",
+        "UC-05": "covered_fail",
+        "UC-06": "covered_fail"
+    }
+}
