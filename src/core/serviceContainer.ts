@@ -27,6 +27,9 @@ import { GitHubWorkflowRunnerService } from "../features/github-workflow-runner/
 import { HooksConfigDeployer } from "../features/initialization/hooksConfigDeployer";
 import { ConvertToMarkdownPanelService } from "../features/convert-to-markdown/convertToMarkdownPanelService";
 import { MarkitdownConversionService } from "../features/convert-to-markdown/markitdownConversionService";
+import { AzureDevOpsAuthService } from "../features/devops-branch-creation/azureDevOpsAuthService";
+import { AzureDevOpsRestClient } from "../features/devops-branch-creation/azureDevOpsRestClient";
+import { DevOpsBranchCreationService } from "../features/devops-branch-creation/devOpsBranchCreationService";
 import { DevOpsAuthProvider } from "../features/devops-pipelines/devOpsAuthProvider";
 import { DevOpsBuildsClient } from "../features/devops-pipelines/devOpsBuildsClient";
 import { DevOpsPipelinesPanelService } from "../features/devops-pipelines/devOpsPipelinesPanelService";
@@ -65,6 +68,7 @@ export interface ServiceContainer {
   githubWorkflowRunner: GitHubWorkflowRunnerService;
   convertToMarkdown: ConvertToMarkdownPanelService;
   markitdownConversion: MarkitdownConversionService;
+  devOpsBranchCreation: DevOpsBranchCreationService;
   devOpsPipelines: DevOpsPipelinesPanelService;
   devOpsBuildLog: BuildLogViewService;
   devOpsProjectBrowser: DevOpsProjectBrowserService;
@@ -117,6 +121,9 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const aiCreditStatusBar = new AiCreditStatusBarService(context, aiCreditUsage);
   const markitdownConversion = new MarkitdownConversionService(logging);
   const convertToMarkdown = new ConvertToMarkdownPanelService(context.extensionUri, markitdownConversion);
+  const azureDevOpsAuthService = new AzureDevOpsAuthService();
+  const azureDevOpsRestClient = new AzureDevOpsRestClient(azureDevOpsAuthService);
+  const devOpsBranchCreation = new DevOpsBranchCreationService(devOpsConfig, azureDevOpsRestClient, telemetry);
   const devOpsAuth = new DevOpsAuthProvider();
   const devOpsBuildsClient = new DevOpsBuildsClient(
     devOpsAuth,
@@ -174,6 +181,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     githubWorkflowRunner,
     convertToMarkdown,
     markitdownConversion,
+    devOpsBranchCreation,
     devOpsPipelines,
     devOpsBuildLog,
     devOpsProjectBrowser,

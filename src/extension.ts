@@ -18,6 +18,7 @@ import { registerShowLogsCommand } from "./shared/commands/loggingCommand";
 import { registerAddDevOpsConnectionCommand, registerRemoveDevOpsConnectionCommand } from "./features/apm-devops/commands";
 import { registerGenerateCommitMessageCommand } from "./features/commit-management/commands";
 import { registerOpenConvertToMarkdownCommand } from "./features/convert-to-markdown/commands";
+import { registerCreateBranchFromWorkItemCommand } from "./features/devops-branch-creation/commands";
 import { registerBuildLogView, registerOpenDevOpsPipelinesCommand } from "./features/devops-pipelines/commands";
 import { registerAiCreditCommands } from "./features/ai-credit-usage/commands";
 
@@ -62,6 +63,7 @@ export async function activate(context: vscode.ExtensionContext) {
   registerGenerateCommitMessageCommand(context, services);
   registerAiCreditCommands(context, services);
   registerOpenConvertToMarkdownCommand(context, services);
+  registerCreateBranchFromWorkItemCommand(context, services);
   registerOpenDevOpsPipelinesCommand(context, services);
   registerBuildLogView(context, services);
 

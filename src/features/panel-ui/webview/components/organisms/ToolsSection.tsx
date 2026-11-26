@@ -17,6 +17,10 @@ export function ToolsSection() {
     messenger.sendMessage({ command: "openConvertToMarkdown" });
   };
 
+  const createBranchFromWorkItem = (): void => {
+    messenger.sendMessage({ command: "createBranchFromWorkItem" });
+  };
+
   // Request workflow list when the section mounts (if not already loaded)
   useEffect(() => {
     if (!workflows.isReady) {
@@ -29,6 +33,11 @@ export function ToolsSection() {
       <CollapsibleSection id="tools-convert-to-markdown" title="Convert to Markdown">
         <button class="action-button" onClick={openConvertToMarkdown}>
           Open Convert to Markdown
+        </button>
+      </CollapsibleSection>
+      <CollapsibleSection id="tools-create-branch-from-work-item" title="Create Branch from Work Item">
+        <button class="action-button" onClick={createBranchFromWorkItem}>
+          Create Branch from Work Item
         </button>
       </CollapsibleSection>
       <CollapsibleSection id="tools-workflow-runner" title="GitHub Workflow Runner">

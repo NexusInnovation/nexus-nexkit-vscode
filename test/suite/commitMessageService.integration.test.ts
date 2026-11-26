@@ -13,6 +13,7 @@ import * as sinon from "sinon";
 import * as vscode from "vscode";
 import { CommitMessageService } from "../../src/features/commit-management/commitMessageService";
 import { SettingsManager } from "../../src/core/settingsManager";
+import { Commands } from "../../src/shared/constants/commands";
 
 /** Helper: create a fake async iterable that yields the given chunks. */
 function fakeAsyncIterable(chunks: string[]): AsyncIterable<string> {
@@ -43,6 +44,8 @@ suite("Integration: CommitMessageService – Generate Commit Message", () => {
   let getCommitMessageSystemPromptStub: sinon.SinonStub;
   let showErrorMessageStub: sinon.SinonStub;
   let showInformationMessageStub: sinon.SinonStub;
+  let showWarningMessageStub: sinon.SinonStub;
+  let executeCommandStub: sinon.SinonStub;
   let withProgressStub: sinon.SinonStub;
 
   // Repository mock state
@@ -51,6 +54,7 @@ suite("Integration: CommitMessageService – Generate Commit Message", () => {
   let mockAddSpy: sinon.SinonSpy;
   let mockWorkingTreeChanges: Array<{ uri: vscode.Uri }>;
   let mockIndexChanges: Array<{ uri: vscode.Uri }>;
+  let mockHead: { name?: string } | undefined;
   let mockRepositories: any[];
 
   setup(() => {
@@ -63,6 +67,7 @@ suite("Integration: CommitMessageService – Generate Commit Message", () => {
     mockAddSpy = sandbox.spy();
     mockWorkingTreeChanges = [];
     mockIndexChanges = [];
+    mockHead = undefined;
 
     // ── Git Extension mock ──────────────────────────────────────────────
     const mockRepository = {
@@ -80,6 +85,9 @@ suite("Integration: CommitMessageService – Generate Commit Message", () => {
         },
         get workingTreeChanges() {
           return mockWorkingTreeChanges;
+        },
+        get HEAD() {
+          return mockHead;
         },
       },
     };
@@ -105,6 +113,8 @@ suite("Integration: CommitMessageService – Generate Commit Message", () => {
     // ── VS Code window stubs ────────────────────────────────────────────
     showErrorMessageStub = sandbox.stub(vscode.window, "showErrorMessage").resolves(undefined);
     showInformationMessageStub = sandbox.stub(vscode.window, "showInformationMessage").resolves(undefined);
+    showWarningMessageStub = sandbox.stub(vscode.window, "showWarningMessage").resolves(undefined);
+    executeCommandStub = sandbox.stub(vscode.commands, "executeCommand").resolves(undefined);
 
     // Make withProgress run the callback immediately (skipping UI)
     withProgressStub = sandbox.stub(vscode.window, "withProgress").callsFake(async (_opts: any, task: any) => {
@@ -361,5 +371,92 @@ suite("Integration: CommitMessageService – Generate Commit Message", () => {
       "Should inform user that diff is empty after staging"
     );
     assert.strictEqual(mockInputBox.value, "", "Input box should remain empty");
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // Scenario 9: Protected branch → propose creating a branch instead
+  // ─────────────────────────────────────────────────────────────────────────
+  test("Should prompt to create a branch when committing on main and execute the command when accepted", async () => {
+    mockHead = { name: "main" };
+    mockDiffResults.push("diff --git a/foo.ts b/foo.ts\n+line");
+    mockIndexChanges.push({ uri: vscode.Uri.file("/repo/foo.ts") });
+
+    const createBranchAction = "Créer une branche depuis un élément de travail";
+    showWarningMessageStub.resolves(createBranchAction);
+    selectChatModelsStub.resolves([
+      {
+        name: "test-model",
+        family: "gpt-4o",
+        sendRequest: sandbox.stub().resolves({ text: fakeAsyncIterable(["feat: change"]) }),
+      },
+    ]);
+
+    await service.generateCommitMessage();
+
+    assert.strictEqual(mockInputBox.value, "feat: change", "Commit message should still be set");
+    assert.ok(showWarningMessageStub.calledOnce, "Should warn when committing on the protected 'main' branch");
+    assert.ok(
+      executeCommandStub.calledOnceWithExactly(Commands.CREATE_BRANCH_FROM_WORK_ITEM),
+      "Should execute the create-branch command when the user accepts"
+    );
+  });
+
+  test("Should prompt to create a branch when committing on develop", async () => {
+    mockHead = { name: "develop" };
+    mockDiffResults.push("diff --git a/foo.ts b/foo.ts\n+line");
+    mockIndexChanges.push({ uri: vscode.Uri.file("/repo/foo.ts") });
+
+    showWarningMessageStub.resolves(undefined);
+    selectChatModelsStub.resolves([
+      {
+        name: "test-model",
+        family: "gpt-4o",
+        sendRequest: sandbox.stub().resolves({ text: fakeAsyncIterable(["feat: change"]) }),
+      },
+    ]);
+
+    await service.generateCommitMessage();
+
+    assert.ok(showWarningMessageStub.calledOnce, "Should warn when committing on the protected 'develop' branch");
+    assert.ok(executeCommandStub.notCalled, "Should not execute the create-branch command when the user dismisses the prompt");
+    assert.strictEqual(mockInputBox.value, "feat: change", "Commit message should remain in the input box");
+  });
+
+  test("Should not prompt when on a feature branch", async () => {
+    mockHead = { name: "feature/foo" };
+    mockDiffResults.push("diff --git a/foo.ts b/foo.ts\n+line");
+    mockIndexChanges.push({ uri: vscode.Uri.file("/repo/foo.ts") });
+
+    selectChatModelsStub.resolves([
+      {
+        name: "test-model",
+        family: "gpt-4o",
+        sendRequest: sandbox.stub().resolves({ text: fakeAsyncIterable(["feat: change"]) }),
+      },
+    ]);
+
+    await service.generateCommitMessage();
+
+    assert.ok(showWarningMessageStub.notCalled, "Should not warn when on a non-protected branch");
+    assert.ok(executeCommandStub.notCalled, "Should not execute the create-branch command");
+    assert.strictEqual(mockInputBox.value, "feat: change", "Commit message should still be set");
+  });
+
+  test("Should not throw and not prompt when HEAD is undefined", async () => {
+    mockDiffResults.push("diff --git a/foo.ts b/foo.ts\n+line");
+    mockIndexChanges.push({ uri: vscode.Uri.file("/repo/foo.ts") });
+
+    selectChatModelsStub.resolves([
+      {
+        name: "test-model",
+        family: "gpt-4o",
+        sendRequest: sandbox.stub().resolves({ text: fakeAsyncIterable(["feat: change"]) }),
+      },
+    ]);
+
+    await service.generateCommitMessage();
+
+    assert.ok(showWarningMessageStub.notCalled, "Should not warn when HEAD is undefined");
+    assert.strictEqual(mockInputBox.value, "feat: change", "Commit message should still be set");
   });
 });
