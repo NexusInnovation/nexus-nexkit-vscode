@@ -28,12 +28,17 @@ import { HooksConfigDeployer } from "../features/initialization/hooksConfigDeplo
 import { JsonFormatterPanelService } from "../features/json-formatter/jsonFormatterPanelService";
 import { ConvertToMarkdownPanelService } from "../features/convert-to-markdown/convertToMarkdownPanelService";
 import { MarkitdownConversionService } from "../features/convert-to-markdown/markitdownConversionService";
+import { AzureDevOpsAuthService } from "../features/devops-branch-creation/azureDevOpsAuthService";
+import { AzureDevOpsRestClient } from "../features/devops-branch-creation/azureDevOpsRestClient";
+import { DevOpsBranchCreationService } from "../features/devops-branch-creation/devOpsBranchCreationService";
 import { DevOpsAuthProvider } from "../features/devops-pipelines/devOpsAuthProvider";
 import { DevOpsBuildsClient } from "../features/devops-pipelines/devOpsBuildsClient";
 import { DevOpsPipelinesPanelService } from "../features/devops-pipelines/devOpsPipelinesPanelService";
 import { BuildLogViewService } from "../features/devops-pipelines/buildLogViewService";
 import { DevOpsProjectBrowserService } from "../features/apm-devops/devOpsProjectBrowserService";
 import { DevOpsProjectDiscoveryClient } from "../features/apm-devops/devOpsProjectDiscoveryClient";
+import { AiCreditUsageService } from "../features/ai-credit-usage/services/aiCreditUsageService";
+import { AiCreditStatusBarService } from "../features/ai-credit-usage/services/aiCreditStatusBarService";
 
 /**
  * Service container for dependency injection
@@ -65,9 +70,12 @@ export interface ServiceContainer {
   jsonFormatter: JsonFormatterPanelService;
   convertToMarkdown: ConvertToMarkdownPanelService;
   markitdownConversion: MarkitdownConversionService;
+  devOpsBranchCreation: DevOpsBranchCreationService;
   devOpsPipelines: DevOpsPipelinesPanelService;
   devOpsBuildLog: BuildLogViewService;
   devOpsProjectBrowser: DevOpsProjectBrowserService;
+  aiCreditUsage: AiCreditUsageService;
+  aiCreditStatusBar: AiCreditStatusBarService;
 }
 
 /**
@@ -112,8 +120,13 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   const startupVerification = new StartupVerificationService(gitExcludeConfigDeployer, hooksConfigDeployer, githubAuthPrompt);
   const githubWorkflowRunner = new GitHubWorkflowRunnerService(context.extensionUri);
   const jsonFormatter = new JsonFormatterPanelService(context.extensionUri);
+  const aiCreditUsage = new AiCreditUsageService(context);
+  const aiCreditStatusBar = new AiCreditStatusBarService(context, aiCreditUsage);
   const markitdownConversion = new MarkitdownConversionService(logging);
   const convertToMarkdown = new ConvertToMarkdownPanelService(context.extensionUri, markitdownConversion);
+  const azureDevOpsAuthService = new AzureDevOpsAuthService();
+  const azureDevOpsRestClient = new AzureDevOpsRestClient(azureDevOpsAuthService);
+  const devOpsBranchCreation = new DevOpsBranchCreationService(devOpsConfig, azureDevOpsRestClient, telemetry);
   const devOpsAuth = new DevOpsAuthProvider();
   const devOpsBuildsClient = new DevOpsBuildsClient(
     devOpsAuth,
@@ -142,6 +155,8 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   context.subscriptions.push(convertToMarkdown);
   context.subscriptions.push(devOpsPipelines);
   context.subscriptions.push(devOpsBuildLog);
+  context.subscriptions.push(aiCreditUsage);
+  context.subscriptions.push(aiCreditStatusBar);
 
   logging.info("All services initialized successfully");
 
@@ -171,8 +186,11 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     jsonFormatter,
     convertToMarkdown,
     markitdownConversion,
+    devOpsBranchCreation,
     devOpsPipelines,
     devOpsBuildLog,
     devOpsProjectBrowser,
+    aiCreditUsage,
+    aiCreditStatusBar,
   };
 }

@@ -60,6 +60,15 @@ suite("Unit: NexkitPanelMessageHandler", () => {
     assert.ok(executeCommand.calledOnceWithExactly(Commands.OPEN_JSON_FORMATTER));
   });
 
+  test("triggers Create Branch from Work Item from the webview", async () => {
+    const executeCommand = sandbox.stub(vscode.commands, "executeCommand").resolves();
+    const handler = new NexkitPanelMessageHandler(() => undefined, createServices());
+
+    await handler.handleMessage({ command: "createBranchFromWorkItem" });
+
+    assert.ok(executeCommand.calledOnceWithExactly(Commands.CREATE_BRANCH_FROM_WORK_ITEM));
+  });
+
   suite("marketplaces", () => {
     function createWebview(posted: Array<{ command: string; [key: string]: unknown }>): () => vscode.WebviewView {
       const view = {
