@@ -4,15 +4,15 @@ import * as path from "path";
 import { fileExists } from "../../shared/utils/fileHelper";
 import { LoggingService } from "../../shared/services/loggingService";
 
+const OFFICIAL_PLUGIN_MARKETPLACE = "NexusInnovation/nexus-plugin-marketplace";
+const MARKETPLACE_SETTING_KEY = "chat.plugins.marketplaces";
+const LEGACY_PLUGIN_MARKETPLACE = `${OFFICIAL_PLUGIN_MARKETPLACE}#main`;
+
 /**
  * Mapping from VS Code chat setting keys to workspace .nexkit subdirectory names.
  */
 const CHAT_LOCATION_SETTINGS: Record<string, string> = {
-  "chat.agentFilesLocations": "agents",
-  "chat.agentSkillsLocations": "skills",
   "chat.hookFilesLocations": "hooks",
-  "chat.instructionsFilesLocations": "instructions",
-  "chat.promptFilesLocations": "prompts",
 };
 
 /**
@@ -29,24 +29,50 @@ const LEGACY_WORKSPACE_KEYS = [
 ];
 
 /**
+ * Identifies the sanctioned call site invoking {@link RecommendedSettingsConfigDeployer.deployVscodeSettings}.
+ * settings.json writes are only permitted from these two entry points:
+ * - "initialization": first-time workspace setup (WorkspaceInitializationService).
+ * - "migration": workspace-to-user migration.
+ */
+export type SettingsDeploymentCaller = "initialization" | "migration";
+
+const SANCTIONED_CALLERS: readonly SettingsDeploymentCaller[] = ["initialization", "migration"];
+
+/**
  * Service for deploying recommended VS Code chat settings to user-level (global) scope.
  * Uses workspace-relative paths for the active workspace.
  */
 export class RecommendedSettingsConfigDeployer {
   private readonly _logging = LoggingService.getInstance();
+  private readonly _installedPluginsPath: string;
+
+  constructor(installedPluginsPath = path.join(process.env.HOME ?? process.env.USERPROFILE ?? "", ".vscode", "agent-plugins", "installed.json")) {
+    this._installedPluginsPath = installedPluginsPath;
+  }
 
   /**
    * Deploy chat location settings to user-level VS Code configuration.
    * NON-DESTRUCTIVE: Merges NexKit paths with existing user entries — never overwrites.
+   * All writes target ConfigurationTarget.Global (user profile) — never the workspace.
    * Also cleans up legacy workspace-level settings previously created by NexKit.
    * Always adds workspace-relative .nexkit paths for the active workspace.
+   *
+   * This method must only be invoked from a sanctioned entry point (see {@link SettingsDeploymentCaller}).
+   * It is intentionally NOT called during startup verification.
+   *
    * @param workspaceRoot Root directory of the workspace (used for legacy cleanup and workspace paths)
+   * @param caller Sanctioned call site invoking the deployment, for auditability and guarding.
    */
-  async deployVscodeSettings(workspaceRoot: string): Promise<void> {
-    this._logging.info("Deploying chat settings to user-level configuration...");
+  async deployVscodeSettings(workspaceRoot: string, caller: SettingsDeploymentCaller): Promise<void> {
+    if (!SANCTIONED_CALLERS.includes(caller)) {
+      throw new Error(`deployVscodeSettings called from an unsanctioned caller: "${caller}". Settings may only be written during initialization or migration.`);
+    }
+
+    this._logging.info(`Deploying chat settings to user-level configuration (caller: ${caller})...`);
 
     await this._deployUserLevelChatSettings();
     await this._cleanupWorkspaceSettings(workspaceRoot);
+    await this._notifyLegacyInstalledPlugins();
 
     this._logging.info("Chat settings deployed to user-level configuration successfully.");
   }
@@ -86,6 +112,61 @@ export class RecommendedSettingsConfigDeployer {
       await chatConfig.update("useHooks", true, vscode.ConfigurationTarget.Global);
       this._logging.debug("Set user-level chat.useHooks: true");
     }
+
+    // Ensure the official Nexus plugin marketplace is first in the list, normalizing/deduping any
+    // legacy `#ref`-suffixed variants (e.g. "NexusInnovation/nexus-plugin-marketplace#main") down
+    // to the bare key.
+    const marketplacesInspect = chatConfig.inspect<string[]>("plugins.marketplaces");
+    const existingMarketplaces = marketplacesInspect?.globalValue ?? [];
+    const normalizedMarketplaces = this._normalizeMarketplaces(existingMarketplaces);
+
+    if (!this._areArraysEqual(existingMarketplaces, normalizedMarketplaces)) {
+      await chatConfig.update("plugins.marketplaces", normalizedMarketplaces, vscode.ConfigurationTarget.Global);
+      this._logging.debug(`Set user-level chat.plugins.marketplaces: ensured ${OFFICIAL_PLUGIN_MARKETPLACE} is first`);
+    }
+  }
+
+  /**
+   * Strip any `#ref` suffix from a marketplace identifier to get its stable dedupe key.
+   */
+  private _marketplaceKey(marketplace: string): string {
+    return marketplace.split("#")[0];
+  }
+
+  private _normalizeMarketplaces(marketplaces: string[]): string[] {
+    const filtered = marketplaces.filter((marketplace) => this._marketplaceKey(marketplace) !== OFFICIAL_PLUGIN_MARKETPLACE);
+    return [OFFICIAL_PLUGIN_MARKETPLACE, ...filtered];
+  }
+
+  private async _notifyLegacyInstalledPlugins(): Promise<void> {
+    try {
+      const content = await fs.promises.readFile(this._installedPluginsPath, "utf8");
+      const installed = JSON.parse(content) as { installed?: Array<{ marketplace?: string; name?: string }> };
+      const legacyPlugins = (installed.installed ?? []).filter(
+        (plugin) => plugin.marketplace === LEGACY_PLUGIN_MARKETPLACE && typeof plugin.name === "string" && plugin.name.length > 0 && plugin.name !== "nexkit"
+      );
+
+      if (legacyPlugins.length === 0) {
+        return;
+      }
+
+      const pluginNames = legacyPlugins.map((plugin) => plugin.name).filter((name): name is string => Boolean(name));
+      const selection = await vscode.window.showWarningMessage(
+        `Agent Plugins installed from the legacy marketplace reference (#main) were detected: ${pluginNames.join(", ")}. Please uninstall and reinstall them from ${OFFICIAL_PLUGIN_MARKETPLACE}.`,
+        "Open Agent Plugins",
+        "Later"
+      );
+
+      if (selection === "Open Agent Plugins") {
+        await vscode.commands.executeCommand("workbench.agentPlugins.browse");
+      }
+    } catch (error) {
+      this._logging.warn("Could not check for Agent Plugins installed from the legacy marketplace reference.", error);
+    }
+  }
+
+  private _areArraysEqual(a: string[], b: string[]): boolean {
+    return a.length === b.length && a.every((value, index) => value === b[index]);
   }
 
   /**
@@ -125,6 +206,15 @@ export class RecommendedSettingsConfigDeployer {
             delete settings[key];
             modified = true;
           }
+        }
+      }
+
+      const workspaceMarketplaces = settings[MARKETPLACE_SETTING_KEY];
+      if (Array.isArray(workspaceMarketplaces) && workspaceMarketplaces.some((marketplace) => this._marketplaceKey(marketplace) === OFFICIAL_PLUGIN_MARKETPLACE)) {
+        const normalizedMarketplaces = this._normalizeMarketplaces(workspaceMarketplaces);
+        if (!this._areArraysEqual(workspaceMarketplaces, normalizedMarketplaces)) {
+          settings[MARKETPLACE_SETTING_KEY] = normalizedMarketplaces;
+          modified = true;
         }
       }
 
