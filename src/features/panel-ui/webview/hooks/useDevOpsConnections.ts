@@ -37,6 +37,10 @@ export interface UseDevOpsConnectionsResult {
   addConnection: (url: string) => void;
 
   /**
+   * Pick an existing Azure DevOps project from the user's accessible organizations (Quick Pick in VS Code)
+   */
+  browseProjects: () => void;
+  /**
    * Remove a DevOps connection
    */
   removeConnection: (connectionId: string) => void;
@@ -70,6 +74,10 @@ export function useDevOpsConnections(): UseDevOpsConnectionsResult {
     messenger.sendMessage({ command: "addDevOpsConnection", url });
   };
 
+  const browseProjects = () => {
+    messenger.sendMessage({ command: "browseDevOpsProjects" });
+  };
+
   const removeConnection = (connectionId: string) => {
     messenger.sendMessage({ command: "removeDevOpsConnection", connectionId });
   };
@@ -93,6 +101,7 @@ export function useDevOpsConnections(): UseDevOpsConnectionsResult {
     isReady: devOpsConnections.isReady,
     error: devOpsConnections.error,
     addConnection,
+    browseProjects,
     removeConnection,
     setActiveConnection,
     refresh,

@@ -44,31 +44,25 @@ suite("Unit: ServiceContainer", () => {
     if (services.telemetry) {
       services.telemetry.dispose();
     }
-    if (services.aiTemplateData) {
-      services.aiTemplateData.dispose();
-    }
-    if (services.nexkitFileWatcher) {
-      services.nexkitFileWatcher.dispose();
-    }
   });
 
   test("Should initialize all required services", () => {
     assert.ok(services.telemetry, "TelemetryService should be initialized");
     assert.ok(services.mcpConfig, "MCPConfigService should be initialized");
-    assert.ok(services.aiTemplateData, "AITemplateDataService should be initialized");
-    assert.ok(services.installedTemplatesState, "InstalledTemplatesStateManager should be initialized");
+    assert.ok(services.marketplace, "MarketplaceService should be initialized");
     assert.ok(services.updateStatusBar, "UpdateStatusBarService should be initialized");
     assert.ok(services.extensionUpdate, "ExtensionUpdateService should be initialized");
     assert.ok(services.backup, "BackupService should be initialized");
+    assert.ok(services.devOpsPipelines, "DevOpsPipelinesPanelService should be initialized");
     assert.ok(services.gitExcludeConfigDeployer, "GitExcludeConfigDeployer should be initialized");
     assert.ok(services.mcpConfigDeployer, "MCPConfigDeployer should be initialized");
     assert.ok(services.recommendedExtensionsConfigDeployer, "RecommendedExtensionsConfigDeployer should be initialized");
     assert.ok(services.recommendedSettingsConfigDeployer, "RecommendedSettingsConfigDeployer should be initialized");
-    assert.ok(services.aiTemplateFilesDeployer, "AITemplateFilesDeployer should be initialized");
     assert.ok(services.workspaceInitPrompt, "WorkspaceInitPromptService should be initialized");
     assert.ok(services.githubAuthPrompt, "GitHubAuthPromptService should be initialized");
     assert.ok(services.startupVerification, "StartupVerificationService should be initialized");
-    assert.ok(services.rtfConverter, "RtfConverterPanelService should be initialized");
+    assert.ok(services.convertToMarkdown, "ConvertToMarkdownPanelService should be initialized");
+    assert.ok(services.markitdownConversion, "MarkitdownConversionService should be initialized");
   });
 
   test("Should register disposables in context", () => {

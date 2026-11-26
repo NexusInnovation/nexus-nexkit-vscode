@@ -43,8 +43,20 @@ function copyStaticFiles() {
       staticSubFolder: "static",
     },
     {
-      sourceDir: path.join(__dirname, "src", "features", "rtf-converter", "webview"),
-      outputDir: path.join(__dirname, "out", "rtf-converter"),
+      sourceDir: path.join(__dirname, "src", "features", "convert-to-markdown", "webview"),
+      outputDir: path.join(__dirname, "out", "convert-to-markdown"),
+      filesToCopy: ["index.html"],
+      staticSubFolder: null,
+    },
+    {
+      sourceDir: path.join(__dirname, "src", "features", "devops-pipelines", "webview"),
+      outputDir: path.join(__dirname, "out", "devops-pipelines"),
+      filesToCopy: ["index.html"],
+      staticSubFolder: null,
+    },
+    {
+      sourceDir: path.join(__dirname, "src", "features", "devops-pipelines", "logview"),
+      outputDir: path.join(__dirname, "out", "devops-build-log"),
       filesToCopy: ["index.html"],
       staticSubFolder: null,
     },
@@ -67,6 +79,8 @@ function copyStaticFiles() {
       if (fs.existsSync(source)) {
         fs.copyFileSync(source, dest);
         console.log(`[copy] ${file} -> ${path.relative(__dirname, config.outputDir)}/${file}`);
+      } else {
+        console.warn(`[copy] WARNING: source file not found, skipped: ${path.relative(__dirname, source)}`);
       }
     });
 
@@ -85,9 +99,7 @@ function copyStaticFiles() {
           const dest = path.join(staticOutputDir, file);
           if (fs.statSync(source).isFile()) {
             fs.copyFileSync(source, dest);
-            console.log(
-              `[copy] ${config.staticSubFolder}/${file} -> ${path.relative(__dirname, staticOutputDir)}/${file}`
-            );
+            console.log(`[copy] ${config.staticSubFolder}/${file} -> ${path.relative(__dirname, staticOutputDir)}/${file}`);
           }
         });
       }
@@ -126,7 +138,17 @@ const watchStaticFilesPlugin = {
           staticSubFolder: "static",
         },
         {
-          sourceDir: path.join(__dirname, "src", "features", "rtf-converter", "webview"),
+          sourceDir: path.join(__dirname, "src", "features", "convert-to-markdown", "webview"),
+          filesToWatch: ["index.html"],
+          staticSubFolder: null,
+        },
+        {
+          sourceDir: path.join(__dirname, "src", "features", "devops-pipelines", "webview"),
+          filesToWatch: ["index.html"],
+          staticSubFolder: null,
+        },
+        {
+          sourceDir: path.join(__dirname, "src", "features", "devops-pipelines", "logview"),
           filesToWatch: ["index.html"],
           staticSubFolder: null,
         },
@@ -203,15 +225,30 @@ async function main() {
     plugins: [esbuildProblemMatcherPlugin, copyStaticFilesPlugin, watchStaticFilesPlugin],
   });
 
-  // RTF converter webview bundle
-  const rtfConverterCtx = await esbuild.context({
-    entryPoints: ["src/features/rtf-converter/webview/main.tsx"],
+  // Convert to Markdown webview bundle
+  const convertToMarkdownCtx = await esbuild.context({
+    entryPoints: ["src/features/convert-to-markdown/webview/main.tsx"],
     bundle: true,
     format: "iife",
     minify: production,
     sourcemap: !production,
     platform: "browser",
-    outfile: "out/rtfConverter.js",
+    outfile: "out/convertToMarkdown.js",
+    logLevel: "silent",
+    jsx: "automatic",
+    jsxImportSource: "preact",
+    plugins: [esbuildProblemMatcherPlugin, copyStaticFilesPlugin, watchStaticFilesPlugin],
+  });
+
+  // Azure DevOps builds webview bundle
+  const devOpsPipelinesCtx = await esbuild.context({
+    entryPoints: ["src/features/devops-pipelines/webview/main.tsx"],
+    bundle: true,
+    format: "iife",
+    minify: production,
+    sourcemap: !production,
+    platform: "browser",
+    outfile: "out/devOpsPipelines.js",
     logLevel: "silent",
     jsx: "automatic",
     jsxImportSource: "preact",
@@ -236,16 +273,19 @@ async function main() {
   if (watch) {
     await extensionCtx.watch();
     await webviewCtx.watch();
-    await rtfConverterCtx.watch();
+    await convertToMarkdownCtx.watch();
+    await devOpsPipelinesCtx.watch();
     await jsonFormatterCtx.watch();
   } else {
     await extensionCtx.rebuild();
     await webviewCtx.rebuild();
-    await rtfConverterCtx.rebuild();
+    await convertToMarkdownCtx.rebuild();
+    await devOpsPipelinesCtx.rebuild();
     await jsonFormatterCtx.rebuild();
     await extensionCtx.dispose();
     await webviewCtx.dispose();
-    await rtfConverterCtx.dispose();
+    await convertToMarkdownCtx.dispose();
+    await devOpsPipelinesCtx.dispose();
     await jsonFormatterCtx.dispose();
   }
 }

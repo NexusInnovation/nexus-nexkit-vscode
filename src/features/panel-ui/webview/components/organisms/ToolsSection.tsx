@@ -13,8 +13,8 @@ export function ToolsSection() {
   const messenger = useVSCodeAPI();
   const { workflows } = useAppState();
 
-  const openRtfConverter = (): void => {
-    messenger.sendMessage({ command: "openRtfConverter" });
+  const openConvertToMarkdown = (): void => {
+    messenger.sendMessage({ command: "openConvertToMarkdown" });
   };
 
   const openJsonFormatter = (): void => {
@@ -30,9 +30,9 @@ export function ToolsSection() {
 
   return (
     <>
-      <CollapsibleSection id="tools-rtf-converter" title="RTF to Markdown">
-        <button class="action-button" onClick={openRtfConverter}>
-          Open RTF to Markdown
+      <CollapsibleSection id="tools-convert-to-markdown" title="Convert to Markdown">
+        <button class="action-button" onClick={openConvertToMarkdown}>
+          Open Convert to Markdown
         </button>
       </CollapsibleSection>
       <CollapsibleSection id="tools-json-formatter" title="JSON Formatter">
