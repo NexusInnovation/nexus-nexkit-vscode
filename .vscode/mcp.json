@@ -6,7 +6,7 @@
 				"-y",
 				"@azure-devops/mcp",
 				"nexusinno",
-				"Firebolt-Dashboard",
+				"Librairie Martin - SLIM v2",
 				"-d",
 				"core",
 				"work",

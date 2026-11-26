@@ -1,10 +1,74 @@
 import * as assert from "assert";
 import * as sinon from "sinon";
+import * as vscode from "vscode";
 import { parseLogLine } from "../../src/features/devops-pipelines/buildLogParser";
+import { BuildLogHostMessage, BuildLogViewService } from "../../src/features/devops-pipelines/buildLogViewService";
 import { DevOpsProjectDiscoveryClient } from "../../src/features/apm-devops/devOpsProjectDiscoveryClient";
 import { buildProjectUrl } from "../../src/features/apm-devops/devOpsProjectBrowserService";
 import { parseDevOpsUrl } from "../../src/features/apm-devops/devOpsUrlParser";
-import { DevOpsApiError } from "../../src/features/devops-pipelines/devOpsBuildsClient";
+import { DevOpsApiError, DevOpsBuildsClient } from "../../src/features/devops-pipelines/devOpsBuildsClient";
+import { LoggingService } from "../../src/shared/services/loggingService";
+
+suite("Unit: BuildLogViewService followBuild", () => {
+  test("waits for the build and retains incremental logs from parallel tasks until completion", async () => {
+    const clock = sinon.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const executeCommand = sinon.stub(vscode.commands, "executeCommand").resolves();
+    const client = {
+      getBuild: sinon.stub(),
+      getTimeline: sinon.stub(),
+      getLogLines: sinon.stub(),
+    };
+    client.getBuild.onCall(0).resolves({ status: "notStarted" });
+    client.getBuild.onCall(1).resolves({ status: "inProgress" });
+    client.getBuild.onCall(2).resolves({ status: "completed" });
+    const records = [
+      { id: "one", type: "Task", name: "One", state: "inProgress", log: { id: 1 } },
+      { id: "two", type: "Task", name: "Two", state: "inProgress", log: { id: 2 } },
+    ];
+    client.getTimeline.onCall(0).resolves({ records });
+    client.getTimeline.onCall(1).resolves({ records: records.map((record) => ({ ...record, state: "completed" })) });
+    client.getLogLines.onCall(0).resolves(["one first"]);
+    client.getLogLines.onCall(1).resolves(["two first"]);
+    client.getLogLines.onCall(2).resolves(["one last"]);
+    client.getLogLines.onCall(3).resolves(["two last"]);
+    const postMessage = sinon.stub().resolves(true);
+    const service = new BuildLogViewService(
+      vscode.Uri.file("/ext"),
+      client as unknown as DevOpsBuildsClient,
+      LoggingService.getInstance()
+    );
+    (service as unknown as { _view: unknown })._view = { webview: { postMessage } };
+
+    try {
+      const following = service.followBuild({ organization: "org", project: "proj" }, 7, "42");
+      await clock.tickAsync(0);
+      assert.strictEqual(client.getTimeline.callCount, 0);
+      assert.ok(postMessage.getCalls().some((call) => call.args[0].text === "Waiting for the build to start…"));
+
+      await clock.tickAsync(3_000);
+      await clock.tickAsync(3_000);
+      await following;
+
+      assert.deepStrictEqual(
+        client.getLogLines.getCalls().map((call) => call.args.slice(2)),
+        [
+          [1, 1],
+          [2, 1],
+          [1, 2],
+          [2, 2],
+        ]
+      );
+      const messages = postMessage.getCalls().map((call) => call.args[0] as BuildLogHostMessage);
+      const lines = messages.flatMap((message) => (message.type === "lines" ? message.lines.map((line) => line.text) : []));
+      assert.deepStrictEqual(lines, ["One", "one first", "Two", "two first", "One", "one last", "Two", "two last"]);
+      assert.ok(messages.some((message) => message.type === "status" && message.text === "End of log" && !message.live));
+    } finally {
+      service.dispose();
+      executeCommand.restore();
+      clock.restore();
+    }
+  });
+});
 
 suite("Unit: parseLogLine", () => {
   test("splits the ISO timestamp into an HH:mm:ss time", () => {

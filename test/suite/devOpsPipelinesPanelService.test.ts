@@ -97,7 +97,7 @@ suite("Unit: DevOpsPipelinesPanelService", () => {
   };
   let auth: { getAccessToken: sinon.SinonStub };
   let telemetry: { trackEvent: sinon.SinonStub };
-  let logTerminals: { open: sinon.SinonStub };
+  let logTerminals: { open: sinon.SinonStub; followBuild: sinon.SinonStub };
   let service: DevOpsPipelinesPanelService;
 
   const activeConnection = { id: "org-proj", organization: "org", project: "proj", isActive: true, serverName: "azure-devops" };
@@ -131,7 +131,7 @@ suite("Unit: DevOpsPipelinesPanelService", () => {
     };
     auth = { getAccessToken: sinon.stub().resolves("token") };
     telemetry = { trackEvent: sinon.stub() };
-    logTerminals = { open: sinon.stub().resolves() };
+    logTerminals = { open: sinon.stub().resolves(), followBuild: sinon.stub().resolves() };
 
     service = new DevOpsPipelinesPanelService(
       vscode.Uri.file("/ext"),
@@ -260,6 +260,16 @@ suite("Unit: DevOpsPipelinesPanelService", () => {
       "20261125.1",
       "task-1",
     ]);
+  });
+
+  test("follow-log opens the live build log", async () => {
+    service.openPanel();
+    await send({ type: "webview-ready" });
+
+    await send({ type: "follow-log", buildId: 7 });
+
+    assert.deepStrictEqual(logTerminals.followBuild.firstCall.args, [{ organization: "org", project: "proj" }, 7, "20261125.1"]);
+    assert.strictEqual(logTerminals.open.callCount, 0);
   });
 
   test("cancel-build calls the client only after confirmation", async () => {
