@@ -6,7 +6,6 @@
 				"-y",
 				"@azure-devops/mcp",
 				"nexusinno",
-				"Firebolt-Dashboard",
 				"-d",
 				"core",
 				"work",
