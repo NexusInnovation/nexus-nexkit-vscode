@@ -12,21 +12,42 @@ export function registerAddDevOpsConnectionCommand(context: vscode.ExtensionCont
     context,
     Commands.ADD_DEVOPS_CONNECTION,
     async () => {
-      // Prompt for URL
-      const url = await vscode.window.showInputBox({
-        prompt: "Enter Azure DevOps project URL",
-        placeHolder: "https://dev.azure.com/organization/project",
-        validateInput: (value) => {
-          if (!value || value.trim().length === 0) {
-            return "URL is required";
-          }
-          const result = parseDevOpsUrl(value.trim());
-          if (!result.isValid) {
-            return result.error;
-          }
-          return undefined;
-        },
-      });
+      const method = await vscode.window.showQuickPick(
+        [
+          { label: "$(search) Browse projects…", description: "Pick from the projects your account can access", browse: true },
+          { label: "$(link) Enter URL…", description: "Paste an Azure DevOps project URL", browse: false },
+        ],
+        { title: "Add Azure DevOps Project", placeHolder: "How do you want to add the project?" }
+      );
+      if (!method) {
+        return;
+      }
+
+      let url: string | undefined;
+      if (method.browse) {
+        try {
+          url = await services.devOpsProjectBrowser.browse();
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          vscode.window.showErrorMessage(`Failed to list Azure DevOps projects: ${message}`);
+          return;
+        }
+      } else {
+        url = await vscode.window.showInputBox({
+          prompt: "Enter Azure DevOps project URL",
+          placeHolder: "https://dev.azure.com/organization/project",
+          validateInput: (value) => {
+            if (!value || value.trim().length === 0) {
+              return "URL is required";
+            }
+            const result = parseDevOpsUrl(value.trim());
+            if (!result.isValid) {
+              return result.error;
+            }
+            return undefined;
+          },
+        });
+      }
 
       if (!url) {
         return;
@@ -34,9 +55,7 @@ export function registerAddDevOpsConnectionCommand(context: vscode.ExtensionCont
 
       try {
         const connection = await services.devOpsConfig.addConnection(url.trim());
-        vscode.window.showInformationMessage(
-          `Added Azure DevOps connection: ${connection.organization}/${connection.project}`
-        );
+        vscode.window.showInformationMessage(`Added Azure DevOps connection: ${connection.organization}/${connection.project}`);
 
         services.telemetry.trackEvent("devops.connection.added", {
           organization: connection.organization,

@@ -1,16 +1,10 @@
+import { OperationMode } from "../../../../shared/constants/operationMode";
+import { MarketplaceNode, MarketplaceSuggestion } from "../../../marketplace-management/models/marketplace";
 /**
  * Global application state types for the Nexkit webview
  * Centralized state management to prevent timing issues with component mounting
  */
 
-import {
-  AITemplateFile,
-  InstalledTemplatesMap,
-  OperationMode,
-  RepositoryTemplatesMap,
-} from "../../../ai-template-files/models/aiTemplateFile";
-import { TemplateMetadataEntry } from "../../../ai-template-files/services/templateMetadataScannerService";
-import { Profile } from "../../../profile-management/models/profile";
 import { DevOpsConnection } from "../../../apm-devops/models/devOpsConnection";
 import { WorkflowInfo } from "../../../github-workflow-runner/githubWorkflowRunnerService";
 
@@ -27,26 +21,17 @@ export interface AppState {
     isInitRefused: boolean; // User explicitly dismissed the initialization prompt
     isReady: boolean; // Whether initial workspace state has been received from extension
     mode: OperationMode; // Operation mode
-    deployMode: "user" | "workspace"; // Where templates are installed
-    workspaceOverrideActive: boolean; // Whether per-project overrides exist
   };
 
   /**
-   * Template state
+   * Plugin marketplaces state (chat.plugins.marketplaces)
    */
-  templates: {
-    repositories: RepositoryTemplatesMap[];
-    installed: InstalledTemplatesMap;
+  marketplaces: {
+    configured: string[];
+    suggested: MarketplaceSuggestion[];
+    tree: MarketplaceNode[];
     isReady: boolean;
-    updatesAvailable: boolean;
-  };
-
-  /**
-   * Profile state
-   */
-  profiles: {
-    list: Profile[];
-    isReady: boolean;
+    error?: string;
   };
 
   /**
@@ -65,22 +50,6 @@ export interface AppState {
     list: WorkflowInfo[];
     isReady: boolean;
   };
-
-  /**
-   * Metadata scan state for fuzzy search
-   */
-  metadataScan: {
-    /** Whether a scan is currently in progress */
-    isScanning: boolean;
-    /** Number of templates scanned so far */
-    scannedCount: number;
-    /** Total number of templates to scan */
-    totalCount: number;
-    /** Whether the scan has completed at least once */
-    isComplete: boolean;
-    /** The metadata index built by the scan, for fuzzy search */
-    index: TemplateMetadataEntry[];
-  };
 }
 
 /**
@@ -93,24 +62,11 @@ export const initialAppState: AppState = {
     isInitRefused: false,
     isReady: false,
     mode: OperationMode.None,
-    deployMode: "user",
-    workspaceOverrideActive: false,
   },
-  templates: {
-    repositories: [],
-    installed: {
-      agents: [],
-      prompts: [],
-      skills: [],
-      instructions: [],
-      chatmodes: [],
-      hooks: [],
-    },
-    isReady: false,
-    updatesAvailable: false,
-  },
-  profiles: {
-    list: [],
+  marketplaces: {
+    configured: [],
+    suggested: [],
+    tree: [],
     isReady: false,
   },
   devOpsConnections: {
@@ -120,12 +76,5 @@ export const initialAppState: AppState = {
   workflows: {
     list: [],
     isReady: false,
-  },
-  metadataScan: {
-    isScanning: false,
-    scannedCount: 0,
-    totalCount: 0,
-    isComplete: false,
-    index: [],
   },
 };

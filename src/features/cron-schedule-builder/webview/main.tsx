@@ -34,7 +34,7 @@ function App() {
           id="cron-expression"
           value={expression}
           onInput={(event) => setExpression((event.target as HTMLInputElement).value)}
-          spellCheck={false}
+          spellcheck={false}
           aria-describedby="cron-help cron-result"
           style={{
             flex: 1,

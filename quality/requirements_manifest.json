@@ -1,0 +1,141 @@
+{
+    "schema_version": "1.5.6",
+    "generated_at": "2026-07-24T02:12:00Z",
+    "records": [
+        {
+            "id": "REQ-001",
+            "title": "Command Registration Completeness",
+            "tier": 3,
+            "functional_section": "Activation and Lifecycle",
+            "specificity": "specific",
+            "description": "Activation must register all contributed commands.",
+            "use_cases": [
+                "UC-01",
+                "UC-06"
+            ]
+        },
+        {
+            "id": "REQ-002",
+            "title": "Global Handler Idempotency",
+            "tier": 3,
+            "functional_section": "Activation and Lifecycle",
+            "specificity": "specific",
+            "description": "Global process handlers must not duplicate across lifecycle transitions.",
+            "use_cases": [
+                "UC-01"
+            ]
+        },
+        {
+            "id": "REQ-003",
+            "title": "Startup Verification Non-Intrusiveness",
+            "tier": 3,
+            "functional_section": "Activation and Lifecycle",
+            "specificity": "specific",
+            "description": "Startup verification should avoid interactive auth prompts unless user-triggered.",
+            "use_cases": [
+                "UC-05"
+            ]
+        },
+        {
+            "id": "REQ-004",
+            "title": "Byte-Preserving Change Rollback",
+            "tier": 3,
+            "functional_section": "Managed Files",
+            "specificity": "specific",
+            "description": "Managed file rollback must preserve byte-exact content.",
+            "use_cases": [
+                "UC-02"
+            ]
+        },
+        {
+            "id": "REQ-005",
+            "title": "Watcher Startup Idempotency",
+            "tier": 3,
+            "functional_section": "Managed Files",
+            "specificity": "specific",
+            "description": "Watcher startup must avoid duplicate listener allocation.",
+            "use_cases": [
+                "UC-01",
+                "UC-02"
+            ]
+        },
+        {
+            "id": "REQ-006",
+            "title": "Parse Failure Preservation",
+            "tier": 3,
+            "functional_section": "MCP Configuration",
+            "specificity": "specific",
+            "description": "MCP parse errors must not destructively overwrite existing config.",
+            "use_cases": [
+                "UC-03"
+            ]
+        },
+        {
+            "id": "REQ-007",
+            "title": "Cross-Surface Merge Consistency",
+            "tier": 3,
+            "functional_section": "MCP Configuration",
+            "specificity": "specific",
+            "description": "User and workspace MCP merge paths must provide equivalent non-destructive guarantees.",
+            "use_cases": [
+                "UC-03"
+            ]
+        },
+        {
+            "id": "REQ-008",
+            "title": "Shell-Safe Parameter Encoding",
+            "tier": 3,
+            "functional_section": "Workflow Execution",
+            "specificity": "specific",
+            "description": "Workflow event/job values must preserve shell-safe argument boundaries.",
+            "use_cases": [
+                "UC-04"
+            ]
+        },
+        {
+            "id": "REQ-009",
+            "title": "Conversion Path Responsiveness",
+            "tier": 3,
+            "functional_section": "Workflow Execution",
+            "specificity": "specific",
+            "description": "Conversion flow should avoid extension-host blocking patterns.",
+            "use_cases": [
+                "UC-01"
+            ]
+        },
+        {
+            "id": "REQ-010",
+            "title": "Activation Contract Tests Must Execute",
+            "tier": 3,
+            "functional_section": "Quality Guardrails",
+            "specificity": "specific",
+            "description": "Activation command contract tests must run and track current command IDs.",
+            "use_cases": [
+                "UC-06"
+            ]
+        },
+        {
+            "id": "REQ-011",
+            "title": "Least-Privilege Auth Scope",
+            "tier": 3,
+            "functional_section": "Quality Guardrails",
+            "specificity": "specific",
+            "description": "Auth scope requests should follow least privilege by operation.",
+            "use_cases": [
+                "UC-05"
+            ]
+        },
+        {
+            "id": "REQ-012",
+            "title": "Deterministic Startup Writes",
+            "tier": 3,
+            "functional_section": "Quality Guardrails",
+            "specificity": "specific",
+            "description": "Startup verification writes should be deterministic and minimized.",
+            "use_cases": [
+                "UC-01",
+                "UC-05"
+            ]
+        }
+    ]
+}

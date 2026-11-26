@@ -1,0 +1,14 @@
+*** Begin Patch
+*** Update File: quality/test_regression.js
+@@
+   {
++    id: "BUG-001",
++    description: "Startup verification should not call interactive auth prompt path unconditionally",
++    run: () => {
++      const startup = read("src/features/initialization/startupVerificationService.ts");
++      if (startup.includes("await this._githubAuthPrompt.ensureAuthenticated();")) {
++        throw new Error("Found unconditional startup ensureAuthenticated() call");
++      }
++    },
++  },
+*** End Patch

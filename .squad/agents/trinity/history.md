@@ -86,6 +86,7 @@ parameterized edge cases.
 
 ## Learnings
 
+- 2026-08-07: Reproduced full test pipeline after a prior non-zero run and confirmed stable green (`test-compile`, `lint`, `npm test`). When extension-host tests emit repeated blocked-auth-dialog logs in test mode, classify as expected noise unless accompanied by assertion failures; still track as medium regression-observability risk and add explicit auth-suppression/negative-path assertions.
 - 2026-07-10: The RTF converter webview in `src/features/rtf-converter/webview/main.tsx` has no exported pure rendering helpers and the test stack has no DOM harness (`jsdom`, Testing Library, or Preact test utilities). Keep service-level panel tests separate; validate the Markdown/Preview interaction manually until a deliberate webview-test architecture is introduced.
 
 - 2026-07-10: QA approved the RTF converter Markdown preview. `npm run check:types`, package-lock dry-run resolution, and a focused markdown-it probe passed: raw HTML is escaped, unsafe `javascript:` and `data:` links do not render as hrefs, and HTTPS links render. The current absence of DOM interaction coverage is acceptable for this small, isolated switch but remains a manual-test boundary.
@@ -210,4 +211,25 @@ SmsFormFunctionTests. All 224 tests pass.
 Added assertions for `resp.redirected` and session expiry message detection in `SmsFormFunctionTests.cs`. Validates that
 client-side JavaScript correctly detects when Easy Auth session expires. 224 tests pass.
 
+### 2026-07-21 — Commit-message SCM context reviewer gate
+
+APPROVED: the Git-menu command forwards the optional invoking `SourceControl.rootUri`, and `CommitMessageService` selects the matching Git repository by canonical `Uri.toString(true)` before preserving the existing single-repository, uniquely-staged, then-index-zero fallback sequence. Focused integration coverage proves the selected second repository is used and unmatched context retains staged-change selection; command coverage verifies URI forwarding. `npm run check:types` and test compilation remain blocked by unrelated missing RTF converter dependencies/types in `src/features/rtf-converter/webview/main.tsx`; the extension-host test runner did not honor the supplied grep and ended with SIGINT after broad execution. `git diff --check` reported no focused whitespace errors.
+
+### 2026-07-21 — Commit-message SCM repository routing QA
+
+Approved the commit-management multi-root routing change. The Git-menu command forwards the invoking
+`SourceControl.rootUri`; `CommitMessageService` selects the exact Git API repository by URI before preserving the
+existing single-repository, uniquely staged, and first-repository fallbacks. Focused test cases cover exact selection,
+unmatched-context fallback, and command forwarding. `git diff --check` passed. Full test compilation and type-checking
+remain blocked by unrelated missing RTF converter dependencies (`mammoth`, `turndown`, `turndown-plugin-gfm`, and
+`rtf.js`).
+
 **Patterns:** JavaScript behavior assertions in rendered HTML, session expiry detection via redirect/content-type.
+
+## Team update — 2026-07-20 (RTF converter to markitdown migration)
+
+Shared context (see decisions.md "Replace custom RTF/DOCX/HTML to Markdown conversion with microsoft/markitdown"): conversion moved host-side via microsoft/markitdown (Python child process). Message contract lives in src/features/rtf-converter/messages.ts (convert-paste-html | convert-file | recheck-availability -> conversion-result | conversion-error | availability-status). markdown-it preview retained; deps mammoth/turndown/turndown-plugin-gfm/rtf.js/@types/turndown removed; type shims rtfJsBundle.d.ts + turndownPluginGfm.d.ts deleted. Security: argv array + sandboxed temp file, shell:false, 10MB cap, two-layer timeout. Suite 382 passing / 0 failing. Open follow-up: add clean/rimraf out step before test-compile (stale out/ artifacts can abort npm test).
+
+## Team update — 2026-07-20 (Convert to Markdown — full migration complete and merged)
+
+Wrote `markitdownConversionService.test.ts` (19 tests) and `convertToMarkdownPanelService.test.ts` (11 tests) covering the full-scope migration; updated `extension.test.ts`, `nexkitPanelMessageHandler.test.ts`, `serviceContainer.test.ts` for the rename; deleted `rtfConverterPanelService.test.ts`. All 30 pass. Note for the team: the stale-`out/` test-compile issue flagged in the prior session recurred — Mocha crashed loading a leftover `out/test/suite/cronSchedule.test.js` from a deleted feature. Coordinator resolved it by deleting `out/` (no `cronstrue` dependency was actually needed).
