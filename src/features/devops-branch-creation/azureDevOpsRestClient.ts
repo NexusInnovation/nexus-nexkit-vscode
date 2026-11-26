@@ -32,6 +32,12 @@ export class AzureDevOpsRestClient {
       throw new Error(this._buildHttpErrorMessage(response, organization, workItemId));
     }
 
+    // Azure DevOps répond 203 + une page HTML de connexion quand le jeton est rejeté
+    const contentType = response.headers.get("content-type") ?? "";
+    if (!contentType.includes("json")) {
+      throw new Error(this._buildHttpErrorMessage(response, organization, workItemId, true));
+    }
+
     let data: any;
     try {
       data = await response.json();
@@ -50,8 +56,8 @@ export class AzureDevOpsRestClient {
     return { id, title, type, organization };
   }
 
-  private _buildHttpErrorMessage(response: Response, organization: string, workItemId: number): string {
-    if (response.status === 401 || response.status === 403) {
+  private _buildHttpErrorMessage(response: Response, organization: string, workItemId: number, rejectedToken = false): string {
+    if (rejectedToken || response.status === 401 || response.status === 403) {
       return "Accès refusé à Azure DevOps. Vérifiez que l'organisation utilise l'authentification Microsoft Entra ID et que vous avez accès à cet élément de travail.";
     }
     if (response.status === 404) {

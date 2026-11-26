@@ -8,11 +8,12 @@ import * as sinon from "sinon";
 import { AzureDevOpsRestClient } from "../../src/features/devops-branch-creation/azureDevOpsRestClient";
 import { AzureDevOpsAuthService } from "../../src/features/devops-branch-creation/azureDevOpsAuthService";
 
-function fakeResponse(status: number, body: unknown, statusText = ""): Response {
+function fakeResponse(status: number, body: unknown, statusText = "", contentType = "application/json"): Response {
   return {
     ok: status >= 200 && status < 300,
     status,
     statusText,
+    headers: { get: (name: string) => (name.toLowerCase() === "content-type" ? contentType : null) },
     json: async () => body,
   } as unknown as Response;
 }
@@ -74,6 +75,12 @@ suite("Unit: AzureDevOpsRestClient", () => {
 
   test("Should throw a clear error on 403", async () => {
     fetchStub.resolves(fakeResponse(403, {}, "Forbidden"));
+
+    await assert.rejects(() => client.getWorkItem("myorg", 1), /Entra ID/);
+  });
+
+  test("Should report an authentication error on a 203 HTML sign-in page", async () => {
+    fetchStub.resolves(fakeResponse(203, "<html></html>", "Non-Authoritative Information", "text/html"));
 
     await assert.rejects(() => client.getWorkItem("myorg", 1), /Entra ID/);
   });

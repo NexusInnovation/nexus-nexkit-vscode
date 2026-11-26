@@ -57,7 +57,7 @@ suite("Unit: NexkitPanelMessageHandler", () => {
 
     await handler.handleMessage({ command: "createBranchFromWorkItem" });
 
-    assert.ok(executeCommand.calledOnceWithExactly(Commands.CREATE_BRANCH_FROM_WORK_ITEM));
+    assert.ok(executeCommand.calledOnceWithExactly(Commands.CREATE_BRANCH_FROM_WORK_ITEM, { triggerSource: "panel" }));
   });
 
   suite("marketplaces", () => {

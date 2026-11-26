@@ -43,7 +43,7 @@ export class DevOpsBranchCreationService {
     private readonly _telemetry: TelemetryService
   ) {}
 
-  async createBranchFromWorkItem(triggerSource: "palette" | "panel"): Promise<void> {
+  async createBranchFromWorkItem(triggerSource: "palette" | "panel", rootUri?: vscode.Uri): Promise<void> {
     const workItemIdInput = await vscode.window.showInputBox({
       prompt: "ID de l'élément de travail Azure DevOps",
       placeHolder: "1234",
@@ -55,7 +55,7 @@ export class DevOpsBranchCreationService {
       return;
     }
 
-    const repo = await this._resolveRepository();
+    const repo = await this._resolveRepository(rootUri);
     if (!repo) {
       return;
     }
@@ -99,8 +99,10 @@ export class DevOpsBranchCreationService {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this._logging.error("Failed to create branch from work item", error);
-      this._telemetry.trackError(error instanceof Error ? error : new Error(message), {
+      // Le message brut peut contenir l'ID du work item, le nom de branche ou des chemins locaux : ne pas l'envoyer.
+      this._telemetry.trackError(new Error("Branch creation from work item failed"), {
         context: "devOpsBranchCreation.createBranchFromWorkItem",
+        errorType: error instanceof Error ? error.name : "unknown",
       });
       vscode.window.showErrorMessage(`Nexkit: ${message}`);
     }
@@ -108,14 +110,15 @@ export class DevOpsBranchCreationService {
 
   // ─── Private helpers ─────────────────────────────────────────────────────
 
-  private async _resolveRepository(): Promise<GitRepository | undefined> {
+  private async _resolveRepository(rootUri?: vscode.Uri): Promise<GitRepository | undefined> {
     const gitExtension = vscode.extensions.getExtension("vscode.git")?.exports as
-      | { getAPI(version: 1): GitExtensionAPI }
-      | undefined;
+      { getAPI(version: 1): GitExtensionAPI } | undefined;
 
     if (!gitExtension) {
       this._logging.warn("Git extension not found");
-      vscode.window.showErrorMessage("Nexkit: Extension Git introuvable. Veuillez vous assurer que l'extension Git intégrée est activée.");
+      vscode.window.showErrorMessage(
+        "Nexkit: Extension Git introuvable. Veuillez vous assurer que l'extension Git intégrée est activée."
+      );
       return undefined;
     }
 
@@ -126,6 +129,13 @@ export class DevOpsBranchCreationService {
       this._logging.warn("No Git repository found in the current workspace");
       vscode.window.showErrorMessage("Nexkit: Aucun dépôt Git trouvé dans l'espace de travail actuel.");
       return undefined;
+    }
+
+    if (rootUri) {
+      const invokedRepository = repos.find((repo) => repo.rootUri.toString(true) === rootUri.toString(true));
+      if (invokedRepository) {
+        return invokedRepository;
+      }
     }
 
     if (repos.length === 1) {
