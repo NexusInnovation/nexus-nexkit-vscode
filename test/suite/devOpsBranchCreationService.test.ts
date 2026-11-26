@@ -241,6 +241,30 @@ suite("Integration: DevOpsBranchCreationService – Create Branch from Work Item
     assert.ok(showErrorMessageStub.calledWithMatch(/Élément de travail introuvable/));
   });
 
+  test("Should not send the raw error message to telemetry", async () => {
+    const repo = createRepo("/repo", [{ name: "origin", fetchUrl: "https://dev.azure.com/myorg/myproject/_git/myrepo" }]);
+    stubGit([repo]);
+    restClient.getWorkItem.rejects(new Error("Élément de travail #1234 introuvable"));
+
+    await service.createBranchFromWorkItem("palette");
+
+    const sentError = telemetry.trackError.firstCall.args[0] as Error;
+    assert.ok(!sentError.message.includes("1234"));
+  });
+
+  test("Should target the repository matching the provided rootUri", async () => {
+    const remotes = [{ name: "origin", fetchUrl: "https://dev.azure.com/myorg/myproject/_git/myrepo" }];
+    const repoA = createRepo("/repoA", remotes);
+    const repoB = createRepo("/repoB", remotes);
+    stubGit([repoA, repoB]);
+
+    await service.createBranchFromWorkItem("palette", repoB.rootUri);
+
+    assert.ok(showQuickPickStub.notCalled);
+    assert.ok(repoB.createBranch.calledOnce);
+    assert.ok(repoA.createBranch.notCalled);
+  });
+
   test("Should track the panel trigger source when invoked from the panel", async () => {
     const repo = createRepo("/repo", [{ name: "origin", fetchUrl: "https://dev.azure.com/myorg/myproject/_git/myrepo" }]);
     stubGit([repo]);
