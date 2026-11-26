@@ -1,3 +1,15 @@
+## [4.4.0](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v4.3.0...v4.4.0) (2026-11-26)
+
+### Features
+
+* **extension-updates:** prompt for sign-in only on manual update checks ([1c84dac](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/1c84dac3cb86481d6004bff57118b1ee7e538af8))
+* **mcp:** add Azure DevOps MCP server configuration ([fc293ef](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/fc293ef0656ea1ed2af6c5e0d6d3fcbe1e2042fe))
+
+### Bug Fixes
+
+* **apm-devops:** avoid window reload on project change ([8ae529e](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/8ae529e86fa56c302374718197f4d9e732876374))
+* remove unused Azure DevOps project argument ([6a27409](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/6a2740935bc8060c0809857bba9c56535277251f))
+
 ## [4.4.0-beta.1](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v4.3.0...v4.4.0-beta.1) (2026-11-26)
 
 ### Features
