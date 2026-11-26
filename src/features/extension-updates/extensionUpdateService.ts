@@ -19,10 +19,10 @@ export class ExtensionUpdateService {
   /**
    * Checks if an extension update is available by comparing the current version with the latest release.
    */
-  public async checkForExtensionUpdate(): Promise<ExtensionUpdateInfo | null> {
+  public async checkForExtensionUpdate(allowSignInPrompt: boolean = false): Promise<ExtensionUpdateInfo | null> {
     try {
       const currentVersion = getExtensionVersion() || "0.0.0";
-      const release = await this.extensionReleaseService.fetchLatestRelease();
+      const release = await this.extensionReleaseService.fetchLatestRelease(allowSignInPrompt);
       const latestVersion = release.tagName.replace(/^v/, "");
 
       const isNewer = this.compareVersions(latestVersion, currentVersion) > 0;

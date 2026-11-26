@@ -11,7 +11,7 @@ export function registerCheckExtensionUpdateCommand(context: vscode.ExtensionCon
     context,
     Commands.CHECK_EXTENSION_UPDATE,
     async () => {
-      const updateInfo = await services.extensionUpdate.checkForExtensionUpdate();
+      const updateInfo = await services.extensionUpdate.checkForExtensionUpdate(true);
 
       if (!updateInfo) {
         vscode.window.showInformationMessage("Nexkit extension is up to date!");

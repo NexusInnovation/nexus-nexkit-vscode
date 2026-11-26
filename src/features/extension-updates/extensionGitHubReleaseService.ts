@@ -30,11 +30,7 @@ export class ExtensionGitHubReleaseService {
    * @param requireAuth If true, will prompt for authentication if not already authenticated
    */
   private async getAuthHeaders(requireAuth: boolean = true): Promise<Record<string, string>> {
-    return await GitHubAuthHelper.getAuthHeaders(
-      ["repo"],
-      "nexus-nexkit-vscode-Extension",
-      requireAuth
-    );
+    return await GitHubAuthHelper.getAuthHeaders(["repo"], "nexus-nexkit-vscode-Extension", requireAuth);
   }
 
   /**
@@ -79,7 +75,7 @@ export class ExtensionGitHubReleaseService {
   /**
    * Fetch the latest release information from GitHub
    */
-  async fetchLatestRelease(): Promise<GitHubReleaseInfo> {
+  async fetchLatestRelease(allowSignInPrompt: boolean = false): Promise<GitHubReleaseInfo> {
     const url = `${ExtensionGitHubReleaseService.BASE_URL}/repos/${ExtensionGitHubReleaseService.REPO_OWNER}/${ExtensionGitHubReleaseService.REPO_NAME}/releases/latest`;
 
     try {
@@ -88,7 +84,7 @@ export class ExtensionGitHubReleaseService {
       let response = await fetch(url, { headers });
 
       // If we get 404, 401, or 403, it might be a private repo - try to authenticate and retry
-      if (!response.ok && (response.status === 404 || response.status === 401 || response.status === 403)) {
+      if (allowSignInPrompt && !response.ok && (response.status === 404 || response.status === 401 || response.status === 403)) {
         const authenticated = await this.handleAuthError(response);
 
         if (authenticated) {
