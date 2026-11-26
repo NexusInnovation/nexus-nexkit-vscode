@@ -1,3 +1,9 @@
+## [4.5.0-beta.1](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v4.4.0...v4.5.0-beta.1) (2026-11-26)
+
+### Features
+
+* **devops-pipelines:** add live build log following and status styling ([4780f88](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/4780f8832cc03987364456cc7e37a3ce1745c13c))
+
 ## [4.4.0-beta.3](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v4.4.0-beta.2...v4.4.0-beta.3) (2026-11-26)
 
 ### Features
