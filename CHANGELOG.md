@@ -1,3 +1,15 @@
+## [4.1.0](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v4.0.0...v4.1.0) (2026-11-26)
+
+### Features
+
+* **devops:** add Azure DevOps builds view and build log panel ([#335](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/335)) ([50a1848](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/50a1848cba5373898cd5b8105f699dcf4c80a792))
+* **devops:** add Azure DevOps builds view and build log panel ([#335](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/335)) ([09dbba1](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/09dbba1eeb55f88a38a11f8558496e278705ed77))
+* **devops:** Add Azure DevOps builds view and build log panel ([#337](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/337)) ([6daf51d](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/6daf51da7265fe642690eab4d542c9241d69a5ed)), closes [#335](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/335) [#336](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/336)
+
+### Bug Fixes
+
+* **ci:** use lockfile-installed semantic-release ([#336](https://github.com/NexusInnovation/nexus-nexkit-vscode/issues/336)) ([9cc30f2](https://github.com/NexusInnovation/nexus-nexkit-vscode/commit/9cc30f26b154ade5cb6e2ce31a5b5aa5cdb5dbb9))
+
 ## [4.1.0-beta.1](https://github.com/NexusInnovation/nexus-nexkit-vscode/compare/v4.0.0...v4.1.0-beta.1) (2026-11-26)
 
 ### Features
