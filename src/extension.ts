@@ -86,6 +86,9 @@ export async function activate(context: vscode.ExtensionContext) {
     services.logging.error("Failed to initialize AI credit status bar", error);
   });
 
+  // Badge on the Nexkit icon while Azure DevOps builds are in progress
+  services.devOpsBuildBadge.start();
+
   // Check for required MCP servers on activation
   services.mcpConfig.promptInstallRequiredMCPsOnActivation();
 

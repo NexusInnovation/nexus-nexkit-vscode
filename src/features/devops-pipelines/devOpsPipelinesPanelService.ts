@@ -5,14 +5,23 @@ import { LoggingService } from "../../shared/services/loggingService";
 import { TelemetryService } from "../../shared/services/telemetryService";
 import { IDevOpsAuthProvider } from "./devOpsAuthProvider";
 import { BuildLogViewService } from "./buildLogViewService";
-import { DevOpsApiError, DevOpsBuildsClient, DevOpsProjectRef, RawBuild, buildWebUrl } from "./devOpsBuildsClient";
+import {
+  DevOpsApiError,
+  DevOpsBuildsClient,
+  DevOpsProjectRef,
+  PipelineSource,
+  RawBuild,
+  buildWebUrl,
+} from "./devOpsBuildsClient";
 import {
   ResolvedRequester,
   isActiveStatus,
   requesterNeedsAuthor,
   resolveRequester,
+  shortBranchName,
   toBuildDetail,
   toBuildSummary,
+  toPipelineSummary,
   toStageSummaries,
 } from "./buildMapper";
 import { BuildSummary, HostToWebviewMessage, StageSummary, WebviewToHostMessage } from "./messages";
@@ -141,7 +150,74 @@ export class DevOpsPipelinesPanelService implements vscode.Disposable {
           await vscode.env.openExternal(vscode.Uri.parse(buildWebUrl(this._currentRef, message.buildId)));
         }
         break;
+      case "load-pipelines":
+        await this._loadPipelines();
+        break;
+      case "prepare-run":
+        await this._prepareRun(message.pipelineId);
+        break;
+      case "run-pipeline":
+        await this._runPipeline(message.pipelineId, message.branch);
+        break;
     }
+  }
+
+  private async _loadPipelines(): Promise<void> {
+    const ref = this._currentRef ?? (await this._resolveRef());
+    if (!ref) {
+      return;
+    }
+    try {
+      const pipelines = await this._client.listPipelines(ref);
+      this._post({ type: "pipelines", pipelines: pipelines.map(toPipelineSummary) });
+    } catch (error) {
+      this._logging.warn("Could not list the Azure DevOps pipelines", error);
+      this._post({ type: "pipelines-error", message: this._describeError(error) });
+    }
+  }
+
+  /** Resolves the branches offered by the Run dialog; free typing stays possible when they cannot be listed */
+  private async _prepareRun(pipelineId: number): Promise<void> {
+    const ref = this._currentRef ?? (await this._resolveRef());
+    if (!ref) {
+      return;
+    }
+
+    let source: PipelineSource = {};
+    let branches: string[] = [];
+    try {
+      source = await this._client.getPipelineSource(ref, pipelineId);
+      if (source.repositoryType === "TfsGit" && source.repositoryId) {
+        branches = await this._client.listBranches(ref, source.repositoryId);
+      }
+    } catch (error) {
+      this._logging.warn(`Could not load the branches of pipeline ${pipelineId}`, error);
+    }
+
+    const defaultBranch = shortBranchName(source.defaultBranch);
+    const names = branches.map(shortBranchName);
+    const ordered = defaultBranch ? [defaultBranch, ...names.filter((n) => n !== defaultBranch)] : names;
+    this._post({ type: "run-options", options: { pipelineId, branches: ordered, defaultBranch } });
+  }
+
+  private async _runPipeline(pipelineId: number, branch: string): Promise<void> {
+    const ref = this._currentRef ?? (await this._resolveRef());
+    const name = branch.trim();
+    if (!ref || !name) {
+      return;
+    }
+
+    try {
+      const sourceBranch = name.startsWith("refs/") ? name : `refs/heads/${name}`;
+      const build = await this._client.runPipeline(ref, pipelineId, sourceBranch);
+      this._telemetry.trackEvent("devopsPipelines.runPipeline");
+      this._post({ type: "run-result", pipelineId, success: true, buildId: build.id });
+    } catch (error) {
+      this._logging.warn(`Could not run pipeline ${pipelineId}`, error);
+      this._post({ type: "run-result", pipelineId, success: false, message: this._describeError(error) });
+      return;
+    }
+    await this._refresh();
   }
 
   private async _signIn(): Promise<void> {

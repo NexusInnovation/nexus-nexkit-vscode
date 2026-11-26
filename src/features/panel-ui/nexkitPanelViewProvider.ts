@@ -14,10 +14,12 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
 
   private _view?: vscode.WebviewView;
   private _context?: vscode.ExtensionContext;
+  private _services?: ServiceContainer;
   private _messageHandler?: NexkitPanelMessageHandler;
 
   public initialize(context: vscode.ExtensionContext, services: ServiceContainer) {
     this._context = context;
+    this._services = services;
 
     // Initialize message handler
     this._messageHandler = new NexkitPanelMessageHandler(() => this._view, services);
@@ -44,7 +46,7 @@ export class NexkitPanelViewProvider implements vscode.WebviewViewProvider {
 
   public async resolveWebviewView(webviewView: vscode.WebviewView): Promise<void> {
     this._view = webviewView;
-
+    this._services?.devOpsBuildBadge.attach(webviewView);
     this._view.webview.options = {
       enableScripts: true,
       localResourceRoots: [vscode.Uri.joinPath(this._context!.extensionUri, "out")],

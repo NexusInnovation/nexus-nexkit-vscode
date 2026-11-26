@@ -34,6 +34,7 @@ import { DevOpsAuthProvider } from "../features/devops-pipelines/devOpsAuthProvi
 import { DevOpsBuildsClient } from "../features/devops-pipelines/devOpsBuildsClient";
 import { DevOpsPipelinesPanelService } from "../features/devops-pipelines/devOpsPipelinesPanelService";
 import { BuildLogViewService } from "../features/devops-pipelines/buildLogViewService";
+import { BuildActivityBadgeService } from "../features/devops-pipelines/buildActivityBadgeService";
 import { DevOpsProjectBrowserService } from "../features/apm-devops/devOpsProjectBrowserService";
 import { DevOpsProjectDiscoveryClient } from "../features/apm-devops/devOpsProjectDiscoveryClient";
 import { AiCreditUsageService } from "../features/ai-credit-usage/services/aiCreditUsageService";
@@ -71,6 +72,7 @@ export interface ServiceContainer {
   devOpsBranchCreation: DevOpsBranchCreationService;
   devOpsPipelines: DevOpsPipelinesPanelService;
   devOpsBuildLog: BuildLogViewService;
+  devOpsBuildBadge: BuildActivityBadgeService;
   devOpsProjectBrowser: DevOpsProjectBrowserService;
   aiCreditUsage: AiCreditUsageService;
   aiCreditStatusBar: AiCreditStatusBarService;
@@ -139,6 +141,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     telemetry,
     devOpsBuildLog
   );
+  const devOpsBuildBadge = new BuildActivityBadgeService(devOpsConfig, devOpsBuildsClient, logging);
   const devOpsProjectBrowser = new DevOpsProjectBrowserService(
     new DevOpsProjectDiscoveryClient(devOpsAuth, `nexus-nexkit-vscode/${context.extension?.packageJSON?.version ?? "unknown"}`)
   );
@@ -151,6 +154,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
   context.subscriptions.push(convertToMarkdown);
   context.subscriptions.push(devOpsPipelines);
   context.subscriptions.push(devOpsBuildLog);
+  context.subscriptions.push(devOpsBuildBadge);
   context.subscriptions.push(aiCreditUsage);
   context.subscriptions.push(aiCreditStatusBar);
 
@@ -184,6 +188,7 @@ export async function initializeServices(context: vscode.ExtensionContext): Prom
     devOpsBranchCreation,
     devOpsPipelines,
     devOpsBuildLog,
+    devOpsBuildBadge,
     devOpsProjectBrowser,
     aiCreditUsage,
     aiCreditStatusBar,

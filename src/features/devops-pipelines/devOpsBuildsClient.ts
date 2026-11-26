@@ -3,6 +3,9 @@ import { parseStageDependencies } from "./stageDependencies";
 
 const API_VERSION = "7.1";
 const DEFAULT_TOP = 30;
+const MAX_PIPELINES = 200;
+const MAX_ACTIVE_BUILDS = 100;
+const MAX_BRANCHES = 500;
 const MAX_AVATAR_BYTES = 128 * 1024;
 
 export type DevOpsApiErrorKind = "auth" | "forbidden" | "notFound" | "rateLimited" | "http" | "network";
@@ -81,6 +84,22 @@ export interface RawTimeline {
   records?: RawTimelineRecord[];
 }
 
+/** Subset of a build definition (pipeline) with its latest run, as returned by the definitions list */
+export interface RawDefinition {
+  id: number;
+  name: string;
+  path?: string;
+  latestBuild?: RawBuild;
+}
+
+export interface PipelineSource {
+  /** Repository type, e.g. "TfsGit" or "GitHub" */
+  repositoryType?: string;
+  repositoryId?: string;
+  /** Full ref, e.g. refs/heads/main */
+  defaultBranch?: string;
+}
+
 export function buildWebUrl(ref: DevOpsProjectRef, buildId: number): string {
   return `${projectBaseUrl(ref)}/_build/results?buildId=${buildId}`;
 }
@@ -106,6 +125,15 @@ export class DevOpsBuildsClient {
     return result.value ?? [];
   }
 
+  /** Number of builds currently running or waiting to start */
+  public async countActiveBuilds(ref: DevOpsProjectRef): Promise<number> {
+    const url =
+      `${projectBaseUrl(ref)}/_apis/build/builds?statusFilter=inProgress,notStarted&$top=${MAX_ACTIVE_BUILDS}` +
+      `&queryOrder=queueTimeDescending&api-version=${API_VERSION}`;
+    const result = await this._request<{ count?: number; value?: unknown[] }>(url);
+    return result.value?.length ?? result.count ?? 0;
+  }
+
   public async getBuild(ref: DevOpsProjectRef, buildId: number): Promise<RawBuild> {
     const url = `${projectBaseUrl(ref)}/_apis/build/builds/${buildId}?api-version=${API_VERSION}`;
     return this._request<RawBuild>(url);
@@ -119,6 +147,41 @@ export class DevOpsBuildsClient {
   public async cancelBuild(ref: DevOpsProjectRef, buildId: number): Promise<void> {
     const url = `${projectBaseUrl(ref)}/_apis/build/builds/${buildId}?api-version=${API_VERSION}`;
     await this._request<unknown>(url, { method: "PATCH", body: JSON.stringify({ status: "cancelling" }) });
+  }
+
+  /** Lists the pipelines (YAML and classic) of the project with their latest run */
+  public async listPipelines(ref: DevOpsProjectRef, top: number = MAX_PIPELINES): Promise<RawDefinition[]> {
+    const url =
+      `${projectBaseUrl(ref)}/_apis/build/definitions?includeLatestBuilds=true&queryOrder=definitionNameAscending` +
+      `&$top=${top}&api-version=${API_VERSION}`;
+    const result = await this._request<{ value?: RawDefinition[] }>(url);
+    return result.value ?? [];
+  }
+
+  /** Queues a run of a pipeline on the given full ref (e.g. refs/heads/main) and returns the created build */
+  public async runPipeline(ref: DevOpsProjectRef, definitionId: number, sourceBranch: string): Promise<RawBuild> {
+    const url = `${projectBaseUrl(ref)}/_apis/build/builds?api-version=${API_VERSION}`;
+    const body = { definition: { id: definitionId }, sourceBranch };
+    return this._request<RawBuild>(url, { method: "POST", body: JSON.stringify(body) });
+  }
+
+  public async getPipelineSource(ref: DevOpsProjectRef, definitionId: number): Promise<PipelineSource> {
+    const url = `${projectBaseUrl(ref)}/_apis/build/definitions/${definitionId}?api-version=${API_VERSION}`;
+    const definition = await this._request<{ repository?: { id?: string; type?: string; defaultBranch?: string } }>(url);
+    return {
+      repositoryType: definition.repository?.type,
+      repositoryId: definition.repository?.id,
+      defaultBranch: definition.repository?.defaultBranch,
+    };
+  }
+
+  /** Branch refs (refs/heads/...) of an Azure Repos Git repository */
+  public async listBranches(ref: DevOpsProjectRef, repositoryId: string): Promise<string[]> {
+    const url =
+      `${projectBaseUrl(ref)}/_apis/git/repositories/${encodeURIComponent(repositoryId)}/refs` +
+      `?filter=heads/&$top=${MAX_BRANCHES}&api-version=${API_VERSION}`;
+    const result = await this._request<{ value?: Array<{ name?: string }> }>(url);
+    return (result.value ?? []).map((r) => r.name).filter((n): n is string => !!n);
   }
 
   /**
