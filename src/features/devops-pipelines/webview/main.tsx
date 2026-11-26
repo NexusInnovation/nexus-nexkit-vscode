@@ -522,7 +522,8 @@ function PipelineRow({ pipeline, now, onRun }: { pipeline: PipelineSummary; now:
   );
 }
 
-const FOCUSABLE_SELECTOR = 'button:not([disabled]), input:not([disabled]), [href], select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+const FOCUSABLE_SELECTOR =
+  'button:not([disabled]), input:not([disabled]), [href], select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 function RunDialog({
   pipeline,
@@ -681,7 +682,8 @@ function App() {
             setPipelinesError(undefined);
             clearRunDialog();
           } else if (msg.projectLabel) {
-            if (projectRef.current !== undefined && projectRef.current !== msg.projectLabel) {
+            const projectChanged = projectRef.current !== msg.projectLabel;
+            if (projectRef.current !== undefined && projectChanged) {
               // Switching project: nothing loaded for the previous one may stay visible or actionable
               setBuilds([]);
               setUpdatedAt(undefined);
@@ -692,12 +694,13 @@ function App() {
               setPipelines(undefined);
               setPipelinesError(undefined);
               clearRunDialog();
-              if (tabRef.current === "pipelines") {
-                postToHost({ type: "load-pipelines" });
-              }
             }
             projectRef.current = msg.projectLabel;
             setProjectLabel(msg.projectLabel);
+            // Also covers a first label or a restored connection, where an earlier reply may have been discarded
+            if (projectChanged && tabRef.current === "pipelines") {
+              postToHost({ type: "load-pipelines" });
+            }
           }
           break;
         case "builds":

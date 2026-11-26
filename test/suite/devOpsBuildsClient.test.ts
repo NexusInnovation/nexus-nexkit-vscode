@@ -94,6 +94,18 @@ suite("Unit: DevOpsBuildsClient", () => {
     assert.ok(fetchStub.getCall(1).args[0].includes("continuationToken=next%20page"));
   });
 
+  test("listPipelines fails instead of returning a partial list when the page limit is reached", async () => {
+    fetchStub.callsFake(
+      async () =>
+        new Response(JSON.stringify({ value: [{ id: 1, name: "A" }] }), {
+          status: 200,
+          headers: { "content-type": "application/json", "x-ms-continuationtoken": "more" },
+        })
+    );
+
+    await assert.rejects(() => client.listPipelines(ref), /more than 50 pages/);
+  });
+
   test("listPipelines follows the continuation token", async () => {
     fetchStub.onCall(0).resolves(
       new Response(JSON.stringify({ value: [{ id: 1, name: "A" }] }), {

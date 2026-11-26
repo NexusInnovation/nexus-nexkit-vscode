@@ -320,11 +320,11 @@ export class DevOpsBuildsClient {
       const { data, continuationToken: next } = await this._requestWithHeaders<{ value?: T[] }>(pageUrl);
       items.push(...(data.value ?? []));
       if (!next) {
-        break;
+        return items;
       }
       continuationToken = next;
     }
-    return items;
+    throw new Error(`Azure DevOps returned more than ${MAX_PAGES} pages; the result would be incomplete.`);
   }
 
   private async _request<T>(url: string, init: { method?: string; body?: string } = {}): Promise<T> {
