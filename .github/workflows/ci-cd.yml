@@ -294,7 +294,7 @@ jobs:
       - name: Run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: pnpm exec semantic-release
+        run: pnpm dlx semantic-release
 
   # Job 8: Preview Build for PRs to develop (creates beta-preview packages)
   pr-preview:

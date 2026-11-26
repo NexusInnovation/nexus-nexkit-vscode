@@ -21,6 +21,7 @@ export type WebviewMessage =
   | { command: "openFeedback" }
   | { command: "openCronScheduleBuilder" }
   | { command: "openConvertToMarkdown" }
+  | { command: "createBranchFromWorkItem" }
   | { command: "openDevOpsPipelines" }
   | { command: "setMode"; mode: OperationMode }
   // APM DevOps connection messages
