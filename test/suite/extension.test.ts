@@ -77,12 +77,11 @@ suite("Unit: Extension Activation", () => {
     const commands = await vscode.commands.getCommands(true);
     const nexkitCommands = [
       "nexus-nexkit-vscode.initProject",
-      "nexus-nexkit-vscode.updateTemplates",
       "nexus-nexkit-vscode.checkExtensionUpdate",
       "nexus-nexkit-vscode.installUserMCPs",
       "nexus-nexkit-vscode.configureAzureDevOps",
       "nexus-nexkit-vscode.openSettings",
-      "nexus-nexkit-vscode.restoreBackup",
+      "nexus-nexkit-vscode.addNexusMarketplace",
     ];
     nexkitCommands.forEach((cmd) => {
       assert.ok(commands.includes(cmd), `Command ${cmd} should be registered`);

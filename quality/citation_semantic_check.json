@@ -1,0 +1,8 @@
+{
+    "schema_version": "1.1",
+    "generated_at": "2026-07-24T02:24:00Z",
+    "project": "nexus-nexkit-vscode",
+    "tier_1_or_2_requirements_present": false,
+    "reviews": [],
+    "notes": "No Tier-1/Tier-2 requirements found in quality/REQUIREMENTS.md; semantic citation review not applicable for this phase."
+}

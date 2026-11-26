@@ -49,6 +49,9 @@ testing without real HTTP/auth.
 
 ## Learnings
 
+- 2026-08-07: Reproduced full test pipeline after a prior non-zero run and confirmed stable green (`test-compile`, `lint`, `npm test`). When extension-host tests emit repeated blocked-auth-dialog logs in test mode, classify as expected noise unless accompanied by assertion failures; still track as medium regression-observability risk and add explicit auth-suppression/negative-path assertions.
+- 2026-07-10: The RTF converter webview in `src/features/rtf-converter/webview/main.tsx` has no exported pure rendering helpers and the test stack has no DOM harness (`jsdom`, Testing Library, or Preact test utilities). Keep service-level panel tests separate; validate the Markdown/Preview interaction manually until a deliberate webview-test architecture is introduced.
+
 ## Learnings (Nethris project, condensed 2026-08-06)
 
 - **RTF converter Markdown preview (2026-07-10):** No exported pure rendering helpers in `main.tsx`; no DOM test

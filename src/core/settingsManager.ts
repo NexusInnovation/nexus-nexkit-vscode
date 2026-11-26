@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { OperationMode } from "../features/ai-template-files/models/aiTemplateFile";
+import { OperationMode } from "../shared/constants/operationMode";
 
 /**
  * Centralized manager for all Nexkit extension settings and workspace state
@@ -9,6 +9,9 @@ export class SettingsManager {
 
   private static readonly NEXKIT_SECTION = "nexkit";
   private static readonly TELEMETRY_SECTION = "telemetry";
+  private static readonly CHAT_SECTION = "chat";
+  private static readonly PLUGIN_MARKETPLACES = "plugins.marketplaces";
+  private static readonly PLUGIN_LOCATIONS = "pluginLocations";
 
   // Workspace state keys
   private static readonly WORKSPACE_INITIALIZED_KEY = "workspaceInitialized";
@@ -19,12 +22,6 @@ export class SettingsManager {
 
   // MCP Setup settings
   private static readonly MCP_SETUP_DISMISSED = "mcpSetup.dismissed";
-
-  // Repository settings
-  private static readonly REPOSITORIES = "repositories";
-
-  // Repository commit SHA state key (WorkspaceState)
-  private static readonly REPOSITORY_COMMIT_SHAS_KEY = "nexkit.repositories.commitShas";
 
   // Telemetry settings
   private static readonly TELEMETRY_ENABLED = "telemetry.enabled";
@@ -38,37 +35,17 @@ export class SettingsManager {
   // Convert to Markdown settings
   private static readonly CONVERT_TO_MARKDOWN_PYTHON_PATH = "convertToMarkdown.pythonPath";
 
-  // Template auto-refresh settings
-  private static readonly TEMPLATES_AUTO_REFRESH_INTERVAL = "templates.autoRefreshIntervalMinutes";
-  /**
-   * @deprecated Use TEMPLATES_AUTO_UPDATE_ENABLED instead.
-   */
-  private static readonly TEMPLATES_AUTO_UPDATE_ON_REFRESH = "templates.autoUpdateOnRefresh";
-  private static readonly TEMPLATES_AUTO_UPDATE_ENABLED = "templates.autoUpdateOnRefresh";
-
-  // Template deploy mode
-  private static readonly TEMPLATES_DEPLOY_MODE = "templates.deployMode";
-
   // Extension update state keys (GlobalState)
   private static readonly EXTENSION_LAST_UPDATE_CHECK_STATE_KEY = "nexkit.extension.lastUpdateCheck";
 
   // Mode settings
   private static readonly MODE = "mode";
 
-  // Profile management settings
-  private static readonly PROFILES = "profiles";
-  private static readonly PROFILES_CONFIRM_BEFORE_SWITCH = "profiles.confirmBeforeSwitch";
-
-  // Profile management state keys (WorkspaceState)
-  private static readonly LAST_APPLIED_PROFILE_KEY = "lastAppliedProfile";
-
   // User mode settings
   private static readonly USER_MODE = "userMode";
 
   // First time user state key (GlobalState)
   private static readonly FIRST_TIME_USER_KEY = "nexkit.firstTimeUser";
-
-  // Profile management state keys (WorkspaceState)
 
   // APM DevOps state keys (WorkspaceState)
   private static readonly ACTIVE_DEVOPS_CONNECTION_KEY = "activeDevOpsConnection";
@@ -132,35 +109,6 @@ export class SettingsManager {
       .update(this.MCP_SETUP_DISMISSED, value, vscode.ConfigurationTarget.Global);
   }
 
-  // Repositories
-  static getRepositories<T = any>(): T[] {
-    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<T[]>(this.REPOSITORIES, []);
-  }
-
-  static getRepositoryCommitSha(repoName: string): string | undefined {
-    if (!this.context) {
-      return undefined;
-    }
-    const shas = this.context.workspaceState.get<Record<string, string>>(this.REPOSITORY_COMMIT_SHAS_KEY, {});
-    return shas[repoName];
-  }
-
-  static async setRepositoryCommitSha(repoName: string, sha: string): Promise<void> {
-    if (!this.context) {
-      return;
-    }
-    const shas = this.context.workspaceState.get<Record<string, string>>(this.REPOSITORY_COMMIT_SHAS_KEY, {});
-    shas[repoName] = sha;
-    await this.context.workspaceState.update(this.REPOSITORY_COMMIT_SHAS_KEY, shas);
-  }
-
-  static async setRepositories<T = any>(
-    repositories: T[],
-    target: vscode.ConfigurationTarget = vscode.ConfigurationTarget.Workspace
-  ): Promise<void> {
-    await vscode.workspace.getConfiguration(this.NEXKIT_SECTION).update(this.REPOSITORIES, repositories, target);
-  }
-
   // Telemetry
   static isNexkitTelemetryEnabled(): boolean {
     return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<boolean>(this.TELEMETRY_ENABLED, true);
@@ -190,54 +138,6 @@ export class SettingsManager {
     return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<number>(this.EXTENSION_UPDATE_CHECK_INTERVAL, 24);
   }
 
-  static getTemplatesAutoRefreshIntervalMinutes(): number {
-    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<number>(this.TEMPLATES_AUTO_REFRESH_INTERVAL, 30);
-  }
-
-  static isTemplatesAutoUpdateEnabled(): boolean {
-    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<boolean>(this.TEMPLATES_AUTO_UPDATE_ON_REFRESH, true);
-  }
-
-  static getTemplateDeployMode(): "user" | "workspace" {
-    return vscode.workspace
-      .getConfiguration(this.NEXKIT_SECTION)
-      .get<"user" | "workspace">(this.TEMPLATES_DEPLOY_MODE, "workspace");
-  }
-
-  static isUserDeployMode(): boolean {
-    return this.getTemplateDeployMode() === "user";
-  }
-
-  /**
-   * Determines whether the workspace has per-project template overrides active.
-   * True when deployMode is "workspace" OR a .nexkit/ directory exists in the workspace root.
-   * When active, both user-level and workspace-level template paths should coexist.
-   */
-  static isWorkspaceOverrideActive(): boolean {
-    if (this.getTemplateDeployMode() === "workspace") {
-      return true;
-    }
-    // Auto-detect: check if a .nexkit/ directory exists at the workspace root
-    try {
-      const fs = require("fs");
-      const path = require("path");
-      const workspaceFile = vscode.workspace.workspaceFile;
-      let root: string | undefined;
-      if (workspaceFile && workspaceFile.scheme === "file") {
-        root = path.dirname(workspaceFile.fsPath);
-      } else {
-        root = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-      }
-      if (!root) {
-        return false;
-      }
-      const nexkitPath = path.join(root, ".nexkit");
-      return fs.existsSync(nexkitPath) && fs.statSync(nexkitPath).isDirectory();
-    } catch {
-      return false;
-    }
-  }
-
   static getLastUpdateCheck(): number {
     if (!this.context) {
       throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
@@ -250,36 +150,6 @@ export class SettingsManager {
       throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
     }
     await this.context.globalState.update(this.EXTENSION_LAST_UPDATE_CHECK_STATE_KEY, timestamp);
-  }
-
-  // Profiles
-  static getProfiles<T = any>(): T[] {
-    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<T[]>(this.PROFILES, []);
-  }
-
-  static async setProfiles<T = any>(profiles: T[]): Promise<void> {
-    await vscode.workspace
-      .getConfiguration(this.NEXKIT_SECTION)
-      .update(this.PROFILES, profiles, vscode.ConfigurationTarget.Global);
-  }
-
-  static isProfileConfirmBeforeSwitchEnabled(): boolean {
-    return vscode.workspace.getConfiguration(this.NEXKIT_SECTION).get<boolean>(this.PROFILES_CONFIRM_BEFORE_SWITCH, true);
-  }
-
-  // Last Applied Profile (using workspace state)
-  static getLastAppliedProfile(): string | null {
-    if (!this.context) {
-      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
-    }
-    return this.context.workspaceState.get<string | null>(this.LAST_APPLIED_PROFILE_KEY, null);
-  }
-
-  static async setLastAppliedProfile(profileName: string | null): Promise<void> {
-    if (!this.context) {
-      throw new Error("SettingsManager not initialized. Call SettingsManager.initialize() first.");
-    }
-    await this.context.workspaceState.update(this.LAST_APPLIED_PROFILE_KEY, profileName);
   }
 
   // User Mode
@@ -313,6 +183,28 @@ export class SettingsManager {
 
   static async setMode(mode: OperationMode): Promise<void> {
     await vscode.workspace.getConfiguration(this.NEXKIT_SECTION).update(this.MODE, mode, vscode.ConfigurationTarget.Global);
+  }
+
+  // Agent plugin marketplaces (VS Code `chat.plugins.marketplaces`, user scope)
+  static getPluginMarketplaces(): string[] {
+    const value = vscode.workspace.getConfiguration(this.CHAT_SECTION).inspect<string[]>(this.PLUGIN_MARKETPLACES)?.globalValue;
+    return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : [];
+  }
+
+  static async setPluginMarketplaces(marketplaces: string[]): Promise<void> {
+    await vscode.workspace
+      .getConfiguration(this.CHAT_SECTION)
+      .update(this.PLUGIN_MARKETPLACES, marketplaces, vscode.ConfigurationTarget.Global);
+  }
+
+  // Agent plugin locations (VS Code `chat.pluginLocations`, user scope): plugin folder → enabled
+  static getPluginLocations(): Record<string, boolean> {
+    const value = vscode.workspace.getConfiguration(this.CHAT_SECTION).inspect<Record<string, boolean>>(this.PLUGIN_LOCATIONS)?.globalValue;
+    return value && typeof value === "object" && !Array.isArray(value) ? { ...value } : {};
+  }
+
+  static async setPluginLocations(locations: Record<string, boolean>): Promise<void> {
+    await vscode.workspace.getConfiguration(this.CHAT_SECTION).update(this.PLUGIN_LOCATIONS, locations, vscode.ConfigurationTarget.Global);
   }
 
   // Commit Message

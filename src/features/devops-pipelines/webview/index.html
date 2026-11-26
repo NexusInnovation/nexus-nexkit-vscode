@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline'; img-src data:; script-src 'nonce-{{nonce}}';"
+    />
+    <title>Azure DevOps Builds</title>
+    <style>
+      :root {
+        --ok: var(--vscode-testing-iconPassed, #388a34);
+        --fail: var(--vscode-testing-iconFailed, #f14c4c);
+        --warn: var(--vscode-editorWarning-foreground, #cca700);
+        --run: var(--vscode-progressBar-background, #0e70c0);
+        --muted: var(--vscode-descriptionForeground);
+        --card: var(--vscode-editorWidget-background);
+        --border: var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+      }
+      body {
+        font-family: var(--vscode-font-family);
+        font-size: var(--vscode-font-size);
+        color: var(--vscode-foreground);
+        padding: 0 20px 20px;
+      }
+      h1 {
+        font-size: 1.4em;
+        font-weight: 600;
+        margin: 16px 0 4px;
+      }
+      h2 {
+        font-size: 1.05em;
+        font-weight: 600;
+        margin: 0 0 8px;
+      }
+      button {
+        font-family: inherit;
+        font-size: inherit;
+        cursor: pointer;
+        border: 1px solid transparent;
+        border-radius: 2px;
+        padding: 4px 12px;
+        color: var(--vscode-button-secondaryForeground);
+        background: var(--vscode-button-secondaryBackground);
+      }
+      button:hover {
+        background: var(--vscode-button-secondaryHoverBackground);
+      }
+      button.primary {
+        color: var(--vscode-button-foreground);
+        background: var(--vscode-button-background);
+      }
+      button.primary:hover {
+        background: var(--vscode-button-hoverBackground);
+      }
+      button.danger {
+        color: var(--vscode-button-foreground);
+        background: var(--fail);
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      button.link {
+        background: none;
+        color: var(--vscode-textLink-foreground);
+        padding: 0;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 12px 0;
+        flex-wrap: wrap;
+      }
+      .toolbar .spacer {
+        flex: 1;
+      }
+      .tabs button {
+        background: none;
+        border-bottom: 2px solid transparent;
+        border-radius: 0;
+        color: var(--vscode-foreground);
+      }
+      .tabs button.active {
+        border-bottom-color: var(--vscode-focusBorder);
+        font-weight: 600;
+      }
+      .banner {
+        margin: 8px 0;
+        padding: 8px 12px;
+        border-left: 3px solid var(--warn);
+        background: var(--card);
+      }
+      .banner.error {
+        border-left-color: var(--fail);
+      }
+      .empty {
+        text-align: center;
+        margin: 48px 0;
+      }
+
+      .list {
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: var(--card);
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 28px minmax(0, 3fr) minmax(120px, 2fr) 110px;
+        gap: 12px;
+        align-items: center;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border);
+        cursor: pointer;
+      }
+      .row:last-child {
+        border-bottom: none;
+      }
+      .row:hover,
+      .row:focus {
+        background: var(--vscode-list-hoverBackground);
+        outline: none;
+      }
+      .row-title {
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .row-sub {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--muted);
+        font-size: 0.9em;
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      .meta {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        min-width: 0;
+      }
+      .meta.requester {
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .meta.ref {
+        color: var(--vscode-foreground);
+      }
+      .meta.commit {
+        font-family: var(--vscode-editor-font-family, monospace);
+        font-weight: 600;
+      }
+      .avatar {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        flex: none;
+        object-fit: cover;
+      }
+      .avatar.initials {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--border);
+        color: var(--vscode-foreground);
+        font-size: 9px;
+      }
+      .row-time {
+        text-align: right;
+        color: var(--muted);
+        font-size: 0.9em;
+        line-height: 1.5;
+      }
+      .dots {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .dots .link-line {
+        width: 6px;
+        height: 2px;
+        background: var(--border);
+      }
+
+      .icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        font-size: 10px;
+        line-height: 1;
+        color: #fff;
+        flex: none;
+        box-sizing: border-box;
+      }
+      .icon.succeeded {
+        background: var(--ok);
+      }
+      .icon.failed {
+        background: var(--fail);
+      }
+      .icon.warning,
+      .icon.partiallySucceeded {
+        background: var(--warn);
+      }
+      .icon.canceled,
+      .icon.cancelling,
+      .icon.skipped {
+        background: var(--muted);
+      }
+      .icon.queued,
+      .icon.pending {
+        background: transparent;
+        border: 2px solid var(--muted);
+      }
+      .icon.running {
+        background: transparent;
+        border: 2px solid var(--run);
+        border-top-color: transparent;
+        animation: spin 1s linear infinite;
+      }
+      .icon.large {
+        width: 22px;
+        height: 22px;
+        font-size: 13px;
+      }
+      .dot {
+        width: 12px;
+        height: 12px;
+        font-size: 8px;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .detail-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 16px 0 4px;
+      }
+      .detail-head h1 {
+        margin: 0;
+        flex: 1;
+      }
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        background: var(--card);
+        padding: 14px 18px;
+        margin: 12px 0;
+      }
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin-top: 10px;
+      }
+      .info-grid .label {
+        color: var(--muted);
+        font-size: 0.9em;
+      }
+      .issue {
+        display: flex;
+        gap: 10px;
+        padding: 8px 0;
+        border-top: 1px solid var(--border);
+      }
+      .issue:first-of-type {
+        border-top: none;
+      }
+      .issue-source {
+        color: var(--muted);
+        font-size: 0.85em;
+      }
+      .graph-scroll {
+        overflow: auto;
+        padding: 4px 4px 12px;
+      }
+      .graph {
+        position: relative;
+      }
+      .graph svg {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        overflow: visible;
+      }
+      .graph .edge {
+        fill: none;
+        stroke: var(--muted);
+        stroke-width: 1.5;
+      }
+      .graph .arrow {
+        fill: var(--muted);
+      }
+      .stage {
+        position: absolute;
+        box-sizing: border-box;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 8px 10px;
+        background: var(--vscode-editor-background);
+        overflow: hidden;
+      }
+      .stage-title {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-weight: 600;
+        height: 22px;
+      }
+      .stage-title span:last-child {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .stage-meta {
+        color: var(--muted);
+        font-size: 0.9em;
+        height: 20px;
+        margin-left: 24px;
+      }
+      .job,
+      .step {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        font-size: 0.9em;
+        margin-left: 24px;
+        box-sizing: border-box;
+      }
+      .job {
+        height: 26px;
+      }
+      .step {
+        height: 22px;
+        margin-left: 44px;
+      }
+      .job .name,
+      .step .name {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        text-align: left;
+      }
+      .job button,
+      .step button {
+        background: none;
+        border: none;
+        color: inherit;
+        padding: 0;
+      }
+      .job button.name:enabled:hover,
+      .step button.name:enabled:hover {
+        text-decoration: underline;
+        color: var(--vscode-textLink-foreground);
+      }
+      .job button:disabled,
+      .step button:disabled {
+        cursor: default;
+      }
+      .chevron {
+        width: 14px;
+        text-align: center;
+        color: var(--muted);
+      }
+      .graph-note {
+        color: var(--muted);
+        font-size: 0.9em;
+        margin: 0 0 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script nonce="{{nonce}}" src="{{scriptUri}}"></script>
+  </body>
+</html>
