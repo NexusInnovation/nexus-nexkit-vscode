@@ -115,7 +115,11 @@ export class BuildLogViewService implements vscode.WebviewViewProvider, vscode.D
           return;
         }
         for (const record of records) {
-          if (record.type !== "Task" || record.log?.id === undefined || completed.has(record.id)) {
+          if (
+            (record.type !== "Task" && record.type !== "Job") ||
+            record.log?.id === undefined ||
+            completed.has(record.id)
+          ) {
             continue;
           }
           const lines = await this._client.getLogLines(
