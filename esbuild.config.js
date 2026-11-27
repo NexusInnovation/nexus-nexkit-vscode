@@ -60,6 +60,12 @@ function copyStaticFiles() {
       filesToCopy: ["index.html"],
       staticSubFolder: null,
     },
+    {
+      sourceDir: path.join(__dirname, "src", "features", "regex-builder", "webview"),
+      outputDir: path.join(__dirname, "out", "regex-builder"),
+      filesToCopy: ["index.html"],
+      staticSubFolder: null,
+    },
   ];
 
   staticConfigs.forEach((config) => {
@@ -145,6 +151,11 @@ const watchStaticFilesPlugin = {
         },
         {
           sourceDir: path.join(__dirname, "src", "features", "devops-pipelines", "logview"),
+          filesToWatch: ["index.html"],
+          staticSubFolder: null,
+        },
+        {
+          sourceDir: path.join(__dirname, "src", "features", "regex-builder", "webview"),
           filesToWatch: ["index.html"],
           staticSubFolder: null,
         },
@@ -246,20 +257,37 @@ async function main() {
     plugins: [esbuildProblemMatcherPlugin, copyStaticFilesPlugin, watchStaticFilesPlugin],
   });
 
+  const regexBuilderCtx = await esbuild.context({
+    entryPoints: ["src/features/regex-builder/webview/main.tsx"],
+    bundle: true,
+    format: "iife",
+    minify: production,
+    sourcemap: !production,
+    platform: "browser",
+    outfile: "out/regexBuilder.js",
+    logLevel: "silent",
+    jsx: "automatic",
+    jsxImportSource: "preact",
+    plugins: [esbuildProblemMatcherPlugin, copyStaticFilesPlugin, watchStaticFilesPlugin],
+  });
+
   if (watch) {
     await extensionCtx.watch();
     await webviewCtx.watch();
     await convertToMarkdownCtx.watch();
     await devOpsPipelinesCtx.watch();
+    await regexBuilderCtx.watch();
   } else {
     await extensionCtx.rebuild();
     await webviewCtx.rebuild();
     await convertToMarkdownCtx.rebuild();
     await devOpsPipelinesCtx.rebuild();
+    await regexBuilderCtx.rebuild();
     await extensionCtx.dispose();
     await webviewCtx.dispose();
     await convertToMarkdownCtx.dispose();
     await devOpsPipelinesCtx.dispose();
+    await regexBuilderCtx.dispose();
   }
 }
 

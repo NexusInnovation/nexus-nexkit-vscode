@@ -38,6 +38,7 @@ export class NexkitPanelMessageHandler {
       ["openVsCodePluginSettings", this.handleOpenVsCodePluginSettings.bind(this)],
       ["openPluginBrowser", this.handleOpenPluginBrowser.bind(this)],
       ["openFeedback", this.handleOpenFeedback.bind(this)],
+      ["openRegexBuilder", this.handleOpenRegexBuilder.bind(this)],
       ["openConvertToMarkdown", this.handleOpenConvertToMarkdown.bind(this)],
       ["createBranchFromWorkItem", this.handleCreateBranchFromWorkItem.bind(this)],
       ["openDevOpsPipelines", this.handleOpenDevOpsPipelines.bind(this)],
@@ -220,6 +221,11 @@ export class NexkitPanelMessageHandler {
   private async handleOpenDevOpsPipelines(message: WebviewMessage): Promise<void> {
     this.trackWebviewAction("openDevOpsPipelines");
     await vscode.commands.executeCommand(Commands.OPEN_DEVOPS_PIPELINES);
+  }
+
+  private async handleOpenRegexBuilder(message: WebviewMessage): Promise<void> {
+    this.trackWebviewAction("openRegexBuilder");
+    await vscode.commands.executeCommand(Commands.OPEN_REGEX_BUILDER);
   }
 
   private async handleSetMode(message: WebviewMessage & { command: "setMode" }): Promise<void> {

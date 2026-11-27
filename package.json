@@ -126,6 +126,11 @@
         "command": "nexus-nexkit-vscode.openDevOpsPipelines",
         "title": "Nexkit: Open Azure DevOps Builds",
         "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.openRegexBuilder",
+        "title": "Nexkit: RegEx Builder",
+        "category": "Nexkit"
       }
     ],
     "menus": {
