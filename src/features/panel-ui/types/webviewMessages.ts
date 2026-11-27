@@ -19,6 +19,7 @@ export type WebviewMessage =
   | { command: "openVsCodePluginSettings" }
   | { command: "openPluginBrowser" }
   | { command: "openFeedback" }
+  | { command: "openCronScheduleBuilder" }
   | { command: "openConvertToMarkdown" }
   | { command: "createBranchFromWorkItem" }
   | { command: "openDevOpsPipelines" }

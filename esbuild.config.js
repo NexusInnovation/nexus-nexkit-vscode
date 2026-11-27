@@ -60,6 +60,12 @@ function copyStaticFiles() {
       filesToCopy: ["index.html"],
       staticSubFolder: null,
     },
+    {
+      sourceDir: path.join(__dirname, "src", "features", "cron-schedule-builder", "webview"),
+      outputDir: path.join(__dirname, "out", "cron-schedule-builder"),
+      filesToCopy: ["index.html"],
+      staticSubFolder: null,
+    },
   ];
 
   staticConfigs.forEach((config) => {
@@ -145,6 +151,11 @@ const watchStaticFilesPlugin = {
         },
         {
           sourceDir: path.join(__dirname, "src", "features", "devops-pipelines", "logview"),
+          filesToWatch: ["index.html"],
+          staticSubFolder: null,
+        },
+        {
+          sourceDir: path.join(__dirname, "src", "features", "cron-schedule-builder", "webview"),
           filesToWatch: ["index.html"],
           staticSubFolder: null,
         },
@@ -246,18 +257,35 @@ async function main() {
     plugins: [esbuildProblemMatcherPlugin, copyStaticFilesPlugin, watchStaticFilesPlugin],
   });
 
+  const cronScheduleBuilderCtx = await esbuild.context({
+    entryPoints: ["src/features/cron-schedule-builder/webview/main.tsx"],
+    bundle: true,
+    format: "iife",
+    minify: production,
+    sourcemap: !production,
+    platform: "browser",
+    outfile: "out/cronScheduleBuilder.js",
+    logLevel: "silent",
+    jsx: "automatic",
+    jsxImportSource: "preact",
+    plugins: [esbuildProblemMatcherPlugin, copyStaticFilesPlugin, watchStaticFilesPlugin],
+  });
+
   if (watch) {
     await extensionCtx.watch();
     await webviewCtx.watch();
+    await cronScheduleBuilderCtx.watch();
     await convertToMarkdownCtx.watch();
     await devOpsPipelinesCtx.watch();
   } else {
     await extensionCtx.rebuild();
     await webviewCtx.rebuild();
+    await cronScheduleBuilderCtx.rebuild();
     await convertToMarkdownCtx.rebuild();
     await devOpsPipelinesCtx.rebuild();
     await extensionCtx.dispose();
     await webviewCtx.dispose();
+    await cronScheduleBuilderCtx.dispose();
     await convertToMarkdownCtx.dispose();
     await devOpsPipelinesCtx.dispose();
   }

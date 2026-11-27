@@ -17,6 +17,10 @@ export function ToolsSection() {
     messenger.sendMessage({ command: "openConvertToMarkdown" });
   };
 
+  const openCronScheduleBuilder = (): void => {
+    messenger.sendMessage({ command: "openCronScheduleBuilder" });
+  };
+
   const createBranchFromWorkItem = (): void => {
     messenger.sendMessage({ command: "createBranchFromWorkItem" });
   };
@@ -33,6 +37,11 @@ export function ToolsSection() {
       <CollapsibleSection id="tools-convert-to-markdown" title="Convert to Markdown">
         <button class="action-button" onClick={openConvertToMarkdown}>
           Open Convert to Markdown
+        </button>
+      </CollapsibleSection>
+      <CollapsibleSection id="tools-cron-schedule-builder" title="Cron Job Schedule Builder">
+        <button class="action-button" onClick={openCronScheduleBuilder}>
+          Open Cron Schedule Builder
         </button>
       </CollapsibleSection>
       <CollapsibleSection id="tools-create-branch-from-work-item" title="Create Branch from Work Item">

@@ -134,7 +134,7 @@ nexus-nexkit-vscode/
 ├── esbuild.config.js             # Build configuration (extension + webview bundles)
 ├── eslint.config.mjs             # ESLint flat config
 ├── lefthook.yml                  # Git hooks (commitlint + pretest)
-├── commitlint.config.js          # Conventional Commits enforcement
+├── .commitlintrc.cjs             # Conventional Commits enforcement
 ├── AGENTS.md                     # Developer guide & conventions
 ├── README.md                     # User-facing documentation
 ├── CHANGELOG.md                  # Auto-generated changelog

@@ -19,6 +19,7 @@
   ],
   "dependencies": {
     "applicationinsights": "^3.17.0",
+    "cronstrue": "^3.24.0",
     "markdown-it": "^14.3.3",
     "prettier": "^3.7.4",
     "yaml": "^2.9.1"
@@ -125,6 +126,11 @@
       {
         "command": "nexus-nexkit-vscode.openDevOpsPipelines",
         "title": "Nexkit: Open Azure DevOps Builds",
+        "category": "Nexkit"
+      },
+      {
+        "command": "nexus-nexkit-vscode.openCronScheduleBuilder",
+        "title": "Nexkit: Cron Job Schedule Builder",
         "category": "Nexkit"
       }
     ],

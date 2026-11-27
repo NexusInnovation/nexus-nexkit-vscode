@@ -35,6 +35,7 @@ export const Commands = {
   REFRESH_AI_CREDIT_USAGE: "nexus-nexkit-vscode.refreshAiCreditUsage",
 
   // Developer tools
+  OPEN_CRON_SCHEDULE_BUILDER: "nexus-nexkit-vscode.openCronScheduleBuilder",
   OPEN_CONVERT_TO_MARKDOWN: "nexus-nexkit-vscode.openConvertToMarkdown",
 } as const;
 

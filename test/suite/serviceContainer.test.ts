@@ -61,6 +61,7 @@ suite("Unit: ServiceContainer", () => {
     assert.ok(services.workspaceInitPrompt, "WorkspaceInitPromptService should be initialized");
     assert.ok(services.githubAuthPrompt, "GitHubAuthPromptService should be initialized");
     assert.ok(services.startupVerification, "StartupVerificationService should be initialized");
+    assert.ok(services.cronScheduleBuilder, "CronScheduleBuilderPanelService should be initialized");
     assert.ok(services.convertToMarkdown, "ConvertToMarkdownPanelService should be initialized");
     assert.ok(services.markitdownConversion, "MarkitdownConversionService should be initialized");
   });
